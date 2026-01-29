@@ -1,39 +1,56 @@
-export const metadata = {
-  title: "English Club Nanda Nagar | Spoken English & Computer Institute",
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Spoken English Classes in Nanda Nagar Indore | English Club",
   description:
-    "English Club Nanda Nagar offers Spoken English, Computer Courses, Tally & CPCT coaching. Trusted institute in Indore since 2010.",
+    "English Club offers spoken English and personality development classes in Nanda Nagar, Indore. Since 2010. Call 9713014234.",
 };
 
 export default function NandaNagarPage() {
   return (
-    <main style={{ padding: "40px 20px" }}>
-      <h1>English Club – Nanda Nagar</h1>
-      <p>
-        Spoken English & Computer Training Institute<br />
-        Classes running successfully since <strong>2010</strong>
+    <main className="px-4 py-8">
+      <h1 className="text-2xl font-bold mb-4">
+        Spoken English Classes in Nanda Nagar, Indore
+      </h1>
+
+      <p className="text-gray-700 mb-6">
+        English Club is a trusted spoken English institute in Nanda Nagar,
+        Indore, helping students improve communication skills, confidence,
+        and fluency since 2010.
       </p>
 
-      <h2>Courses Available</h2>
-      <ul>
-        <li>Spoken English (Online & Offline)</li>
-        <li>Computer Courses</li>
-        <li>Advanced Excel</li>
-        <li>Tally & CPCT Preparation</li>
+      <h2 className="text-xl font-semibold mb-2">Courses Offered</h2>
+      <ul className="list-disc ml-6 mb-6">
+        <li>Spoken English (Beginner to Advanced)</li>
+        <li>Grammar & Sentence Practice</li>
+        <li>Interview Preparation</li>
+        <li>Personality Development</li>
       </ul>
 
-      <p>
-        📞 Call / WhatsApp:
-        <a href="tel:9713014234"> 9713014234</a>
+      <h2 className="text-xl font-semibold mb-2">Visit Our Nanda Nagar Branch</h2>
+      <p className="mb-4">
+        📍 Nanda Nagar, Indore  
+        <br />
+        📞 <a href="tel:9713014234" className="text-blue-600">9713014234</a>
       </p>
 
-      <h3>Location</h3>
+      {/* Google Map */}
       <iframe
-        src="https://www.google.com/maps?q=English%20Club%20Nanda%20Nagar%20Indore&output=embed"
+        src="https://www.google.com/maps?q=Nanda+Nagar+Indore&output=embed"
         width="100%"
         height="300"
-        style={{ border: 0 }}
         loading="lazy"
+        className="rounded-lg"
       ></iframe>
+
+      <div className="mt-6">
+        <a
+          href="https://wa.me/919713014234"
+          className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg"
+        >
+          WhatsApp Now
+        </a>
+      </div>
     </main>
   );
 }

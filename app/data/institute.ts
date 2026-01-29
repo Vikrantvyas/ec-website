@@ -1,13 +1,24 @@
 export const instituteData = {
   name: "English Club",
-  tagline: "Spoken English & Computer Training Institute",
-  since: "2010",
   city: "Indore",
   phone: "9713014234",
-  whatsapp: "9713014234",
-  branches: [
-    "Nanda Nagar",
-    "Bapat Square",
-    "Aurobindo Hospital"
-  ],
+  since: 2010,
 };
+
+export const branches = [
+  {
+    name: "Nanda Nagar",
+    slug: "/nanda-nagar",
+    address: "Nanda Nagar, Indore",
+  },
+  {
+    name: "Bapat Square",
+    slug: "/bapat-square",
+    address: "Bapat Square, Indore",
+  },
+  {
+    name: "Aurobindo Hospital",
+    slug: "/aurobindo-hospital",
+    address: "Aurobindo Hospital Area, Indore",
+  },
+];
