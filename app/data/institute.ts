@@ -1,5 +1,6 @@
 export const instituteData = {
   name: "English Club",
+  tagline: "Spoken English & Personality Development Institute",
   city: "Indore",
   phone: "9713014234",
   since: 2010,
