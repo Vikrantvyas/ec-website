@@ -3,6 +3,7 @@ export const instituteData = {
   tagline: "Spoken English & Personality Development Institute",
   city: "Indore",
   phone: "9713014234",
+  whatsapp: "9713014234",
   since: 2010,
 };
 
