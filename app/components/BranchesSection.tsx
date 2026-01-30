@@ -3,21 +3,23 @@ import { branches } from "../data/institute";
 
 export default function BranchesSection() {
   return (
-    <section className="py-10 px-4">
-      <h2 className="text-2xl font-bold text-center mb-6">
+    <section className="py-20 px-4 bg-white">
+      <h2 className="text-3xl font-bold text-center mb-12 tracking-tight">
         Our Branches in Indore
       </h2>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="max-w-4xl mx-auto space-y-4">
         {branches.map((branch) => (
           <Link
             key={branch.slug}
             href={branch.slug}
-            className="border rounded-lg p-4 hover:shadow-md transition"
+            className="group flex items-center justify-between border border-gray-200 rounded-2xl p-5 bg-white hover:bg-gray-50 transition"
           >
-            <h3 className="text-lg font-semibold">{branch.name}</h3>
-            <p className="text-sm text-gray-600">{branch.address}</p>
-            <span className="text-blue-600 text-sm mt-2 inline-block">
+            <span className="text-lg font-medium text-gray-900">
+              {branch.name}
+            </span>
+
+            <span className="text-blue-600 text-sm font-medium group-hover:translate-x-1 transition">
               View Branch →
             </span>
           </Link>

@@ -1,34 +1,24 @@
 export default function MapSection() {
   return (
-    <section style={{ padding: "40px 20px", background: "#f5f7fb" }}>
-      <h2 style={{ textAlign: "center" }}>Find Us on Google Map</h2>
-      <p style={{ textAlign: "center" }}>
-        Visit any of our branches in Indore
-      </p>
+    <section className="py-12 px-4 bg-gray-50">
+      <h2 className="text-2xl font-bold text-center mb-6">
+        Visit English Club, Indore
+      </h2>
 
-      <div
-        style={{
-          maxWidth: "800px",
-          margin: "30px auto",
-          borderRadius: "8px",
-          overflow: "hidden",
-        }}
-      >
+      <div className="max-w-4xl mx-auto">
         <iframe
-          src="https://www.google.com/maps?q=English%20Club%20Indore&output=embed"
+          src="https://www.google.com/maps?q=English+Club+Indore&output=embed"
           width="100%"
-          height="350"
-          style={{ border: 0 }}
+          height="300"
           loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
+          className="rounded-lg"
         ></iframe>
-      </div>
 
-      <ul style={{ textAlign: "center", lineHeight: "1.8" }}>
-        <li>📍 Nanda Nagar</li>
-        <li>📍 Bapat Square</li>
-        <li>📍 Near Aurobindo Hospital</li>
-      </ul>
+        <p className="text-center text-gray-600 mt-4">
+          We have multiple branches across Indore.  
+          Please select your nearest branch to view exact location details.
+        </p>
+      </div>
     </section>
   );
 }

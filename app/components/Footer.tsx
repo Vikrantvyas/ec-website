@@ -1,39 +1,86 @@
+import Link from "next/link";
+import { instituteData } from "../data/institute";
+
 export default function Footer() {
   return (
-    <footer
-      style={{
-        background: "#1f2937",
-        color: "#ffffff",
-        padding: "30px 20px",
-        textAlign: "center",
-      }}
-    >
-      <h3 style={{ marginBottom: "10px" }}>English Club</h3>
+    <footer className="bg-gray-900 text-gray-300 py-10 px-4">
+      <div className="max-w-6xl mx-auto grid gap-8 md:grid-cols-3">
+        {/* Institute Info */}
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-3">
+            {instituteData.name}
+          </h3>
+          <p className="text-sm leading-relaxed">
+            {instituteData.tagline}
+            <br />
+            Serving students in Indore since {instituteData.since}.
+          </p>
+        </div>
 
-      <p style={{ margin: "5px 0" }}>
-        Spoken English & Computer Training Institute
-      </p>
+        {/* Quick Links */}
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-3">
+            Quick Links
+          </h3>
+          <ul className="space-y-2 text-sm">
+            <li>
+              <Link href="/" className="hover:text-white">
+                Home
+              </Link>
+            </li>
+            <li>
+              <Link href="/nanda-nagar" className="hover:text-white">
+                Nanda Nagar Branch
+              </Link>
+            </li>
+            <li>
+              <Link href="/bapat-square" className="hover:text-white">
+                Bapat Square Branch
+              </Link>
+            </li>
+            <li>
+              <Link href="/aurobindo-hospital" className="hover:text-white">
+                Aurobindo Hospital Branch
+              </Link>
+            </li>
+          </ul>
+        </div>
 
-      <p style={{ margin: "5px 0" }}>
-        Classes running successfully since <strong>2010</strong>
-      </p>
+        {/* Contact */}
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-3">
+            Contact
+          </h3>
+          <p className="text-sm mb-2">
+            📍 Indore, Madhya Pradesh
+          </p>
+          <p className="text-sm mb-2">
+            📞{" "}
+            <a
+              href={`tel:${instituteData.phone}`}
+              className="hover:text-white"
+            >
+              {instituteData.phone}
+            </a>
+          </p>
+          <p className="text-sm">
+            💬{" "}
+            <a
+              href={`https://wa.me/91${instituteData.whatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white"
+            >
+              WhatsApp Chat
+            </a>
+          </p>
+        </div>
+      </div>
 
-      <p style={{ margin: "5px 0" }}>
-        📍 Nanda Nagar | Bapat Square | Aurobindo Hospital – Indore
-      </p>
-
-      <p style={{ margin: "10px 0" }}>
-        📞 <a
-          href="tel:9713014234"
-          style={{ color: "#ffffff", textDecoration: "underline" }}
-        >
-          9713014234
-        </a>
-      </p>
-
-      <p style={{ fontSize: "14px", marginTop: "15px", opacity: 0.8 }}>
-        © {new Date().getFullYear()} English Club. All rights reserved.
-      </p>
+      {/* Bottom Bar */}
+      <div className="border-t border-gray-700 mt-8 pt-4 text-center text-sm text-gray-400">
+        © {new Date().getFullYear()} {instituteData.name}. All rights reserved.
+      </div>
     </footer>
   );
 }

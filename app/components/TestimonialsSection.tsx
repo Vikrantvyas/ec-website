@@ -1,34 +1,48 @@
 export default function TestimonialsSection() {
   return (
-    <section style={{ padding: "40px 20px", background: "#f9fafb" }}>
-      <h2 style={{ textAlign: "center" }}>What Our Students Say</h2>
+    <section className="py-20 px-4 bg-gray-50">
+      <h2 className="text-3xl font-bold text-center mb-12 tracking-tight">
+        What Our Students Say
+      </h2>
 
-      <div style={{ maxWidth: "800px", margin: "30px auto" }}>
-        <div style={{ marginBottom: "20px" }}>
-          <p>
-            ⭐⭐⭐⭐⭐ <br />
+      <div className="max-w-5xl mx-auto grid gap-8 md:grid-cols-3">
+        {/* Testimonial 1 */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition">
+          <p className="text-gray-700 mb-4">
+            ⭐⭐⭐⭐⭐
+            <br />
             “English Club helped me improve my spoken English confidence.
             Teachers are very supportive.”
           </p>
-          <strong>— Student, Indore</strong>
+          <span className="text-sm text-gray-600 font-medium">
+            — Student, Indore
+          </span>
         </div>
 
-        <div style={{ marginBottom: "20px" }}>
-          <p>
-            ⭐⭐⭐⭐⭐ <br />
+        {/* Testimonial 2 */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition">
+          <p className="text-gray-700 mb-4">
+            ⭐⭐⭐⭐⭐
+            <br />
             “Best institute for Spoken English and Computer courses.
-            Practical teaching method.”
+            Very practical teaching method.”
           </p>
-          <strong>— Working Professional</strong>
+          <span className="text-sm text-gray-600 font-medium">
+            — Working Professional
+          </span>
         </div>
 
-        <div>
-          <p>
-            ⭐⭐⭐⭐⭐ <br />
-            “Good environment for kids and beginners.
+        {/* Testimonial 3 */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition">
+          <p className="text-gray-700 mb-4">
+            ⭐⭐⭐⭐⭐
+            <br />
+            “Good environment for beginners.
             Highly recommended.”
           </p>
-          <strong>— Parent</strong>
+          <span className="text-sm text-gray-600 font-medium">
+            — Parent
+          </span>
         </div>
       </div>
     </section>
