@@ -6,11 +6,9 @@ export default function StickyButtons() {
       {/* Call Button */}
       <a
         href="tel:9713014234"
-        className="fixed z-[9999] bottom-20 left-4
-                   flex items-center gap-2
-                   bg-blue-600 text-white px-4 py-3
-                   rounded-full shadow-lg
-                   text-sm"
+        className="fixed bottom-4 left-4 z-50
+                   bg-blue-600 text-white px-5 py-3 rounded-full
+                   shadow-lg flex items-center gap-2"
       >
         📞 Call
       </a>
@@ -20,11 +18,10 @@ export default function StickyButtons() {
         href="https://wa.me/919713014234"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed z-[9999] bottom-20 right-4
-                   flex items-center gap-2
-                   bg-green-600 text-white px-4 py-3
-                   rounded-full shadow-lg
-                   text-sm"
+        className="fixed bottom-4 z-50
+                   bg-green-500 text-white px-5 py-3 rounded-full
+                   shadow-lg flex items-center gap-2"
+        style={{ right: "12px" }}   // 👈 EXTRA LEFT SHIFT (important)
       >
         💬 WhatsApp
       </a>
