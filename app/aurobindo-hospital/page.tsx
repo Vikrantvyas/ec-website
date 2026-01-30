@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title:
     "Spoken English Classes near Aurobindo Hospital Indore | English Club",
   description:
-    "English Club offers spoken English classes near Aurobindo Hospital, Indore with exact Google Maps location. Ideal for students, professionals and job-seekers. Since 2010. Call 9713014234.",
+    "English Club offers spoken English classes near Aurobindo Hospital, Indore. Exact location, daily speaking practice and experienced trainers. Since 2010. Call 9713014234.",
 };
 
 export default function AurobindoHospitalPage() {
@@ -16,10 +16,9 @@ export default function AurobindoHospitalPage() {
 
       <p className="text-gray-700 mb-6">
         English Club is a trusted spoken English institute located near
-        Aurobindo Hospital, Indore. Our practical, speaking-focused training
-        helps students, job-seekers and working professionals improve their
-        English fluency, confidence and communication skills. Serving learners
-        successfully since 2010.
+        Aurobindo Hospital, Indore. Our practical and speaking-focused
+        training helps students and professionals improve fluency,
+        confidence and communication skills. Serving learners since 2010.
       </p>
 
       <h2 className="text-xl font-semibold mb-2">Courses Offered</h2>
@@ -31,17 +30,6 @@ export default function AurobindoHospitalPage() {
       </ul>
 
       <h2 className="text-xl font-semibold mb-2">
-        Why Choose English Club near Aurobindo Hospital?
-      </h2>
-      <ul className="list-disc ml-6 mb-6 text-gray-700">
-        <li>Convenient location near hospital area</li>
-        <li>Experienced and supportive trainers</li>
-        <li>Small batches with personal attention</li>
-        <li>Affordable course fees</li>
-        <li>Trusted institute since 2010</li>
-      </ul>
-
-      <h2 className="text-xl font-semibold mb-2">
         Visit Our Aurobindo Hospital Area Branch
       </h2>
       <p className="mb-4 text-gray-700">
@@ -50,20 +38,25 @@ export default function AurobindoHospitalPage() {
         📞{" "}
         <a href="tel:9713014234" className="text-blue-600 font-medium">
           9713014234
-        </a>{" "}
-        <br />
-        💬 WhatsApp Available
+        </a>
       </p>
 
-      {/* Exact Google Map – Real Location */}
+      {/* Fixed Branch Location Map */}
       <iframe
-        src="https://www.google.com/maps/embed?pb=!1m23!1m12!1m3!1d14718.964637760524!2d75.88825034999999!3d22.7378602!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m8!3e6!4m0!4m5!1s0x396303b75af59373%3A0xc2f255d82b1e4738!2sEnglish%20Club%20Computer%20G%20Aurobindo%20Branch%2C%20Joggers%20Pk%20Rd%2C%20247%20premium%20park%2C%20near%20Arvindo%20Hospital%2C%20247%2C%20Sanwer%20Rd%2C%20near%20Bhangiya%20and%20Kalindi%20Gold%20City%2C%20Premium%20Park%20Colony%2C%20Jakhya%2C%20Indore%2C%20Madhya%20Pradesh%20453555!3m2!1d22.798720199999998!2d75.8557239!5e0!3m2!1sen!2sin!4v1769752997977!5m2!1sen!2sin"
+        src="https://www.google.com/maps?q=English+Club+near+Aurobindo+Hospital+Indore&output=embed"
         width="100%"
         height="320"
         loading="lazy"
-        className="rounded-xl mb-6"
-        referrerPolicy="no-referrer-when-downgrade"
+        className="rounded-xl mb-4"
       ></iframe>
+
+      <a
+        href="https://www.google.com/maps/dir/?api=1&destination=English+Club+near+Aurobindo+Hospital+Indore"
+        target="_blank"
+        className="inline-block mb-6 bg-blue-600 text-white px-6 py-3 rounded-xl"
+      >
+        📍 Get Directions from your location
+      </a>
 
       <div className="flex gap-4">
         <a
@@ -72,7 +65,6 @@ export default function AurobindoHospitalPage() {
         >
           Call Now
         </a>
-
         <a
           href="https://wa.me/919713014234"
           className="bg-green-600 text-white px-6 py-3 rounded-xl"

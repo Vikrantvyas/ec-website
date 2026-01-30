@@ -1,7 +1,7 @@
 export default function MapSection() {
   return (
-    <section className="py-12 px-4 bg-gray-50">
-      <h2 className="text-2xl font-bold text-center mb-6">
+    <section className="py-6 px-4 bg-gray-50">
+      <h2 className="text-2xl font-bold text-center mb-4">
         Visit English Club, Indore
       </h2>
 
@@ -14,7 +14,7 @@ export default function MapSection() {
           className="rounded-lg"
         ></iframe>
 
-        <p className="text-center text-gray-600 mt-4">
+        <p className="text-center text-gray-600 mt-3">
           We have multiple branches across Indore.  
           Please select your nearest branch to view exact location details.
         </p>
