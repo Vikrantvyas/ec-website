@@ -68,7 +68,7 @@ export default function BapatSquarePage() {
           <div className="bg-white p-6 rounded-2xl shadow-sm">
             <div className="flex items-center gap-4 mb-4">
               <img
-                src="/students/student-1.jpg"
+                src="/bapat-square/review-1.jpg"
                 alt="Ankit - Bapat Square"
                 className="w-14 h-14 rounded-full object-cover"
               />
@@ -90,7 +90,7 @@ export default function BapatSquarePage() {
           <div className="bg-white p-6 rounded-2xl shadow-sm">
             <div className="flex items-center gap-4 mb-4">
               <img
-                src="/students/student-2.jpg"
+                src="/bapat-square/review-2.jpg"
                 alt="Pooja - Bapat Square"
                 className="w-14 h-14 rounded-full object-cover"
               />
@@ -112,7 +112,7 @@ export default function BapatSquarePage() {
           <div className="bg-white p-6 rounded-2xl shadow-sm">
             <div className="flex items-center gap-4 mb-4">
               <img
-                src="/students/student-3.jpg"
+                src="/bapat-square/review-3.jpg"
                 alt="Rahul - Bapat Square"
                 className="w-14 h-14 rounded-full object-cover"
               />

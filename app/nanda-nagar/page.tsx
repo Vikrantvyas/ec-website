@@ -69,7 +69,7 @@ export default function NandaNagarPage() {
           <div className="bg-white p-6 rounded-2xl shadow-sm">
             <div className="flex items-center gap-4 mb-4">
               <img
-                src="/students/student-1.jpg"
+                src="/nanda-nagar/review-1.jpg"
                 alt="Riya - Nanda Nagar"
                 className="w-14 h-14 rounded-full object-cover"
               />
@@ -91,7 +91,7 @@ export default function NandaNagarPage() {
           <div className="bg-white p-6 rounded-2xl shadow-sm">
             <div className="flex items-center gap-4 mb-4">
               <img
-                src="/students/student-2.jpg"
+                src="/nanda-nagar/review-2.jpg"
                 alt="Aman - Nanda Nagar"
                 className="w-14 h-14 rounded-full object-cover"
               />
@@ -112,7 +112,7 @@ export default function NandaNagarPage() {
           <div className="bg-white p-6 rounded-2xl shadow-sm">
             <div className="flex items-center gap-4 mb-4">
               <img
-                src="/students/student-3.jpg"
+                src="/nanda-nagar/review-3.jpg"
                 alt="Neha - Nanda Nagar"
                 className="w-14 h-14 rounded-full object-cover"
               />

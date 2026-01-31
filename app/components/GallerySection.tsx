@@ -15,22 +15,25 @@ export default function GallerySection() {
           margin: "0 auto",
         }}
       >
-        {/* Placeholder cards – Phase-1 */}
         {[1, 2, 3, 4, 5, 6].map((item) => (
           <div
             key={item}
             style={{
               height: "120px",
-              background: "#e5e7eb",
               borderRadius: "6px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "14px",
-              color: "#555",
+              overflow: "hidden",
+              background: "#f3f4f6",
             }}
           >
-            Photo Coming Soon
+            <img
+              src={`/home/gallery-${item}.jpg`}
+              alt={`English Club classroom activity ${item}`}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
           </div>
         ))}
       </div>
