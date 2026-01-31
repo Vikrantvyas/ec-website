@@ -32,7 +32,7 @@ export default function BapatSquarePage() {
         Visit Our Bapat Square Branch
       </h2>
       <p className="mb-4 text-gray-700">
-        📍 Near Bapat Square, Indore  
+        📍 Near Bapat Square, Indore
         <br />
         📞{" "}
         <a href="tel:9713014234" className="text-blue-600 font-medium">
@@ -52,12 +52,88 @@ export default function BapatSquarePage() {
       <a
         href="https://www.google.com/maps/dir/?api=1&destination=English+Club+Bapat+Square+Indore"
         target="_blank"
-        className="inline-block mb-6 bg-blue-600 text-white px-6 py-3 rounded-xl"
+        className="inline-block mb-10 bg-blue-600 text-white px-6 py-3 rounded-xl"
       >
         📍 Get Directions from your location
       </a>
 
-      <div className="flex gap-4">
+      {/* ⭐ STUDENT REVIEWS – BAPAT SQUARE */}
+      <section className="py-10">
+        <h2 className="text-xl font-bold text-center mb-6">
+          What Students Say – Bapat Square
+        </h2>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          {/* Review 1 */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-4 mb-4">
+              <img
+                src="/students/student-1.jpg"
+                alt="Ankit - Bapat Square"
+                className="w-14 h-14 rounded-full object-cover"
+              />
+              <div>
+                <p className="font-semibold text-gray-800">Ankit</p>
+                <p className="text-sm text-gray-500">Bapat Square Branch</p>
+              </div>
+            </div>
+
+            <p className="text-yellow-500 text-sm mb-2">⭐⭐⭐⭐⭐</p>
+
+            <p className="text-gray-700 text-sm leading-relaxed">
+              Daily speaking practice se meri English kaafi improve hui.
+              Teachers bahut cooperative hain.
+            </p>
+          </div>
+
+          {/* Review 2 */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-4 mb-4">
+              <img
+                src="/students/student-2.jpg"
+                alt="Pooja - Bapat Square"
+                className="w-14 h-14 rounded-full object-cover"
+              />
+              <div>
+                <p className="font-semibold text-gray-800">Pooja</p>
+                <p className="text-sm text-gray-500">Bapat Square Branch</p>
+              </div>
+            </div>
+
+            <p className="text-yellow-500 text-sm mb-2">⭐⭐⭐⭐⭐</p>
+
+            <p className="text-gray-700 text-sm leading-relaxed">
+              Office communication improve karne ke liye join kiya tha.
+              Achha experience raha.
+            </p>
+          </div>
+
+          {/* Review 3 */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-4 mb-4">
+              <img
+                src="/students/student-3.jpg"
+                alt="Rahul - Bapat Square"
+                className="w-14 h-14 rounded-full object-cover"
+              />
+              <div>
+                <p className="font-semibold text-gray-800">Rahul</p>
+                <p className="text-sm text-gray-500">Bapat Square Branch</p>
+              </div>
+            </div>
+
+            <p className="text-yellow-500 text-sm mb-2">⭐⭐⭐⭐⭐</p>
+
+            <p className="text-gray-700 text-sm leading-relaxed">
+              Beginners ke liye best spoken English institute near
+              Bapat Square.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Buttons */}
+      <div className="flex gap-4 mt-6">
         <a
           href="tel:9713014234"
           className="bg-blue-600 text-white px-6 py-3 rounded-xl"

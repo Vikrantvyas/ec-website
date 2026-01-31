@@ -33,7 +33,7 @@ export default function NandaNagarPage() {
         Visit Our Nanda Nagar Branch
       </h2>
       <p className="mb-4 text-gray-700">
-        📍 Nanda Nagar, Indore  
+        📍 Nanda Nagar, Indore
         <br />
         📞{" "}
         <a href="tel:9713014234" className="text-blue-600 font-medium">
@@ -53,12 +53,86 @@ export default function NandaNagarPage() {
       <a
         href="https://www.google.com/maps/dir/?api=1&destination=English+Club+Nanda+Nagar+Indore"
         target="_blank"
-        className="inline-block mb-6 bg-blue-600 text-white px-6 py-3 rounded-xl"
+        className="inline-block mb-10 bg-blue-600 text-white px-6 py-3 rounded-xl"
       >
         📍 Get Directions from your location
       </a>
 
-      <div className="flex gap-4">
+      {/* ⭐ STUDENT REVIEWS – NANDA NAGAR */}
+      <section className="py-10">
+        <h2 className="text-xl font-bold text-center mb-6">
+          What Students Say – Nanda Nagar
+        </h2>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          {/* Review 1 */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-4 mb-4">
+              <img
+                src="/students/student-1.jpg"
+                alt="Riya - Nanda Nagar"
+                className="w-14 h-14 rounded-full object-cover"
+              />
+              <div>
+                <p className="font-semibold text-gray-800">Riya</p>
+                <p className="text-sm text-gray-500">Nanda Nagar Branch</p>
+              </div>
+            </div>
+
+            <p className="text-yellow-500 text-sm mb-2">⭐⭐⭐⭐⭐</p>
+
+            <p className="text-gray-700 text-sm leading-relaxed">
+              English bolne ka confidence aa gaya. Daily speaking practice
+              se kaafi improvement hui.
+            </p>
+          </div>
+
+          {/* Review 2 */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-4 mb-4">
+              <img
+                src="/students/student-2.jpg"
+                alt="Aman - Nanda Nagar"
+                className="w-14 h-14 rounded-full object-cover"
+              />
+              <div>
+                <p className="font-semibold text-gray-800">Aman</p>
+                <p className="text-sm text-gray-500">Nanda Nagar Branch</p>
+              </div>
+            </div>
+
+            <p className="text-yellow-500 text-sm mb-2">⭐⭐⭐⭐⭐</p>
+
+            <p className="text-gray-700 text-sm leading-relaxed">
+              Teachers bahut supportive hain aur environment friendly hai.
+            </p>
+          </div>
+
+          {/* Review 3 */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-4 mb-4">
+              <img
+                src="/students/student-3.jpg"
+                alt="Neha - Nanda Nagar"
+                className="w-14 h-14 rounded-full object-cover"
+              />
+              <div>
+                <p className="font-semibold text-gray-800">Neha</p>
+                <p className="text-sm text-gray-500">Nanda Nagar Branch</p>
+              </div>
+            </div>
+
+            <p className="text-yellow-500 text-sm mb-2">⭐⭐⭐⭐⭐</p>
+
+            <p className="text-gray-700 text-sm leading-relaxed">
+              Interview preparation ke liye best jagah. Highly recommended.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Buttons */}
+      <div className="flex gap-4 mt-6">
         <a
           href="tel:9713014234"
           className="bg-blue-600 text-white px-6 py-3 rounded-xl"
