@@ -64,7 +64,7 @@ export default function GallerySection() {
         /* Mobile optimisation */
         @media (max-width: 768px) {
           .gallery-track {
-            animation-duration: 16s;
+            animation-duration: 10s;
           }
         }
       `}</style>
