@@ -3,7 +3,8 @@
 export default function MobileBottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t md:hidden">
-      <div className="flex justify-around py-2 text-sm">
+      <div className="flex justify-around py-2 text-xs text-gray-700">
+        
         <a href="/" className="flex flex-col items-center">
           🏠
           <span>Home</span>
@@ -28,6 +29,7 @@ export default function MobileBottomNav() {
           ⋯
           <span>More</span>
         </a>
+
       </div>
     </nav>
   );
