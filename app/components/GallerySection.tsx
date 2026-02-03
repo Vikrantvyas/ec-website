@@ -6,18 +6,16 @@ export default function GallerySection() {
         Classroom activities & institute moments
       </p>
 
-      {/* Center aligned container (same as reviews width) */}
       <div
         style={{
           maxWidth: "1100px",
           margin: "0 auto",
-          overflow: "hidden",
           padding: "0 16px",
         }}
       >
         <div className="gallery-track">
-          {[1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6].map((item, index) => (
-            <div className="gallery-item" key={index}>
+          {[1, 2, 3, 4, 5, 6].map((item) => (
+            <div className="gallery-item" key={item}>
               <img
                 src={`/home/gallery-${item}.jpg`}
                 alt={`English Club classroom activity ${item}`}
@@ -28,19 +26,17 @@ export default function GallerySection() {
         </div>
       </div>
 
-      {/* Server-safe CSS */}
       <style>{`
+        /* ===== COMMON ===== */
         .gallery-track {
           display: flex;
           gap: 16px;
-          animation: scrollGallery 22s linear infinite;
-          will-change: transform;
         }
 
         .gallery-item {
           min-width: 220px;
           height: 140px;
-          border-radius: 8px;
+          border-radius: 10px;
           overflow: hidden;
           background: #f3f4f6;
           flex-shrink: 0;
@@ -52,19 +48,40 @@ export default function GallerySection() {
           object-fit: cover;
         }
 
-        @keyframes scrollGallery {
-          from {
-            transform: translateX(0);
+        /* ===== DESKTOP: AUTO MOVE ===== */
+        @media (min-width: 769px) {
+          .gallery-track {
+            animation: scrollGallery 22s linear infinite;
+            will-change: transform;
           }
-          to {
-            transform: translateX(-50%);
+
+          @keyframes scrollGallery {
+            from {
+              transform: translateX(0);
+            }
+            to {
+              transform: translateX(-50%);
+            }
           }
         }
 
-        /* Mobile optimisation */
+        /* ===== MOBILE: FACEBOOK STORIES STYLE ===== */
         @media (max-width: 768px) {
           .gallery-track {
-            animation-duration: 10s;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+          }
+
+          .gallery-item {
+            scroll-snap-align: start;
+            min-width: 80%;
+          }
+
+          /* Hide scrollbar */
+          .gallery-track::-webkit-scrollbar {
+            display: none;
           }
         }
       `}</style>
