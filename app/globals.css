@@ -25,7 +25,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Section anchor spacing (for fixed header) */
+/* Section anchor spacing */
 section {
   scroll-margin-top: 80px;
 }
@@ -36,10 +36,17 @@ h3 {
   letter-spacing: -0.01em;
 }
 
-/* 📱 MOBILE FIXED HEADER & BOTTOM NAV SPACING */
+/* 📱 Mobile spacing (header + bottom nav) */
 @media (max-width: 768px) {
   body {
-    padding-top: 56px;   /* MobileHeader height */
-    padding-bottom: 64px; /* MobileBottomNav height */
+    padding-top: 56px;    /* MobileHeader */
+    padding-bottom: 64px; /* MobileBottomNav */
+  }
+}
+
+/* 💻 Desktop spacing (fixed header) */
+@media (min-width: 769px) {
+  body {
+    padding-top: 56px; /* DesktopHeader */
   }
 }

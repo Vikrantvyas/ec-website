@@ -1,4 +1,5 @@
 import MobileHeader from "./components/MobileHeader";
+import DesktopHeader from "./components/DesktopHeader";
 import MobileBottomNav from "./components/MobileBottomNav";
 
 import HeroSection from "./components/HeroSection";
@@ -15,15 +16,15 @@ import StickyButtons from "./components/StickyButtons";
 export default function Home() {
   return (
     <>
-      {/* 📱 Mobile WhatsApp-style header */}
+      {/* 📱 Mobile Header */}
       <MobileHeader />
+
+      {/* 💻 Desktop Header */}
+      <DesktopHeader />
 
       <HeroSection />
       <CoursesSection />
-
-      {/* 🔥 Trust / Impact cards */}
       <TrustSection />
-
       <BranchesSection />
       <MapSection />
       <TestimonialsSection />
@@ -31,10 +32,10 @@ export default function Home() {
       <ContactSection />
       <Footer />
 
-      {/* 📱 Mobile bottom navigation */}
+      {/* 📱 Mobile Bottom Nav */}
       <MobileBottomNav />
 
-      {/* Existing floating buttons */}
+      {/* 💻 Desktop Floating Buttons */}
       <StickyButtons />
     </>
   );
