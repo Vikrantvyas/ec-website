@@ -1,5 +1,6 @@
 import HeroSection from "./components/HeroSection";
 import CoursesSection from "./components/CoursesSection";
+import TrustSection from "./components/TrustSection"; // ✅ ADD THIS
 import BranchesSection from "./components/BranchesSection";
 import MapSection from "./components/MapSection";
 import TestimonialsSection from "./components/TestimonialsSection";
@@ -13,6 +14,10 @@ export default function Home() {
     <>
       <HeroSection />
       <CoursesSection />
+
+      {/* ✅ TRUST CARDS SECTION */}
+      <TrustSection />
+
       <BranchesSection />
       <MapSection />
       <TestimonialsSection />
