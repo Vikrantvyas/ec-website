@@ -1,77 +1,48 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { instituteData } from "../data/institute";
 
-export default function Footer() {
+export default function MobileHeader() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <footer className="bg-gray-900 text-gray-300 py-10 px-4">
-      <div className="max-w-6xl mx-auto grid gap-8 md:grid-cols-4">
+    <>
+      {/* Top Bar */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b md:hidden">
+        <div className="flex items-center justify-between px-4 h-14">
+          <span className="font-semibold text-lg">English Club</span>
 
-        {/* Institute Info */}
-        <div>
-          <h3 className="text-lg font-semibold text-white mb-3">
-            {instituteData.name}
-          </h3>
-          <p className="text-sm leading-relaxed">
-            {instituteData.tagline}
-            <br />
-            Serving students in Indore since {instituteData.since}.
-          </p>
+          <button
+            onClick={() => setOpen(!open)}
+            className="text-2xl"
+            aria-label="Menu"
+          >
+            ⋮
+          </button>
         </div>
+      </header>
 
-        {/* Quick Links */}
-        <div>
-          <h3 className="text-lg font-semibold text-white mb-3">
-            Quick Links
-          </h3>
-          <ul className="space-y-2 text-sm">
-            <li><Link href="/" className="hover:text-white">Home</Link></li>
-            <li><Link href="/nanda-nagar" className="hover:text-white">Nanda Nagar Branch</Link></li>
-            <li><Link href="/bapat-square" className="hover:text-white">Bapat Square Branch</Link></li>
-            <li><Link href="/aurobindo-hospital" className="hover:text-white">Aurobindo Hospital Branch</Link></li>
+      {/* Dropdown Menu */}
+      {open && (
+        <div className="fixed top-14 right-4 z-50 bg-white shadow-lg rounded-xl w-56 p-4 md:hidden">
+          <ul className="space-y-3 text-sm">
+            <li><Link href="/" onClick={() => setOpen(false)}>Home</Link></li>
+            <li><Link href="/#courses" onClick={() => setOpen(false)}>Courses</Link></li>
+            <li><Link href="/#branches" onClick={() => setOpen(false)}>Branches</Link></li>
+            <li><Link href="/contact" onClick={() => setOpen(false)}>Contact</Link></li>
           </ul>
-        </div>
 
-        {/* Contact */}
-        <div>
-          <h3 className="text-lg font-semibold text-white mb-3">
-            Contact
-          </h3>
-          <p className="text-sm mb-2">📍 Indore, Madhya Pradesh</p>
-          <p className="text-sm mb-2">
-            📞{" "}
-            <a href={`tel:${instituteData.phone}`} className="hover:text-white">
-              {instituteData.phone}
-            </a>
-          </p>
-          <p className="text-sm">
-            💬{" "}
-            <a
-              href={`https://wa.me/91${instituteData.whatsapp}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white"
-            >
-              WhatsApp Chat
-            </a>
-          </p>
-        </div>
-
-        {/* 🌐 Social Media (REAL COLORS) */}
-        <div>
-          <h3 className="text-lg font-semibold text-white mb-3">
-            Follow Us
-          </h3>
-
-          <div className="flex gap-4 items-center">
+          {/* Social Icons */}
+          <div className="flex gap-4 mt-4 border-t pt-4">
             {/* Facebook */}
             <a
               href="https://www.facebook.com/englishclubindore"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Facebook"
-              className="text-[#1877F2] hover:opacity-80"
+              className="text-[#1877F2]"
             >
-              <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M22.675 0h-21.35C.597 0 0 .597 0 1.326v21.348C0 23.403.597 24 1.326 24H12.82v-9.294H9.692V11.01h3.128V8.309c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24h-1.918c-1.504 0-1.796.716-1.796 1.765v2.313h3.587l-.467 3.696h-3.12V24h6.116C23.403 24 24 23.403 24 22.674V1.326C24 .597 23.403 0 22.675 0z"/>
               </svg>
             </a>
@@ -81,17 +52,10 @@ export default function Footer() {
               href="https://www.instagram.com/englishclubindore"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Instagram"
-              className="hover:opacity-80"
             >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="url(#igGradient)"
-              >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="url(#igGradMobile)">
                 <defs>
-                  <linearGradient id="igGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <linearGradient id="igGradMobile" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#feda75"/>
                     <stop offset="50%" stopColor="#d62976"/>
                     <stop offset="100%" stopColor="#962fbf"/>
@@ -106,25 +70,15 @@ export default function Footer() {
               href="https://www.youtube.com/@englishclubindore"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="YouTube"
-              className="text-[#FF0000] hover:opacity-80"
+              className="text-[#FF0000]"
             >
-              <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.498 6.186a2.999 2.999 0 0 0-2.112-2.117C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.386.524a2.999 2.999 0 0 0-2.112 2.117A31.8 31.8 0 0 0 0 12a31.8 31.8 0 0 0 .502 5.814 2.999 2.999 0 0 0 2.112 2.117c1.881.524 9.386.524 9.386.524s7.505 0 9.386-.524a2.999 2.999 0 0 0 2.112-2.117A31.8 31.8 0 0 0 24 12a31.8 31.8 0 0 0-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M23.498 6.186a2.999 2.999 0 0 0-2.112-2.117C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.386.524a2.999 2.999 0 0 0-2.112 2.117A31.8 31.8 0 0 0 0 12a31.8 31.8 0 0 0 .502 5.814 2.999 2.999 0 0 0 2.112 2.117c1.881.524 9.386.524 9.386.524s7.505 0 9.386-.524a2.999 2.999 0 0 0 2.112-2.117A31.8 31.8 0 0 0 24 12a31.8 31.8 0 0 0-.502-5.814z"/>
               </svg>
             </a>
           </div>
-
-          <p className="text-xs text-gray-400 mt-2">
-            Follow us for updates & student success stories
-          </p>
         </div>
-      </div>
-
-      {/* Bottom Bar */}
-      <div className="border-t border-gray-700 mt-8 pt-4 text-center text-sm text-gray-400">
-        © {new Date().getFullYear()} {instituteData.name}. All rights reserved.
-      </div>
-    </footer>
+      )}
+    </>
   );
 }
