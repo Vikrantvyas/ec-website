@@ -3,36 +3,39 @@ import { branches } from "../data/institute";
 
 export default function BranchesSection() {
   return (
-    <section className="py-6 px-4">
+    <section className="py-8 px-4 bg-white">
       <h2 className="text-2xl font-bold text-center mb-6">
         Our Branches in Indore
       </h2>
 
-      <div className="max-w-5xl mx-auto grid gap-4 md:grid-cols-3">
+      <div className="max-w-4xl mx-auto space-y-4">
         {branches.map((branch) => (
           <Link
             key={branch.slug}
             href={branch.slug}
-            className="border rounded-xl overflow-hidden hover:shadow-md transition bg-white"
+            className="flex items-center gap-4 border rounded-xl p-3 hover:bg-gray-50 transition"
           >
-            {/* Branch Image */}
-            <div className="h-40 w-full overflow-hidden">
-              <img
-                src={`/home/branch-${branch.slug.replace("/", "")}.jpg`}
-                alt={`${branch.name} English Club`}
-                className="w-full h-full object-cover"
-              />
-            </div>
+            {/* Branch Image (small & controlled) */}
+            <img
+              src={`/home/branches/${branch.slug.replace("/", "")}.jpg`}
+              alt={`${branch.name} branch`}
+              className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+            />
 
             {/* Branch Info */}
-            <div className="p-4 flex items-center justify-between">
-              <span className="text-lg font-semibold text-gray-800">
+            <div className="flex-1">
+              <p className="text-base font-semibold text-gray-800">
                 {branch.name}
-              </span>
-              <span className="text-blue-600 text-sm">
-                View Branch →
-              </span>
+              </p>
+              <p className="text-sm text-gray-500">
+                Spoken English & Communication
+              </p>
             </div>
+
+            {/* Arrow */}
+            <span className="text-blue-600 text-sm font-medium">
+              View →
+            </span>
           </Link>
         ))}
       </div>
