@@ -1,6 +1,12 @@
 import "./globals.css";
 import type { Metadata } from "next";
 
+/* 🧩 COMMON LAYOUT COMPONENTS */
+import MobileHeader from "./components/MobileHeader";
+import DesktopHeader from "./components/DesktopHeader";
+import MobileBottomNav from "./components/MobileBottomNav";
+import StickyButtons from "./components/StickyButtons";
+
 export const metadata: Metadata = {
   title: "English Club Indore | Spoken English & Computer Institute",
   description:
@@ -32,7 +38,22 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {/* 📱 Mobile fixed header (WhatsApp style) */}
+        <MobileHeader />
+
+        {/* 💻 Desktop fixed header */}
+        <DesktopHeader />
+
+        {/* 🧠 All page content */}
+        {children}
+
+        {/* 📱 Mobile bottom navigation */}
+        <MobileBottomNav />
+
+        {/* 💬 Floating Call & WhatsApp (desktop + mobile helper) */}
+        <StickyButtons />
+      </body>
     </html>
   );
 }
