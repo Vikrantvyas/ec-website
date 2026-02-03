@@ -1,30 +1,50 @@
+"use client";
+
+import { useState } from "react";
+
 export default function GallerySection() {
+  const [activeImage, setActiveImage] = useState<string | null>(null);
+
   return (
-    <section style={{ padding: "40px 0", background: "#ffffff" }}>
-      <h2 style={{ textAlign: "center" }}>Gallery</h2>
-      <p style={{ textAlign: "center", marginBottom: "20px", color: "#555" }}>
+    <section className="py-10 bg-white">
+      <h2 className="text-center text-2xl font-bold mb-2">
+        Gallery
+      </h2>
+      <p className="text-center text-gray-600 mb-6">
         Classroom activities & institute moments
       </p>
 
-      <div
-        style={{
-          maxWidth: "1100px",
-          margin: "0 auto",
-          padding: "0 16px",
-        }}
-      >
+      <div className="max-w-5xl mx-auto px-4">
         <div className="gallery-track">
-          {[1, 2, 3, 4, 5, 6].map((item) => (
-            <div className="gallery-item" key={item}>
-              <img
-                src={`/home/gallery-${item}.jpg`}
-                alt={`English Club classroom activity ${item}`}
-                loading="lazy"
-              />
-            </div>
-          ))}
+          {[1, 2, 3, 4, 5, 6].map((item) => {
+            const imgSrc = `/home/gallery-${item}.jpg`;
+            return (
+              <div
+                className="gallery-item"
+                key={item}
+                onClick={() => setActiveImage(imgSrc)}
+              >
+                <img
+                  src={imgSrc}
+                  alt={`English Club classroom activity ${item}`}
+                  loading="lazy"
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
+
+      {/* ===== FULL VIEW MODAL ===== */}
+      {activeImage && (
+        <div
+          className="gallery-modal"
+          onClick={() => setActiveImage(null)}
+        >
+          <img src={activeImage} alt="Full view" />
+          <span className="close-btn">✕</span>
+        </div>
+      )}
 
       <style>{`
         /* ===== COMMON ===== */
@@ -34,12 +54,11 @@ export default function GallerySection() {
         }
 
         .gallery-item {
-          min-width: 220px;
-          height: 140px;
-          border-radius: 10px;
+          flex-shrink: 0;
+          border-radius: 14px;
           overflow: hidden;
           background: #f3f4f6;
-          flex-shrink: 0;
+          cursor: pointer;
         }
 
         .gallery-item img {
@@ -48,11 +67,16 @@ export default function GallerySection() {
           object-fit: cover;
         }
 
-        /* ===== DESKTOP: AUTO MOVE ===== */
+        /* ===== DESKTOP (auto move) ===== */
         @media (min-width: 769px) {
           .gallery-track {
             animation: scrollGallery 22s linear infinite;
             will-change: transform;
+          }
+
+          .gallery-item {
+            width: 240px;
+            height: 150px;
           }
 
           @keyframes scrollGallery {
@@ -65,7 +89,7 @@ export default function GallerySection() {
           }
         }
 
-        /* ===== MOBILE: FACEBOOK STORIES STYLE ===== */
+        /* ===== MOBILE (reels / stories style) ===== */
         @media (max-width: 768px) {
           .gallery-track {
             overflow-x: auto;
@@ -76,13 +100,39 @@ export default function GallerySection() {
 
           .gallery-item {
             scroll-snap-align: start;
-            min-width: 80%;
+            width: 80%;
+            height: 220px;
           }
 
-          /* Hide scrollbar */
           .gallery-track::-webkit-scrollbar {
             display: none;
           }
+        }
+
+        /* ===== FULL VIEW MODAL ===== */
+        .gallery-modal {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 50;
+        }
+
+        .gallery-modal img {
+          max-width: 90%;
+          max-height: 90%;
+          border-radius: 12px;
+        }
+
+        .close-btn {
+          position: absolute;
+          top: 16px;
+          right: 20px;
+          color: #fff;
+          font-size: 28px;
+          cursor: pointer;
         }
       `}</style>
     </section>
