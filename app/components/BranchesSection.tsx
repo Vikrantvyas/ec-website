@@ -9,35 +9,47 @@ export default function BranchesSection() {
       </h2>
 
       <div className="max-w-4xl mx-auto space-y-4">
-        {branches.map((branch) => (
-          <Link
-            key={branch.slug}
-            href={branch.slug}
-            className="flex items-center gap-4 border rounded-xl p-3 hover:bg-gray-50 transition"
-          >
-            {/* Branch Image (small & controlled) */}
-            <img
-              src={`/home/branches/${branch.slug.replace("/", "")}.jpg`}
-              alt={`${branch.name} branch`}
-              className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-            />
+        {branches.map((branch) => {
+          let imagePath = "";
 
-            {/* Branch Info */}
-            <div className="flex-1">
-              <p className="text-base font-semibold text-gray-800">
-                {branch.name}
-              </p>
-              <p className="text-sm text-gray-500">
-                Spoken English & Communication
-              </p>
-            </div>
+          if (branch.slug === "/nanda-nagar") {
+            imagePath = "/home/branch-nanda-nagar.jpg";
+          } else if (branch.slug === "/bapat-square") {
+            imagePath = "/home/branch-bapat-square.jpg";
+          } else if (branch.slug === "/aurobindo-hospital") {
+            imagePath = "/home/branch-aurobindo-hospital.jpg";
+          }
 
-            {/* Arrow */}
-            <span className="text-blue-600 text-sm font-medium">
-              View →
-            </span>
-          </Link>
-        ))}
+          return (
+            <Link
+              key={branch.slug}
+              href={branch.slug}
+              className="flex items-center gap-4 border rounded-xl p-3 hover:bg-gray-50 transition"
+            >
+              {/* Branch Image (small & controlled) */}
+              <img
+                src={imagePath}
+                alt={`${branch.name} branch`}
+                className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+              />
+
+              {/* Branch Info */}
+              <div className="flex-1">
+                <p className="text-base font-semibold text-gray-800">
+                  {branch.name}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Spoken English & Communication
+                </p>
+              </div>
+
+              {/* Arrow */}
+              <span className="text-blue-600 text-sm font-medium">
+                View →
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
