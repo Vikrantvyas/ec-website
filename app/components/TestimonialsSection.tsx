@@ -43,7 +43,7 @@ export default function TestimonialsSection() {
 
       <div className="relative max-w-5xl mx-auto flex items-center justify-center">
 
-        {/* LEFT ARROW (Desktop) */}
+        {/* LEFT ARROW – DESKTOP ONLY */}
         <button
           onClick={prev}
           className="hidden md:flex absolute left-0 z-10 w-10 h-10 items-center justify-center rounded-full bg-white shadow hover:bg-gray-100"
@@ -51,8 +51,8 @@ export default function TestimonialsSection() {
           ‹
         </button>
 
-        {/* TESTIMONIALS */}
-        <div className="relative w-full h-[340px] flex items-center justify-center">
+        {/* TESTIMONIAL CARDS */}
+        <div className="relative w-full h-[300px] flex items-center justify-center">
 
           {testimonials.map((t, i) => {
             let position = "hidden";
@@ -79,19 +79,24 @@ export default function TestimonialsSection() {
                   }
                 `}
               >
-                <div className="bg-white rounded-3xl p-6 shadow-lg w-[300px] text-center">
-                  <img
-                    src={t.image}
-                    alt={t.name}
-                    className="w-16 h-16 mx-auto rounded-full object-cover mb-3"
-                  />
+                <div className="bg-white rounded-3xl p-6 shadow-lg w-[320px]">
 
-                  <p className="font-semibold text-gray-800">
-                    {t.name}
-                  </p>
-                  <p className="text-sm text-gray-500 mb-2">
-                    {t.branch}
-                  </p>
+                  {/* OLD TRUSTED LAYOUT */}
+                  <div className="flex items-center gap-4 mb-4">
+                    <img
+                      src={t.image}
+                      alt={t.name}
+                      className="w-14 h-14 rounded-full object-cover"
+                    />
+                    <div>
+                      <p className="font-semibold text-gray-800">
+                        {t.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {t.branch}
+                      </p>
+                    </div>
+                  </div>
 
                   <p className="text-yellow-500 text-sm mb-2">
                     ⭐⭐⭐⭐⭐
@@ -106,26 +111,10 @@ export default function TestimonialsSection() {
           })}
         </div>
 
-        {/* RIGHT ARROW (Desktop) */}
+        {/* RIGHT ARROW – DESKTOP ONLY */}
         <button
           onClick={next}
           className="hidden md:flex absolute right-0 z-10 w-10 h-10 items-center justify-center rounded-full bg-white shadow hover:bg-gray-100"
-        >
-          ›
-        </button>
-      </div>
-
-      {/* MOBILE SWIPE BUTTONS */}
-      <div className="flex justify-center gap-4 mt-8 md:hidden">
-        <button
-          onClick={prev}
-          className="w-10 h-10 rounded-full bg-white shadow"
-        >
-          ‹
-        </button>
-        <button
-          onClick={next}
-          className="w-10 h-10 rounded-full bg-white shadow"
         >
           ›
         </button>
