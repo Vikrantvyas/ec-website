@@ -7,81 +7,81 @@ export default function HomeVideoReviewsSection() {
 
         {/* Heading */}
         <h2 className="text-2xl md:text-3xl font-bold text-center text-green-700 mb-4 animate-fadeUp">
-          Real Student Video Reviews
+          Student Video Reviews
         </h2>
 
         <p className="text-center text-gray-600 max-w-2xl mx-auto mb-10 animate-fadeUp delay-100">
-          Watch short video reviews from our students and see how English Club
-          helped them gain confidence and practical skills.
+          Real students. Real stories. Swipe to watch their journey with
+          English Club.
         </p>
 
-        {/* Video Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Horizontal Reel Scroll */}
+        <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory">
 
-          {/* Video Card 1 */}
-          <div className="bg-white rounded-2xl border shadow-sm hover-lift animate-fadeUp">
-            <div className="aspect-video rounded-t-2xl overflow-hidden">
+          {/* Reel Card 1 */}
+          <div className="snap-start flex-shrink-0 w-[220px] md:w-[240px] bg-white rounded-2xl shadow-md hover-lift animate-fadeUp">
+            <div className="relative w-full h-[390px] rounded-2xl overflow-hidden">
               <iframe
-                className="w-full h-full"
+                className="absolute inset-0 w-full h-full"
                 src="https://www.youtube.com/embed/q-ThaUZcuSs"
-                title="Student Video Review 1"
+                title="Student Review 1"
                 frameBorder="0"
                 allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
             </div>
 
-            <div className="p-4">
+            <div className="p-3 text-center">
               <p className="font-semibold text-gray-800">
                 Student Name
               </p>
-              <p className="text-sm text-gray-600">
-                Spoken English Course
+              <p className="text-xs text-gray-600">
+                Spoken English
               </p>
             </div>
           </div>
 
-          {/* Video Card 2 */}
-          <div className="bg-white rounded-2xl border shadow-sm hover-lift animate-fadeUp delay-100">
-            <div className="aspect-video rounded-t-2xl overflow-hidden">
+          {/* Reel Card 2 */}
+          <div className="snap-start flex-shrink-0 w-[220px] md:w-[240px] bg-white rounded-2xl shadow-md hover-lift animate-fadeUp delay-100">
+            <div className="relative w-full h-[390px] rounded-2xl overflow-hidden">
               <iframe
-                className="w-full h-full"
+                className="absolute inset-0 w-full h-full"
                 src="https://www.youtube.com/embed/q-ThaUZcuSs"
-                title="Student Video Review 2"
+                title="Student Review 2"
                 frameBorder="0"
                 allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
             </div>
 
-            <div className="p-4">
+            <div className="p-3 text-center">
               <p className="font-semibold text-gray-800">
                 Student Name
               </p>
-              <p className="text-sm text-gray-600">
-                Spoken English Course
+              <p className="text-xs text-gray-600">
+                Spoken English
               </p>
             </div>
           </div>
 
-          {/* Video Card 3 */}
-          <div className="bg-white rounded-2xl border shadow-sm hover-lift animate-fadeUp delay-200">
-            <div className="aspect-video rounded-t-2xl overflow-hidden">
+          {/* Reel Card 3 */}
+          <div className="snap-start flex-shrink-0 w-[220px] md:w-[240px] bg-white rounded-2xl shadow-md hover-lift animate-fadeUp delay-200">
+            <div className="relative w-full h-[390px] rounded-2xl overflow-hidden">
               <iframe
-                className="w-full h-full"
+                className="absolute inset-0 w-full h-full"
                 src="https://www.youtube.com/embed/q-ThaUZcuSs"
-                title="Student Video Review 3"
+                title="Student Review 3"
                 frameBorder="0"
                 allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
             </div>
 
-            <div className="p-4">
+            <div className="p-3 text-center">
               <p className="font-semibold text-gray-800">
                 Student Name
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs text-gray-600">
                 Computer Course
               </p>
             </div>
