@@ -22,7 +22,7 @@ const curriculum = [
     topics: [
       "MS Word Interface",
       "Typing Practice",
-      "Formatting (Font, Paragraph, Styles)",
+      "Font & Paragraph Formatting",
       "Page Setup & Printing",
       "Tables, Images & Shapes",
       "Resume & Letter Creation",
@@ -37,7 +37,6 @@ const curriculum = [
       "Animations & Transitions",
       "Charts & Images",
       "Professional Presentation Making",
-      "Presentation Practice",
     ],
   },
   {
@@ -45,17 +44,16 @@ const curriculum = [
     topics: [
       "Excel Interface",
       "Rows, Columns & Cells",
-      "Basic Formulas (+, -, *, /)",
-      "Simple Functions (SUM, AVERAGE)",
+      "Basic Formulas",
+      "SUM, AVERAGE Functions",
       "Formatting & Printing",
     ],
   },
   {
     title: "Week 6, 7 & 8 – Advanced Excel",
     topics: [
-      "Advanced Formulas",
-      "Logical Functions (IF)",
-      "Lookup Functions (VLOOKUP / XLOOKUP)",
+      "IF Function",
+      "VLOOKUP / XLOOKUP",
       "Pivot Tables",
       "Charts & Data Analysis",
       "Practical Excel Projects",
@@ -68,7 +66,7 @@ const curriculum = [
       "Google Docs",
       "Google Sheets",
       "Google Slides",
-      "Google Drive",
+      "Google Drive & Sharing",
       "Online Collaboration",
     ],
   },
@@ -85,7 +83,7 @@ const curriculum = [
 ];
 
 export default function BasicComputerPage() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
     <>
@@ -98,18 +96,18 @@ export default function BasicComputerPage() {
           Duration: <strong>3 Months</strong>
         </p>
         <p className="max-w-2xl mx-auto text-gray-600">
-          Job-oriented basic computer training with practical approach,
-          conducted at Computer-G (Nanda Nagar Campus).
+          Job-oriented basic computer training with practical approach.
+          Conducted at Computer-G (Nanda Nagar Campus).
         </p>
       </section>
 
-      {/* CURRICULUM */}
-      <section className="px-4 py-14 bg-gray-50">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-10 text-blue-700">
-          Week-Wise Curriculum
+      {/* WEEK-WISE CURRICULUM */}
+      <section className="px-4 py-16 bg-gray-50">
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-12 text-blue-700">
+          Week-Wise Course Plan
         </h2>
 
-        <div className="max-w-4xl mx-auto space-y-4">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
           {curriculum.map((week, index) => {
             const isOpen = openIndex === index;
 
@@ -123,13 +121,19 @@ export default function BasicComputerPage() {
                   onClick={() =>
                     setOpenIndex(isOpen ? null : index)
                   }
-                  className="w-full flex justify-between items-center px-6 py-4 text-left"
+                  className="w-full flex items-center justify-between px-6 py-4 text-left"
                 >
                   <span className="font-semibold text-gray-800">
                     {week.title}
                   </span>
-                  <span className="text-xl">
-                    {isOpen ? "−" : "+"}
+
+                  {/* Arrow */}
+                  <span
+                    className={`text-xl text-blue-600 transition-transform duration-300 ${
+                      isOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    ˅
                   </span>
                 </button>
 
@@ -142,9 +146,9 @@ export default function BasicComputerPage() {
                       ))}
                     </ul>
 
-                    {/* PDF PLACEHOLDER (FUTURE) */}
+                    {/* NOTES PLACEHOLDER */}
                     <div className="mt-4">
-                      <button className="text-sm text-blue-600 font-medium hover:underline">
+                      <button className="text-sm font-medium text-green-600 hover:underline">
                         📄 Download Notes (PDF)
                       </button>
                     </div>
