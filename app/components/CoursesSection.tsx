@@ -2,62 +2,65 @@ import Link from "next/link";
 
 export default function CoursesSection() {
   return (
-    <section className="py-8 px-4 bg-gray-50">
-      <h2 className="text-2xl font-bold text-center mb-6">
+    <section className="py-6 px-4 bg-gray-50">
+      <h2 className="text-2xl font-bold text-center mb-4">
         Courses We Offer
       </h2>
 
-      <div className="max-w-5xl mx-auto grid gap-6 md:grid-cols-3">
+      <div className="max-w-4xl mx-auto space-y-3">
 
         {/* Spoken English Offline */}
-        <div className="bg-white rounded-xl p-6 shadow text-center">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Spoken English (Offline)
-          </h3>
-
-          <p className="text-sm text-gray-600 mb-4">
-            Classroom-based spoken English training at our Indore branches
-          </p>
+        <div className="flex items-center justify-between gap-4 bg-white border rounded-xl p-4">
+          <div>
+            <p className="text-base font-semibold text-gray-800">
+              Spoken English (Offline)
+            </p>
+            <p className="text-sm text-gray-600">
+              Classroom training at Indore branches
+            </p>
+          </div>
 
           <button
             disabled
-            className="px-4 py-2 rounded-full bg-gray-300 text-gray-600 text-sm cursor-not-allowed"
+            className="text-sm px-3 py-1.5 rounded-full bg-gray-300 text-gray-600 cursor-not-allowed"
           >
             View
           </button>
         </div>
 
         {/* Spoken English Online */}
-        <div className="bg-white rounded-xl p-6 shadow text-center">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Spoken English (Online)
-          </h3>
-
-          <p className="text-sm text-gray-600 mb-4">
-            Live Zoom classes with daily speaking practice
-          </p>
+        <div className="flex items-center justify-between gap-4 bg-white border rounded-xl p-4">
+          <div>
+            <p className="text-base font-semibold text-gray-800">
+              Spoken English (Online)
+            </p>
+            <p className="text-sm text-gray-600">
+              Live Zoom classes from home
+            </p>
+          </div>
 
           <Link
             href="/online-english"
-            className="inline-block px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium"
+            className="text-sm px-3 py-1.5 rounded-full bg-blue-600 text-white font-medium"
           >
             View
           </Link>
         </div>
 
         {/* Computer Courses */}
-        <div className="bg-white rounded-xl p-6 shadow text-center">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Computer Courses
-          </h3>
-
-          <p className="text-sm text-gray-600 mb-4">
-            Practical computer training at Computer G
-          </p>
+        <div className="flex items-center justify-between gap-4 bg-white border rounded-xl p-4">
+          <div>
+            <p className="text-base font-semibold text-gray-800">
+              Computer Courses
+            </p>
+            <p className="text-sm text-gray-600">
+              Practical training at Computer G
+            </p>
+          </div>
 
           <Link
             href="/computer-g"
-            className="inline-block px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium"
+            className="text-sm px-3 py-1.5 rounded-full bg-blue-600 text-white font-medium"
           >
             View
           </Link>
