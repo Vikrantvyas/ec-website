@@ -13,7 +13,7 @@ export default function Footer() {
             {instituteData.name}
           </h3>
           <p className="text-sm leading-relaxed">
-            {instituteData.tagline}
+            Spoken English & Computer Training Institute
             <br />
             Serving students in Indore since {instituteData.since}.
           </p>
@@ -26,18 +26,35 @@ export default function Footer() {
           </h3>
           <ul className="space-y-2 text-sm">
             <li>
-              <Link href="/" className="hover:text-white">Home</Link>
+              <Link href="/" className="hover:text-white">
+                Home
+              </Link>
             </li>
+
+            <li>
+              <Link href="/online-english" className="hover:text-white">
+                Online English (Live Classes)
+              </Link>
+            </li>
+
+            <li>
+              <Link href="/computer-g" className="hover:text-white">
+                Computer G (Computer Courses)
+              </Link>
+            </li>
+
             <li>
               <Link href="/nanda-nagar" className="hover:text-white">
                 Nanda Nagar Branch
               </Link>
             </li>
+
             <li>
               <Link href="/bapat-square" className="hover:text-white">
                 Bapat Square Branch
               </Link>
             </li>
+
             <li>
               <Link href="/aurobindo-hospital" className="hover:text-white">
                 Aurobindo Hospital Branch
@@ -52,12 +69,17 @@ export default function Footer() {
             Contact
           </h3>
           <p className="text-sm mb-2">📍 Indore, Madhya Pradesh</p>
+
           <p className="text-sm mb-2">
             📞{" "}
-            <a href={`tel:${instituteData.phone}`} className="hover:text-white">
+            <a
+              href={`tel:${instituteData.phone}`}
+              className="hover:text-white"
+            >
               {instituteData.phone}
             </a>
           </p>
+
           <p className="text-sm">
             💬{" "}
             <a
@@ -71,14 +93,13 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* 🌐 Social Media (REAL BRAND ICONS) */}
+        {/* Social Media */}
         <div>
           <h3 className="text-lg font-semibold text-white mb-3">
             Follow Us
           </h3>
 
           <div className="flex gap-4 items-center">
-            {/* Facebook */}
             <a
               href="https://www.facebook.com/englishclubindore"
               target="_blank"
@@ -88,7 +109,6 @@ export default function Footer() {
               <FaFacebookF />
             </a>
 
-            {/* Instagram */}
             <a
               href="https://www.instagram.com/englishclubindore"
               target="_blank"
@@ -98,7 +118,6 @@ export default function Footer() {
               <FaInstagram />
             </a>
 
-            {/* YouTube */}
             <a
               href="https://www.youtube.com/@englishclubindore"
               target="_blank"

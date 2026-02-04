@@ -11,13 +11,17 @@ export default function BranchesSection() {
       <div className="max-w-4xl mx-auto space-y-4">
         {branches.map((branch) => {
           let imagePath = "";
+          let badges: string[] = [];
 
           if (branch.slug === "/nanda-nagar") {
             imagePath = "/home/branch-nanda-nagar.jpg";
+            badges = ["English", "Computer"];
           } else if (branch.slug === "/bapat-square") {
             imagePath = "/home/branch-bapat-square.jpg";
+            badges = ["English"];
           } else if (branch.slug === "/aurobindo-hospital") {
             imagePath = "/home/branch-aurobindo-hospital.jpg";
+            badges = ["Computer"];
           }
 
           return (
@@ -26,7 +30,7 @@ export default function BranchesSection() {
               href={branch.slug}
               className="flex items-center gap-4 border rounded-xl p-3 hover:bg-gray-50 transition"
             >
-              {/* Branch Image (small & controlled) */}
+              {/* Branch Image */}
               <img
                 src={imagePath}
                 alt={`${branch.name} branch`}
@@ -38,9 +42,21 @@ export default function BranchesSection() {
                 <p className="text-base font-semibold text-gray-800">
                   {branch.name}
                 </p>
-                <p className="text-sm text-gray-500">
-                  Spoken English & Communication
-                </p>
+
+                <div className="flex gap-2 mt-1 flex-wrap">
+                  {badges.map((badge) => (
+                    <span
+                      key={badge}
+                      className={`text-xs px-2 py-0.5 rounded-full ${
+                        badge === "English"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}
+                    >
+                      {badge}
+                    </span>
+                  ))}
+                </div>
               </div>
 
               {/* Arrow */}
