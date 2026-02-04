@@ -37,8 +37,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className="overflow-x-hidden">
+      <body className="overflow-x-hidden">
         {/* 📱 Mobile fixed header (WhatsApp style) */}
         <MobileHeader />
 
@@ -51,7 +51,7 @@ export default function RootLayout({
         {/* 📱 Mobile bottom navigation */}
         <MobileBottomNav />
 
-        {/* 💬 Floating Call & WhatsApp (desktop + mobile helper) */}
+        {/* 💬 Floating Call & WhatsApp */}
         <StickyButtons />
       </body>
     </html>

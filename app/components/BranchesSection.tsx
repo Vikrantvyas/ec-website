@@ -66,6 +66,40 @@ export default function BranchesSection() {
             </Link>
           );
         })}
+
+        {/* ONLINE OPTION */}
+        <div className="pt-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+            Online Option
+          </h3>
+
+          <Link
+            href="/online-english"
+            className="flex items-center gap-4 border rounded-xl p-3 hover:bg-gray-50 transition"
+          >
+            {/* Zoom Image */}
+            <img
+              src="/home/online-zoom.jpg"
+              alt="Online English Zoom Class"
+              className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+            />
+
+            {/* Online Info */}
+            <div className="flex-1">
+              <p className="text-base font-semibold text-gray-800">
+                Online English
+              </p>
+
+              <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                English
+              </span>
+            </div>
+
+            <span className="text-green-600 text-sm font-medium">
+              Join →
+            </span>
+          </Link>
+        </div>
       </div>
     </section>
   );

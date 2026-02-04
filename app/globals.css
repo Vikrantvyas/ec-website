@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* 🔒 GLOBAL HORIZONTAL SCROLL FIX */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
