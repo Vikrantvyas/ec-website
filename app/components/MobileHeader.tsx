@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { FaFacebookF, FaInstagram, FaYoutube } from "react-icons/fa";
 
 export default function MobileHeader() {
@@ -12,9 +13,20 @@ export default function MobileHeader() {
       {/* Top Bar */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-blue-600 md:hidden">
         <div className="flex items-center justify-between px-4 h-14 text-white">
-          <span className="font-semibold text-lg">
-            English Club
-          </span>
+          
+          {/* Logo + Name */}
+          <div className="flex items-center gap-2">
+            <Image
+              src="/home/logo.jpg"
+              alt="English Club Logo"
+              width={26}
+              height={26}
+              className="rounded-sm"
+            />
+            <span className="font-semibold text-lg">
+              English Club
+            </span>
+          </div>
 
           <button
             onClick={() => setOpen(!open)}
@@ -52,17 +64,19 @@ export default function MobileHeader() {
             </li>
           </ul>
 
-          {/* Social Icons (REAL BRAND COLORS) */}
+          {/* Social Icons */}
           <div className="flex gap-4 mt-4 border-t pt-4">
+            {/* Facebook (white bg fix) */}
             <a
               href="https://www.facebook.com/englishclubindore"
               target="_blank"
               aria-label="Facebook"
-              className="text-[#1877F2] text-lg"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-white text-[#1877F2]"
             >
               <FaFacebookF />
             </a>
 
+            {/* Instagram */}
             <a
               href="https://www.instagram.com/englishclubindore"
               target="_blank"
@@ -72,6 +86,7 @@ export default function MobileHeader() {
               <FaInstagram />
             </a>
 
+            {/* YouTube */}
             <a
               href="https://www.youtube.com/@englishclubindore"
               target="_blank"
