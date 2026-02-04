@@ -30,14 +30,12 @@ export default function BranchesSection() {
               href={branch.slug}
               className="flex items-center gap-4 border rounded-xl p-3 hover:bg-gray-50 transition"
             >
-              {/* Branch Image */}
               <img
                 src={imagePath}
                 alt={`${branch.name} branch`}
                 className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
               />
 
-              {/* Branch Info */}
               <div className="flex-1">
                 <p className="text-base font-semibold text-gray-800">
                   {branch.name}
@@ -59,7 +57,6 @@ export default function BranchesSection() {
                 </div>
               </div>
 
-              {/* Arrow */}
               <span className="text-blue-600 text-sm font-medium">
                 View →
               </span>
@@ -77,14 +74,12 @@ export default function BranchesSection() {
             href="/online-english"
             className="flex items-center gap-4 border rounded-xl p-3 hover:bg-gray-50 transition"
           >
-            {/* Zoom Image */}
             <img
               src="/home/online-zoom.jpg"
               alt="Online English Zoom Class"
               className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
             />
 
-            {/* Online Info */}
             <div className="flex-1">
               <p className="text-base font-semibold text-gray-800">
                 Online English
@@ -95,8 +90,8 @@ export default function BranchesSection() {
               </span>
             </div>
 
-            <span className="text-green-600 text-sm font-medium">
-              Join →
+            <span className="text-blue-600 text-sm font-medium">
+              View →
             </span>
           </Link>
         </div>

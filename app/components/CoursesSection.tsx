@@ -7,81 +7,60 @@ export default function CoursesSection() {
         Courses We Offer
       </h2>
 
-      <div className="max-w-5xl mx-auto grid gap-6 md:grid-cols-2">
+      <div className="max-w-5xl mx-auto grid gap-6 md:grid-cols-3">
 
-        {/* SPOKEN ENGLISH */}
-        <div className="bg-white rounded-xl p-6 shadow">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800">
-            Spoken English
+        {/* Spoken English Offline */}
+        <div className="bg-white rounded-xl p-6 shadow text-center">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            Spoken English (Offline)
           </h3>
 
-          <ul className="space-y-2 text-gray-700 text-sm">
-            <li className="font-medium">• Online English</li>
-            <li className="ml-4 text-gray-600">
-              – Live Zoom Classes
-            </li>
+          <p className="text-sm text-gray-600 mb-4">
+            Classroom-based spoken English training at our Indore branches
+          </p>
 
-            <li className="font-medium mt-3">
-              • Offline English Classes
-            </li>
-            <li className="ml-4 text-gray-600">
-              – Nanda Nagar
-            </li>
-            <li className="ml-4 text-gray-600">
-              – Bapat Square
-            </li>
-          </ul>
-
-          <div className="mt-5 flex gap-3 flex-wrap">
-            <Link
-              href="/online-english"
-              className="px-4 py-2 rounded-full bg-green-600 text-white text-sm font-medium"
-            >
-              Online English
-            </Link>
-
-            <Link
-              href="/nanda-nagar"
-              className="px-4 py-2 rounded-full border border-blue-600 text-blue-600 text-sm font-medium"
-            >
-              Offline English
-            </Link>
-          </div>
+          <button
+            disabled
+            className="px-4 py-2 rounded-full bg-gray-300 text-gray-600 text-sm cursor-not-allowed"
+          >
+            View
+          </button>
         </div>
 
-        {/* COMPUTER COURSES */}
-        <div className="bg-white rounded-xl p-6 shadow">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800">
+        {/* Spoken English Online */}
+        <div className="bg-white rounded-xl p-6 shadow text-center">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            Spoken English (Online)
+          </h3>
+
+          <p className="text-sm text-gray-600 mb-4">
+            Live Zoom classes with daily speaking practice
+          </p>
+
+          <Link
+            href="/online-english"
+            className="inline-block px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium"
+          >
+            View
+          </Link>
+        </div>
+
+        {/* Computer Courses */}
+        <div className="bg-white rounded-xl p-6 shadow text-center">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
             Computer Courses
           </h3>
 
-          <ul className="space-y-2 text-gray-700 text-sm">
-            <li className="font-medium">
-              • Offline Computer Classes
-            </li>
-            <li className="ml-4 text-gray-600">
-              – Nanda Nagar (Computer G)
-            </li>
-            <li className="ml-4 text-gray-600">
-              – Aurobindo Hospital
-            </li>
-          </ul>
+          <p className="text-sm text-gray-600 mb-4">
+            Practical computer training at Computer G
+          </p>
 
-          <div className="mt-5 flex gap-3 flex-wrap">
-            <Link
-              href="/computer-g"
-              className="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium"
-            >
-              Computer G (Nanda Nagar)
-            </Link>
-
-            <Link
-              href="/aurobindo-hospital"
-              className="px-4 py-2 rounded-full border border-blue-600 text-blue-600 text-sm font-medium"
-            >
-              Aurobindo Branch
-            </Link>
-          </div>
+          <Link
+            href="/computer-g"
+            className="inline-block px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium"
+          >
+            View
+          </Link>
         </div>
 
       </div>
