@@ -8,6 +8,7 @@ const curriculum = {
   month1: [
     {
       title: "Week 1 – Windows & Internet",
+      icon: "🪟🌐",
       topics: [
         "Computer Fundamentals",
         "Windows Interface & Settings",
@@ -20,6 +21,7 @@ const curriculum = {
     },
     {
       title: "Week 2 & 3 – MS Word",
+      icon: "📝",
       topics: [
         "MS Word Interface",
         "Typing Practice",
@@ -31,6 +33,7 @@ const curriculum = {
     },
     {
       title: "Week 4 – MS PowerPoint",
+      icon: "📊",
       topics: [
         "Presentation Basics",
         "Slide Design & Layouts",
@@ -44,6 +47,7 @@ const curriculum = {
   month2: [
     {
       title: "Week 5 – Basic Excel",
+      icon: "📈",
       topics: [
         "Excel Interface",
         "Rows, Columns & Cells",
@@ -54,6 +58,7 @@ const curriculum = {
     },
     {
       title: "Week 6, 7 & 8 – Advanced Excel",
+      icon: "📊📈",
       topics: [
         "IF Function",
         "VLOOKUP / XLOOKUP",
@@ -67,6 +72,7 @@ const curriculum = {
   month3: [
     {
       title: "Week 9 & 10 – Google Workspace",
+      icon: "☁️",
       topics: [
         "Gmail Advanced Usage",
         "Google Docs",
@@ -78,6 +84,7 @@ const curriculum = {
     },
     {
       title: "Week 11 & 12 – Basic Designing",
+      icon: "🎨",
       topics: [
         "Designing Fundamentals",
         "Canva Introduction",
@@ -94,7 +101,7 @@ export default function BasicComputerPage() {
 
   const renderMonth = (
     monthTitle: string,
-    items: { title: string; topics: string[] }[],
+    items: { title: string; icon: string; topics: string[] }[],
     prefix: string
   ) => (
     <div>
@@ -118,9 +125,13 @@ export default function BasicComputerPage() {
                 }
                 className="w-full flex justify-between items-center px-5 py-4 text-left"
               >
-                <span className="font-semibold text-gray-800">
-                  {week.title}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{week.icon}</span>
+                  <span className="font-semibold text-gray-800">
+                    {week.title}
+                  </span>
+                </div>
+
                 <span
                   className={`text-xl text-blue-600 transition-transform ${
                     isOpen ? "rotate-180" : ""
@@ -137,12 +148,6 @@ export default function BasicComputerPage() {
                       <li key={i}>{topic}</li>
                     ))}
                   </ul>
-
-                  <div className="mt-4">
-                    <button className="text-sm font-medium text-green-600 hover:underline">
-                      📄 Download Notes (PDF)
-                    </button>
-                  </div>
                 </div>
               )}
             </div>
