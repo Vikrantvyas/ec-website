@@ -20,12 +20,12 @@ export default function CoursesSection() {
             </p>
           </div>
 
-          <button
-            disabled
-            className="text-sm px-3 py-1.5 rounded-full bg-gray-300 text-gray-600 cursor-not-allowed"
+          <Link
+            href="/offline-english"
+            className="text-sm px-3 py-1.5 rounded-full bg-blue-600 text-white font-medium"
           >
             View
-          </button>
+          </Link>
         </div>
 
         {/* Spoken English Online */}
