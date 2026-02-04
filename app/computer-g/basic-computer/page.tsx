@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import ContactSection from "../../components/ContactSection";
 import Footer from "../../components/Footer";
 
@@ -8,7 +9,7 @@ const curriculum = {
   month1: [
     {
       title: "Week 1 – Windows & Internet",
-      icon: "🪟🌐",
+      icon: "/logos/internet.png",
       topics: [
         "Computer Fundamentals",
         "Windows Interface & Settings",
@@ -21,7 +22,7 @@ const curriculum = {
     },
     {
       title: "Week 2 & 3 – MS Word",
-      icon: "📝",
+      icon: "/logos/word.png",
       topics: [
         "MS Word Interface",
         "Typing Practice",
@@ -33,7 +34,7 @@ const curriculum = {
     },
     {
       title: "Week 4 – MS PowerPoint",
-      icon: "📊",
+      icon: "/logos/powerpoint.png",
       topics: [
         "Presentation Basics",
         "Slide Design & Layouts",
@@ -47,7 +48,7 @@ const curriculum = {
   month2: [
     {
       title: "Week 5 – Basic Excel",
-      icon: "📈",
+      icon: "/logos/excel.png",
       topics: [
         "Excel Interface",
         "Rows, Columns & Cells",
@@ -58,7 +59,7 @@ const curriculum = {
     },
     {
       title: "Week 6, 7 & 8 – Advanced Excel",
-      icon: "📊📈",
+      icon: "/logos/excel.png",
       topics: [
         "IF Function",
         "VLOOKUP / XLOOKUP",
@@ -72,7 +73,7 @@ const curriculum = {
   month3: [
     {
       title: "Week 9 & 10 – Google Workspace",
-      icon: "☁️",
+      icon: "/logos/google.png",
       topics: [
         "Gmail Advanced Usage",
         "Google Docs",
@@ -84,7 +85,7 @@ const curriculum = {
     },
     {
       title: "Week 11 & 12 – Basic Designing",
-      icon: "🎨",
+      icon: "/logos/design.png",
       topics: [
         "Designing Fundamentals",
         "Canva Introduction",
@@ -115,18 +116,19 @@ export default function BasicComputerPage() {
           const isOpen = openKey === key;
 
           return (
-            <div
-              key={key}
-              className="bg-white rounded-xl shadow"
-            >
+            <div key={key} className="bg-white rounded-xl shadow">
               <button
-                onClick={() =>
-                  setOpenKey(isOpen ? null : key)
-                }
+                onClick={() => setOpenKey(isOpen ? null : key)}
                 className="w-full flex justify-between items-center px-5 py-4 text-left"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{week.icon}</span>
+                  <Image
+                    src={week.icon}
+                    alt={week.title}
+                    width={28}
+                    height={28}
+                    className="flex-shrink-0"
+                  />
                   <span className="font-semibold text-gray-800">
                     {week.title}
                   </span>
