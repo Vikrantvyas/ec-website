@@ -1,4 +1,6 @@
 import CoursesSection from "./components/CoursesSection";
+import HomeVideoSection from "./components/HomeVideoSection";
+import HomeVideoReviewsSection from "./components/HomeVideoReviewsSection";
 import BranchesSection from "./components/BranchesSection";
 import TrustSection from "./components/TrustSection";
 import MapSection from "./components/MapSection";
@@ -49,6 +51,12 @@ export default function Home() {
 
       {/* 🎯 Courses (Main Decision Area) */}
       <CoursesSection />
+
+      {/* 🎥 How English Club Works (Intro Video) */}
+      <HomeVideoSection />
+
+      {/* 🎤 Real Student Short Video Reviews */}
+      <HomeVideoReviewsSection />
 
       {/* 📍 Branches */}
       <BranchesSection />
