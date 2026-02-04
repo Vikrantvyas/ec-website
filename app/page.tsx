@@ -1,4 +1,3 @@
-import HeroSection from "./components/HeroSection";
 import CoursesSection from "./components/CoursesSection";
 import BranchesSection from "./components/BranchesSection";
 import TrustSection from "./components/TrustSection";
@@ -11,15 +10,13 @@ import Footer from "./components/Footer";
 export default function Home() {
   return (
     <>
-      <HeroSection />
-
-      {/* 🎯 Decision first */}
+      {/* 🎯 Start directly with Courses */}
       <CoursesSection />
 
-      {/* 📍 Location next */}
+      {/* 📍 Branches */}
       <BranchesSection />
 
-      {/* 🧠 Trust & proof */}
+      {/* 🧠 Trust & Proof */}
       <TrustSection />
       <MapSection />
       <TestimonialsSection />
