@@ -1,172 +1,62 @@
-import Link from "next/link";
+import ComputerGCoursesSection from "../components/ComputerGCoursesSection";
+import ContactSection from "../components/ContactSection";
+import Footer from "../components/Footer";
 
 export const metadata = {
-  title: "Computer Training Institute in Indore | Computer G",
+  title: "Computer-G Indore | Computer Courses at Nanda Nagar",
   description:
-    "Computer G is a computer training institute in Indore offering Basic Computer, Tally, MS Office, Graphic Design and AI basics. Practical training since 2010.",
+    "Computer-G offers Basic Computer, Advanced Excel, Tally with GST and CPCT preparation courses at Nanda Nagar, Indore.",
 };
 
 export default function ComputerGPage() {
   return (
-    <main className="bg-white">
-
-      {/* HERO SECTION */}
-      <section className="bg-gradient-to-br from-blue-50 to-white px-4 py-12 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          Computer Training Institute in Indore
+    <>
+      {/* HERO */}
+      <section className="px-4 pt-16 pb-12 bg-gradient-to-b from-blue-50 to-white text-center">
+        <h1 className="text-3xl md:text-4xl font-bold text-blue-700 mb-3">
+          Computer-G Training Center
         </h1>
-        <p className="text-gray-600 max-w-xl mx-auto">
-          Learn practical computer skills at <strong>Computer G</strong> –
-          the computer training division of English Club. Trusted since 2010.
+
+        <p className="text-gray-700 max-w-2xl mx-auto">
+          Practical computer training with job-oriented syllabus.
+          Classes running at Nanda Nagar campus since 2010.
+        </p>
+      </section>
+
+      {/* COURSES + CURRICULUM SYSTEM */}
+      <ComputerGCoursesSection />
+
+      {/* CTA STRIP */}
+      <section className="px-4 py-12 bg-blue-600 text-white text-center">
+        <h2 className="text-2xl font-semibold mb-3">
+          Ready to Start Your Computer Course?
+        </h2>
+        <p className="mb-6 text-blue-100">
+          Call or WhatsApp us to know fees, batches & demo classes.
         </p>
 
-        <div className="flex justify-center gap-4 mt-6">
+        <div className="flex justify-center gap-4 flex-wrap">
           <a
             href="tel:9713014234"
-            className="px-6 py-3 rounded-full bg-blue-600 text-white font-medium"
+            className="bg-white text-blue-700 px-6 py-3 rounded-lg font-medium"
           >
-            Call Now
+            📞 Call Now
           </a>
+
           <a
             href="https://wa.me/919713014234"
-            className="px-6 py-3 rounded-full border border-green-600 text-green-600 font-medium"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-green-500 text-white px-6 py-3 rounded-lg font-medium"
           >
-            WhatsApp
+            💬 WhatsApp
           </a>
         </div>
       </section>
 
-      {/* ABOUT */}
-      <section className="px-4 py-10 max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4 text-gray-900">
-          About Computer G
-        </h2>
-        <p className="text-gray-600 leading-relaxed">
-          Computer G is a dedicated computer training institute located at
-          Nanda Nagar, Indore. We focus on hands-on, practical learning for
-          students, job seekers, and beginners who want real computer skills
-          for work and daily use.
-        </p>
-      </section>
-
-      {/* COURSES */}
-      <section className="bg-gray-50 px-4 py-10">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold mb-6 text-gray-900">
-            Computer Courses Offered
-          </h2>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="border rounded-xl p-4 bg-white">
-              <h3 className="font-semibold text-gray-800">
-                Basic Computer Course
-              </h3>
-              <p className="text-sm text-gray-600">
-                Windows, Internet, MS Office
-              </p>
-            </div>
-
-            <div className="border rounded-xl p-4 bg-white">
-              <h3 className="font-semibold text-gray-800">
-                Tally with GST
-              </h3>
-              <p className="text-sm text-gray-600">
-                Accounting & billing basics
-              </p>
-            </div>
-
-            <div className="border rounded-xl p-4 bg-white">
-              <h3 className="font-semibold text-gray-800">
-                Graphic Design (Basic)
-              </h3>
-              <p className="text-sm text-gray-600">
-                Design fundamentals & tools
-              </p>
-            </div>
-
-            <div className="border rounded-xl p-4 bg-white">
-              <h3 className="font-semibold text-gray-800">
-                AI & Computer Basics
-              </h3>
-              <p className="text-sm text-gray-600">
-                Introduction to modern tools
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* WHY CHOOSE */}
-      <section className="px-4 py-10 max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-gray-900">
-          Why Choose Computer G?
-        </h2>
-
-        <ul className="space-y-3 text-gray-600">
-          <li>✔ Practical, hands-on computer training</li>
-          <li>✔ Individual attention to students</li>
-          <li>✔ Job-oriented learning approach</li>
-          <li>✔ Experienced trainers</li>
-          <li>✔ Training institute since 2010</li>
-        </ul>
-      </section>
-
-      {/* BATCH TIMINGS */}
-      <section className="bg-gray-50 px-4 py-10">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold mb-4 text-gray-900">
-            Batch Timings
-          </h2>
-          <p className="text-gray-600">
-            Morning and evening batches available. Flexible timings for
-            students and working professionals.
-          </p>
-        </div>
-      </section>
-
-      {/* LOCATION */}
-      <section className="px-4 py-10 max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4 text-gray-900">
-          Our Location
-        </h2>
-        <p className="text-gray-600 mb-4">
-          Nanda Nagar, Indore (Same campus as English Club)
-        </p>
-
-        <a
-          href="https://www.google.com/maps"
-          target="_blank"
-          className="inline-block px-6 py-3 rounded-full bg-blue-600 text-white font-medium"
-        >
-          Get Directions
-        </a>
-      </section>
-
-      {/* FINAL CTA */}
-      <section className="bg-blue-600 text-white text-center px-4 py-12">
-        <h2 className="text-2xl font-bold mb-4">
-          Join Computer G Today
-        </h2>
-        <p className="mb-6">
-          Learn practical computer skills and grow your career.
-        </p>
-
-        <div className="flex justify-center gap-4">
-          <a
-            href="tel:9713014234"
-            className="px-6 py-3 rounded-full bg-white text-blue-600 font-semibold"
-          >
-            Call Now
-          </a>
-          <a
-            href="https://wa.me/919713014234"
-            className="px-6 py-3 rounded-full border border-white font-semibold"
-          >
-            WhatsApp
-          </a>
-        </div>
-      </section>
-
-    </main>
+      {/* CONTACT + FOOTER */}
+      <ContactSection />
+      <Footer />
+    </>
   );
 }
