@@ -7,11 +7,13 @@ body {
   overflow-x: hidden;
 }
 
+/* 🎨 COLOR BASE */
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
 
+/* Tailwind theme bridge */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -19,6 +21,7 @@ body {
   --font-mono: var(--font-geist-mono);
 }
 
+/* 🌙 Dark mode base (future ready) */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -26,17 +29,19 @@ body {
   }
 }
 
+/* 🧱 BODY BASE */
 body {
   background-color: #f9fafb;
   color: #111827;
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Section anchor spacing */
+/* Section anchor spacing (for fixed headers) */
 section {
   scroll-margin-top: 80px;
 }
 
+/* Headings tightening */
 h1,
 h2,
 h3 {
@@ -56,4 +61,48 @@ h3 {
   body {
     padding-top: 56px; /* DesktopHeader */
   }
+}
+
+/* =========================================
+   ✨ SOFT YOUTH ANIMATIONS (GLOBAL)
+   ========================================= */
+
+/* Fade + slide up on load */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Utility animation class */
+.animate-fadeUp {
+  animation: fadeUp 0.6s ease-out both;
+}
+
+/* Delay helpers */
+.animate-fadeUp.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.animate-fadeUp.delay-200 {
+  animation-delay: 0.2s;
+}
+
+/* =========================================
+   🌈 YOUTH POLISH HELPERS (OPTIONAL USE)
+   ========================================= */
+
+/* Smooth hover everywhere */
+.hover-lift {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }

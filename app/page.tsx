@@ -11,11 +11,20 @@ export default function Home() {
   return (
     <>
       {/* ⭐ Google Reviews Trust Badge */}
-      <section className="px-4 pt-6">
+      <section className="px-4 pt-8">
         <div className="max-w-4xl mx-auto flex justify-center">
-          <div className="flex items-center gap-3 bg-white border rounded-xl px-4 py-3 shadow-sm">
-            {/* Google Icon */}
-            <span className="text-lg font-bold">
+          <div
+            className="
+              flex items-center gap-4
+              bg-white border rounded-2xl
+              px-5 py-4
+              shadow-sm
+              hover-lift
+              animate-fadeUp
+            "
+          >
+            {/* Google Logo Style Text */}
+            <span className="text-xl font-bold leading-none">
               <span className="text-blue-500">G</span>
               <span className="text-red-500">o</span>
               <span className="text-yellow-500">o</span>
@@ -26,8 +35,9 @@ export default function Home() {
 
             {/* Rating */}
             <div className="text-sm">
-              <p className="font-semibold text-gray-800">
-                4.9 / 5 ⭐⭐⭐⭐⭐
+              <p className="font-semibold text-gray-800 flex items-center gap-1">
+                4.9 / 5
+                <span className="text-yellow-400">★★★★★</span>
               </p>
               <p className="text-gray-500">
                 Google Reviews • Trusted by students in Indore
@@ -37,7 +47,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 🎯 Courses */}
+      {/* 🎯 Courses (Main Decision Area) */}
       <CoursesSection />
 
       {/* 📍 Branches */}
