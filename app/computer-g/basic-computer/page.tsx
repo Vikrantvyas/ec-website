@@ -4,86 +4,153 @@ import { useState } from "react";
 import ContactSection from "../../components/ContactSection";
 import Footer from "../../components/Footer";
 
-const curriculum = [
-  {
-    title: "Week 1 – Windows & Internet",
-    topics: [
-      "Computer Fundamentals",
-      "Windows Interface & Settings",
-      "File & Folder Management",
-      "Control Panel & System Tools",
-      "Internet Basics",
-      "Browser Usage (Chrome)",
-      "Email Creation & Usage",
-    ],
-  },
-  {
-    title: "Week 2 & 3 – MS Word",
-    topics: [
-      "MS Word Interface",
-      "Typing Practice",
-      "Font & Paragraph Formatting",
-      "Page Setup & Printing",
-      "Tables, Images & Shapes",
-      "Resume & Letter Creation",
-      "Practical Assignments",
-    ],
-  },
-  {
-    title: "Week 4 – MS PowerPoint",
-    topics: [
-      "Presentation Basics",
-      "Slide Design & Layouts",
-      "Animations & Transitions",
-      "Charts & Images",
-      "Professional Presentation Making",
-    ],
-  },
-  {
-    title: "Week 5 – Basic Excel",
-    topics: [
-      "Excel Interface",
-      "Rows, Columns & Cells",
-      "Basic Formulas",
-      "SUM, AVERAGE Functions",
-      "Formatting & Printing",
-    ],
-  },
-  {
-    title: "Week 6, 7 & 8 – Advanced Excel",
-    topics: [
-      "IF Function",
-      "VLOOKUP / XLOOKUP",
-      "Pivot Tables",
-      "Charts & Data Analysis",
-      "Practical Excel Projects",
-    ],
-  },
-  {
-    title: "Week 9 & 10 – Google Workspace",
-    topics: [
-      "Gmail Advanced Usage",
-      "Google Docs",
-      "Google Sheets",
-      "Google Slides",
-      "Google Drive & Sharing",
-      "Online Collaboration",
-    ],
-  },
-  {
-    title: "Week 11 & 12 – Basic Designing",
-    topics: [
-      "Designing Fundamentals",
-      "Canva Introduction",
-      "Poster & Banner Design",
-      "Social Media Post Design",
-      "Basic Image Editing",
-    ],
-  },
-];
+const curriculum = {
+  month1: [
+    {
+      title: "Week 1 – Windows & Internet",
+      topics: [
+        "Computer Fundamentals",
+        "Windows Interface & Settings",
+        "File & Folder Management",
+        "Control Panel & System Tools",
+        "Internet Basics",
+        "Browser Usage",
+        "Email Creation & Usage",
+      ],
+    },
+    {
+      title: "Week 2 & 3 – MS Word",
+      topics: [
+        "MS Word Interface",
+        "Typing Practice",
+        "Font & Paragraph Formatting",
+        "Page Setup & Printing",
+        "Tables, Images & Shapes",
+        "Resume & Letter Creation",
+      ],
+    },
+    {
+      title: "Week 4 – MS PowerPoint",
+      topics: [
+        "Presentation Basics",
+        "Slide Design & Layouts",
+        "Animations & Transitions",
+        "Charts & Images",
+        "Professional Presentation Making",
+      ],
+    },
+  ],
+
+  month2: [
+    {
+      title: "Week 5 – Basic Excel",
+      topics: [
+        "Excel Interface",
+        "Rows, Columns & Cells",
+        "Basic Formulas",
+        "SUM, AVERAGE Functions",
+        "Formatting & Printing",
+      ],
+    },
+    {
+      title: "Week 6, 7 & 8 – Advanced Excel",
+      topics: [
+        "IF Function",
+        "VLOOKUP / XLOOKUP",
+        "Pivot Tables",
+        "Charts & Data Analysis",
+        "Practical Excel Projects",
+      ],
+    },
+  ],
+
+  month3: [
+    {
+      title: "Week 9 & 10 – Google Workspace",
+      topics: [
+        "Gmail Advanced Usage",
+        "Google Docs",
+        "Google Sheets",
+        "Google Slides",
+        "Google Drive & Sharing",
+        "Online Collaboration",
+      ],
+    },
+    {
+      title: "Week 11 & 12 – Basic Designing",
+      topics: [
+        "Designing Fundamentals",
+        "Canva Introduction",
+        "Poster & Banner Design",
+        "Social Media Post Design",
+        "Basic Image Editing",
+      ],
+    },
+  ],
+};
 
 export default function BasicComputerPage() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [openKey, setOpenKey] = useState<string | null>(null);
+
+  const renderMonth = (
+    monthTitle: string,
+    items: { title: string; topics: string[] }[],
+    prefix: string
+  ) => (
+    <div>
+      <h3 className="text-xl font-semibold text-center mb-4 text-green-600">
+        {monthTitle}
+      </h3>
+
+      <div className="space-y-4">
+        {items.map((week, index) => {
+          const key = `${prefix}-${index}`;
+          const isOpen = openKey === key;
+
+          return (
+            <div
+              key={key}
+              className="bg-white rounded-xl shadow"
+            >
+              <button
+                onClick={() =>
+                  setOpenKey(isOpen ? null : key)
+                }
+                className="w-full flex justify-between items-center px-5 py-4 text-left"
+              >
+                <span className="font-semibold text-gray-800">
+                  {week.title}
+                </span>
+                <span
+                  className={`text-xl text-blue-600 transition-transform ${
+                    isOpen ? "rotate-180" : ""
+                  }`}
+                >
+                  ˅
+                </span>
+              </button>
+
+              {isOpen && (
+                <div className="px-5 pb-4 border-t animate-fadeUp">
+                  <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700 mt-3">
+                    {week.topics.map((topic, i) => (
+                      <li key={i}>{topic}</li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-4">
+                    <button className="text-sm font-medium text-green-600 hover:underline">
+                      📄 Download Notes (PDF)
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -96,67 +163,21 @@ export default function BasicComputerPage() {
           Duration: <strong>3 Months</strong>
         </p>
         <p className="max-w-2xl mx-auto text-gray-600">
-          Job-oriented basic computer training with practical approach.
-          Conducted at Computer-G (Nanda Nagar Campus).
+          Job-oriented basic computer training with practical approach
+          at Computer-G (Nanda Nagar Campus).
         </p>
       </section>
 
-      {/* WEEK-WISE CURRICULUM */}
+      {/* CURRICULUM */}
       <section className="px-4 py-16 bg-gray-50">
         <h2 className="text-2xl md:text-3xl font-bold text-center mb-12 text-blue-700">
-          Week-Wise Course Plan
+          Month-Wise Course Plan
         </h2>
 
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-          {curriculum.map((week, index) => {
-            const isOpen = openIndex === index;
-
-            return (
-              <div
-                key={index}
-                className="bg-white rounded-xl shadow"
-              >
-                {/* HEADER */}
-                <button
-                  onClick={() =>
-                    setOpenIndex(isOpen ? null : index)
-                  }
-                  className="w-full flex items-center justify-between px-6 py-4 text-left"
-                >
-                  <span className="font-semibold text-gray-800">
-                    {week.title}
-                  </span>
-
-                  {/* Arrow */}
-                  <span
-                    className={`text-xl text-blue-600 transition-transform duration-300 ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
-                  >
-                    ˅
-                  </span>
-                </button>
-
-                {/* CONTENT */}
-                {isOpen && (
-                  <div className="px-6 pb-4 border-t animate-fadeUp">
-                    <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700 mt-3">
-                      {week.topics.map((topic, i) => (
-                        <li key={i}>{topic}</li>
-                      ))}
-                    </ul>
-
-                    {/* NOTES PLACEHOLDER */}
-                    <div className="mt-4">
-                      <button className="text-sm font-medium text-green-600 hover:underline">
-                        📄 Download Notes (PDF)
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+          {renderMonth("Month 1", curriculum.month1, "m1")}
+          {renderMonth("Month 2", curriculum.month2, "m2")}
+          {renderMonth("Month 3", curriculum.month3, "m3")}
         </div>
       </section>
 
