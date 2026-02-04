@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const testimonials = [
   {
@@ -28,12 +28,33 @@ const testimonials = [
 
 export default function TestimonialsSection() {
   const [index, setIndex] = useState(0);
+  const startX = useRef<number | null>(null);
 
   const prev = () =>
-    setIndex((index - 1 + testimonials.length) % testimonials.length);
+    setIndex((i) => (i - 1 + testimonials.length) % testimonials.length);
 
   const next = () =>
-    setIndex((index + 1) % testimonials.length);
+    setIndex((i) => (i + 1) % testimonials.length);
+
+  /* 👉 TOUCH HANDLERS (REAL SWIPE) */
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (startX.current === null) return;
+
+    const endX = e.changedTouches[0].clientX;
+    const diff = startX.current - endX;
+
+    // minimum swipe distance
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) next(); // swipe left
+      else prev(); // swipe right
+    }
+
+    startX.current = null;
+  };
 
   return (
     <section className="py-16 px-4 bg-gray-50 overflow-hidden">
@@ -51,9 +72,12 @@ export default function TestimonialsSection() {
           ‹
         </button>
 
-        {/* TESTIMONIAL CARDS */}
-        <div className="relative w-full h-[300px] flex items-center justify-center">
-
+        {/* SWIPE AREA */}
+        <div
+          className="relative w-full h-[300px] flex items-center justify-center"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {testimonials.map((t, i) => {
             let position = "hidden";
 
@@ -80,7 +104,6 @@ export default function TestimonialsSection() {
                 `}
               >
                 <div className="bg-white rounded-3xl p-6 shadow-lg w-[320px]">
-
                   {/* OLD TRUSTED LAYOUT */}
                   <div className="flex items-center gap-4 mb-4">
                     <img
