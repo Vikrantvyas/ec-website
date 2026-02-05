@@ -2,9 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import ContactSection from "../../components/ContactSection";
 import Footer from "../../components/Footer";
 
+/* =========================
+   CURRICULUM DATA
+========================= */
 const curriculum = {
   month1: [
     {
@@ -44,7 +48,6 @@ const curriculum = {
       ],
     },
   ],
-
   month2: [
     {
       title: "Week 5 – Basic Excel",
@@ -69,7 +72,6 @@ const curriculum = {
       ],
     },
   ],
-
   month3: [
     {
       title: "Week 9 & 10 – Google Workspace",
@@ -127,13 +129,11 @@ export default function BasicComputerPage() {
                     alt={week.title}
                     width={28}
                     height={28}
-                    className="flex-shrink-0"
                   />
                   <span className="font-semibold text-gray-800">
                     {week.title}
                   </span>
                 </div>
-
                 <span
                   className={`text-xl text-blue-600 transition-transform ${
                     isOpen ? "rotate-180" : ""
@@ -144,7 +144,7 @@ export default function BasicComputerPage() {
               </button>
 
               {isOpen && (
-                <div className="px-5 pb-4 border-t animate-fadeUp">
+                <div className="px-5 pb-4 border-t">
                   <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700 mt-3">
                     {week.topics.map((topic, i) => (
                       <li key={i}>{topic}</li>
@@ -164,15 +164,45 @@ export default function BasicComputerPage() {
       {/* HERO */}
       <section className="px-4 pt-16 pb-12 bg-gradient-to-b from-blue-50 to-white text-center">
         <h1 className="text-3xl md:text-4xl font-bold text-blue-700 mb-3">
-          Basic Computer Course
+          Basic Computer Course in Indore
         </h1>
         <p className="text-gray-700 mb-2">
-          Duration: <strong>3 Months</strong>
+          Duration: <strong>3 Months</strong> | Offline Classes
         </p>
         <p className="max-w-2xl mx-auto text-gray-600">
-          Job-oriented basic computer training with practical approach
-          at Computer-G (Nanda Nagar Campus).
+          Learn computer fundamentals, MS Office, Excel, Internet & designing
+          through practical lab-based training at Computer-G (Nanda Nagar).
         </p>
+      </section>
+
+      {/* OVERVIEW */}
+      <section className="px-4 py-12 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-2xl font-bold mb-4 text-blue-700">
+            Course Overview
+          </h2>
+          <p className="text-gray-700 leading-relaxed">
+            This Basic Computer Course is designed for beginners who want to
+            build confidence in computer usage for office work, studies, and
+            daily digital tasks. The course focuses on hands-on practice rather
+            than theory.
+          </p>
+        </div>
+      </section>
+
+      {/* HIGHLIGHTS */}
+      <section className="px-4 py-12 bg-gray-50">
+        <div className="max-w-6xl mx-auto grid gap-6 md:grid-cols-3 text-center">
+          <div className="bg-white p-6 rounded-xl shadow">
+            💻 Practical Lab Training
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow">
+            👨‍🏫 Experienced Trainers
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow">
+            🕒 Flexible Batch Timings
+          </div>
+        </div>
       </section>
 
       {/* CURRICULUM */}
@@ -180,7 +210,6 @@ export default function BasicComputerPage() {
         <h2 className="text-2xl md:text-3xl font-bold text-center mb-12 text-blue-700">
           Month-Wise Course Plan
         </h2>
-
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
           {renderMonth("Month 1", curriculum.month1, "m1")}
           {renderMonth("Month 2", curriculum.month2, "m2")}
@@ -188,15 +217,59 @@ export default function BasicComputerPage() {
         </div>
       </section>
 
+      {/* TRAINER */}
+      <section className="px-4 py-12 bg-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-6 text-blue-700">
+            Course Trainer
+          </h2>
+          <Image
+            src="/home/trainer.jpg"
+            alt="Computer Trainer"
+            width={120}
+            height={120}
+            className="mx-auto rounded-full mb-4"
+          />
+          <p className="font-semibold">Experienced Computer Faculty</p>
+          <p className="text-gray-600 text-sm">
+            10+ years experience in computer & office software training
+          </p>
+        </div>
+      </section>
+
+      {/* STUDENT TASKS */}
+      <section className="px-4 py-12 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-2xl font-bold mb-6 text-blue-700">
+            Student Practice & Tasks
+          </h2>
+          <ul className="list-disc pl-6 text-gray-700 space-y-2">
+            <li>Daily typing & document creation</li>
+            <li>Excel calculation & reports</li>
+            <li>Email & internet-based tasks</li>
+            <li>Mini projects & assignments</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* NAVIGATION */}
+      <section className="px-4 py-10 bg-white text-center">
+        <Link
+          href="/computer-g"
+          className="text-blue-600 font-medium hover:underline"
+        >
+          ← Back to All Computer Courses
+        </Link>
+      </section>
+
       {/* CTA */}
       <section className="px-4 py-12 bg-blue-600 text-white text-center">
         <h3 className="text-2xl font-semibold mb-3">
-          Want to Join Basic Computer Course?
+          Ready to Join Basic Computer Course?
         </h3>
         <p className="text-blue-100 mb-6">
           Call or WhatsApp us for fees, batches & demo class.
         </p>
-
         <div className="flex justify-center gap-4 flex-wrap">
           <a
             href="tel:9713014234"
@@ -207,7 +280,6 @@ export default function BasicComputerPage() {
           <a
             href="https://wa.me/919713014234"
             target="_blank"
-            rel="noopener noreferrer"
             className="bg-green-500 text-white px-6 py-3 rounded-lg font-medium"
           >
             💬 WhatsApp
