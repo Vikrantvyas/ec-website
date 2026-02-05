@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 
 import HomeVideoSection from "../../components/HomeVideoSection";
@@ -9,193 +9,157 @@ import GallerySection from "../../components/GallerySection";
 import TestimonialsSection from "../../components/TestimonialsSection";
 import Footer from "../../components/Footer";
 
-/* ================= 15 DAYS TYPING PLAN ================= */
+/* ================= 15 DAYS CONTINUOUS TYPING CONTENT ================= */
 
-const typingPlan = [
+const typingDays = [
   {
     day: "Day 1",
-    title: "Home Row Practice",
-    pairs: [
-      ["as", "df"],
-      ["jk", "la"],
-      ["sa", "fd"],
-      ["al", "kj"],
-      ["fa", "js"],
-      ["da", "kl"],
-      ["sd", "fj"],
-      ["lk", "aj"],
-      ["aa", "ss"],
-      ["dd", "ff"],
+    title: "Basic Home Row Words",
+    text: [
+      ["add as", "ha gas"],
+      ["hag ask", "ass fall"],
+      ["fad flag", "all lad"],
+      ["lag dash", "gash jag"],
+      ["gag gall", "flash glass"],
+      ["sad hall", "hash half"],
+      ["flask lash", "shall shah"],
+      ["kaka shad", "add as"],
     ],
   },
   {
     day: "Day 2",
-    title: "Upper Row Practice",
-    pairs: [
-      ["qw", "er"],
-      ["ui", "op"],
-      ["ty", "re"],
-      ["io", "yu"],
-      ["we", "rt"],
-      ["qp", "wo"],
-      ["ee", "rr"],
-      ["tt", "yy"],
-      ["uu", "ii"],
-      ["oo", "pp"],
+    title: "Short Words Practice",
+    text: [
+      ["to tie", "too tope"],
+      ["tot toy", "tri tree"],
+      ["true tour", "rope row"],
+      ["rat out", "pity porter"],
+      ["poor pope", "poppet port"],
     ],
   },
   {
     day: "Day 3",
-    title: "Home + Upper Mix",
-    pairs: [
-      ["as", "we"],
-      ["df", "rt"],
-      ["jk", "ui"],
-      ["kl", "op"],
-      ["sa", "er"],
-      ["fd", "ty"],
-      ["aj", "yu"],
-      ["lk", "io"],
-      ["qw", "as"],
-      ["er", "df"],
+    title: "Mixed Short Words",
+    text: [
+      ["fox was", "zoo ooz"],
+      ["zip zax", "siz lozy"],
+      ["cozy razer", "zeal maze"],
+      ["zulum zinky", "zone zebra"],
     ],
   },
   {
     day: "Day 4",
-    title: "Lower Row Practice",
-    pairs: [
-      ["zx", "cv"],
-      ["bn", "nm"],
-      ["xc", "vb"],
-      ["mn", "cb"],
-      ["zz", "xx"],
-      ["cc", "vv"],
-      ["bb", "nn"],
-      ["mm", "zz"],
+    title: "Word Variety Practice",
+    text: [
+      ["van xmas", "sun vain"],
+      ["elbow come", "aunt zero"],
+      ["model visit", "zigzag volume"],
+      ["moon bombay", "zoology xerasia"],
     ],
   },
   {
     day: "Day 5",
-    title: "Home + Lower Mix",
-    pairs: [
-      ["as", "zx"],
-      ["df", "cv"],
-      ["jk", "nm"],
-      ["kl", "vb"],
-      ["sa", "xc"],
-      ["fd", "bn"],
-      ["aj", "mn"],
-      ["lk", "cb"],
+    title: "Academic Words – Easy",
+    text: [
+      ["quaint grumble", "frequent question"],
+      ["grammarian query", "flavour baldrick"],
+      ["auxiliary industrial", "knives quietly"],
+      ["graduate aeroplane", "zoological thumb"],
     ],
   },
   {
     day: "Day 6",
-    title: "Upper + Lower Mix",
-    pairs: [
-      ["qw", "zx"],
-      ["er", "cv"],
-      ["ui", "nm"],
-      ["op", "vb"],
-      ["we", "xc"],
-      ["rt", "bn"],
-      ["yu", "mn"],
-      ["io", "cb"],
+    title: "Academic Words – Continued",
+    text: [
+      ["credits labourer", "knowledge obediently"],
+      ["indigo boyco", "quo ent"],
+      ["zylograph resolution", "raging horizen"],
+      ["judicial zoography", "typewriter cheque"],
     ],
   },
+
+  /* CAPITAL LETTERS START */
+
   {
     day: "Day 7",
-    title: "All Rows Practice",
-    pairs: [
-      ["as", "qw"],
-      ["zx", "er"],
-      ["df", "cv"],
-      ["jk", "ui"],
-      ["nm", "op"],
-      ["la", "we"],
-      ["vb", "rt"],
-      ["mn", "yu"],
+    title: "Capital Letters Introduction",
+    text: [
+      ["Maximum Electric", "Sentiment Stenograph"],
+      ["Absolute Ceiling", "Defamation Election"],
+      ["Abstract Censure", "Deficit Budget"],
     ],
   },
   {
     day: "Day 8",
-    title: "Random Mix",
-    pairs: [
-      ["qa", "zm"],
-      ["we", "xn"],
-      ["rt", "cv"],
-      ["yu", "bn"],
-      ["io", "kl"],
-      ["op", "as"],
-      ["qw", "mn"],
-      ["er", "cb"],
+    title: "Office Vocabulary",
+    text: [
+      ["Emergency Abundant", "Chairman Default"],
+      ["Employer Academic", "Chancellor Demotion"],
+      ["Enclosure Academy", "Character Deputation"],
     ],
   },
   {
     day: "Day 9",
-    title: "Small English Words",
-    pairs: [
-      ["in", "on"],
-      ["to", "is"],
-      ["at", "up"],
-      ["we", "go"],
-      ["me", "my"],
-      ["he", "it"],
+    title: "Administration Words",
+    text: [
+      ["Encroachment Access", "Circular Designation"],
+      ["Evaluation Factory", "Gallery Hereditary"],
+      ["Illegible Faculty", "Gazetted Highway"],
     ],
   },
   {
     day: "Day 10",
-    title: "Medium Words",
-    pairs: [
-      ["this", "that"],
-      ["have", "will"],
-      ["good", "time"],
-      ["work", "type"],
-      ["fast", "keys"],
+    title: "Governance Words",
+    text: [
+      ["Immediate Family", "General Homage"],
+      ["Impartial Federation", "Governor Honorable"],
+      ["Feudalism Gratis", "Honorary Implementation"],
     ],
   },
   {
     day: "Day 11",
-    title: "Capital Letters (Shift)",
-    pairs: [
-      ["This", "That"],
-      ["Good", "Time"],
-      ["Work", "Type"],
-      ["Have", "Will"],
+    title: "Policy & Law",
+    text: [
+      ["Fictitious Claim", "Gratuity Hostile"],
+      ["Imprisonment Gradation", "Incidental Journalism"],
+      ["Library Magistrate", "National Journalist"],
     ],
   },
   {
     day: "Day 12",
-    title: "Mixed Case Words",
-    pairs: [
-      ["Typing", "Practice"],
-      ["English", "Computer"],
-      ["Student", "Keyboard"],
-      ["Office", "Skill"],
+    title: "Legal Language",
+    text: [
+      ["Labour Malpractice", "Nationalization Judgment"],
+      ["Landmark Maintenance", "Navigation Jubilee"],
+      ["Ledger Manifesto", "Nearest Judicial"],
     ],
   },
   {
     day: "Day 13",
-    title: "Double Capital Words",
-    pairs: [
-      ["Good Job", "New Day"],
-      ["Best Work", "Fast Typing"],
-      ["Right Hand", "Left Hand"],
+    title: "Advanced Legal Terms",
+    text: [
+      ["Legislative Manipulation", "Necessary Jurisdiction"],
+      ["Litigation Manuscript", "Negligence Justice"],
+      ["Livelihood Maximum", "Nepotism Sabotage"],
     ],
   },
   {
     day: "Day 14",
-    title: "Exam Style Words",
-    pairs: [
-      ["data entry", "office work"],
-      ["computer skill", "typing speed"],
+    title: "Professional Vocabulary",
+    text: [
+      ["Technical Unconfirmed", "Vacancy Safeguard"],
+      ["Temporary Uncontested", "Vacation Schedule"],
+      ["Terminology Undertaking", "Vehicle Scrutiny"],
     ],
   },
   {
     day: "Day 15",
-    title: "Final Challenge",
-    pairs: [
-      ["Typing Practice", "Computer Skills"],
-      ["Office Work", "English Typing"],
+    title: "Final Typing Challenge",
+    text: [
+      ["Tourism Unified", "Vague Secretariat"],
+      ["Transfer Urban", "Area Valid"],
+      ["Standard Transmission", "Valuation Suspension"],
+      ["Tribunal Underage", "Vacation"],
     ],
   },
 ];
@@ -203,29 +167,28 @@ const typingPlan = [
 export default function EnglishTypingPage() {
   const [activeDay, setActiveDay] = useState(0);
   const [input, setInput] = useState("");
-
-  const currentDay = typingPlan[activeDay];
-
-  /* Desktop only */
   const [isDesktop, setIsDesktop] = useState(true);
+
   useEffect(() => {
     if (window.innerWidth < 1024) setIsDesktop(false);
   }, []);
 
   if (!isDesktop) {
     return (
-      <section className="min-h-screen flex items-center justify-center px-4 text-center">
+      <section className="min-h-screen flex items-center justify-center text-center px-4">
         <div className="bg-white p-6 rounded-xl shadow max-w-md">
           <h2 className="text-xl font-bold text-red-600 mb-2">
             Desktop Required
           </h2>
           <p className="text-gray-600">
-            English Typing Practice works best on desktop or laptop only.
+            English Typing Practice works best on desktop or laptop.
           </p>
         </div>
       </section>
     );
   }
+
+  const current = typingDays[activeDay];
 
   return (
     <>
@@ -235,15 +198,15 @@ export default function EnglishTypingPage() {
           English Typing Practice
         </h1>
         <p className="max-w-2xl mx-auto text-gray-600">
-          15 Days structured typing practice plan for beginners.
+          15 Days structured English typing practice system.
         </p>
       </section>
 
-      {/* ⭐ Google Reviews */}
+      {/* ⭐ GOOGLE REVIEWS */}
       <section className="px-4 pt-6">
         <div className="max-w-4xl mx-auto flex justify-center">
           <div className="flex items-center gap-4 bg-white border rounded-2xl px-5 py-4 shadow-sm">
-            <span className="text-xl font-bold leading-none">
+            <span className="text-xl font-bold">
               <span className="text-blue-500">G</span>
               <span className="text-red-500">o</span>
               <span className="text-yellow-500">o</span>
@@ -263,11 +226,11 @@ export default function EnglishTypingPage() {
         </div>
       </section>
 
-      {/* TABS */}
+      {/* DAY TABS + CONTENT */}
       <section className="px-4 py-12 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-wrap gap-2 justify-center mb-8">
-            {typingPlan.map((d, i) => (
+            {typingDays.map((d, i) => (
               <button
                 key={i}
                 onClick={() => {
@@ -286,21 +249,22 @@ export default function EnglishTypingPage() {
           </div>
 
           <h2 className="text-2xl font-bold text-center mb-2">
-            {currentDay.title}
+            {current.title}
           </h2>
           <p className="text-center text-gray-600 mb-6">
-            Type each word pair <strong>3 times</strong>. Do not copy or paste.
+            Type each word pair three times. Do not copy or paste.
           </p>
 
-          <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-            {currentDay.pairs.map((pair, i) => (
-              <div
-                key={i}
-                className="border rounded-lg p-4 text-center text-lg font-semibold"
-              >
-                <span className="text-blue-600">{pair[0]}</span>{" "}
-                <span className="text-red-600">{pair[1]}</span>
-              </div>
+          <div className="max-w-4xl mx-auto text-lg leading-relaxed mb-8">
+            {current.text.map((pair, i) => (
+              <span key={i}>
+                <span className="text-blue-600 font-semibold">
+                  {pair[0]}
+                </span>{" "}
+                <span className="text-green-600 font-semibold">
+                  {pair[1]}
+                </span>{" "}
+              </span>
             ))}
           </div>
 
@@ -308,8 +272,9 @@ export default function EnglishTypingPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onPaste={(e) => e.preventDefault()}
-            placeholder="Type here..."
-            className="mt-8 w-full max-w-4xl mx-auto block border rounded-lg p-4 h-32 focus:outline-none focus:ring"
+            placeholder="Start typing here..."
+            className="w-full max-w-4xl mx-auto block border rounded-lg p-4 text-base focus:outline-none focus:ring"
+            style={{ height: "220px" }} // ~10–12 lines
           />
         </div>
       </section>
@@ -330,7 +295,7 @@ export default function EnglishTypingPage() {
       </section>
 
       {/* MEDIA */}
-      <HomeVideoSection title="How Typing Practice Works" />
+      <HomeVideoSection title="How English Typing Practice Works" />
       <GallerySection
         title="Typing Practice Lab"
         subtitle="Students practicing typing daily"
@@ -345,10 +310,10 @@ export default function EnglishTypingPage() {
       {/* CTA */}
       <section className="px-4 py-14 bg-blue-600 text-white text-center">
         <h3 className="text-2xl font-semibold mb-3">
-          Want to Improve Typing Speed?
+          Want to Improve Your Typing Speed?
         </h3>
         <p className="text-blue-100 mb-6">
-          Join our Computer or Spoken English courses.
+          Join our Computer or Spoken English courses today.
         </p>
         <div className="flex justify-center gap-4">
           <a
