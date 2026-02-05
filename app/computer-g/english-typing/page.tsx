@@ -3,86 +3,224 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 
-/* 🔁 Reused HOME components */
 import HomeVideoSection from "../../components/HomeVideoSection";
 import HomeVideoReviewsSection from "../../components/HomeVideoReviewsSection";
 import GallerySection from "../../components/GallerySection";
 import TestimonialsSection from "../../components/TestimonialsSection";
 import Footer from "../../components/Footer";
 
-/* ================= PRACTICE TEXTS ================= */
+/* ================= 15 DAYS TYPING PLAN ================= */
 
-const practiceTexts = [
-  "Typing regularly helps you improve speed and accuracy. Focus on correct fingers and maintain a steady rhythm while typing each word carefully.",
-  "Computer skills are essential in today’s world. Practicing typing daily will increase your confidence and efficiency in office work.",
-  "Consistency is the key to success. Spend at least fifteen minutes every day on typing practice to see visible improvement."
+const typingPlan = [
+  {
+    day: "Day 1",
+    title: "Home Row Practice",
+    pairs: [
+      ["as", "df"],
+      ["jk", "la"],
+      ["sa", "fd"],
+      ["al", "kj"],
+      ["fa", "js"],
+      ["da", "kl"],
+      ["sd", "fj"],
+      ["lk", "aj"],
+      ["aa", "ss"],
+      ["dd", "ff"],
+    ],
+  },
+  {
+    day: "Day 2",
+    title: "Upper Row Practice",
+    pairs: [
+      ["qw", "er"],
+      ["ui", "op"],
+      ["ty", "re"],
+      ["io", "yu"],
+      ["we", "rt"],
+      ["qp", "wo"],
+      ["ee", "rr"],
+      ["tt", "yy"],
+      ["uu", "ii"],
+      ["oo", "pp"],
+    ],
+  },
+  {
+    day: "Day 3",
+    title: "Home + Upper Mix",
+    pairs: [
+      ["as", "we"],
+      ["df", "rt"],
+      ["jk", "ui"],
+      ["kl", "op"],
+      ["sa", "er"],
+      ["fd", "ty"],
+      ["aj", "yu"],
+      ["lk", "io"],
+      ["qw", "as"],
+      ["er", "df"],
+    ],
+  },
+  {
+    day: "Day 4",
+    title: "Lower Row Practice",
+    pairs: [
+      ["zx", "cv"],
+      ["bn", "nm"],
+      ["xc", "vb"],
+      ["mn", "cb"],
+      ["zz", "xx"],
+      ["cc", "vv"],
+      ["bb", "nn"],
+      ["mm", "zz"],
+    ],
+  },
+  {
+    day: "Day 5",
+    title: "Home + Lower Mix",
+    pairs: [
+      ["as", "zx"],
+      ["df", "cv"],
+      ["jk", "nm"],
+      ["kl", "vb"],
+      ["sa", "xc"],
+      ["fd", "bn"],
+      ["aj", "mn"],
+      ["lk", "cb"],
+    ],
+  },
+  {
+    day: "Day 6",
+    title: "Upper + Lower Mix",
+    pairs: [
+      ["qw", "zx"],
+      ["er", "cv"],
+      ["ui", "nm"],
+      ["op", "vb"],
+      ["we", "xc"],
+      ["rt", "bn"],
+      ["yu", "mn"],
+      ["io", "cb"],
+    ],
+  },
+  {
+    day: "Day 7",
+    title: "All Rows Practice",
+    pairs: [
+      ["as", "qw"],
+      ["zx", "er"],
+      ["df", "cv"],
+      ["jk", "ui"],
+      ["nm", "op"],
+      ["la", "we"],
+      ["vb", "rt"],
+      ["mn", "yu"],
+    ],
+  },
+  {
+    day: "Day 8",
+    title: "Random Mix",
+    pairs: [
+      ["qa", "zm"],
+      ["we", "xn"],
+      ["rt", "cv"],
+      ["yu", "bn"],
+      ["io", "kl"],
+      ["op", "as"],
+      ["qw", "mn"],
+      ["er", "cb"],
+    ],
+  },
+  {
+    day: "Day 9",
+    title: "Small English Words",
+    pairs: [
+      ["in", "on"],
+      ["to", "is"],
+      ["at", "up"],
+      ["we", "go"],
+      ["me", "my"],
+      ["he", "it"],
+    ],
+  },
+  {
+    day: "Day 10",
+    title: "Medium Words",
+    pairs: [
+      ["this", "that"],
+      ["have", "will"],
+      ["good", "time"],
+      ["work", "type"],
+      ["fast", "keys"],
+    ],
+  },
+  {
+    day: "Day 11",
+    title: "Capital Letters (Shift)",
+    pairs: [
+      ["This", "That"],
+      ["Good", "Time"],
+      ["Work", "Type"],
+      ["Have", "Will"],
+    ],
+  },
+  {
+    day: "Day 12",
+    title: "Mixed Case Words",
+    pairs: [
+      ["Typing", "Practice"],
+      ["English", "Computer"],
+      ["Student", "Keyboard"],
+      ["Office", "Skill"],
+    ],
+  },
+  {
+    day: "Day 13",
+    title: "Double Capital Words",
+    pairs: [
+      ["Good Job", "New Day"],
+      ["Best Work", "Fast Typing"],
+      ["Right Hand", "Left Hand"],
+    ],
+  },
+  {
+    day: "Day 14",
+    title: "Exam Style Words",
+    pairs: [
+      ["data entry", "office work"],
+      ["computer skill", "typing speed"],
+    ],
+  },
+  {
+    day: "Day 15",
+    title: "Final Challenge",
+    pairs: [
+      ["Typing Practice", "Computer Skills"],
+      ["Office Work", "English Typing"],
+    ],
+  },
 ];
 
 export default function EnglishTypingPage() {
-  const [started, setStarted] = useState(false);
-  const [completed, setCompleted] = useState(false);
+  const [activeDay, setActiveDay] = useState(0);
   const [input, setInput] = useState("");
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [timeTaken, setTimeTaken] = useState(0);
-  const [textIndex, setTextIndex] = useState(0);
 
-  const text = useMemo(() => practiceTexts[textIndex], [textIndex]);
+  const currentDay = typingPlan[activeDay];
 
-  /* Desktop only check */
+  /* Desktop only */
   const [isDesktop, setIsDesktop] = useState(true);
-
   useEffect(() => {
-    if (window.innerWidth < 1024) {
-      setIsDesktop(false);
-    }
+    if (window.innerWidth < 1024) setIsDesktop(false);
   }, []);
-
-  /* Typing logic */
-  useEffect(() => {
-    if (!started || completed) return;
-
-    if (input.length === text.length) {
-      const end = Date.now();
-      setTimeTaken(Math.floor((end - (startTime || end)) / 1000));
-      setCompleted(true);
-      setStarted(false);
-    }
-  }, [input, started, completed, text, startTime]);
-
-  const handleStart = () => {
-    setInput("");
-    setCompleted(false);
-    setStarted(true);
-    setStartTime(Date.now());
-  };
-
-  const handleReset = () => {
-    setStarted(false);
-    setCompleted(false);
-    setInput("");
-    setTimeTaken(0);
-    setStartTime(null);
-    setTextIndex((prev) => (prev + 1) % practiceTexts.length);
-  };
-
-  const mistakes = input.split("").filter((c, i) => c !== text[i]).length;
-  const wordsTyped = input.trim().split(/\s+/).length;
-  const minutes = timeTaken / 60 || 1 / 60;
-  const wpm = Math.round(wordsTyped / minutes);
-  const accuracy = input.length
-    ? Math.max(0, Math.round(((input.length - mistakes) / input.length) * 100))
-    : 100;
 
   if (!isDesktop) {
     return (
-      <section className="min-h-screen flex items-center justify-center text-center px-4">
-        <div className="max-w-md bg-white p-6 rounded-xl shadow">
-          <h2 className="text-xl font-bold mb-3 text-red-600">
+      <section className="min-h-screen flex items-center justify-center px-4 text-center">
+        <div className="bg-white p-6 rounded-xl shadow max-w-md">
+          <h2 className="text-xl font-bold text-red-600 mb-2">
             Desktop Required
           </h2>
           <p className="text-gray-600">
-            English Typing Practice works only on desktop or laptop for best
-            accuracy and learning experience.
+            English Typing Practice works best on desktop or laptop only.
           </p>
         </div>
       </section>
@@ -97,12 +235,11 @@ export default function EnglishTypingPage() {
           English Typing Practice
         </h1>
         <p className="max-w-2xl mx-auto text-gray-600">
-          Improve your typing speed and accuracy with daily English typing
-          practice at Computer-G.
+          15 Days structured typing practice plan for beginners.
         </p>
       </section>
 
-      {/* ⭐ Google Reviews Trust Badge */}
+      {/* ⭐ Google Reviews */}
       <section className="px-4 pt-6">
         <div className="max-w-4xl mx-auto flex justify-center">
           <div className="flex items-center gap-4 bg-white border rounded-2xl px-5 py-4 shadow-sm">
@@ -126,86 +263,63 @@ export default function EnglishTypingPage() {
         </div>
       </section>
 
-      {/* OVERVIEW */}
-      <section className="px-4 py-12 bg-white text-center">
-        <h2 className="text-2xl font-bold mb-4">
-          Practice English Typing Daily
-        </h2>
-        <p className="max-w-3xl mx-auto text-gray-600">
-          This typing practice system is designed for beginners to improve
-          typing speed, accuracy and confidence for exams, office work and
-          daily computer use.
-        </p>
-      </section>
+      {/* TABS */}
+      <section className="px-4 py-12 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-wrap gap-2 justify-center mb-8">
+            {typingPlan.map((d, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  setActiveDay(i);
+                  setInput("");
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                  activeDay === i
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700"
+                }`}
+              >
+                {d.day}
+              </button>
+            ))}
+          </div>
 
-      {/* TYPING PRACTICE SYSTEM */}
-      <section className="px-4 py-14 bg-gray-50">
-        <div className="max-w-5xl mx-auto bg-white p-6 rounded-xl shadow">
-          <p className="mb-4 text-gray-700 font-medium">
-            Type the following text:
+          <h2 className="text-2xl font-bold text-center mb-2">
+            {currentDay.title}
+          </h2>
+          <p className="text-center text-gray-600 mb-6">
+            Type each word pair <strong>3 times</strong>. Do not copy or paste.
           </p>
 
-          <div className="mb-6 p-4 border rounded text-gray-800 leading-relaxed">
-            {text.split("").map((char, i) => {
-              let color = "";
-              if (i < input.length) {
-                color =
-                  input[i] === char ? "text-green-600" : "text-red-600";
-              }
-              return (
-                <span key={i} className={color}>
-                  {char}
-                </span>
-              );
-            })}
+          <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+            {currentDay.pairs.map((pair, i) => (
+              <div
+                key={i}
+                className="border rounded-lg p-4 text-center text-lg font-semibold"
+              >
+                <span className="text-blue-600">{pair[0]}</span>{" "}
+                <span className="text-red-600">{pair[1]}</span>
+              </div>
+            ))}
           </div>
 
           <textarea
             value={input}
-            disabled={!started}
             onChange={(e) => setInput(e.target.value)}
-            className="w-full border rounded p-3 h-28 focus:outline-none focus:ring"
-            placeholder="Click Start and begin typing here..."
             onPaste={(e) => e.preventDefault()}
+            placeholder="Type here..."
+            className="mt-8 w-full max-w-4xl mx-auto block border rounded-lg p-4 h-32 focus:outline-none focus:ring"
           />
-
-          <div className="flex flex-wrap gap-4 justify-between mt-6 text-sm text-gray-700">
-            <div>⏱ Time: {timeTaken}s</div>
-            <div>⚡ Speed: {completed ? wpm : 0} WPM</div>
-            <div>🎯 Accuracy: {completed ? accuracy : 100}%</div>
-            <div>❌ Mistakes: {mistakes}</div>
-          </div>
-
-          <div className="flex gap-4 justify-center mt-6">
-            <button
-              onClick={handleStart}
-              disabled={started}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg"
-            >
-              ▶ Start
-            </button>
-            <button
-              onClick={handleReset}
-              className="bg-gray-200 px-6 py-2 rounded-lg"
-            >
-              🔄 Reset
-            </button>
-          </div>
-
-          {completed && (
-            <p className="text-center mt-6 font-semibold text-green-600">
-              Great job! Practice daily to improve your speed 🚀
-            </p>
-          )}
         </div>
       </section>
 
       {/* TRAINER */}
-      <section className="px-4 py-14 bg-white text-center">
+      <section className="px-4 py-14 bg-gray-50 text-center">
         <h2 className="text-2xl font-bold mb-6">English Typing Trainer</h2>
         <Image
           src="/home/trainer.jpg"
-          alt="English Typing Trainer"
+          alt="Typing Trainer"
           width={120}
           height={120}
           className="mx-auto rounded-full mb-4"
@@ -213,42 +327,29 @@ export default function EnglishTypingPage() {
         <p className="font-semibold text-gray-800">
           Experienced English & Computer Faculty
         </p>
-        <p className="text-gray-600 text-sm">
-          Helping students improve typing speed and accuracy for exams and jobs
-        </p>
       </section>
 
       {/* MEDIA */}
-      <HomeVideoSection
-        title="How English Typing Practice Works"
-        description="See how students practice typing daily to improve speed and accuracy."
-      />
-
+      <HomeVideoSection title="How Typing Practice Works" />
       <GallerySection
         title="Typing Practice Lab"
-        subtitle="Students practicing English typing at Computer-G"
+        subtitle="Students practicing typing daily"
         basePath="/english-typing"
       />
-
       <HomeVideoReviewsSection
         title="Typing Practice Student Reviews"
-        subtitle="Students sharing their typing improvement experience"
         courseLabel="English Typing Practice"
       />
-
-      <TestimonialsSection
-        heading="What our Typing Practice Students Say"
-      />
+      <TestimonialsSection heading="What our Typing Students Say" />
 
       {/* CTA */}
       <section className="px-4 py-14 bg-blue-600 text-white text-center">
         <h3 className="text-2xl font-semibold mb-3">
-          Want to Improve Your Typing Faster?
+          Want to Improve Typing Speed?
         </h3>
         <p className="text-blue-100 mb-6">
-          Join our Computer or Spoken English courses at Computer-G.
+          Join our Computer or Spoken English courses.
         </p>
-
         <div className="flex justify-center gap-4">
           <a
             href="tel:9713014234"
