@@ -1,5 +1,4 @@
 import ComputerGCoursesSection from "../components/ComputerGCoursesSection";
-import ContactSection from "../components/ContactSection";
 import Footer from "../components/Footer";
 
 export const metadata = {
@@ -92,7 +91,7 @@ export default function ComputerGPage() {
         </div>
       </section>
 
-      {/* ================= SINGLE CTA ================= */}
+      {/* ================= SINGLE CTA (FINAL) ================= */}
       <section className="px-4 py-14 bg-blue-600 text-white text-center">
         <h2 className="text-2xl font-semibold mb-3">
           Want to Join Computer Courses at Computer-G?
@@ -121,7 +120,6 @@ export default function ComputerGPage() {
         </div>
       </section>
 
-      <ContactSection />
       <Footer />
     </>
   );
