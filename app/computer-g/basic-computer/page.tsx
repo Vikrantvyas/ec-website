@@ -171,6 +171,40 @@ export default function BasicComputerPage() {
         </p>
       </section>
 
+      {/* ⭐ Google Reviews Trust Badge (SAME AS HOME) */}
+      <section className="px-4 pt-6">
+        <div className="max-w-4xl mx-auto flex justify-center">
+          <div
+            className="
+              flex items-center gap-4
+              bg-white border rounded-2xl
+              px-5 py-4
+              shadow-sm
+              hover-lift
+              animate-fadeUp
+            "
+          >
+            <span className="text-xl font-bold leading-none">
+              <span className="text-blue-500">G</span>
+              <span className="text-red-500">o</span>
+              <span className="text-yellow-500">o</span>
+              <span className="text-blue-500">g</span>
+              <span className="text-green-500">l</span>
+              <span className="text-red-500">e</span>
+            </span>
+
+            <div className="text-sm">
+              <p className="font-semibold text-gray-800 flex items-center gap-1">
+                4.9 / 5 <span className="text-yellow-400">★★★★★</span>
+              </p>
+              <p className="text-gray-500">
+                Google Reviews • Trusted by students in Indore
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* OVERVIEW */}
       <section className="px-4 py-12 bg-white text-center">
         <h2 className="text-2xl font-bold mb-4">Course Overview</h2>
@@ -206,9 +240,7 @@ export default function BasicComputerPage() {
 
       {/* TRAINER */}
       <section className="px-4 py-14 bg-white text-center">
-        <h2 className="text-2xl font-bold mb-6">
-          Basic Computer Trainer
-        </h2>
+        <h2 className="text-2xl font-bold mb-6">Basic Computer Trainer</h2>
         <Image
           src="/home/trainer.jpg"
           alt="Basic Computer Trainer"
@@ -237,7 +269,7 @@ export default function BasicComputerPage() {
         </ul>
       </section>
 
-      {/* COURSE-SPECIFIC MEDIA (HOME STYLE) */}
+      {/* MEDIA */}
       <HomeVideoSection
         title="How Basic Computer Classes Work"
         description="See how students learn computers practically in our lab with real assignments."
@@ -255,9 +287,7 @@ export default function BasicComputerPage() {
         courseLabel="Basic Computer Course"
       />
 
-      <TestimonialsSection
-        heading="What our Basic Computer Students Say"
-      />
+      <TestimonialsSection heading="What our Basic Computer Students Say" />
 
       {/* SINGLE CTA */}
       <section className="px-4 py-14 bg-blue-600 text-white text-center">
