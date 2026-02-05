@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 
 import HomeVideoSection from "../../components/HomeVideoSection";
@@ -9,7 +9,7 @@ import GallerySection from "../../components/GallerySection";
 import TestimonialsSection from "../../components/TestimonialsSection";
 import Footer from "../../components/Footer";
 
-/* ================= FINAL WORD DATA ================= */
+/* ================= WORD DATA ================= */
 
 const days = [
   {
@@ -113,11 +113,24 @@ export default function EnglishTypingPage() {
     );
   }
 
-  const wordsArray = days[activeDay].words.split(" ");
-  const linesTyped = input.split("\n").filter((l) => l.trim() !== "").length;
+  /* ---------- WORD PAIR COLOR LOGIC ---------- */
+  const words = useMemo(
+    () => days[activeDay].words.split(" "),
+    [activeDay]
+  );
 
+  /* ---------- LINE COUNT (VISUAL) ---------- */
+  const approxCharsPerLine = 45;
+  const linesTyped = Math.max(
+    1,
+    Math.ceil(input.length / approxCharsPerLine)
+  );
+
+  /* ---------- TYPING COLOR (3 LINES BLOCK) ---------- */
   const typingColor =
-    Math.floor(linesTyped / 3) % 2 === 0 ? "text-blue-600" : "text-green-600";
+    Math.floor((linesTyped - 1) / 3) % 2 === 0
+      ? "text-blue-600"
+      : "text-green-600";
 
   return (
     <>
@@ -153,31 +166,26 @@ export default function EnglishTypingPage() {
             ))}
           </div>
 
-          {/* WORDS DISPLAY */}
+          {/* WORDS (PAIR COLOR) */}
           <div className="max-w-5xl mx-auto text-lg leading-relaxed mb-2">
-            {wordsArray.map((word, i) => (
-              <span
-                key={i}
-                className={i % 2 === 0 ? "text-blue-600" : "text-green-600"}
-              >
-                {word}{" "}
-              </span>
-            ))}
+            {words.map((word, i) => {
+              const pairIndex = Math.floor(i / 2);
+              const color =
+                pairIndex % 2 === 0 ? "text-blue-600" : "text-green-600";
+              return (
+                <span key={i} className={color}>
+                  {word}{" "}
+                </span>
+              );
+            })}
           </div>
 
-          {/* SINGLE INSTRUCTION */}
+          {/* INSTRUCTION */}
           <p className="text-center text-red-600 mb-4">
             Type each word pair in three lines
           </p>
 
-          {/* LINE COUNTER */}
-          <div className="text-center mb-4">
-            <span className="inline-block bg-black text-white px-5 py-2 rounded-full text-lg font-bold">
-              Lines typed: {linesTyped}
-            </span>
-          </div>
-
-          {/* TYPING BOX */}
+          {/* TEXTAREA */}
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -186,6 +194,13 @@ export default function EnglishTypingPage() {
             className={`w-full max-w-5xl mx-auto block border rounded-lg p-4 text-base focus:outline-none focus:ring ${typingColor}`}
             style={{ height: "240px" }}
           />
+
+          {/* LINE COUNTER (BELOW TEXTAREA) */}
+          <div className="text-center mt-4">
+            <span className="inline-block bg-black text-white px-5 py-2 rounded-full text-lg font-bold">
+              Lines typed: {linesTyped}
+            </span>
+          </div>
         </div>
       </section>
 
