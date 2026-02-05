@@ -9,7 +9,7 @@ import GallerySection from "../../components/GallerySection";
 import TestimonialsSection from "../../components/TestimonialsSection";
 import Footer from "../../components/Footer";
 
-/* ================= 15 DAYS FINAL WORD DATA ================= */
+/* ================= FINAL WORD DATA ================= */
 
 const days = [
   {
@@ -67,28 +67,25 @@ const days = [
     words:
       "Zylograph Resolution Raging Horizen Judicial Zoography Typewriter Cheque Maximum Electric Sentiment Stenograph",
   },
-
-  /* Day 12–15 (designed) */
-
   {
     day: "Day 12",
     words:
-      "Typing Practice Computer Skills Office Work Data Entry Keyboard Accuracy Speed Control",
+      "Typing Practice Computer Skills Office Work Data Entry Keyboard Accuracy Speed Control Typing Speed Practice",
   },
   {
     day: "Day 13",
     words:
-      "Professional Communication Business Writing Technical Knowledge Practical Training",
+      "Professional Communication Business Writing Technical Knowledge Practical Training Daily Practice Improvement",
   },
   {
     day: "Day 14",
     words:
-      "Examination Preparation Speed Accuracy Consistency Confidence Improvement",
+      "Examination Preparation Speed Accuracy Consistency Confidence Improvement Continuous Practice Evaluation",
   },
   {
     day: "Day 15",
     words:
-      "Final Typing Challenge Maintain Rhythm Improve Speed Achieve Accuracy",
+      "Final Typing Challenge Maintain Rhythm Improve Speed Achieve Accuracy Professional Performance",
   },
 ];
 
@@ -116,10 +113,10 @@ export default function EnglishTypingPage() {
     );
   }
 
-  const text = days[activeDay].words;
+  const wordsArray = days[activeDay].words.split(" ");
   const linesTyped = input.split("\n").filter((l) => l.trim() !== "").length;
 
-  const lineColor =
+  const typingColor =
     Math.floor(linesTyped / 3) % 2 === 0 ? "text-blue-600" : "text-green-600";
 
   return (
@@ -156,23 +153,28 @@ export default function EnglishTypingPage() {
             ))}
           </div>
 
-          {/* INSTRUCTIONS */}
-          <div className="text-center mb-6 text-gray-700 font-medium">
-            <p>Type each word pair three times</p>
-            <p>Complete three full lines</p>
-            <p>Focus on accuracy first</p>
+          {/* WORDS DISPLAY */}
+          <div className="max-w-5xl mx-auto text-lg leading-relaxed mb-2">
+            {wordsArray.map((word, i) => (
+              <span
+                key={i}
+                className={i % 2 === 0 ? "text-blue-600" : "text-green-600"}
+              >
+                {word}{" "}
+              </span>
+            ))}
           </div>
+
+          {/* SINGLE INSTRUCTION */}
+          <p className="text-center text-red-600 mb-4">
+            Type each word pair in three lines
+          </p>
 
           {/* LINE COUNTER */}
           <div className="text-center mb-4">
             <span className="inline-block bg-black text-white px-5 py-2 rounded-full text-lg font-bold">
-              Lines typed: {linesTyped} / 3
+              Lines typed: {linesTyped}
             </span>
-          </div>
-
-          {/* WORD TEXT */}
-          <div className="max-w-5xl mx-auto text-lg leading-relaxed mb-6 font-semibold">
-            {text}
           </div>
 
           {/* TYPING BOX */}
@@ -181,8 +183,8 @@ export default function EnglishTypingPage() {
             onChange={(e) => setInput(e.target.value)}
             onPaste={(e) => e.preventDefault()}
             placeholder="Start typing here..."
-            className={`w-full max-w-5xl mx-auto block border rounded-lg p-4 text-base focus:outline-none focus:ring ${lineColor}`}
-            style={{ height: "240px" }} // ~10–12 lines
+            className={`w-full max-w-5xl mx-auto block border rounded-lg p-4 text-base focus:outline-none focus:ring ${typingColor}`}
+            style={{ height: "240px" }}
           />
         </div>
       </section>
@@ -197,7 +199,7 @@ export default function EnglishTypingPage() {
           height={120}
           className="mx-auto rounded-full mb-4"
         />
-        <p className="font-semibold text-gray-800">
+        <p className="text-gray-800">
           Experienced English & Computer Faculty
         </p>
       </section>
