@@ -9,158 +9,86 @@ import GallerySection from "../../components/GallerySection";
 import TestimonialsSection from "../../components/TestimonialsSection";
 import Footer from "../../components/Footer";
 
-/* ================= 15 DAYS CONTINUOUS TYPING CONTENT ================= */
+/* ================= 15 DAYS FINAL WORD DATA ================= */
 
-const typingDays = [
+const days = [
   {
     day: "Day 1",
-    title: "Basic Home Row Words",
-    text: [
-      ["add as", "ha gas"],
-      ["hag ask", "ass fall"],
-      ["fad flag", "all lad"],
-      ["lag dash", "gash jag"],
-      ["gag gall", "flash glass"],
-      ["sad hall", "hash half"],
-      ["flask lash", "shall shah"],
-      ["kaka shad", "add as"],
-    ],
+    words:
+      "add gas ask ass fall fad flag all dash flash glass sad hall half flask shall shah kaka",
   },
   {
     day: "Day 2",
-    title: "Short Words Practice",
-    text: [
-      ["to tie", "too tope"],
-      ["tot toy", "tri tree"],
-      ["true tour", "rope row"],
-      ["rat out", "pity porter"],
-      ["poor pope", "poppet port"],
-    ],
+    words:
+      "to tie too toy tri tree true tour rope row rat out pity porter poor port upper trip towel worry root repute power peep yellow quiet",
   },
   {
     day: "Day 3",
-    title: "Mixed Short Words",
-    text: [
-      ["fox was", "zoo ooz"],
-      ["zip zax", "siz lozy"],
-      ["cozy razer", "zeal maze"],
-      ["zulum zinky", "zone zebra"],
-    ],
+    words:
+      "go hate hot leg kill jug pastry skipper peru good hydro wood hair joy was",
   },
   {
     day: "Day 4",
-    title: "Word Variety Practice",
-    text: [
-      ["van xmas", "sun vain"],
-      ["elbow come", "aunt zero"],
-      ["model visit", "zigzag volume"],
-      ["moon bombay", "zoology xerasia"],
-    ],
+    words:
+      "van mam can bat fox zoo wax cat sun vat new zip cozy zeal maze zone zebra zmas vain elbow come aunt zero model visit",
   },
   {
     day: "Day 5",
-    title: "Academic Words – Easy",
-    text: [
-      ["quaint grumble", "frequent question"],
-      ["grammarian query", "flavour baldrick"],
-      ["auxiliary industrial", "knives quietly"],
-      ["graduate aeroplane", "zoological thumb"],
-    ],
+    words:
+      "Add Gas Ask Ass Fall Fad Flag All Dash Flash Glass Sad Hall Half Flask Shall Kaka",
   },
   {
     day: "Day 6",
-    title: "Academic Words – Continued",
-    text: [
-      ["credits labourer", "knowledge obediently"],
-      ["indigo boyco", "quo ent"],
-      ["zylograph resolution", "raging horizen"],
-      ["judicial zoography", "typewriter cheque"],
-    ],
+    words:
+      "To Tie Too Toy Tri Tree True Tour Rope Row Rat Out Pity Porter Poor Port Upper Trip Towel Worry Root Repute Power Quiet",
   },
-
-  /* CAPITAL LETTERS START */
-
   {
     day: "Day 7",
-    title: "Capital Letters Introduction",
-    text: [
-      ["Maximum Electric", "Sentiment Stenograph"],
-      ["Absolute Ceiling", "Defamation Election"],
-      ["Abstract Censure", "Deficit Budget"],
-    ],
+    words:
+      "Go Hate Hot Leg Kill Jug Pastry Skipper Peru Good Hydro Wood Hair Joy Was",
   },
   {
     day: "Day 8",
-    title: "Office Vocabulary",
-    text: [
-      ["Emergency Abundant", "Chairman Default"],
-      ["Employer Academic", "Chancellor Demotion"],
-      ["Enclosure Academy", "Character Deputation"],
-    ],
+    words:
+      "Van Mam Can Bat Fox Zoo Wax Cat Sun Vat New Zip Cozy Zeal Maze Zone Zebra Zmas Vain Elbow Come Aunt Zero Model Visit",
   },
   {
     day: "Day 9",
-    title: "Administration Words",
-    text: [
-      ["Encroachment Access", "Circular Designation"],
-      ["Evaluation Factory", "Gallery Hereditary"],
-      ["Illegible Faculty", "Gazetted Highway"],
-    ],
+    words:
+      "Volume Bombay Zoology Vulture Victoria Quaint Grumble Frequent Question Grammarian Query Flavour Baldrick Auzillary Industrial Knives Quietly",
   },
   {
     day: "Day 10",
-    title: "Governance Words",
-    text: [
-      ["Immediate Family", "General Homage"],
-      ["Impartial Federation", "Governor Honorable"],
-      ["Feudalism Gratis", "Honorary Implementation"],
-    ],
+    words:
+      "Graduate Aeroplane Zoological Thumb Credits Absolute Celling Defamation Election Labourer Knowledge Obediently Indigo Boycott Quotient",
   },
   {
     day: "Day 11",
-    title: "Policy & Law",
-    text: [
-      ["Fictitious Claim", "Gratuity Hostile"],
-      ["Imprisonment Gradation", "Incidental Journalism"],
-      ["Library Magistrate", "National Journalist"],
-    ],
+    words:
+      "Zylograph Resolution Raging Horizen Judicial Zoography Typewriter Cheque Maximum Electric Sentiment Stenograph",
   },
+
+  /* Day 12–15 (designed) */
+
   {
     day: "Day 12",
-    title: "Legal Language",
-    text: [
-      ["Labour Malpractice", "Nationalization Judgment"],
-      ["Landmark Maintenance", "Navigation Jubilee"],
-      ["Ledger Manifesto", "Nearest Judicial"],
-    ],
+    words:
+      "Typing Practice Computer Skills Office Work Data Entry Keyboard Accuracy Speed Control",
   },
   {
     day: "Day 13",
-    title: "Advanced Legal Terms",
-    text: [
-      ["Legislative Manipulation", "Necessary Jurisdiction"],
-      ["Litigation Manuscript", "Negligence Justice"],
-      ["Livelihood Maximum", "Nepotism Sabotage"],
-    ],
+    words:
+      "Professional Communication Business Writing Technical Knowledge Practical Training",
   },
   {
     day: "Day 14",
-    title: "Professional Vocabulary",
-    text: [
-      ["Technical Unconfirmed", "Vacancy Safeguard"],
-      ["Temporary Uncontested", "Vacation Schedule"],
-      ["Terminology Undertaking", "Vehicle Scrutiny"],
-    ],
+    words:
+      "Examination Preparation Speed Accuracy Consistency Confidence Improvement",
   },
   {
     day: "Day 15",
-    title: "Final Typing Challenge",
-    text: [
-      ["Tourism Unified", "Vague Secretariat"],
-      ["Transfer Urban", "Area Valid"],
-      ["Standard Transmission", "Valuation Suspension"],
-      ["Tribunal Underage", "Vacation"],
-    ],
+    words:
+      "Final Typing Challenge Maintain Rhythm Improve Speed Achieve Accuracy",
   },
 ];
 
@@ -175,20 +103,24 @@ export default function EnglishTypingPage() {
 
   if (!isDesktop) {
     return (
-      <section className="min-h-screen flex items-center justify-center text-center px-4">
+      <section className="min-h-screen flex items-center justify-center px-4 text-center">
         <div className="bg-white p-6 rounded-xl shadow max-w-md">
           <h2 className="text-xl font-bold text-red-600 mb-2">
             Desktop Required
           </h2>
           <p className="text-gray-600">
-            English Typing Practice works best on desktop or laptop.
+            English Typing Practice works only on desktop or laptop.
           </p>
         </div>
       </section>
     );
   }
 
-  const current = typingDays[activeDay];
+  const text = days[activeDay].words;
+  const linesTyped = input.split("\n").filter((l) => l.trim() !== "").length;
+
+  const lineColor =
+    Math.floor(linesTyped / 3) % 2 === 0 ? "text-blue-600" : "text-green-600";
 
   return (
     <>
@@ -198,39 +130,15 @@ export default function EnglishTypingPage() {
           English Typing Practice
         </h1>
         <p className="max-w-2xl mx-auto text-gray-600">
-          15 Days structured English typing practice system.
+          15 Days structured English typing practice system
         </p>
       </section>
 
-      {/* ⭐ GOOGLE REVIEWS */}
-      <section className="px-4 pt-6">
-        <div className="max-w-4xl mx-auto flex justify-center">
-          <div className="flex items-center gap-4 bg-white border rounded-2xl px-5 py-4 shadow-sm">
-            <span className="text-xl font-bold">
-              <span className="text-blue-500">G</span>
-              <span className="text-red-500">o</span>
-              <span className="text-yellow-500">o</span>
-              <span className="text-blue-500">g</span>
-              <span className="text-green-500">l</span>
-              <span className="text-red-500">e</span>
-            </span>
-            <div className="text-sm">
-              <p className="font-semibold text-gray-800">
-                4.9 / 5 <span className="text-yellow-400">★★★★★</span>
-              </p>
-              <p className="text-gray-500">
-                Google Reviews • Trusted by students in Indore
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* DAY TABS + CONTENT */}
-      <section className="px-4 py-12 bg-white">
+      {/* DAY TABS */}
+      <section className="px-4 py-10 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-wrap gap-2 justify-center mb-8">
-            {typingDays.map((d, i) => (
+          <div className="flex flex-wrap gap-2 justify-center mb-6">
+            {days.map((d, i) => (
               <button
                 key={i}
                 onClick={() => {
@@ -248,33 +156,33 @@ export default function EnglishTypingPage() {
             ))}
           </div>
 
-          <h2 className="text-2xl font-bold text-center mb-2">
-            {current.title}
-          </h2>
-          <p className="text-center text-gray-600 mb-6">
-            Type each word pair three times. Do not copy or paste.
-          </p>
-
-          <div className="max-w-4xl mx-auto text-lg leading-relaxed mb-8">
-            {current.text.map((pair, i) => (
-              <span key={i}>
-                <span className="text-blue-600 font-semibold">
-                  {pair[0]}
-                </span>{" "}
-                <span className="text-green-600 font-semibold">
-                  {pair[1]}
-                </span>{" "}
-              </span>
-            ))}
+          {/* INSTRUCTIONS */}
+          <div className="text-center mb-6 text-gray-700 font-medium">
+            <p>Type each word pair three times</p>
+            <p>Complete three full lines</p>
+            <p>Focus on accuracy first</p>
           </div>
 
+          {/* LINE COUNTER */}
+          <div className="text-center mb-4">
+            <span className="inline-block bg-black text-white px-5 py-2 rounded-full text-lg font-bold">
+              Lines typed: {linesTyped} / 3
+            </span>
+          </div>
+
+          {/* WORD TEXT */}
+          <div className="max-w-5xl mx-auto text-lg leading-relaxed mb-6 font-semibold">
+            {text}
+          </div>
+
+          {/* TYPING BOX */}
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onPaste={(e) => e.preventDefault()}
             placeholder="Start typing here..."
-            className="w-full max-w-4xl mx-auto block border rounded-lg p-4 text-base focus:outline-none focus:ring"
-            style={{ height: "220px" }} // ~10–12 lines
+            className={`w-full max-w-5xl mx-auto block border rounded-lg p-4 text-base focus:outline-none focus:ring ${lineColor}`}
+            style={{ height: "240px" }} // ~10–12 lines
           />
         </div>
       </section>
@@ -295,7 +203,7 @@ export default function EnglishTypingPage() {
       </section>
 
       {/* MEDIA */}
-      <HomeVideoSection title="How English Typing Practice Works" />
+      <HomeVideoSection title="How Typing Practice Works" />
       <GallerySection
         title="Typing Practice Lab"
         subtitle="Students practicing typing daily"
@@ -306,30 +214,6 @@ export default function EnglishTypingPage() {
         courseLabel="English Typing Practice"
       />
       <TestimonialsSection heading="What our Typing Students Say" />
-
-      {/* CTA */}
-      <section className="px-4 py-14 bg-blue-600 text-white text-center">
-        <h3 className="text-2xl font-semibold mb-3">
-          Want to Improve Your Typing Speed?
-        </h3>
-        <p className="text-blue-100 mb-6">
-          Join our Computer or Spoken English courses today.
-        </p>
-        <div className="flex justify-center gap-4">
-          <a
-            href="tel:9713014234"
-            className="bg-white text-blue-700 px-6 py-3 rounded-lg font-medium"
-          >
-            📞 Call Now
-          </a>
-          <a
-            href="https://wa.me/919713014234"
-            className="bg-green-500 px-6 py-3 rounded-lg font-medium"
-          >
-            💬 WhatsApp
-          </a>
-        </div>
-      </section>
 
       <Footer />
     </>
