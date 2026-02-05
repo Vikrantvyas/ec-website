@@ -8,7 +8,7 @@ export default function DesktopHeader() {
   return (
     <header className="hidden md:block fixed top-0 left-0 right-0 z-40 bg-blue-600">
       <div className="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between text-white">
-        
+
         {/* Logo + Name */}
         <Link href="/" className="flex items-center gap-2">
           <Image
@@ -37,34 +37,28 @@ export default function DesktopHeader() {
 
           {/* Social Icons */}
           <div className="flex gap-3 items-center">
-            {/* Facebook (white bg fix) */}
             <a
               href="https://www.facebook.com/englishclubindore"
               target="_blank"
-              aria-label="Facebook"
               className="w-7 h-7 flex items-center justify-center rounded-full bg-white text-[#1877F2]"
             >
               <FaFacebookF size={14} />
             </a>
 
-            {/* Instagram */}
             <a
               href="https://www.instagram.com/englishclubindore"
               target="_blank"
-              aria-label="Instagram"
-              className="text-[#E4405F]"
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-white text-[#E4405F]"
             >
-              <FaInstagram />
+              <FaInstagram size={14} />
             </a>
 
-            {/* YouTube */}
             <a
               href="https://www.youtube.com/@englishclubindore"
               target="_blank"
-              aria-label="YouTube"
-              className="text-[#FF0000]"
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-white text-[#FF0000]"
             >
-              <FaYoutube />
+              <FaYoutube size={14} />
             </a>
           </div>
         </div>
