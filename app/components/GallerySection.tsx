@@ -2,22 +2,32 @@
 
 import { useState } from "react";
 
-export default function GallerySection() {
+type Props = {
+  title?: string;
+  subtitle?: string;
+  basePath?: string;
+};
+
+export default function GallerySection({
+  title = "Gallery",
+  subtitle = "Classroom activities & institute moments",
+  basePath = "/home",
+}: Props) {
   const [activeImage, setActiveImage] = useState<string | null>(null);
 
   return (
     <section className="py-10 bg-white">
       <h2 className="text-center text-2xl font-bold mb-2">
-        Gallery
+        {title}
       </h2>
       <p className="text-center text-gray-600 mb-6">
-        Classroom activities & institute moments
+        {subtitle}
       </p>
 
       <div className="max-w-5xl mx-auto px-4">
         <div className="gallery-track">
           {[1, 2, 3, 4, 5, 6].map((item) => {
-            const imgSrc = `/home/gallery-${item}.jpg`;
+            const imgSrc = `${basePath}/gallery-${item}.jpg`;
             return (
               <div
                 className="gallery-item"
@@ -26,7 +36,7 @@ export default function GallerySection() {
               >
                 <img
                   src={imgSrc}
-                  alt={`English Club classroom activity ${item}`}
+                  alt={`${title} image ${item}`}
                   loading="lazy"
                 />
               </div>
@@ -35,7 +45,6 @@ export default function GallerySection() {
         </div>
       </div>
 
-      {/* ===== FULL VIEW MODAL ===== */}
       {activeImage && (
         <div
           className="gallery-modal"
@@ -47,7 +56,6 @@ export default function GallerySection() {
       )}
 
       <style>{`
-        /* ===== COMMON ===== */
         .gallery-track {
           display: flex;
           gap: 16px;
@@ -67,11 +75,9 @@ export default function GallerySection() {
           object-fit: cover;
         }
 
-        /* ===== DESKTOP (auto move) ===== */
         @media (min-width: 769px) {
           .gallery-track {
             animation: scrollGallery 22s linear infinite;
-            will-change: transform;
           }
 
           .gallery-item {
@@ -89,7 +95,6 @@ export default function GallerySection() {
           }
         }
 
-        /* ===== MOBILE (reels / stories style) ===== */
         @media (max-width: 768px) {
           .gallery-track {
             overflow-x: auto;
@@ -109,7 +114,6 @@ export default function GallerySection() {
           }
         }
 
-        /* ===== FULL VIEW MODAL ===== */
         .gallery-modal {
           position: fixed;
           inset: 0;

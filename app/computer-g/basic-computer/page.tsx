@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 
-/* 🔁 Reused HOME components (same style) */
+/* 🔁 Reused HOME components (course-specific props ke sath) */
 import HomeVideoSection from "../../components/HomeVideoSection";
 import HomeVideoReviewsSection from "../../components/HomeVideoReviewsSection";
 import GallerySection from "../../components/GallerySection";
@@ -51,6 +51,7 @@ const curriculum = {
       ],
     },
   ],
+
   month2: [
     {
       title: "Week 5 – Basic Excel",
@@ -75,6 +76,7 @@ const curriculum = {
       ],
     },
   ],
+
   month3: [
     {
       title: "Week 9–10 – Google Workspace",
@@ -194,6 +196,7 @@ export default function BasicComputerPage() {
         <h2 className="text-2xl md:text-3xl font-bold text-center mb-12 text-blue-700">
           Month-Wise Course Plan
         </h2>
+
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
           {renderMonth("Month 1", curriculum.month1, "m1")}
           {renderMonth("Month 2", curriculum.month2, "m2")}
@@ -201,12 +204,14 @@ export default function BasicComputerPage() {
         </div>
       </section>
 
-      {/* TEACHER */}
+      {/* TRAINER */}
       <section className="px-4 py-14 bg-white text-center">
-        <h2 className="text-2xl font-bold mb-6">Your Trainer</h2>
+        <h2 className="text-2xl font-bold mb-6">
+          Basic Computer Trainer
+        </h2>
         <Image
           src="/home/trainer.jpg"
-          alt="Computer Trainer"
+          alt="Basic Computer Trainer"
           width={120}
           height={120}
           className="mx-auto rounded-full mb-4"
@@ -232,11 +237,27 @@ export default function BasicComputerPage() {
         </ul>
       </section>
 
-      {/* MEDIA SECTIONS (HOME STYLE) */}
-      <HomeVideoSection />
-      <GallerySection />
-      <HomeVideoReviewsSection />
-      <TestimonialsSection />
+      {/* COURSE-SPECIFIC MEDIA (HOME STYLE) */}
+      <HomeVideoSection
+        title="How Basic Computer Classes Work"
+        description="See how students learn computers practically in our lab with real assignments."
+      />
+
+      <GallerySection
+        title="Basic Computer Lab Gallery"
+        subtitle="Real classroom & lab practice moments"
+        basePath="/computer-g/basic"
+      />
+
+      <HomeVideoReviewsSection
+        title="Basic Computer Student Video Reviews"
+        subtitle="Real students sharing their computer learning experience"
+        courseLabel="Basic Computer Course"
+      />
+
+      <TestimonialsSection
+        heading="What our Basic Computer Students Say"
+      />
 
       {/* SINGLE CTA */}
       <section className="px-4 py-14 bg-blue-600 text-white text-center">
@@ -246,6 +267,7 @@ export default function BasicComputerPage() {
         <p className="text-blue-100 mb-6">
           Call or WhatsApp us for fees, batches & demo class.
         </p>
+
         <div className="flex justify-center gap-4">
           <a
             href="tel:9713014234"

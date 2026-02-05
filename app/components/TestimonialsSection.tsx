@@ -2,7 +2,19 @@
 
 import { useRef, useState } from "react";
 
-const testimonials = [
+type Testimonial = {
+  name: string;
+  branch: string;
+  image: string;
+  text: string;
+};
+
+type Props = {
+  heading?: string;
+  testimonials?: Testimonial[];
+};
+
+const defaultTestimonials: Testimonial[] = [
   {
     name: "Riya",
     branch: "Nanda Nagar Branch",
@@ -26,7 +38,10 @@ const testimonials = [
   },
 ];
 
-export default function TestimonialsSection() {
+export default function TestimonialsSection({
+  heading = "What Our Students Say",
+  testimonials = defaultTestimonials,
+}: Props) {
   const [index, setIndex] = useState(0);
   const startX = useRef<number | null>(null);
 
@@ -47,10 +62,9 @@ export default function TestimonialsSection() {
     const endX = e.changedTouches[0].clientX;
     const diff = startX.current - endX;
 
-    // minimum swipe distance
     if (Math.abs(diff) > 50) {
-      if (diff > 0) next(); // swipe left
-      else prev(); // swipe right
+      if (diff > 0) next();
+      else prev();
     }
 
     startX.current = null;
@@ -59,11 +73,10 @@ export default function TestimonialsSection() {
   return (
     <section className="py-16 px-4 bg-gray-50 overflow-hidden">
       <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">
-        What Our Students Say
+        {heading}
       </h2>
 
       <div className="relative max-w-5xl mx-auto flex items-center justify-center">
-
         {/* LEFT ARROW – DESKTOP ONLY */}
         <button
           onClick={prev}
@@ -82,7 +95,10 @@ export default function TestimonialsSection() {
             let position = "hidden";
 
             if (i === index) position = "center";
-            else if (i === (index - 1 + testimonials.length) % testimonials.length)
+            else if (
+              i ===
+              (index - 1 + testimonials.length) % testimonials.length
+            )
               position = "left";
             else if (i === (index + 1) % testimonials.length)
               position = "right";
@@ -104,7 +120,7 @@ export default function TestimonialsSection() {
                 `}
               >
                 <div className="bg-white rounded-3xl p-6 shadow-lg w-[320px]">
-                  {/* OLD TRUSTED LAYOUT */}
+                  {/* TRUSTED LAYOUT */}
                   <div className="flex items-center gap-4 mb-4">
                     <img
                       src={t.image}
