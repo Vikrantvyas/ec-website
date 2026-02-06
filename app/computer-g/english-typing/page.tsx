@@ -100,6 +100,16 @@ export default function EnglishTypingPage() {
     }
   };
 
+  /* -------- speed (popup only) -------- */
+  const minutes =
+    startedAt !== null ? (Date.now() - startedAt) / 60000 : 0;
+
+  const grossWPM = minutes ? Math.round(typedWords.length / minutes) : 0;
+  const wrongCount = typedWords.filter((w) => w.startsWith("❌")).length;
+  const netWPM = minutes
+    ? Math.round((typedWords.length - wrongCount) / minutes)
+    : 0;
+
   return (
     <>
       {/* TABS */}
@@ -128,30 +138,36 @@ export default function EnglishTypingPage() {
       <div className="max-w-5xl mx-auto px-4">
         <div
           className="border p-4 font-mono text-lg leading-7
-          overflow-y-scroll overflow-x-hidden whitespace-normal"
-          style={{ height: "150px" }}
+          overflow-y-auto overflow-x-hidden whitespace-normal"
+          style={{ height: "180px" }}   // ✅ 2–3 lines clearly visible
         >
           <p>
-            {referenceWords.map((w, i) => {
-              let cls = "";
-              if (isParagraph) {
-                if (i === typedWords.length) cls = "bg-yellow-300";
-                else if (i < typedWords.length)
-                  cls = typedWords[i].startsWith("❌")
-                    ? "text-red-600"
-                    : "text-green-600";
-              } else {
-                cls =
-                  Math.floor(i / 2) % 2 === 0
-                    ? "text-blue-600"
-                    : "text-green-600";
-              }
-              return (
-                <span key={i} className={`${cls} mr-1`}>
-                  {w}
-                </span>
-              );
-            })}
+            {referenceWords.length === 0 && practiceWrong ? (
+              <span className="text-gray-500">
+                No wrong words to practice 🎉
+              </span>
+            ) : (
+              referenceWords.map((w, i) => {
+                let cls = "";
+                if (isParagraph) {
+                  if (i === typedWords.length) cls = "bg-yellow-300";
+                  else if (i < typedWords.length)
+                    cls = typedWords[i].startsWith("❌")
+                      ? "text-red-600"
+                      : "text-green-600";
+                } else {
+                  cls =
+                    Math.floor(i / 2) % 2 === 0
+                      ? "text-blue-600"
+                      : "text-green-600";
+                }
+                return (
+                  <span key={i} className={`${cls} mr-1`}>
+                    {w}
+                  </span>
+                );
+              })
+            )}
           </p>
         </div>
 
@@ -167,6 +183,56 @@ export default function EnglishTypingPage() {
           placeholder="Start typing here..."
         />
       </div>
+
+      {/* RESULT MODAL */}
+      {showResult && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full text-center">
+            <h2 className="text-2xl font-bold mb-4">Typing Result</h2>
+            <p>⚡ Gross WPM: {grossWPM}</p>
+            <p>🎯 Net WPM: {netWPM}</p>
+            <p>❌ Wrong Words: {wrongCount}</p>
+
+            <div className="flex gap-3 justify-center mt-4">
+              <button
+                onClick={() => {
+                  setShowResult(false);
+                  setInput("");
+                  setTypedWords([]);
+                  setStartedAt(null);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded"
+              >
+                Repeat
+              </button>
+
+              <button
+                onClick={() => {
+                  setPracticeWrong(true);
+                  setShowResult(false);
+                  setInput("");
+                  setTypedWords([]);
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded"
+              >
+                Practice Wrong Words
+              </button>
+
+              <button
+                onClick={() => {
+                  setDay((d) => Math.min(d + 1, 29));
+                  setShowResult(false);
+                  setInput("");
+                  setTypedWords([]);
+                }}
+                className="px-4 py-2 bg-gray-800 text-white rounded"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </>
