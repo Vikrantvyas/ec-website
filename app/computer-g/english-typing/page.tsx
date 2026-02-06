@@ -87,7 +87,7 @@ export default function EnglishTypingPage() {
 
     const updated = [
       ...typedWords,
-      typed === expected ? typed : `❌${expected}`, // ✅ correct word stored
+      typed === expected ? typed : `❌${expected}`, // correct word stored
     ];
     setTypedWords(updated);
 
@@ -100,7 +100,7 @@ export default function EnglishTypingPage() {
     }
   };
 
-  /* -------- speed -------- */
+  /* -------- speed (only for popup) -------- */
   const minutes =
     startedAt !== null ? (Date.now() - startedAt) / 60000 : 0;
 
@@ -138,8 +138,8 @@ export default function EnglishTypingPage() {
       <div className="max-w-5xl mx-auto px-4">
         <div
           className="border p-4 font-mono text-lg leading-relaxed
-          overflow-y-auto overflow-x-hidden whitespace-normal"
-          style={{ height: "150px" }}   // ✅ fixed height = vertical scroll guaranteed
+          overflow-y-scroll overflow-x-hidden whitespace-normal"
+          style={{ height: "120px" }}   // 👈 fixed small height = scroll guaranteed
         >
           {referenceWords.length === 0 && practiceWrong ? (
             <span className="text-gray-500">No wrong words to practice 🎉</span>
@@ -166,14 +166,6 @@ export default function EnglishTypingPage() {
             })
           )}
         </div>
-
-        {/* SPEED */}
-        {isParagraph && (
-          <div className="flex gap-6 justify-center my-4 font-semibold">
-            <span>⚡ Gross WPM: {grossWPM}</span>
-            <span>🎯 Net WPM: {netWPM}</span>
-          </div>
-        )}
 
         {/* TEXTAREA */}
         <textarea
