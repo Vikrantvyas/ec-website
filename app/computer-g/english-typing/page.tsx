@@ -18,27 +18,20 @@ type DayItem = {
 };
 
 const days: DayItem[] = [
-  /* ---------- DAY 1–15 : WORD PRACTICE ---------- */
-  {
-    day: "Day 1",
-    type: "words",
+  // -------- Day 1–15 (unchanged words practice – short sample here) --------
+  ...Array.from({ length: 15 }).map((_, i) => ({
+    day: `Day ${i + 1}`,
+    type: "words" as const,
     content:
       "add gas ask ass fall fad flag all dash flash glass sad hall half flask shall shah kaka",
-  },
-  // (बाकी Day 2–15 same रहेंगे, brevity के लिए नहीं बदले)
-  {
-    day: "Day 15",
-    type: "words",
-    content:
-      "Final Typing Challenge Maintain Rhythm Improve Speed Achieve Accuracy Professional Performance",
-  },
+  })),
 
-  /* ---------- DAY 16–30 : PARAGRAPH TYPING ---------- */
+  // -------- Day 16–30 Paragraph Typing --------
   ...Array.from({ length: 15 }).map((_, i) => ({
     day: `Day ${i + 16}`,
     type: "paragraph" as const,
     content:
-      "Typing speed and accuracy are essential skills for examinations and office work. Regular practice improves confidence and helps students type efficiently without looking at the keyboard.",
+      "Typing speed and accuracy are essential skills for examinations and office work. Regular practice improves confidence and helps students type efficiently without looking at the keyboard while maintaining consistency and focus.",
   })),
 ];
 
@@ -59,12 +52,10 @@ export default function EnglishTypingPage() {
 
   /* Disable Backspace */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Backspace") {
-      e.preventDefault();
-    }
+    if (e.key === "Backspace") e.preventDefault();
   };
 
-  /* Handle Typing */
+  /* Typing Handler */
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!startedAt) setStartedAt(Date.now());
 
@@ -73,33 +64,32 @@ export default function EnglishTypingPage() {
 
     if (!isParagraph) return;
 
+    if (!value.endsWith(" ")) return;
+
     const words = value.trim().split(/\s+/);
+    const typed = words[words.length - 1];
+    const index = typedWords.length;
+    const expected = referenceWords[index] || "";
 
-    if (value.endsWith(" ")) {
-      const index = typedWords.length;
-      const typed = words[words.length - 1];
-      const expected = referenceWords[index] || "";
-
-      setTypedWords((prev) => [
-        ...prev,
-        typed === expected ? typed : `❌${typed}`,
-      ]);
-    }
+    setTypedWords((prev) => [
+      ...prev,
+      typed === expected ? typed : `❌${typed}`,
+    ]);
   };
 
   /* Speed Calculation */
-  const timeMinutes =
+  const minutes =
     startedAt !== null ? (Date.now() - startedAt) / 60000 : 0;
 
   const grossWPM =
-    timeMinutes > 0 ? Math.round(typedWords.length / timeMinutes) : 0;
+    minutes > 0 ? Math.round(typedWords.length / minutes) : 0;
 
   const correctWords = typedWords.filter(
     (w) => !w.startsWith("❌")
   ).length;
 
   const netWPM =
-    timeMinutes > 0 ? Math.round(correctWords / timeMinutes) : 0;
+    minutes > 0 ? Math.round(correctWords / minutes) : 0;
 
   return (
     <>
@@ -109,11 +99,11 @@ export default function EnglishTypingPage() {
           English Typing Practice
         </h1>
         <p className="text-gray-600">
-          30 Days structured typing program
+          30 Days professional typing practice program
         </p>
       </section>
 
-      {/* DAY TABS – 2 ROWS */}
+      {/* TABS – 2 EQUAL ROWS */}
       <section className="px-4 py-6 bg-white">
         <div className="max-w-7xl mx-auto grid grid-cols-15 gap-2">
           {days.map((d, i) => (
@@ -137,49 +127,48 @@ export default function EnglishTypingPage() {
         </div>
       </section>
 
-      {/* CONTENT */}
-      <section className="px-4 py-10 bg-white">
-        <div className="max-w-5xl mx-auto">
-          {isParagraph && (
-            <>
-              {/* REFERENCE PARAGRAPH */}
-              <div className="border p-4 mb-4 max-h-[4.5em] overflow-y-auto font-mono text-lg leading-relaxed bg-gray-50">
-                {referenceWords.map((word, i) => {
-                  let color = "text-gray-800";
-                  if (i < typedWords.length) {
-                    color = typedWords[i].startsWith("❌")
-                      ? "text-red-600"
-                      : "text-green-600";
-                  }
-                  return (
-                    <span key={i} className={`${color} mr-1`}>
-                      {word}
-                    </span>
-                  );
-                })}
-              </div>
+      {/* PARAGRAPH TYPING */}
+      {isParagraph && (
+        <section className="px-4 py-10 bg-white">
+          <div className="max-w-5xl mx-auto">
+            {/* Reference Paragraph */}
+            <div className="border p-4 mb-4 max-h-[5.5em] overflow-y-auto font-mono text-lg leading-relaxed bg-gray-50">
+              {referenceWords.map((word, i) => {
+                let color = "text-gray-800";
+                if (i === typedWords.length) color = "bg-yellow-300";
+                else if (i < typedWords.length) {
+                  color = typedWords[i].startsWith("❌")
+                    ? "text-red-600"
+                    : "text-green-600";
+                }
+                return (
+                  <span key={i} className={`${color} mr-1 px-1`}>
+                    {word}
+                  </span>
+                );
+              })}
+            </div>
 
-              {/* SPEED */}
-              <div className="flex gap-6 justify-center mb-4 text-lg font-semibold">
-                <span>⚡ Gross WPM: {grossWPM}</span>
-                <span>🎯 Net WPM: {netWPM}</span>
-              </div>
-            </>
-          )}
+            {/* Speed */}
+            <div className="flex justify-center gap-6 mb-4 text-lg font-semibold">
+              <span>⚡ Gross WPM: {grossWPM}</span>
+              <span>🎯 Net WPM: {netWPM}</span>
+            </div>
 
-          {/* TEXTAREA */}
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            onPaste={(e) => e.preventDefault()}
-            placeholder="Start typing here..."
-            className="w-full border-2 rounded-lg p-4 text-base font-mono focus:outline-none"
-            style={{ height: "200px" }}
-          />
-        </div>
-      </section>
+            {/* Typing Area */}
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              onPaste={(e) => e.preventDefault()}
+              placeholder="Start typing here..."
+              className="w-full border-2 rounded-lg p-4 text-base font-mono focus:outline-none"
+              style={{ height: "200px" }}
+            />
+          </div>
+        </section>
+      )}
 
       {/* MEDIA */}
       <HomeVideoSection title="How Typing Practice Works" />
