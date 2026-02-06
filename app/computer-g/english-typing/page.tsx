@@ -45,6 +45,7 @@ export default function EnglishTypingPage() {
   const [day, setDay] = useState(0);
   const [input, setInput] = useState("");
   const [typedWords, setTypedWords] = useState<string[]>([]);
+  const [wrongWordsStore, setWrongWordsStore] = useState<string[]>([]);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [practiceWrong, setPracticeWrong] = useState(false);
@@ -53,21 +54,8 @@ export default function EnglishTypingPage() {
 
   const isParagraph = day >= 15 && !practiceWrong;
 
-  /* -------- reference text -------- */
-  const wrongWordList = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          typedWords
-            .filter((w) => w.startsWith("❌"))
-            .map((w) => w.replace("❌", ""))
-        )
-      ),
-    [typedWords]
-  );
-
   const referenceText = practiceWrong
-    ? wrongWordList.join(" ")
+    ? wrongWordsStore.join(" ")
     : isParagraph
     ? paragraphs[day - 15]
     : wordDays[day];
@@ -77,13 +65,10 @@ export default function EnglishTypingPage() {
     [referenceText]
   );
 
-  /* -------- key handling -------- */
+  /* -------- backspace rule -------- */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key !== "Backspace") return;
-
-    const val = input;
-    if (val.endsWith(" ")) {
-      e.preventDefault(); // space ke baad backspace block
+    if (e.key === "Backspace" && input.endsWith(" ")) {
+      e.preventDefault();
     }
   };
 
@@ -107,6 +92,10 @@ export default function EnglishTypingPage() {
     setTypedWords(updated);
 
     if (isParagraph && updated.length === referenceWords.length) {
+      const wrongs = updated
+        .filter((w) => w.startsWith("❌"))
+        .map((w) => w.replace("❌", ""));
+      setWrongWordsStore([...new Set(wrongs)]);
       setShowResult(true);
     }
   };
@@ -145,16 +134,11 @@ export default function EnglishTypingPage() {
         ))}
       </div>
 
-      {/* REFERENCE BOX */}
+      {/* REFERENCE */}
       <div className="max-w-5xl mx-auto px-4">
-        <div
-          className="border p-4 min-h-[6em] font-mono text-lg leading-relaxed
-          overflow-y-auto overflow-x-hidden whitespace-normal break-normal"
-        >
+        <div className="border p-4 min-h-[6em] max-h-[160px] font-mono text-lg leading-relaxed overflow-y-auto overflow-x-hidden whitespace-normal">
           {referenceWords.length === 0 && practiceWrong ? (
-            <span className="text-gray-500">
-              No wrong words to practice 🎉
-            </span>
+            <span className="text-gray-500">No wrong words to practice 🎉</span>
           ) : (
             referenceWords.map((w, i) => {
               let cls = "";
