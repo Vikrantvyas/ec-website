@@ -70,12 +70,14 @@ export default function EnglishTypingPage() {
     [referenceText]
   );
 
+  /* -------- backspace rule -------- */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Backspace" && input.endsWith(" ")) {
       e.preventDefault();
     }
   };
 
+  /* -------- typing logic -------- */
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!startedAt) setStartedAt(Date.now());
 
@@ -94,7 +96,6 @@ export default function EnglishTypingPage() {
     ];
     setTypedWords(updated);
 
-    // ✅ FIXED TRIGGER
     if (isParagraph && updated.length >= referenceWords.length) {
       const wrongs = updated
         .filter((w) => w.startsWith("❌"))
@@ -115,17 +116,101 @@ export default function EnglishTypingPage() {
 
   return (
     <>
-      {/* ---- PAGE CONTENT (unchanged) ---- */}
-      {/* … aapka poora existing page yahin rahega … */}
+      {/* HERO */}
+      <section className="px-4 pt-16 pb-12 bg-gradient-to-b from-blue-50 to-white text-center">
+        <h1 className="text-3xl md:text-4xl font-bold text-blue-700 mb-3">
+          English Typing Practice
+        </h1>
+        <p className="text-gray-700 mb-2">
+          30 Days Professional Typing Program
+        </p>
+        <p className="max-w-2xl mx-auto text-gray-600">
+          Build exam-level typing speed and accuracy with daily structured practice.
+        </p>
+      </section>
+
+      {/* TYPING PRACTICE */}
+      <section className="px-4 py-16 bg-white">
+        <h2 className="text-2xl font-bold text-center mb-8 text-blue-700">
+          Daily Typing Practice
+        </h2>
+
+        {/* ✅ FIXED TABS GRID */}
+        <div className="grid grid-cols-5 md:grid-cols-10 gap-2 mb-6 max-w-6xl mx-auto">
+          {Array.from({ length: 30 }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                setDay(i);
+                setInput("");
+                setTypedWords([]);
+                setStartedAt(null);
+                setShowResult(false);
+                setPracticeWrong(false);
+              }}
+              className={`px-3 py-2 rounded text-sm ${
+                day === i ? "bg-blue-600 text-white" : "bg-gray-100"
+              }`}
+            >
+              Day {i + 1}
+            </button>
+          ))}
+        </div>
+
+        <div className="max-w-5xl mx-auto">
+          {/* ✅ REFERENCE BOX */}
+          <div
+            className="border p-4 font-mono text-lg leading-7
+            overflow-y-auto overflow-x-hidden whitespace-normal"
+            style={{
+              height: "180px",
+              wordBreak: "keep-all",
+              overflowWrap: "break-word",
+            }}
+          >
+            {referenceWords.map((w, i) => {
+              let cls = "";
+              if (isParagraph) {
+                if (i === typedWords.length) cls = "bg-yellow-300";
+                else if (i < typedWords.length)
+                  cls = typedWords[i].startsWith("❌")
+                    ? "text-red-600"
+                    : "text-green-600";
+              } else {
+                cls =
+                  Math.floor(i / 2) % 2 === 0
+                    ? "text-blue-600"
+                    : "text-green-600";
+              }
+              return (
+                <span key={i} className={cls}>
+                  {w}{" "}
+                </span>
+              );
+            })}
+          </div>
+
+          {/* TEXTAREA */}
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onPaste={(e) => e.preventDefault()}
+            className="w-full border-2 rounded-lg p-4 font-mono mt-4"
+            style={{ height: "220px" }}
+            placeholder="Start typing here..."
+          />
+        </div>
+      </section>
 
       {/* RESULT MODAL */}
       {showResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl max-w-md w-full text-center">
             <h2 className="text-2xl font-bold mb-4">Typing Result</h2>
-
-            <p className="mb-1">⚡ Gross WPM: <strong>{grossWPM}</strong></p>
-            <p className="mb-1">🎯 Net WPM: <strong>{netWPM}</strong></p>
+            <p>⚡ Gross WPM: <strong>{grossWPM}</strong></p>
+            <p>🎯 Net WPM: <strong>{netWPM}</strong></p>
             <p className="mb-4">❌ Wrong Words: <strong>{wrongCount}</strong></p>
 
             <div className="flex gap-3 justify-center">
@@ -171,6 +256,19 @@ export default function EnglishTypingPage() {
           </div>
         </div>
       )}
+
+      {/* MEDIA */}
+      <HomeVideoSection title="How Typing Classes Work" />
+      <GallerySection
+        title="Typing Practice Lab"
+        subtitle="Students practicing daily typing"
+        basePath="/english-typing"
+      />
+      <HomeVideoReviewsSection
+        title="Typing Student Video Reviews"
+        courseLabel="English Typing Practice"
+      />
+      <TestimonialsSection heading="What our Typing Students Say" />
 
       <Footer />
     </>
