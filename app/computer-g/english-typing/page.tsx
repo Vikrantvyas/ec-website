@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import Footer from "../../components/Footer";
 
-/* ================= DAY DATA ================= */
+/* ================= DATA ================= */
 
 const wordDays = [
   "add gas ask ass fall fad flag all dash flash glass sad hall half flask shall shah kaka",
@@ -26,9 +26,9 @@ const wordDays = [
 const paragraphs = [
   "Typing speed and accuracy are essential skills for examinations and office work. Regular practice improves confidence and helps students type efficiently without looking at the keyboard.",
   "Accuracy matters more than speed in professional typing tests where even a small mistake can reduce the final score.",
-  "Office typing requires focus, rhythm and correct finger placement to avoid unnecessary errors.",
+  "Office typing requires focus rhythm and correct finger placement to avoid unnecessary errors.",
   "Students should practice typing daily to build muscle memory and confidence.",
-  "Typing exams test patience, consistency and accuracy under time pressure.",
+  "Typing exams test patience consistency and accuracy under time pressure.",
   "Good typists read the word completely before typing it.",
   "Avoid rushing during typing practice sessions to reduce mistakes.",
   "Correct posture improves typing speed and reduces fatigue.",
@@ -42,7 +42,7 @@ const paragraphs = [
 ];
 
 export default function EnglishTypingPage() {
-  const [day, setDay] = useState(15); // start from paragraph for testing
+  const [day, setDay] = useState(0);
   const [input, setInput] = useState("");
   const [typedWords, setTypedWords] = useState<string[]>([]);
   const [startedAt, setStartedAt] = useState<number | null>(null);
@@ -52,21 +52,42 @@ export default function EnglishTypingPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isParagraph = day >= 15 && !practiceWrong;
-  const referenceText = isParagraph
+
+  /* -------- reference text -------- */
+  const wrongWordList = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          typedWords
+            .filter((w) => w.startsWith("❌"))
+            .map((w) => w.replace("❌", ""))
+        )
+      ),
+    [typedWords]
+  );
+
+  const referenceText = practiceWrong
+    ? wrongWordList.join(" ")
+    : isParagraph
     ? paragraphs[day - 15]
-    : practiceWrong
-    ? typedWords.filter((w) => w.startsWith("❌")).map(w => w.replace("❌","")).join(" ")
     : wordDays[day];
 
   const referenceWords = useMemo(
-    () => referenceText.split(" "),
+    () => referenceText.split(" ").filter(Boolean),
     [referenceText]
   );
 
+  /* -------- key handling -------- */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Backspace") e.preventDefault();
+    if (e.key !== "Backspace") return;
+
+    const val = input;
+    if (val.endsWith(" ")) {
+      e.preventDefault(); // space ke baad backspace block
+    }
   };
 
+  /* -------- typing -------- */
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!startedAt) setStartedAt(Date.now());
 
@@ -79,22 +100,25 @@ export default function EnglishTypingPage() {
     const typed = words[words.length - 1];
     const expected = referenceWords[typedWords.length] || "";
 
-    const newTyped = typed === expected ? typed : `❌${typed}`;
-    const updated = [...typedWords, newTyped];
+    const updated = [
+      ...typedWords,
+      typed === expected ? typed : `❌${typed}`,
+    ];
     setTypedWords(updated);
 
-    if (updated.length === referenceWords.length && isParagraph) {
+    if (isParagraph && updated.length === referenceWords.length) {
       setShowResult(true);
     }
   };
 
+  /* -------- speed -------- */
   const minutes =
     startedAt !== null ? (Date.now() - startedAt) / 60000 : 0;
 
   const grossWPM = minutes ? Math.round(typedWords.length / minutes) : 0;
-  const wrongWords = typedWords.filter((w) => w.startsWith("❌"));
+  const wrongCount = typedWords.filter((w) => w.startsWith("❌")).length;
   const netWPM = minutes
-    ? Math.round((typedWords.length - wrongWords.length) / minutes)
+    ? Math.round((typedWords.length - wrongCount) / minutes)
     : 0;
 
   return (
@@ -124,27 +148,44 @@ export default function EnglishTypingPage() {
       {/* REFERENCE BOX */}
       <div className="max-w-5xl mx-auto px-4">
         <div
-          className="border p-4 min-h-[6em] font-mono text-lg overflow-y-auto
-          whitespace-normal break-keep"
+          className="border p-4 min-h-[6em] font-mono text-lg leading-relaxed
+          overflow-y-auto overflow-x-hidden whitespace-normal break-normal"
         >
-          {referenceWords.map((w, i) => {
-            let cls = "";
-            if (isParagraph) {
-              if (i === typedWords.length) cls = "bg-yellow-300";
-              else if (i < typedWords.length)
-                cls = typedWords[i].startsWith("❌")
-                  ? "text-red-600"
-                  : "text-green-600";
-            } else {
-              cls = Math.floor(i / 2) % 2 === 0 ? "text-blue-600" : "text-green-600";
-            }
-            return (
-              <span key={i} className={`${cls} mr-1 px-1`}>
-                {w}
-              </span>
-            );
-          })}
+          {referenceWords.length === 0 && practiceWrong ? (
+            <span className="text-gray-500">
+              No wrong words to practice 🎉
+            </span>
+          ) : (
+            referenceWords.map((w, i) => {
+              let cls = "";
+              if (isParagraph) {
+                if (i === typedWords.length) cls = "bg-yellow-300";
+                else if (i < typedWords.length)
+                  cls = typedWords[i].startsWith("❌")
+                    ? "text-red-600"
+                    : "text-green-600";
+              } else {
+                cls =
+                  Math.floor(i / 2) % 2 === 0
+                    ? "text-blue-600"
+                    : "text-green-600";
+              }
+              return (
+                <span key={i} className={`${cls} mr-1 px-1`}>
+                  {w}
+                </span>
+              );
+            })
+          )}
         </div>
+
+        {/* SPEED */}
+        {isParagraph && (
+          <div className="flex gap-6 justify-center my-4 font-semibold">
+            <span>⚡ Gross WPM: {grossWPM}</span>
+            <span>🎯 Net WPM: {netWPM}</span>
+          </div>
+        )}
 
         {/* TEXTAREA */}
         <textarea
@@ -162,11 +203,11 @@ export default function EnglishTypingPage() {
       {/* RESULT MODAL */}
       {showResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl w-full max-w-md text-center">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full text-center">
             <h2 className="text-2xl font-bold mb-4">Typing Result</h2>
             <p>⚡ Gross WPM: {grossWPM}</p>
             <p>🎯 Net WPM: {netWPM}</p>
-            <p>❌ Wrong Words: {wrongWords.length}</p>
+            <p>❌ Wrong Words: {wrongCount}</p>
 
             <div className="flex gap-3 justify-center mt-4">
               <button
