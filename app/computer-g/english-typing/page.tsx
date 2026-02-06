@@ -138,37 +138,35 @@ export default function EnglishTypingPage() {
       <div className="max-w-5xl mx-auto px-4">
         <div
           className="border p-4 font-mono text-lg leading-7
-          overflow-y-auto overflow-x-hidden whitespace-normal"
-          style={{ height: "180px" }}   // ✅ 2–3 lines clearly visible
+          overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words"
+          style={{ height: "180px" }}
         >
-          <p>
-            {referenceWords.length === 0 && practiceWrong ? (
-              <span className="text-gray-500">
-                No wrong words to practice 🎉
-              </span>
-            ) : (
-              referenceWords.map((w, i) => {
-                let cls = "";
-                if (isParagraph) {
-                  if (i === typedWords.length) cls = "bg-yellow-300";
-                  else if (i < typedWords.length)
-                    cls = typedWords[i].startsWith("❌")
-                      ? "text-red-600"
-                      : "text-green-600";
-                } else {
-                  cls =
-                    Math.floor(i / 2) % 2 === 0
-                      ? "text-blue-600"
-                      : "text-green-600";
-                }
-                return (
-                  <span key={i} className={`${cls} mr-1`}>
-                    {w}
-                  </span>
-                );
-              })
-            )}
-          </p>
+          {referenceWords.length === 0 && practiceWrong ? (
+            <span className="text-gray-500">
+              No wrong words to practice 🎉
+            </span>
+          ) : (
+            referenceWords.map((w, i) => {
+              let cls = "";
+              if (isParagraph) {
+                if (i === typedWords.length) cls = "bg-yellow-300";
+                else if (i < typedWords.length)
+                  cls = typedWords[i].startsWith("❌")
+                    ? "text-red-600"
+                    : "text-green-600";
+              } else {
+                cls =
+                  Math.floor(i / 2) % 2 === 0
+                    ? "text-blue-600"
+                    : "text-green-600";
+              }
+              return (
+                <span key={i} className={`${cls} mr-1`}>
+                  {w}
+                </span>
+              );
+            })
+          )}
         </div>
 
         {/* TEXTAREA */}
