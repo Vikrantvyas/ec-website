@@ -138,7 +138,7 @@ export default function EnglishTypingPage() {
       <div className="max-w-5xl mx-auto px-4">
         <div
           className="border p-4 font-mono text-lg leading-7
-          overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words"
+          overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-normal"
           style={{ height: "180px" }}
         >
           {referenceWords.length === 0 && practiceWrong ? (
