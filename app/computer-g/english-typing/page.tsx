@@ -3,14 +3,14 @@
 import { useMemo, useRef, useState } from "react";
 import Image from "next/image";
 
-/* 🔁 Reused HOME components */
+/* 🔁 Reused HOME components (same as Basic Computer) */
 import HomeVideoSection from "../../components/HomeVideoSection";
 import HomeVideoReviewsSection from "../../components/HomeVideoReviewsSection";
 import GallerySection from "../../components/GallerySection";
 import TestimonialsSection from "../../components/TestimonialsSection";
 import Footer from "../../components/Footer";
 
-/* ================= DATA ================= */
+/* ================= TYPING DATA ================= */
 
 const wordDays = [
   "add gas ask ass fall fad flag all dash flash glass sad hall half flask shall shah kaka",
@@ -58,7 +58,6 @@ export default function EnglishTypingPage() {
   const [practiceWrong, setPracticeWrong] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
   const isParagraph = day >= 15 && !practiceWrong;
 
   const referenceText = practiceWrong
@@ -79,7 +78,7 @@ export default function EnglishTypingPage() {
     }
   };
 
-  /* -------- typing -------- */
+  /* -------- typing logic -------- */
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!startedAt) setStartedAt(Date.now());
 
@@ -107,7 +106,6 @@ export default function EnglishTypingPage() {
     }
   };
 
-  /* -------- speed (popup only) -------- */
   const minutes =
     startedAt !== null ? (Date.now() - startedAt) / 60000 : 0;
 
@@ -128,12 +126,11 @@ export default function EnglishTypingPage() {
           30 Days Professional Typing Program | Offline Practice
         </p>
         <p className="max-w-2xl mx-auto text-gray-600">
-          Improve typing speed, accuracy and exam performance with structured
-          daily practice.
+          Improve typing speed, accuracy and exam performance with structured daily practice.
         </p>
       </section>
 
-      {/* ⭐ GOOGLE REVIEWS */}
+      {/* ⭐ GOOGLE REVIEWS (same as Basic Computer) */}
       <section className="px-4 pt-6">
         <div className="max-w-4xl mx-auto flex justify-center">
           <div className="flex items-center gap-4 bg-white border rounded-2xl px-5 py-4 shadow-sm">
@@ -150,10 +147,29 @@ export default function EnglishTypingPage() {
                 4.9 / 5 <span className="text-yellow-400">★★★★★</span>
               </p>
               <p className="text-gray-500">
-                Google Reviews • Trusted by students
+                Google Reviews • Trusted by students in Indore
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* OVERVIEW */}
+      <section className="px-4 py-12 bg-white text-center">
+        <h2 className="text-2xl font-bold mb-4">Course Overview</h2>
+        <p className="max-w-3xl mx-auto text-gray-600">
+          This course helps students build professional English typing speed and accuracy
+          required for examinations, office work and data entry jobs.
+        </p>
+      </section>
+
+      {/* HIGHLIGHTS */}
+      <section className="px-4 py-12 bg-gray-50">
+        <div className="max-w-6xl mx-auto grid gap-6 md:grid-cols-4 text-center">
+          <div className="bg-white p-5 rounded-xl shadow">⌨️ Speed Building</div>
+          <div className="bg-white p-5 rounded-xl shadow">🎯 Accuracy Focus</div>
+          <div className="bg-white p-5 rounded-xl shadow">📘 Exam Oriented</div>
+          <div className="bg-white p-5 rounded-xl shadow">🧠 Daily Practice</div>
         </div>
       </section>
 
@@ -163,7 +179,6 @@ export default function EnglishTypingPage() {
           Daily Typing Practice
         </h2>
 
-        {/* TABS */}
         <div className="grid grid-cols-15 gap-2 mb-6">
           {Array.from({ length: 30 }).map((_, i) => (
             <button
@@ -185,11 +200,11 @@ export default function EnglishTypingPage() {
           ))}
         </div>
 
-        {/* REFERENCE */}
         <div className="max-w-5xl mx-auto">
           <div
-            className="border p-4 font-mono text-lg leading-7 overflow-y-auto overflow-x-hidden whitespace-normal"
-            style={{ height: "180px" }}
+            className="border p-4 font-mono text-lg leading-7
+            overflow-y-auto overflow-x-hidden whitespace-pre-wrap"
+            style={{ height: "180px", wordBreak: "keep-all", overflowWrap: "normal" }}
           >
             {referenceWords.map((w, i) => {
               let cls = "";
@@ -200,20 +215,16 @@ export default function EnglishTypingPage() {
                     ? "text-red-600"
                     : "text-green-600";
               } else {
-                cls =
-                  Math.floor(i / 2) % 2 === 0
-                    ? "text-blue-600"
-                    : "text-green-600";
+                cls = Math.floor(i / 2) % 2 === 0 ? "text-blue-600" : "text-green-600";
               }
               return (
-                <span key={i} className={`${cls} mr-1`}>
-                  {w}
+                <span key={i} className={cls}>
+                  {w}{" "}
                 </span>
               );
             })}
           </div>
 
-          {/* TEXTAREA */}
           <textarea
             ref={textareaRef}
             value={input}
@@ -254,6 +265,30 @@ export default function EnglishTypingPage() {
         courseLabel="English Typing Practice"
       />
       <TestimonialsSection heading="What our Typing Students Say" />
+
+      {/* CTA */}
+      <section className="px-4 py-14 bg-blue-600 text-white text-center">
+        <h3 className="text-2xl font-semibold mb-3">
+          Ready to Improve Your Typing Speed?
+        </h3>
+        <p className="text-blue-100 mb-6">
+          Call or WhatsApp us for batches, fees and demo class.
+        </p>
+        <div className="flex justify-center gap-4">
+          <a
+            href="tel:9713014234"
+            className="bg-white text-blue-700 px-6 py-3 rounded-lg font-medium"
+          >
+            📞 Call Now
+          </a>
+          <a
+            href="https://wa.me/919713014234"
+            className="bg-green-500 px-6 py-3 rounded-lg font-medium"
+          >
+            💬 WhatsApp
+          </a>
+        </div>
+      </section>
 
       <Footer />
     </>
