@@ -1,15 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
-
-import HomeVideoSection from "../../components/HomeVideoSection";
-import HomeVideoReviewsSection from "../../components/HomeVideoReviewsSection";
-import GallerySection from "../../components/GallerySection";
-import TestimonialsSection from "../../components/TestimonialsSection";
+import { useMemo, useRef, useState } from "react";
 import Footer from "../../components/Footer";
 
-/* ================= DAY 1–15 WORD DATA (USER PROVIDED) ================= */
+/* ================= DAY DATA ================= */
 
 const wordDays = [
   "add gas ask ass fall fad flag all dash flash glass sad hall half flask shall shah kaka",
@@ -29,69 +23,78 @@ const wordDays = [
   "Final Typing Challenge Maintain Rhythm Improve Speed Achieve Accuracy Professional Performance",
 ];
 
-/* ================= DAY 16–30 PARAGRAPHS ================= */
-
 const paragraphs = [
-  "Typing speed plays a vital role in competitive examinations. Students who practice daily develop better control and confidence while typing.",
-  "Accuracy in typing is more important than speed. A single mistake can reduce the final score in many typing tests.",
-  "Office work requires fast and error free typing. Regular keyboard practice improves productivity and efficiency.",
-  "Professional typists focus on rhythm and consistency rather than rushing through the text.",
-  "Typing without looking at the keyboard is a skill that develops with disciplined practice.",
-  "Daily typing exercises help students improve focus and reduce common spelling mistakes.",
-  "Correct posture and finger placement are essential for long typing sessions.",
-  "Typing tests require patience and calmness to maintain accuracy under time pressure.",
-  "Students should avoid unnecessary backspacing during typing examinations.",
-  "Practice sessions should gradually increase in difficulty to build confidence.",
-  "Typing accuracy improves when students read the word carefully before typing.",
-  "Consistent practice helps in mastering keyboard shortcuts and layouts.",
-  "Speed typing is a combination of accuracy, rhythm and muscle memory.",
-  "Professional exams evaluate both speed and correctness equally.",
-  "A calm mind and steady hands lead to better typing performance.",
+  "Typing speed and accuracy are essential skills for examinations and office work. Regular practice improves confidence and helps students type efficiently without looking at the keyboard.",
+  "Accuracy matters more than speed in professional typing tests where even a small mistake can reduce the final score.",
+  "Office typing requires focus, rhythm and correct finger placement to avoid unnecessary errors.",
+  "Students should practice typing daily to build muscle memory and confidence.",
+  "Typing exams test patience, consistency and accuracy under time pressure.",
+  "Good typists read the word completely before typing it.",
+  "Avoid rushing during typing practice sessions to reduce mistakes.",
+  "Correct posture improves typing speed and reduces fatigue.",
+  "Typing without backspace improves real exam performance.",
+  "Confidence in typing comes from disciplined daily practice.",
+  "Typing accuracy improves when distractions are removed.",
+  "Professional typing requires calmness and concentration.",
+  "Practice difficult words separately to improve accuracy.",
+  "Regular evaluation helps in tracking typing improvement.",
+  "Consistent effort leads to excellent typing performance.",
 ];
 
 export default function EnglishTypingPage() {
-  const [day, setDay] = useState(0);
+  const [day, setDay] = useState(15); // start from paragraph for testing
   const [input, setInput] = useState("");
-  const [startedAt, setStartedAt] = useState<number | null>(null);
   const [typedWords, setTypedWords] = useState<string[]>([]);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [showResult, setShowResult] = useState(false);
+  const [practiceWrong, setPracticeWrong] = useState(false);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const isParagraph = day >= 15;
-  const referenceText = isParagraph ? paragraphs[day - 15] : wordDays[day];
+  const isParagraph = day >= 15 && !practiceWrong;
+  const referenceText = isParagraph
+    ? paragraphs[day - 15]
+    : practiceWrong
+    ? typedWords.filter((w) => w.startsWith("❌")).map(w => w.replace("❌","")).join(" ")
+    : wordDays[day];
+
   const referenceWords = useMemo(
     () => referenceText.split(" "),
     [referenceText]
   );
 
-  /* Disable backspace */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Backspace") e.preventDefault();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!startedAt) setStartedAt(Date.now());
+
     const value = e.target.value;
     setInput(value);
 
-    if (!isParagraph || !value.endsWith(" ")) return;
+    if (!value.endsWith(" ")) return;
 
     const words = value.trim().split(/\s+/);
     const typed = words[words.length - 1];
     const expected = referenceWords[typedWords.length] || "";
 
-    setTypedWords((prev) => [
-      ...prev,
-      typed === expected ? typed : `❌${typed}`,
-    ]);
+    const newTyped = typed === expected ? typed : `❌${typed}`;
+    const updated = [...typedWords, newTyped];
+    setTypedWords(updated);
+
+    if (updated.length === referenceWords.length && isParagraph) {
+      setShowResult(true);
+    }
   };
 
   const minutes =
     startedAt !== null ? (Date.now() - startedAt) / 60000 : 0;
+
   const grossWPM = minutes ? Math.round(typedWords.length / minutes) : 0;
+  const wrongWords = typedWords.filter((w) => w.startsWith("❌"));
   const netWPM = minutes
-    ? Math.round(
-        typedWords.filter((w) => !w.startsWith("❌")).length / minutes
-      )
+    ? Math.round((typedWords.length - wrongWords.length) / minutes)
     : 0;
 
   return (
@@ -106,6 +109,8 @@ export default function EnglishTypingPage() {
               setInput("");
               setTypedWords([]);
               setStartedAt(null);
+              setShowResult(false);
+              setPracticeWrong(false);
             }}
             className={`px-3 py-2 rounded text-sm ${
               day === i ? "bg-blue-600 text-white" : "bg-gray-100"
@@ -116,9 +121,12 @@ export default function EnglishTypingPage() {
         ))}
       </div>
 
-      {/* REFERENCE */}
+      {/* REFERENCE BOX */}
       <div className="max-w-5xl mx-auto px-4">
-        <div className="border p-4 min-h-[6em] leading-relaxed font-mono overflow-y-auto whitespace-normal break-words">
+        <div
+          className="border p-4 min-h-[6em] font-mono text-lg overflow-y-auto
+          whitespace-normal break-keep"
+        >
           {referenceWords.map((w, i) => {
             let cls = "";
             if (isParagraph) {
@@ -138,24 +146,68 @@ export default function EnglishTypingPage() {
           })}
         </div>
 
-        {isParagraph && (
-          <div className="flex gap-6 justify-center my-4 font-semibold">
-            <span>⚡ Gross WPM: {grossWPM}</span>
-            <span>🎯 Net WPM: {netWPM}</span>
-          </div>
-        )}
-
+        {/* TEXTAREA */}
         <textarea
           ref={textareaRef}
           value={input}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onPaste={(e) => e.preventDefault()}
-          className="w-full border-2 rounded-lg p-4 font-mono"
+          className="w-full border-2 rounded-lg p-4 font-mono mt-4"
           style={{ height: "220px" }}
           placeholder="Start typing here..."
         />
       </div>
+
+      {/* RESULT MODAL */}
+      {showResult && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-xl w-full max-w-md text-center">
+            <h2 className="text-2xl font-bold mb-4">Typing Result</h2>
+            <p>⚡ Gross WPM: {grossWPM}</p>
+            <p>🎯 Net WPM: {netWPM}</p>
+            <p>❌ Wrong Words: {wrongWords.length}</p>
+
+            <div className="flex gap-3 justify-center mt-4">
+              <button
+                onClick={() => {
+                  setShowResult(false);
+                  setInput("");
+                  setTypedWords([]);
+                  setStartedAt(null);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded"
+              >
+                Repeat
+              </button>
+
+              <button
+                onClick={() => {
+                  setPracticeWrong(true);
+                  setShowResult(false);
+                  setInput("");
+                  setTypedWords([]);
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded"
+              >
+                Practice Wrong Words
+              </button>
+
+              <button
+                onClick={() => {
+                  setDay((d) => Math.min(d + 1, 29));
+                  setShowResult(false);
+                  setInput("");
+                  setTypedWords([]);
+                }}
+                className="px-4 py-2 bg-gray-800 text-white rounded"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </>
