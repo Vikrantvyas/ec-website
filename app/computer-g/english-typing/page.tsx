@@ -87,7 +87,7 @@ export default function EnglishTypingPage() {
 
     const updated = [
       ...typedWords,
-      typed === expected ? typed : `❌${typed}`,
+      typed === expected ? typed : `❌${expected}`, // ✅ correct word stored
     ];
     setTypedWords(updated);
 
@@ -136,7 +136,11 @@ export default function EnglishTypingPage() {
 
       {/* REFERENCE */}
       <div className="max-w-5xl mx-auto px-4">
-        <div className="border p-4 min-h-[6em] max-h-[160px] font-mono text-lg leading-relaxed overflow-y-auto overflow-x-hidden whitespace-normal">
+        <div
+          className="border p-4 font-mono text-lg leading-relaxed
+          overflow-y-auto overflow-x-hidden whitespace-normal"
+          style={{ height: "150px" }}   // ✅ fixed height = vertical scroll guaranteed
+        >
           {referenceWords.length === 0 && practiceWrong ? (
             <span className="text-gray-500">No wrong words to practice 🎉</span>
           ) : (
