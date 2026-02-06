@@ -138,8 +138,12 @@ export default function EnglishTypingPage() {
       <div className="max-w-5xl mx-auto px-4">
         <div
           className="border p-4 font-mono text-lg leading-7
-          overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-normal"
-          style={{ height: "180px" }}
+          overflow-y-auto overflow-x-hidden whitespace-normal"
+          style={{
+            height: "180px",
+            wordBreak: "keep-all",
+            overflowWrap: "normal",
+          }}
         >
           {referenceWords.length === 0 && practiceWrong ? (
             <span className="text-gray-500">
@@ -161,8 +165,8 @@ export default function EnglishTypingPage() {
                     : "text-green-600";
               }
               return (
-                <span key={i} className={`${cls} mr-1`}>
-                  {w}
+                <span key={i} className={cls}>
+                  {w}{" "}
                 </span>
               );
             })
