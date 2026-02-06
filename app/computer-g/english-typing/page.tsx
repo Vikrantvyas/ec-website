@@ -18,7 +18,7 @@ type DayItem = {
 };
 
 const days: DayItem[] = [
-  // -------- Day 1–15 (unchanged words practice – short sample here) --------
+  // Day 1–15 : WORD PRACTICE
   ...Array.from({ length: 15 }).map((_, i) => ({
     day: `Day ${i + 1}`,
     type: "words" as const,
@@ -26,7 +26,7 @@ const days: DayItem[] = [
       "add gas ask ass fall fad flag all dash flash glass sad hall half flask shall shah kaka",
   })),
 
-  // -------- Day 16–30 Paragraph Typing --------
+  // Day 16–30 : PARAGRAPH PRACTICE
   ...Array.from({ length: 15 }).map((_, i) => ({
     day: `Day ${i + 16}`,
     type: "paragraph" as const,
@@ -103,7 +103,7 @@ export default function EnglishTypingPage() {
         </p>
       </section>
 
-      {/* TABS – 2 EQUAL ROWS */}
+      {/* TABS – 2 ROWS */}
       <section className="px-4 py-6 bg-white">
         <div className="max-w-7xl mx-auto grid grid-cols-15 gap-2">
           {days.map((d, i) => (
@@ -127,48 +127,58 @@ export default function EnglishTypingPage() {
         </div>
       </section>
 
-      {/* PARAGRAPH TYPING */}
-      {isParagraph && (
-        <section className="px-4 py-10 bg-white">
-          <div className="max-w-5xl mx-auto">
-            {/* Reference Paragraph */}
-            <div className="border p-4 mb-4 max-h-[5.5em] overflow-y-auto font-mono text-lg leading-relaxed bg-gray-50">
-              {referenceWords.map((word, i) => {
-                let color = "text-gray-800";
-                if (i === typedWords.length) color = "bg-yellow-300";
-                else if (i < typedWords.length) {
-                  color = typedWords[i].startsWith("❌")
-                    ? "text-red-600"
-                    : "text-green-600";
-                }
-                return (
-                  <span key={i} className={`${color} mr-1 px-1`}>
-                    {word}
-                  </span>
-                );
-              })}
-            </div>
+      {/* PRACTICE AREA */}
+      <section className="px-4 py-10 bg-white">
+        <div className="max-w-5xl mx-auto">
+          {/* WORD / PARAGRAPH REFERENCE */}
+          {isParagraph ? (
+            <>
+              <div className="border p-4 mb-4 max-h-[5.5em] overflow-y-auto font-mono text-lg leading-relaxed bg-gray-50">
+                {referenceWords.map((word, i) => {
+                  let style = "text-gray-800";
+                  if (i === typedWords.length)
+                    style = "bg-yellow-300";
+                  else if (i < typedWords.length)
+                    style = typedWords[i].startsWith("❌")
+                      ? "text-red-600"
+                      : "text-green-600";
+                  return (
+                    <span key={i} className={`${style} mr-1 px-1`}>
+                      {word}
+                    </span>
+                  );
+                })}
+              </div>
 
-            {/* Speed */}
-            <div className="flex justify-center gap-6 mb-4 text-lg font-semibold">
-              <span>⚡ Gross WPM: {grossWPM}</span>
-              <span>🎯 Net WPM: {netWPM}</span>
-            </div>
+              <div className="flex justify-center gap-6 mb-4 text-lg font-semibold">
+                <span>⚡ Gross WPM: {grossWPM}</span>
+                <span>🎯 Net WPM: {netWPM}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-lg leading-relaxed mb-2">
+                {currentDay.content}
+              </div>
+              <p className="text-center text-red-600 mb-4">
+                Type each word pair in three lines
+              </p>
+            </>
+          )}
 
-            {/* Typing Area */}
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              onPaste={(e) => e.preventDefault()}
-              placeholder="Start typing here..."
-              className="w-full border-2 rounded-lg p-4 text-base font-mono focus:outline-none"
-              style={{ height: "200px" }}
-            />
-          </div>
-        </section>
-      )}
+          {/* TYPING TEXTAREA – ALWAYS VISIBLE */}
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onPaste={(e) => e.preventDefault()}
+            placeholder="Start typing here..."
+            className="w-full border-2 rounded-lg p-4 text-base font-mono focus:outline-none"
+            style={{ height: "200px" }}
+          />
+        </div>
+      </section>
 
       {/* MEDIA */}
       <HomeVideoSection title="How Typing Practice Works" />
