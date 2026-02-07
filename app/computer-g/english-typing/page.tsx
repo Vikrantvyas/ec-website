@@ -30,34 +30,21 @@ const wordDays = [
 ];
 
 const paragraphs = [
+  /* same paragraphs – unchanged */
   "Typing speed and accuracy are essential skills for examinations and office work. Regular practice improves confidence and helps students type efficiently without looking at the keyboard. Students who practice daily develop better finger coordination, rhythm and muscle memory. Typing correctly without using backspace builds real examination confidence. A good typing habit requires patience, focus and consistency. Speed should never come at the cost of accuracy because mistakes reduce final scores. Professional typing is not about rushing but about maintaining a steady pace with correct spelling and spacing. Daily typing practice helps students perform better in competitive exams, office work and data entry tasks.",
-
   "Accuracy matters more than speed in professional typing tests where even a small mistake can reduce the final score. Examiners focus on correct spelling, spacing and punctuation. Students should read the word carefully before typing it to avoid errors. Developing accuracy takes time and disciplined daily practice. Rushing through paragraphs often leads to unnecessary mistakes. A calm mind and relaxed posture improve both speed and accuracy. Practicing without backspace trains the brain to think before typing. Over time, correct typing habits automatically increase speed without conscious effort.",
-
   "Office typing requires focus, rhythm and correct finger placement to avoid unnecessary errors. Many students type fast but lose marks due to spelling mistakes. Professional typists maintain balance between speed and correctness. Typing practice should be done in a quiet environment to improve concentration. Regular practice improves hand movement and reduces finger fatigue. Students should aim to type smoothly without stopping frequently. Good typing posture and correct keyboard position also play an important role in long typing sessions.",
-
   "Students should practice typing daily to build muscle memory and confidence. Short daily sessions are more effective than long irregular practice. Typing becomes easier when fingers automatically find the correct keys. Beginners should focus on accuracy first and speed later. Confidence grows when students notice fewer mistakes over time. Consistent typing practice also improves reading speed and comprehension. A disciplined routine helps students perform well in exams and professional environments.",
-
   "Typing exams test patience, consistency and accuracy under time pressure. Students must remain calm during the test to avoid panic. Nervousness often leads to typing errors. Practicing full paragraphs improves endurance and concentration. Students should avoid unnecessary hand movement while typing. Correct spacing between words is as important as correct spelling. Exam success depends on regular practice and controlled typing speed.",
-
   "Good typists read the word completely before typing it. This habit reduces spelling mistakes and improves flow. Guessing words often leads to errors. Professional typing requires attention to detail. Students should develop the habit of typing consciously instead of mechanically. Regular evaluation of typing mistakes helps in improvement. Over time, accuracy becomes natural and speed increases automatically.",
-
   "Avoid rushing during typing practice sessions to reduce mistakes. Speed should increase naturally with accuracy. Students often lose marks due to careless typing. Proper breathing and relaxed posture improve typing performance. Typing practice should simulate real exam conditions. Practicing without distractions improves concentration and confidence. A steady typing rhythm is more important than fast typing.",
-
   "Correct posture improves typing speed and reduces fatigue. Sitting straight with relaxed shoulders helps maintain control over the keyboard. Students should keep their eyes on the screen instead of the keyboard. Correct finger placement improves speed and accuracy. Poor posture leads to tiredness and mistakes. Professional typists maintain posture throughout long typing sessions.",
-
   "Typing without backspace improves real exam performance. Exams do not allow correction of mistakes easily. Practicing without backspace trains the brain to think before typing. Students become more careful with spelling and spacing. This method improves accuracy significantly. Over time, confidence increases and mistakes reduce naturally.",
-
   "Confidence in typing comes from disciplined daily practice. Students should trust their preparation during exams. Overthinking leads to mistakes. Regular typing practice builds mental strength. Confidence helps students maintain speed and accuracy under pressure. A confident typist performs better than a nervous fast typist.",
-
   "Typing accuracy improves when distractions are removed. A calm environment helps in better focus. Students should practice in exam-like conditions. Avoid multitasking during typing practice. Focused typing sessions lead to faster improvement. Consistency is the key to mastering typing skills.",
-
   "Professional typing requires calmness and concentration. Typists must maintain accuracy throughout the paragraph. Losing focus even for a moment can cause errors. Regular paragraph typing improves endurance. Students should aim for smooth typing flow. Professional performance comes from disciplined practice.",
-
   "Practice difficult words separately to improve accuracy. Identifying weak areas helps in targeted improvement. Repeating wrong words strengthens spelling memory. Students should not ignore repeated mistakes. Focused correction leads to long-term improvement. This approach boosts exam performance.",
-
   "Regular evaluation helps in tracking typing improvement. Students should analyze mistakes after practice sessions. Understanding errors helps avoid repetition. Tracking speed and accuracy motivates improvement. Evaluation builds awareness and confidence. Gradual progress leads to mastery.",
-
   "Consistent effort leads to excellent typing performance. Success in typing exams depends on dedication and discipline. Daily practice improves both speed and accuracy. Students who practice sincerely achieve better results. Typing is a skill that improves with time and patience."
 ];
 
@@ -84,20 +71,14 @@ export default function EnglishTypingPage() {
     [referenceText]
   );
 
-  /* -------- backspace rule -------- */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Backspace" && input.endsWith(" ")) {
-      e.preventDefault();
-    }
+    if (e.key === "Backspace" && input.endsWith(" ")) e.preventDefault();
   };
 
-  /* -------- typing logic -------- */
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!startedAt) setStartedAt(Date.now());
-
     const value = e.target.value;
     setInput(value);
-
     if (!value.endsWith(" ")) return;
 
     const words = value.trim().split(/\s+/);
@@ -119,39 +100,31 @@ export default function EnglishTypingPage() {
     }
   };
 
-  const minutes =
-    startedAt !== null ? (Date.now() - startedAt) / 60000 : 0;
-
+  const minutes = startedAt ? (Date.now() - startedAt) / 60000 : 0;
   const grossWPM = minutes ? Math.round(typedWords.length / minutes) : 0;
   const wrongCount = typedWords.filter((w) => w.startsWith("❌")).length;
-  const netWPM = minutes
-    ? Math.round((typedWords.length - wrongCount) / minutes)
-    : 0;
+  const netWPM = minutes ? Math.round((typedWords.length - wrongCount) / minutes) : 0;
 
   return (
     <>
       {/* HERO */}
-      <section className="px-4 pt-16 pb-12 bg-gradient-to-b from-blue-50 to-white text-center">
-        <h1 className="text-3xl md:text-4xl font-bold text-blue-700 mb-3">
+      <section className="px-4 pt-8 pb-8 bg-gradient-to-b from-blue-50 to-white text-center">
+        <h1 className="text-3xl md:text-4xl font-bold text-blue-700 mb-2">
           English Typing Practice
         </h1>
-        <p className="text-gray-700 mb-2">
-          30 Days Professional Typing Program
-        </p>
+        <p className="text-gray-700 mb-1">30 Days Professional Typing Program</p>
         <p className="max-w-2xl mx-auto text-gray-600">
           Build exam-level typing speed and accuracy with daily structured practice.
         </p>
       </section>
 
       {/* TYPING PRACTICE */}
-      <section className="px-4 py-16 bg-white">
-        <h2 className="text-2xl font-bold text-center mb-8 text-blue-700">
+      <section className="px-4 pt-8 pb-12 bg-white">
+        <h2 className="text-2xl font-bold text-center mb-4 text-blue-700">
           Daily Typing Practice
         </h2>
 
-        {/* ✅ FIXED TABS GRID */}
-        <div className="grid grid-cols-5 md:grid-cols-15 gap-2 mb-6 max-w-6xl mx-auto">
-
+        <div className="grid grid-cols-5 md:grid-cols-15 gap-2 mb-4 max-w-6xl mx-auto">
           {Array.from({ length: 30 }).map((_, i) => (
             <button
               key={i}
@@ -173,15 +146,9 @@ export default function EnglishTypingPage() {
         </div>
 
         <div className="max-w-5xl mx-auto">
-          {/* ✅ REFERENCE BOX */}
           <div
-            className="border p-4 font-mono text-lg leading-7
-            overflow-y-auto overflow-x-hidden whitespace-normal"
-            style={{
-              height: "180px",
-              wordBreak: "keep-all",
-              overflowWrap: "break-word",
-            }}
+            className="border p-4 font-mono text-lg leading-7 overflow-y-auto overflow-x-hidden whitespace-normal"
+            style={{ height: "180px", wordBreak: "keep-all", overflowWrap: "break-word" }}
           >
             {referenceWords.map((w, i) => {
               let cls = "";
@@ -192,10 +159,7 @@ export default function EnglishTypingPage() {
                     ? "text-red-600"
                     : "text-green-600";
               } else {
-                cls =
-                  Math.floor(i / 2) % 2 === 0
-                    ? "text-blue-600"
-                    : "text-green-600";
+                cls = Math.floor(i / 2) % 2 === 0 ? "text-blue-600" : "text-green-600";
               }
               return (
                 <span key={i} className={cls}>
@@ -205,7 +169,6 @@ export default function EnglishTypingPage() {
             })}
           </div>
 
-          {/* TEXTAREA */}
           <textarea
             ref={textareaRef}
             value={input}
@@ -229,42 +192,13 @@ export default function EnglishTypingPage() {
             <p className="mb-4">❌ Wrong Words: <strong>{wrongCount}</strong></p>
 
             <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => {
-                  setShowResult(false);
-                  setInput("");
-                  setTypedWords([]);
-                  setStartedAt(null);
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded"
-              >
+              <button onClick={() => setShowResult(false)} className="px-4 py-2 bg-blue-600 text-white rounded">
                 Repeat
               </button>
-
-              <button
-                onClick={() => {
-                  setPracticeWrong(true);
-                  setShowResult(false);
-                  setInput("");
-                  setTypedWords([]);
-                  setStartedAt(null);
-                }}
-                className="px-4 py-2 bg-green-600 text-white rounded"
-              >
+              <button onClick={() => { setPracticeWrong(true); setShowResult(false); }} className="px-4 py-2 bg-green-600 text-white rounded">
                 Practice Wrong Words
               </button>
-
-              <button
-                onClick={() => {
-                  setDay((d) => Math.min(d + 1, 29));
-                  setShowResult(false);
-                  setInput("");
-                  setTypedWords([]);
-                  setStartedAt(null);
-                  setPracticeWrong(false);
-                }}
-                className="px-4 py-2 bg-gray-800 text-white rounded"
-              >
+              <button onClick={() => { setDay(d => Math.min(d + 1, 29)); setShowResult(false); }} className="px-4 py-2 bg-gray-800 text-white rounded">
                 Next
               </button>
             </div>
@@ -272,17 +206,9 @@ export default function EnglishTypingPage() {
         </div>
       )}
 
-      {/* MEDIA */}
       <HomeVideoSection title="How Typing Classes Work" />
-      <GallerySection
-        title="Typing Practice Lab"
-        subtitle="Students practicing daily typing"
-        basePath="/english-typing"
-      />
-      <HomeVideoReviewsSection
-        title="Typing Student Video Reviews"
-        courseLabel="English Typing Practice"
-      />
+      <GallerySection title="Typing Practice Lab" subtitle="Students practicing daily typing" basePath="/english-typing" />
+      <HomeVideoReviewsSection title="Typing Student Video Reviews" courseLabel="English Typing Practice" />
       <TestimonialsSection heading="What our Typing Students Say" />
 
       <Footer />
