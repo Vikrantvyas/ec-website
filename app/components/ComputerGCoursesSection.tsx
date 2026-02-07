@@ -11,9 +11,9 @@ const courses = [
   },
   {
     id: 2,
-    name: "Advanced Excel",
-    duration: "1.5 Months",
-    link: "#", // baad me page banega
+    name: "Advanced Excel Course",
+    duration: "1 Month",
+    link: "/computer-g/advanced-excel",
   },
   {
     id: 3,
@@ -23,9 +23,9 @@ const courses = [
   },
   {
     id: 4,
-    name: "CPCT Preparation",
-    duration: "1 Month",
-    link: "#",
+    name: "Power BI Course",
+    duration: "1.5 Months",
+    link: "/computer-g/power-bi-course",
   },
   {
     id: 5,
@@ -65,22 +65,16 @@ export default function ComputerGCoursesSection() {
                 </p>
               </div>
 
-              {course.link !== "#" ? (
-                <Link
-                  href={course.link}
-                  className="
-                    px-4 py-2 rounded-full text-sm font-medium
-                    border border-blue-600 text-blue-600
-                    hover:bg-blue-600 hover:text-white transition
-                  "
-                >
-                  View Details
-                </Link>
-              ) : (
-                <span className="text-sm text-gray-400">
-                  Coming Soon
-                </span>
-              )}
+              <Link
+                href={course.link}
+                className="
+                  px-4 py-2 rounded-full text-sm font-medium
+                  border border-blue-600 text-blue-600
+                  hover:bg-blue-600 hover:text-white transition
+                "
+              >
+                View Details
+              </Link>
             </div>
           </div>
         ))}
