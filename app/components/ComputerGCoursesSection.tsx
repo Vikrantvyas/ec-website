@@ -27,6 +27,18 @@ const courses = [
     duration: "1 Month",
     link: "#",
   },
+  {
+    id: 5,
+    name: "English Typing",
+    duration: "1 Month",
+    link: "/computer-g/english-typing",
+  },
+  {
+    id: 6,
+    name: "Hindi Typing",
+    duration: "1 Month",
+    link: "/computer-g/hindi-typing",
+  },
 ];
 
 export default function ComputerGCoursesSection() {
@@ -36,7 +48,8 @@ export default function ComputerGCoursesSection() {
         Computer-G Courses
       </h2>
 
-      <div className="max-w-6xl mx-auto grid gap-6 md:grid-cols-2">
+      {/* 3 × 3 GRID */}
+      <div className="max-w-6xl mx-auto grid gap-6 md:grid-cols-3">
         {courses.map((course) => (
           <div
             key={course.id}
@@ -61,7 +74,7 @@ export default function ComputerGCoursesSection() {
                     hover:bg-blue-600 hover:text-white transition
                   "
                 >
-                  View Curriculum
+                  View Details
                 </Link>
               ) : (
                 <span className="text-sm text-gray-400">
