@@ -17,9 +17,9 @@ const courses = [
   },
   {
     id: 3,
-    name: "Tally with GST",
-    duration: "2 Months",
-    link: "#",
+    name: "Tally Course (ERP 9 + Prime)",
+    duration: "3 Months",
+    link: "/computer-g/tally-course",
   },
   {
     id: 4,
