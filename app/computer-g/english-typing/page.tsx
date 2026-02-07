@@ -30,21 +30,35 @@ const wordDays = [
 ];
 
 const paragraphs = [
-  "Typing speed and accuracy are essential skills for examinations and office work. Regular practice improves confidence and helps students type efficiently without looking at the keyboard.",
-  "Accuracy matters more than speed in professional typing tests where even a small mistake can reduce the final score.",
-  "Office typing requires focus rhythm and correct finger placement to avoid unnecessary errors.",
-  "Students should practice typing daily to build muscle memory and confidence.",
-  "Typing exams test patience consistency and accuracy under time pressure.",
-  "Good typists read the word completely before typing it.",
-  "Avoid rushing during typing practice sessions to reduce mistakes.",
-  "Correct posture improves typing speed and reduces fatigue.",
-  "Typing without backspace improves real exam performance.",
-  "Confidence in typing comes from disciplined daily practice.",
-  "Typing accuracy improves when distractions are removed.",
-  "Professional typing requires calmness and concentration.",
-  "Practice difficult words separately to improve accuracy.",
-  "Regular evaluation helps in tracking typing improvement.",
-  "Consistent effort leads to excellent typing performance.",
+  "Typing speed and accuracy are essential skills for examinations and office work. Regular practice improves confidence and helps students type efficiently without looking at the keyboard. Students who practice daily develop better finger coordination, rhythm and muscle memory. Typing correctly without using backspace builds real examination confidence. A good typing habit requires patience, focus and consistency. Speed should never come at the cost of accuracy because mistakes reduce final scores. Professional typing is not about rushing but about maintaining a steady pace with correct spelling and spacing. Daily typing practice helps students perform better in competitive exams, office work and data entry tasks.",
+
+  "Accuracy matters more than speed in professional typing tests where even a small mistake can reduce the final score. Examiners focus on correct spelling, spacing and punctuation. Students should read the word carefully before typing it to avoid errors. Developing accuracy takes time and disciplined daily practice. Rushing through paragraphs often leads to unnecessary mistakes. A calm mind and relaxed posture improve both speed and accuracy. Practicing without backspace trains the brain to think before typing. Over time, correct typing habits automatically increase speed without conscious effort.",
+
+  "Office typing requires focus, rhythm and correct finger placement to avoid unnecessary errors. Many students type fast but lose marks due to spelling mistakes. Professional typists maintain balance between speed and correctness. Typing practice should be done in a quiet environment to improve concentration. Regular practice improves hand movement and reduces finger fatigue. Students should aim to type smoothly without stopping frequently. Good typing posture and correct keyboard position also play an important role in long typing sessions.",
+
+  "Students should practice typing daily to build muscle memory and confidence. Short daily sessions are more effective than long irregular practice. Typing becomes easier when fingers automatically find the correct keys. Beginners should focus on accuracy first and speed later. Confidence grows when students notice fewer mistakes over time. Consistent typing practice also improves reading speed and comprehension. A disciplined routine helps students perform well in exams and professional environments.",
+
+  "Typing exams test patience, consistency and accuracy under time pressure. Students must remain calm during the test to avoid panic. Nervousness often leads to typing errors. Practicing full paragraphs improves endurance and concentration. Students should avoid unnecessary hand movement while typing. Correct spacing between words is as important as correct spelling. Exam success depends on regular practice and controlled typing speed.",
+
+  "Good typists read the word completely before typing it. This habit reduces spelling mistakes and improves flow. Guessing words often leads to errors. Professional typing requires attention to detail. Students should develop the habit of typing consciously instead of mechanically. Regular evaluation of typing mistakes helps in improvement. Over time, accuracy becomes natural and speed increases automatically.",
+
+  "Avoid rushing during typing practice sessions to reduce mistakes. Speed should increase naturally with accuracy. Students often lose marks due to careless typing. Proper breathing and relaxed posture improve typing performance. Typing practice should simulate real exam conditions. Practicing without distractions improves concentration and confidence. A steady typing rhythm is more important than fast typing.",
+
+  "Correct posture improves typing speed and reduces fatigue. Sitting straight with relaxed shoulders helps maintain control over the keyboard. Students should keep their eyes on the screen instead of the keyboard. Correct finger placement improves speed and accuracy. Poor posture leads to tiredness and mistakes. Professional typists maintain posture throughout long typing sessions.",
+
+  "Typing without backspace improves real exam performance. Exams do not allow correction of mistakes easily. Practicing without backspace trains the brain to think before typing. Students become more careful with spelling and spacing. This method improves accuracy significantly. Over time, confidence increases and mistakes reduce naturally.",
+
+  "Confidence in typing comes from disciplined daily practice. Students should trust their preparation during exams. Overthinking leads to mistakes. Regular typing practice builds mental strength. Confidence helps students maintain speed and accuracy under pressure. A confident typist performs better than a nervous fast typist.",
+
+  "Typing accuracy improves when distractions are removed. A calm environment helps in better focus. Students should practice in exam-like conditions. Avoid multitasking during typing practice. Focused typing sessions lead to faster improvement. Consistency is the key to mastering typing skills.",
+
+  "Professional typing requires calmness and concentration. Typists must maintain accuracy throughout the paragraph. Losing focus even for a moment can cause errors. Regular paragraph typing improves endurance. Students should aim for smooth typing flow. Professional performance comes from disciplined practice.",
+
+  "Practice difficult words separately to improve accuracy. Identifying weak areas helps in targeted improvement. Repeating wrong words strengthens spelling memory. Students should not ignore repeated mistakes. Focused correction leads to long-term improvement. This approach boosts exam performance.",
+
+  "Regular evaluation helps in tracking typing improvement. Students should analyze mistakes after practice sessions. Understanding errors helps avoid repetition. Tracking speed and accuracy motivates improvement. Evaluation builds awareness and confidence. Gradual progress leads to mastery.",
+
+  "Consistent effort leads to excellent typing performance. Success in typing exams depends on dedication and discipline. Daily practice improves both speed and accuracy. Students who practice sincerely achieve better results. Typing is a skill that improves with time and patience."
 ];
 
 export default function EnglishTypingPage() {
@@ -136,7 +150,8 @@ export default function EnglishTypingPage() {
         </h2>
 
         {/* ✅ FIXED TABS GRID */}
-        <div className="grid grid-cols-5 md:grid-cols-10 gap-2 mb-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-5 md:grid-cols-15 gap-2 mb-6 max-w-6xl mx-auto">
+
           {Array.from({ length: 30 }).map((_, i) => (
             <button
               key={i}
