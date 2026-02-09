@@ -5,25 +5,25 @@ import Link from "next/link";
 const courses = [
   {
     id: 1,
-    name: "Basic Computer Course",
+    name: "Basic Computer",
     duration: "3 Months",
     link: "/computer-g/basic-computer",
   },
   {
     id: 2,
-    name: "Advanced Excel Course",
+    name: "Advanced Excel",
     duration: "1 Month",
     link: "/computer-g/advanced-excel",
   },
   {
     id: 3,
-    name: "Tally Course (ERP 9 + Prime)",
+    name: "Tally (ERP 9 + Prime)",
     duration: "3 Months",
     link: "/computer-g/tally-course",
   },
   {
     id: 4,
-    name: "Power BI Course",
+    name: "Power BI",
     duration: "1.5 Months",
     link: "/computer-g/power-bi-course",
   },
