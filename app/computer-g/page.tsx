@@ -81,7 +81,11 @@ export default function ComputerGCoursesSection() {
         {courses.map((course) => (
           <div
             key={course.id}
-            className="bg-white rounded-2xl p-5 border shadow-sm hover:shadow-md transition flex items-center gap-4"
+            className="
+              bg-white rounded-2xl p-5 border
+              shadow-[0_4px_10px_rgba(0,0,0,0.08)]
+              flex items-center gap-4
+            "
           >
             {/* ICON */}
             <div
@@ -92,16 +96,16 @@ export default function ComputerGCoursesSection() {
 
             {/* CONTENT */}
             <div className="flex-1">
-              <p className="font-semibold text-gray-800">
+              <p className="font-semibold text-gray-800 leading-tight">
                 {course.name}
               </p>
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm text-gray-600 mt-1">
                 ⏱ Duration: {course.duration}
               </p>
 
               <Link
                 href={course.link}
-                className="inline-block text-sm font-medium text-blue-600 hover:underline"
+                className="inline-block mt-2 text-sm font-medium text-blue-600"
               >
                 View Details →
               </Link>
