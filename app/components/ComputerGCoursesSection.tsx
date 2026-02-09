@@ -23,7 +23,7 @@ const courses = [
   },
   {
     id: 4,
-    name: "Power BI",
+    name: "Power BI Course",
     duration: "1.5 Months",
     link: "/computer-g/power-bi-course",
   },
