@@ -1,118 +1,126 @@
-"use client";
+import ComputerGCoursesSection from "../components/ComputerGCoursesSection";
+import Footer from "../components/Footer";
 
-import Link from "next/link";
-import {
-  FaDesktop,
-  FaFileExcel,
-  FaCalculator,
-  FaChartBar,
-  FaKeyboard,
-} from "react-icons/fa";
-
-const courses = [
-  {
-    id: 1,
-    name: "Basic Computer Course",
-    duration: "3 Months",
-    link: "/computer-g/basic-computer",
-    icon: <FaDesktop />,
-    color: "blue",
-  },
-  {
-    id: 2,
-    name: "Advanced Excel Course",
-    duration: "1 Month",
-    link: "/computer-g/advanced-excel",
-    icon: <FaFileExcel />,
-    color: "green",
-  },
-  {
-    id: 3,
-    name: "Tally Course (ERP 9 + Prime)",
-    duration: "3 Months",
-    link: "/computer-g/tally-course",
-    icon: <FaCalculator />,
-    color: "orange",
-  },
-  {
-    id: 4,
-    name: "Power BI Course",
-    duration: "1.5 Months",
-    link: "/computer-g/power-bi-course",
-    icon: <FaChartBar />,
-    color: "purple",
-  },
-  {
-    id: 5,
-    name: "English Typing",
-    duration: "1 Month",
-    link: "/computer-g/english-typing",
-    icon: <FaKeyboard />,
-    color: "cyan",
-  },
-  {
-    id: 6,
-    name: "Hindi Typing",
-    duration: "1 Month",
-    link: "/computer-g/hindi-typing",
-    icon: <FaKeyboard />,
-    color: "rose",
-  },
-];
-
-const colorMap: any = {
-  blue: "bg-blue-100 text-blue-600 border-blue-300",
-  green: "bg-green-100 text-green-600 border-green-300",
-  orange: "bg-orange-100 text-orange-600 border-orange-300",
-  purple: "bg-purple-100 text-purple-600 border-purple-300",
-  cyan: "bg-cyan-100 text-cyan-600 border-cyan-300",
-  rose: "bg-rose-100 text-rose-600 border-rose-300",
+export const metadata = {
+  title: "Computer-G Indore | Best Computer Courses in Nanda Nagar",
+  description:
+    "Computer-G Indore offers job-oriented computer courses like Basic Computer, Excel, Tally & CPCT at Nanda Nagar campus. Practical training since 2010.",
 };
 
-export default function ComputerGCoursesSection() {
+export default function ComputerGPage() {
   return (
-    <section className="py-16 px-4 bg-gray-50">
-      <h2 className="text-2xl md:text-3xl font-bold text-center mb-12 text-blue-700">
-        Computer-G Courses
-      </h2>
+    <>
+      {/* ================= HERO ================= */}
+      <section className="px-4 pt-16 pb-14 bg-gradient-to-b from-blue-50 to-white text-center">
+        <h1 className="text-3xl md:text-4xl font-bold text-blue-700 mb-4">
+          Computer-G Computer Training Institute
+        </h1>
 
-      {/* 3 × 3 GRID */}
-      <div className="max-w-6xl mx-auto grid gap-6 md:grid-cols-3">
-        {courses.map((course) => (
-          <div
-            key={course.id}
-            className="
-              bg-white rounded-2xl p-5 border
-              shadow-[0_4px_10px_rgba(0,0,0,0.08)]
-              flex items-center gap-4
-            "
-          >
-            {/* ICON */}
-            <div
-              className={`w-14 h-14 rounded-xl border flex items-center justify-center text-2xl shrink-0 ${colorMap[course.color]}`}
-            >
-              {course.icon}
-            </div>
+        <p className="text-gray-700 max-w-3xl mx-auto">
+          Learn practical computer skills at <strong>Nanda Nagar, Indore</strong>.
+          Job-oriented computer courses designed for students, job seekers
+          and beginners — trusted since 2010.
+        </p>
+      </section>
 
-            {/* CONTENT */}
-            <div className="flex-1">
-              <p className="font-semibold text-gray-800 leading-tight">
-                {course.name}
-              </p>
-              <p className="text-sm text-gray-600 mt-1">
-                ⏱ Duration: {course.duration}
-              </p>
+   {/* ================= COURSES ================= */}
+      <section className="bg-gray-50">
+        <ComputerGCoursesSection />
+      </section>
 
-              <Link
-                href={course.link}
-                className="inline-block mt-2 text-sm font-medium text-blue-600"
-              >
-                View Details →
-              </Link>
-            </div>
+      {/* ================= WHY COMPUTER-G ================= */}
+      <section className="px-4 py-14 bg-white">
+        <h2 className="text-2xl font-bold text-center mb-10 text-blue-700">
+          Why Choose Computer-G?
+        </h2>
+
+        <div className="max-w-6xl mx-auto grid gap-6 md:grid-cols-4 text-center">
+          <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
+            💻
+            <p className="font-semibold mt-2">Practical Lab Training</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Learn by doing, not just theory
+            </p>
           </div>
-        ))}
-      </div>
-    </section>
+
+          <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
+            📄
+            <p className="font-semibold mt-2">Office & Job Skills</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Skills used in real offices
+            </p>
+          </div>
+
+          <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
+            🧠
+            <p className="font-semibold mt-2">Beginner Friendly</p>
+            <p className="text-sm text-gray-600 mt-1">
+              No prior computer knowledge required
+            </p>
+          </div>
+
+          <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
+            🎯
+            <p className="font-semibold mt-2">Job Oriented Courses</p>
+            <p className="text-sm text-gray-600 mt-1">
+              Focus on employment & confidence
+            </p>
+          </div>
+        </div>
+      </section>
+
+         {/* ================= TRUST STRIP ================= */}
+      <section className="px-4 py-12 bg-white">
+        <div className="max-w-6xl mx-auto grid gap-6 grid-cols-2 md:grid-cols-4 text-center">
+          <div>
+            <p className="text-3xl font-bold text-blue-700">15+</p>
+            <p className="text-sm text-gray-600">Years Experience</p>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-blue-700">1000+</p>
+            <p className="text-sm text-gray-600">Students Trained</p>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-blue-700">500+</p>
+            <p className="text-sm text-gray-600">Job Placements</p>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-blue-700">Since 2010</p>
+            <p className="text-sm text-gray-600">Trusted Institute</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= SINGLE CTA (FINAL) ================= */}
+      <section className="px-4 py-14 bg-blue-600 text-white text-center">
+        <h2 className="text-2xl font-semibold mb-3">
+          Want to Join Computer Courses at Computer-G?
+        </h2>
+
+        <p className="text-blue-100 mb-6">
+          Call or WhatsApp us to know fees, batches & demo classes.
+        </p>
+
+        <div className="flex justify-center gap-4 flex-wrap">
+          <a
+            href="tel:9713014234"
+            className="bg-white text-blue-700 px-6 py-3 rounded-lg font-medium"
+          >
+            📞 Call Now
+          </a>
+
+          <a
+            href="https://wa.me/919713014234"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-green-500 text-white px-6 py-3 rounded-lg font-medium"
+          >
+            💬 WhatsApp
+          </a>
+        </div>
+      </section>
+
+      <Footer />
+    </>
   );
 }
