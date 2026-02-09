@@ -23,6 +23,11 @@ export default function ComputerGPage() {
         </p>
       </section>
 
+   {/* ================= COURSES ================= */}
+      <section className="bg-gray-50">
+        <ComputerGCoursesSection />
+      </section>
+
       {/* ================= WHY COMPUTER-G ================= */}
       <section className="px-4 py-14 bg-white">
         <h2 className="text-2xl font-bold text-center mb-10 text-blue-700">
@@ -64,12 +69,7 @@ export default function ComputerGPage() {
         </div>
       </section>
 
-      {/* ================= COURSES ================= */}
-      <section className="bg-gray-50">
-        <ComputerGCoursesSection />
-      </section>
-
-      {/* ================= TRUST STRIP ================= */}
+         {/* ================= TRUST STRIP ================= */}
       <section className="px-4 py-12 bg-white">
         <div className="max-w-6xl mx-auto grid gap-6 grid-cols-2 md:grid-cols-4 text-center">
           <div>
