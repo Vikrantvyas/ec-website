@@ -30,40 +30,56 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen">
 
-      {/* NAVY SIDEBAR */}
-      <aside className="w-16 bg-[#0b1f4d] flex flex-col items-center py-6 space-y-6 shadow-2xl">
+      {/* SIDEBAR */}
+      <aside className="w-16 bg-[#0a1f44] flex flex-col items-center py-6 space-y-6 shadow-xl">
 
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
 
           return (
-            <Link key={item.href} href={item.href}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group relative flex items-center justify-center"
+            >
               <div
-                className={`p-3 rounded-lg transition ${
+                className={`p-3 rounded-lg transition-all duration-200 ${
                   isActive
-                    ? "bg-[#1e40af]"
-                    : "hover:bg-[#1e40af]"
+                    ? "bg-[#163d7a]"
+                    : "hover:bg-[#163d7a]"
                 }`}
               >
                 <Icon size={20} className="text-white" />
               </div>
+
+              {/* Tooltip */}
+              <span className="absolute left-16 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow">
+                {item.name}
+              </span>
             </Link>
           );
         })}
 
-        <div className="mt-auto">
+        {/* Logout */}
+        <div className="mt-auto group relative">
           <button className="p-3 rounded-lg bg-red-600 hover:bg-red-700 transition">
             <LogOut size={20} className="text-white" />
           </button>
+
+          <span className="absolute left-16 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow">
+            Logout
+          </span>
         </div>
       </aside>
 
-      <main className="flex-1 bg-gray-100 p-6">
+      {/* MAIN CONTENT */}
+      <main className="flex-1 bg-gray-100 p-6 overflow-y-auto">
         {children}
       </main>
+
     </div>
   );
 }
