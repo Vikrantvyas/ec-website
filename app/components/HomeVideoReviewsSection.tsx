@@ -6,6 +6,16 @@ type Props = {
   courseLabel?: string;
 };
 
+/* 👉 YAHAN SIRF VIDEO LINKS CHANGE KARNE HAIN */
+const videoEmbeds = [
+  "https://www.youtube.com/embed/pVx4whJEUio?si=bks1XzR5dx2f_zV2", // 1st Video
+  "https://www.youtube.com/embed/CbkhmXRfuLg?si=F0xwT0ol0NHliYRy", // 2
+  "https://www.youtube.com/embed/UzEMlxwli8I?si=3NWVWcOCFqTNGu_O", // 3
+  "https://www.youtube.com/embed/daDhuzW5I00?si=8lfErCy8bcibbjOX", // 4
+  "https://www.youtube.com/embed/pVx4whJEUio?si=bks1XzR5dx2f_zV2", // 5
+  "https://www.youtube.com/embed/q-ThaUZcuSs", // 6
+];
+
 export default function HomeVideoReviewsSection({
   title = "Student Video Reviews",
   subtitle =
@@ -27,9 +37,9 @@ export default function HomeVideoReviewsSection({
 
         {/* REELS */}
         <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+          {videoEmbeds.map((videoSrc, index) => (
             <div
-              key={i}
+              key={index}
               className="
                 snap-start
                 flex-shrink-0
@@ -44,10 +54,10 @@ export default function HomeVideoReviewsSection({
               <div className="relative w-full h-[390px] rounded-2xl overflow-hidden">
                 <iframe
                   className="absolute inset-0 w-full h-full"
-                  src="https://www.youtube.com/embed/q-ThaUZcuSs"
-                  title={`Student Video Review ${i}`}
+                  src={videoSrc}
+                  title={`Student Video Review ${index + 1}`}
                   frameBorder="0"
-                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 ></iframe>
               </div>

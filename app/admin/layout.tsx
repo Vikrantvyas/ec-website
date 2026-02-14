@@ -1,8 +1,9 @@
 "use client";
 
-import { ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { ReactNode, useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient";
 import {
   LayoutDashboard,
   UserPlus,
@@ -28,6 +29,48 @@ const menuItems = [
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  const isLoginPage = pathname === "/admin/login";
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      // Do NOT protect login page
+      if (isLoginPage) {
+        setLoading(false);
+        return;
+      }
+
+      const { data } = await supabase.auth.getSession();
+
+      if (!data.session) {
+        router.push("/admin/login");
+      } else {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [router, isLoginPage]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/admin/login");
+  };
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-gray-500">Checking authentication...</p>
+      </div>
+    );
+  }
+
+  // If login page → render directly (no sidebar)
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="flex h-screen">
@@ -55,7 +98,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <Icon size={20} className="text-white" />
               </div>
 
-              {/* Tooltip */}
               <span className="absolute left-16 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow">
                 {item.name}
               </span>
@@ -65,7 +107,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         {/* Logout */}
         <div className="mt-auto group relative">
-          <button className="p-3 rounded-lg bg-red-600 hover:bg-red-700 transition">
+          <button
+            onClick={handleLogout}
+            className="p-3 rounded-lg bg-red-600 hover:bg-red-700 transition"
+          >
             <LogOut size={20} className="text-white" />
           </button>
 
@@ -79,7 +124,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <main className="flex-1 bg-gray-100 p-6 overflow-y-auto">
         {children}
       </main>
-
     </div>
   );
 }
