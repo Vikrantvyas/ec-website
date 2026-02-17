@@ -2,22 +2,20 @@
 
 import { useState } from "react";
 
-interface EnquiryType {
-  id: number;
-  studentName: string;
-  courses: string;
-  status: string;
-  enquiryDate: string;
-}
+const dummyEnquiries = [
+  { id: 1, name: "Rahul Kumar", course: "Spoken English", status: "Follow up", date: "21/08/2025" },
+  { id: 2, name: "Priya Sharma", course: "Basic Computer", status: "New Enquiry", date: "20/08/2025" },
+  { id: 3, name: "Amit Singh", course: "Tally", status: "Converted", date: "19/08/2025" },
+  { id: 4, name: "Suman Verma", course: "Web Development", status: "New Enquiry", date: "18/08/2025" },
+  { id: 5, name: "Vijay Kumar", course: "Digital Marketing", status: "Follow up", date: "17/08/2025" },
+];
 
 interface Props {
-  enquiries: EnquiryType[];
-  onSelectEnquiry: (enquiry: EnquiryType) => void;
+  onSelectEnquiry: (enquiry: any) => void;
   onNewEnquiry: () => void;
 }
 
 export default function EnqSidebar({
-  enquiries,
   onSelectEnquiry,
   onNewEnquiry,
 }: Props) {
@@ -58,14 +56,7 @@ export default function EnqSidebar({
 
       {/* List */}
       <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-2">
-
-        {enquiries.length === 0 && (
-          <div className="text-center text-gray-400 text-sm mt-6">
-            No enquiries yet
-          </div>
-        )}
-
-        {enquiries.map((enquiry) => (
+        {dummyEnquiries.map((enquiry) => (
           <div
             key={enquiry.id}
             onClick={() => {
@@ -80,16 +71,16 @@ export default function EnqSidebar({
           >
             {/* Avatar */}
             <div className="w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold">
-              {enquiry.studentName?.charAt(0).toUpperCase()}
+              {enquiry.name.charAt(0)}
             </div>
 
             {/* Info */}
             <div className="flex-1">
               <div className="text-sm font-medium text-gray-900">
-                {enquiry.studentName}
+                {enquiry.name}
               </div>
               <div className="text-xs text-gray-500 truncate">
-                {enquiry.enquiryDate} - {enquiry.courses}
+                {enquiry.date} - {enquiry.course}
               </div>
             </div>
           </div>
