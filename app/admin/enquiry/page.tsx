@@ -7,6 +7,7 @@ import EnqSidebar from "../../components/admin/enquiry/EnqSidebar";
 export interface EnquiryType {
   id: number;
   studentName: string;
+  courses?: string;          // ✅ ADD THIS
   mobileNumber?: string;
   branch?: string;
   enquiryMethod?: string;
@@ -18,15 +19,26 @@ export interface EnquiryType {
 }
 
 export default function EnquiryPage() {
+
   const [enquiries, setEnquiries] = useState<EnquiryType[]>([]);
   const [selectedLead, setSelectedLead] = useState<EnquiryType | null>(null);
   const [isNewEnquiry, setIsNewEnquiry] = useState(true);
 
   // 🔥 Add new enquiry (Latest on top)
-  const handleAddEnquiry = (data: EnquiryType) => {
-    const newEntry = {
-      ...data,
+  const handleAddEnquiry = (data: any) => {
+
+    const newEntry: EnquiryType = {
       id: Date.now(),
+      studentName: data.studentName || "",
+      courses: data.courses || "",   // ✅ ensure exists
+      mobileNumber: data.mobileNumber,
+      branch: data.branch,
+      enquiryMethod: data.enquiryMethod,
+      source: data.source,
+      status: data.status,
+      enquiryDate: data.enquiryDate,
+      enquiryTime: data.enquiryTime,
+      remark: data.remark,
     };
 
     setEnquiries((prev) => [newEntry, ...prev]); // latest on top
@@ -58,6 +70,7 @@ export default function EnquiryPage() {
           onAddEnquiry={handleAddEnquiry}
         />
       </div>
+
     </div>
   );
 }
