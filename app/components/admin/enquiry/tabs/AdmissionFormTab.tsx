@@ -1,6 +1,26 @@
 "use client";
 
-export default function AdmissionFormTab() {
+interface Props {
+  formData: any;
+  setFormData: any;
+  nextTab: () => void;
+  prevTab: () => void;
+}
+
+export default function AdmissionFormTab({
+  formData,
+  setFormData,
+  nextTab,
+  prevTab,
+}: Props) {
+
+  const handleChange = (e: any) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
   return (
     <div className="p-6 space-y-8">
 
@@ -8,53 +28,23 @@ export default function AdmissionFormTab() {
       <Section title="Admission Details">
 
         <Grid>
-          <Field label="Admission Date" type="date" />
-          <Field label="Admission Number" placeholder="Auto Generated Later" />
-          <Select label="Course Selected" options={["Spoken English", "Basic Computer", "Tally", "Digital Marketing"]} />
-          <Select label="Course Duration" options={["3 Months", "6 Months", "1 Year"]} />
-          <Select label="Mode" options={["Offline", "Online"]} />
-        </Grid>
-
-      </Section>
-
-
-      {/* ================= Fee Structure ================= */}
-      <Section title="Fee Structure">
-
-        <Grid>
-          <Field label="Total Course Fee" type="number" />
-          <Select label="Discount Type" options={["None", "Flat", "Percentage"]} />
-          <Field label="Discount Value" type="number" />
-          <Field label="Registration Fee" type="number" />
-          <Field label="Study Material Fee" type="number" />
-          <Field label="Final Payable Fee" type="number" placeholder="Auto Calculated Later" />
-        </Grid>
-
-      </Section>
-
-
-      {/* ================= Installment Plan ================= */}
-      <Section title="Installment Plan">
-
-        <Grid>
-          <Select label="Payment Type" options={["Full Payment", "Installments"]} />
-          <Field label="Number of Installments" type="number" />
-          <Field label="Installment Amount" type="number" />
-          <Field label="First Due Date" type="date" />
-          <Field label="Second Due Date" type="date" />
-          <Field label="Third Due Date" type="date" />
-        </Grid>
-
-      </Section>
-
-
-      {/* ================= Admission Status ================= */}
-      <Section title="Admission Status">
-
-        <Grid>
-          <Select label="Admission Status" options={["Confirmed", "Pending Payment", "Cancelled"]} />
-          <Field label="Counsellor Name" />
-          <Field label="Remarks" />
+          <Field label="Admission Date" name="admissionDate" type="date" value={formData.admissionDate} onChange={handleChange} />
+          <Field label="Admission Number" name="admissionNumber" value={formData.admissionNumber} onChange={handleChange} />
+          <Select label="Course Selected" name="courseSelected"
+            options={["Spoken English", "Basic Computer", "Tally", "Digital Marketing"]}
+            value={formData.courseSelected}
+            onChange={handleChange}
+          />
+          <Select label="Course Duration" name="courseDuration"
+            options={["3 Months", "6 Months", "1 Year"]}
+            value={formData.courseDuration}
+            onChange={handleChange}
+          />
+          <Select label="Mode" name="mode"
+            options={["Offline", "Online"]}
+            value={formData.mode}
+            onChange={handleChange}
+          />
         </Grid>
 
       </Section>
@@ -63,11 +53,17 @@ export default function AdmissionFormTab() {
       {/* ================= Action Buttons ================= */}
       <div className="flex justify-between pt-6 border-t">
 
-        <button className="px-6 py-2 rounded border text-sm font-medium hover:bg-gray-100">
+        <button
+          onClick={prevTab}
+          className="px-6 py-2 rounded border text-sm font-medium hover:bg-gray-100"
+        >
           Previous
         </button>
 
-        <button className="px-6 py-2 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+        <button
+          onClick={nextTab}
+          className="px-6 py-2 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+        >
           Next
         </button>
 
@@ -99,26 +95,35 @@ function Grid({ children }: any) {
   );
 }
 
-function Field({ label, type = "text", placeholder = "" }: any) {
+function Field({ label, name, type = "text", value, onChange }: any) {
   return (
     <div className="flex flex-col">
       <label className="mb-2 text-gray-600 text-sm">{label}</label>
       <input
+        name={name}
         type={type}
-        placeholder={placeholder}
+        value={value || ""}
+        onChange={onChange}
         className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>
   );
 }
 
-function Select({ label, options }: any) {
+function Select({ label, name, options, value, onChange }: any) {
   return (
     <div className="flex flex-col">
       <label className="mb-2 text-gray-600 text-sm">{label}</label>
-      <select className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <select
+        name={name}
+        value={value || ""}
+        onChange={onChange}
+        className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
         {options.map((opt: string, i: number) => (
-          <option key={i}>{opt}</option>
+          <option key={i} value={opt}>
+            {opt}
+          </option>
         ))}
       </select>
     </div>
