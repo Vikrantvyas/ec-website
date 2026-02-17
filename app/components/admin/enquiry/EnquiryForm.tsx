@@ -10,7 +10,7 @@ import {
   lastEducationOptions,
   genderOptions,
   maritalStatusOptions,
-} from "../constants";
+} from "./constants";   // ✅ FIXED HERE
 
 interface Props {
   formData: any;
