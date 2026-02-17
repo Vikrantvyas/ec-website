@@ -28,7 +28,7 @@ export default function EnquiryPage() {
         <EnqMainPanel
           selectedStudent={selectedLead}
           isNewEnquiry={isNewEnquiry}
-          onAddEnquiry={() => {}}   {/* ✅ Dummy Mode Fix */}
+          onAddEnquiry={() => {}}
         />
       </div>
 
