@@ -74,53 +74,66 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100">
 
-      {/* ===== DESKTOP SIDEBAR ===== */}
-      <aside className="hidden md:flex w-16 bg-[#0a1f44] flex-col items-center py-6 space-y-6 shadow-xl">
+      {/* ===== MOBILE TOP BAR ===== */}
+      <div className="md:hidden flex items-center justify-between bg-[#0a1f44] text-white px-4 py-3 sticky top-0 z-40">
+        <button onClick={() => setMobileOpen(true)}>
+          <Menu size={24} />
+        </button>
+        <span className="font-semibold">Admin Panel</span>
+        <div className="w-6" />
+      </div>
 
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
+      <div className="flex">
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="group relative flex items-center justify-center"
-            >
-              <div
-                className={`p-3 rounded-lg transition ${
-                  isActive ? "bg-[#163d7a]" : "hover:bg-[#163d7a]"
-                }`}
+        {/* ===== DESKTOP SIDEBAR ===== */}
+        <aside className="hidden md:flex w-16 bg-[#0a1f44] flex-col items-center py-6 space-y-6 shadow-xl min-h-screen">
+
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group relative flex items-center justify-center"
               >
-                <Icon size={20} className="text-white" />
-              </div>
+                <div
+                  className={`p-3 rounded-lg transition ${
+                    isActive ? "bg-[#163d7a]" : "hover:bg-[#163d7a]"
+                  }`}
+                >
+                  <Icon size={20} className="text-white" />
+                </div>
 
-              <span className="absolute left-16 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow">
-                {item.name}
-              </span>
-            </Link>
-          );
-        })}
+                <span className="absolute left-16 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow">
+                  {item.name}
+                </span>
+              </Link>
+            );
+          })}
 
-        <div className="mt-auto group relative">
-          <button
-            onClick={handleLogout}
-            className="p-3 rounded-lg bg-red-600 hover:bg-red-700 transition"
-          >
-            <LogOut size={20} className="text-white" />
-          </button>
+          <div className="mt-auto group relative">
+            <button
+              onClick={handleLogout}
+              className="p-3 rounded-lg bg-red-600 hover:bg-red-700 transition"
+            >
+              <LogOut size={20} className="text-white" />
+            </button>
+          </div>
+        </aside>
 
-          <span className="absolute left-16 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow">
-            Logout
-          </span>
-        </div>
-      </aside>
+        {/* ===== MAIN CONTENT ===== */}
+        <main className="flex-1 p-4 md:p-6">
+          {children}
+        </main>
+      </div>
 
       {/* ===== MOBILE DRAWER ===== */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div className="fixed inset-0 z-50 md:hidden">
           <div
             className="absolute inset-0 bg-black opacity-50"
             onClick={() => setMobileOpen(false)}
@@ -165,24 +178,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       )}
-
-      {/* ===== MAIN CONTENT AREA ===== */}
-      <div className="flex flex-col flex-1">
-
-        {/* Mobile Top Bar */}
-        <div className="md:hidden flex items-center justify-between bg-[#0a1f44] text-white px-4 py-3 shadow sticky top-0 z-30">
-          <button onClick={() => setMobileOpen(true)}>
-            <Menu size={24} />
-          </button>
-          <span className="font-semibold">Admin Panel</span>
-          <div />
-        </div>
-
-        {/* Content */}
-        <main className="flex-1 p-4 md:p-6">
-          {children}
-        </main>
-      </div>
     </div>
   );
 }
