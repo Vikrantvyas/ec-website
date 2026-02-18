@@ -74,8 +74,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
-
+    <div className="min-h-screen bg-[#f8fafc] overflow-x-hidden">
 
       {/* MOBILE TOP BAR */}
       <div className="md:hidden flex items-center justify-between bg-[#0a1f44] text-white px-4 py-3 sticky top-0 z-40">
@@ -86,10 +85,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <div className="w-6" />
       </div>
 
-      <div className="flex w-full">
+      <div className="flex">
 
         {/* DESKTOP SIDEBAR */}
-        <aside className="hidden md:flex w-16 bg-[#0a1f44] flex-col items-center py-6 space-y-6 shadow-xl min-h-screen shrink-0">
+        <aside className="hidden md:flex w-20 bg-[#0a1f44] flex-col items-center py-8 space-y-8 shadow-xl min-h-screen">
 
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -99,19 +98,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="group relative flex items-center justify-center"
+                className={`p-3 rounded-xl transition ${
+                  isActive
+                    ? "bg-[#163d7a]"
+                    : "hover:bg-[#163d7a]"
+                }`}
               >
-                <div
-                  className={`p-3 rounded-lg transition ${
-                    isActive ? "bg-[#163d7a]" : "hover:bg-[#163d7a]"
-                  }`}
-                >
-                  <Icon size={20} className="text-white" />
-                </div>
-
-                <span className="absolute left-16 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow">
-                  {item.name}
-                </span>
+                <Icon size={22} className="text-white" />
               </Link>
             );
           })}
@@ -119,7 +112,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <div className="mt-auto">
             <button
               onClick={handleLogout}
-              className="p-3 rounded-lg bg-red-600 hover:bg-red-700 transition"
+              className="p-3 rounded-xl bg-red-600 hover:bg-red-700 transition"
             >
               <LogOut size={20} className="text-white" />
             </button>
@@ -127,11 +120,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </aside>
 
         {/* MAIN CONTENT */}
-        <main className="flex-1 min-w-0 p-4 md:p-6">
-          <div className="w-full min-w-0 overflow-x-hidden">
+        <main className="flex-1 p-8">
+          <div className="bg-white rounded-2xl shadow-sm border p-6 min-h-[calc(100vh-80px)]">
             {children}
           </div>
         </main>
+
       </div>
 
       {/* MOBILE DRAWER */}
