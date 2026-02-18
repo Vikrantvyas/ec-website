@@ -76,16 +76,10 @@ export default function AttendancePage() {
   }, [filteredStudents, attendanceState]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-
-      {/* Top Header */}
-      <div className="p-4 bg-white shadow-sm sticky top-0 z-10">
-        <h1 className="text-xl font-semibold">Attendance Manager</h1>
-      </div>
+    <div className="bg-gray-50">
 
       <div className="p-4">
 
-        {/* Branch Filter */}
         <div className="flex gap-2 overflow-x-auto mb-4">
           {branches.map((branch) => (
             <button
@@ -105,10 +99,8 @@ export default function AttendancePage() {
           ))}
         </div>
 
-        {/* Desktop Layout */}
         <div className="grid md:grid-cols-3 gap-6">
 
-          {/* Left Panel - Batches */}
           <div className="md:col-span-1 bg-white p-4 rounded-xl shadow">
             <h2 className="font-semibold mb-3">Batches</h2>
             <div className="space-y-3">
@@ -131,7 +123,6 @@ export default function AttendancePage() {
             </div>
           </div>
 
-          {/* Right Panel - Students */}
           <div className="md:col-span-2 bg-white p-4 rounded-xl shadow">
 
             {!selectedBatch && (
@@ -160,8 +151,6 @@ export default function AttendancePage() {
                         }`}
                       >
                         <div className="flex justify-between items-start">
-
-                          {/* Student Info */}
                           <div>
                             <div
                               className={`font-semibold ${
@@ -197,7 +186,6 @@ export default function AttendancePage() {
                             </div>
                           </div>
 
-                          {/* Toggle */}
                           <button
                             onClick={() =>
                               setAttendanceState((prev) => ({
@@ -223,7 +211,6 @@ export default function AttendancePage() {
               </>
             )}
           </div>
-
         </div>
       </div>
     </div>
