@@ -74,7 +74,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 overflow-x-hidden">
+    <div className="min-h-screen bg-white overflow-x-hidden">
+
 
       {/* MOBILE TOP BAR */}
       <div className="md:hidden flex items-center justify-between bg-[#0a1f44] text-white px-4 py-3 sticky top-0 z-40">
