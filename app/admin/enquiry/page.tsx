@@ -9,10 +9,10 @@ export default function EnquiryPage() {
   const [isNewEnquiry, setIsNewEnquiry] = useState(true);
 
   return (
-    <div className="flex flex-col md:flex-row w-full bg-white">
+    <div className="flex flex-col md:flex-row gap-6">
 
       {/* Sidebar */}
-      <div className="w-full md:w-[350px] md:border-r border-gray-200 bg-white">
+      <div className="w-full md:w-[320px] bg-white rounded-xl border shadow-sm">
         <EnqSidebar
           onSelectEnquiry={(enq) => {
             setSelectedLead(enq);
@@ -26,7 +26,7 @@ export default function EnquiryPage() {
       </div>
 
       {/* Main Panel */}
-      <div className="flex-1 w-full bg-white">
+      <div className="flex-1 bg-white rounded-xl border shadow-sm">
         <EnqMainPanel
           selectedStudent={selectedLead}
           isNewEnquiry={isNewEnquiry}
