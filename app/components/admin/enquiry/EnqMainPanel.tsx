@@ -17,8 +17,6 @@ export default function EnqMainPanel({
   onAddEnquiry,
 }: Props) {
   const [currentTab, setCurrentTab] = useState(0);
-
-  // 🔥 Central Form State
   const [formData, setFormData] = useState<any>({});
 
   const tabs = [
@@ -43,35 +41,39 @@ export default function EnqMainPanel({
   };
 
   const handleFinalSubmit = () => {
-    onAddEnquiry(formData); // sidebar me add karega
+    onAddEnquiry(formData);
     setCurrentTab(0);
     setFormData({});
   };
 
-  // Student selected → show details
+  // If viewing existing student
   if (!isNewEnquiry && selectedStudent) {
     return (
-      <StudentDetailsView selectedStudent={selectedStudent} />
+      <div className="w-full bg-white min-h-screen">
+        <StudentDetailsView selectedStudent={selectedStudent} />
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="w-full bg-white min-h-screen">
 
-      <EnquiryTabs
-        tabs={tabs}
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-      />
+      <div className="max-w-full overflow-x-hidden">
+        <EnquiryTabs
+          tabs={tabs}
+          currentTab={currentTab}
+          setCurrentTab={setCurrentTab}
+        />
 
-      <TabContent
-        currentTab={currentTab}
-        formData={formData}
-        setFormData={setFormData}
-        nextTab={nextTab}
-        prevTab={prevTab}
-        handleFinalSubmit={handleFinalSubmit}
-      />
+        <TabContent
+          currentTab={currentTab}
+          formData={formData}
+          setFormData={setFormData}
+          nextTab={nextTab}
+          prevTab={prevTab}
+          handleFinalSubmit={handleFinalSubmit}
+        />
+      </div>
 
     </div>
   );
