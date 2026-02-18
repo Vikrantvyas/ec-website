@@ -76,9 +76,9 @@ export default function AttendancePage() {
   }, [filteredStudents, attendanceState]);
 
   return (
-    <div className="bg-gray-50">
+    <div className="bg-white min-h-screen">
 
-      <div className="p-4">
+      <div className="p-4 max-w-full">
 
         <div className="flex gap-2 overflow-x-auto mb-4">
           {branches.map((branch) => (
@@ -101,7 +101,7 @@ export default function AttendancePage() {
 
         <div className="grid md:grid-cols-3 gap-6">
 
-          <div className="md:col-span-1 bg-white p-4 rounded-xl shadow">
+          <div className="md:col-span-1 bg-white p-4 rounded-xl border">
             <h2 className="font-semibold mb-3">Batches</h2>
             <div className="space-y-3">
               {filteredBatches.map((batch) => (
@@ -123,7 +123,7 @@ export default function AttendancePage() {
             </div>
           </div>
 
-          <div className="md:col-span-2 bg-white p-4 rounded-xl shadow">
+          <div className="md:col-span-2 bg-white p-4 rounded-xl border">
 
             {!selectedBatch && (
               <div className="text-gray-400 text-center py-20">
@@ -211,6 +211,7 @@ export default function AttendancePage() {
               </>
             )}
           </div>
+
         </div>
       </div>
     </div>
