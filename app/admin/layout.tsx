@@ -64,7 +64,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        Checking authentication...
+        <p className="text-gray-500">Checking authentication...</p>
       </div>
     );
   }
@@ -76,13 +76,59 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-100">
 
-      {/* ===== MOBILE HEADER ===== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0a1f44] text-white flex items-center justify-between px-4 z-40">
+      {/* ===== MOBILE TOP BAR ===== */}
+      <div className="md:hidden flex items-center justify-between bg-[#0a1f44] text-white px-4 py-3 sticky top-0 z-40">
         <button onClick={() => setMobileOpen(true)}>
           <Menu size={24} />
         </button>
         <span className="font-semibold">Admin Panel</span>
         <div className="w-6" />
+      </div>
+
+      <div className="flex">
+
+        {/* ===== DESKTOP SIDEBAR ===== */}
+        <aside className="hidden md:flex w-16 bg-[#0a1f44] flex-col items-center py-6 space-y-6 shadow-xl min-h-screen">
+
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group relative flex items-center justify-center"
+              >
+                <div
+                  className={`p-3 rounded-lg transition ${
+                    isActive ? "bg-[#163d7a]" : "hover:bg-[#163d7a]"
+                  }`}
+                >
+                  <Icon size={20} className="text-white" />
+                </div>
+
+                <span className="absolute left-16 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow">
+                  {item.name}
+                </span>
+              </Link>
+            );
+          })}
+
+          <div className="mt-auto group relative">
+            <button
+              onClick={handleLogout}
+              className="p-3 rounded-lg bg-red-600 hover:bg-red-700 transition"
+            >
+              <LogOut size={20} className="text-white" />
+            </button>
+          </div>
+        </aside>
+
+        {/* ===== MAIN CONTENT ===== */}
+        <main className="flex-1 p-4 md:p-6">
+          {children}
+        </main>
       </div>
 
       {/* ===== MOBILE DRAWER ===== */}
@@ -92,6 +138,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             className="absolute inset-0 bg-black opacity-50"
             onClick={() => setMobileOpen(false)}
           />
+
           <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-xl">
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="font-semibold">Menu</h2>
@@ -122,7 +169,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-3 p-2 rounded-lg bg-red-100 text-red-600 w-full"
+                className="flex items-center gap-3 p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 w-full"
               >
                 <LogOut size={18} />
                 Logout
@@ -131,34 +178,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       )}
-
-      <div className="flex">
-
-        {/* DESKTOP SIDEBAR */}
-        <aside className="hidden md:flex w-16 bg-[#0a1f44] flex-col items-center py-6 space-y-6 shadow-xl min-h-screen">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-
-            return (
-              <Link key={item.href} href={item.href}>
-                <div
-                  className={`p-3 rounded-lg ${
-                    isActive ? "bg-[#163d7a]" : "hover:bg-[#163d7a]"
-                  }`}
-                >
-                  <Icon size={20} className="text-white" />
-                </div>
-              </Link>
-            );
-          })}
-        </aside>
-
-        {/* MAIN CONTENT */}
-        <main className="flex-1 pt-16 md:pt-6 p-4 md:p-6">
-          {children}
-        </main>
-      </div>
     </div>
   );
 }
