@@ -20,13 +20,17 @@ export default function RootLayout({
     <html lang="en">
       <body className="overflow-x-hidden">
 
-        {/* Menu bar ALWAYS visible */}
-        <MobileHeader />
-        <DesktopHeader />
+        {/* PUBLIC HEADER ONLY */}
+        {!isAdmin && (
+          <>
+            <MobileHeader />
+            <DesktopHeader />
+          </>
+        )}
 
         {children}
 
-        {/* Only public pages show these */}
+        {/* PUBLIC FOOTER ONLY */}
         {!isAdmin && (
           <>
             <MobileBottomNav />
