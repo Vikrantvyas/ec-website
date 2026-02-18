@@ -5,29 +5,32 @@ import EnqMainPanel from "../../components/admin/enquiry/EnqMainPanel";
 import EnqSidebar from "../../components/admin/enquiry/EnqSidebar";
 
 export default function EnquiryPage() {
-
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [isNewEnquiry, setIsNewEnquiry] = useState(true);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-[#f1f3f6] -m-6">
+    <div className="flex flex-col md:flex-row w-full bg-[#f1f3f6]">
 
-      <EnqSidebar
-        onSelectEnquiry={(enq) => {
-          setSelectedLead(enq);
-          setIsNewEnquiry(false);
-        }}
-        onNewEnquiry={() => {
-          setIsNewEnquiry(true);
-          setSelectedLead(null);
-        }}
-      />
+      {/* Sidebar */}
+      <div className="w-full md:w-[350px] md:border-r border-gray-200">
+        <EnqSidebar
+          onSelectEnquiry={(enq) => {
+            setSelectedLead(enq);
+            setIsNewEnquiry(false);
+          }}
+          onNewEnquiry={() => {
+            setIsNewEnquiry(true);
+            setSelectedLead(null);
+          }}
+        />
+      </div>
 
-      <div className="flex-1 h-full">
+      {/* Main Panel */}
+      <div className="flex-1 w-full">
         <EnqMainPanel
           selectedStudent={selectedLead}
           isNewEnquiry={isNewEnquiry}
-          onAddEnquiry={() => {}}  // Dummy mode
+          onAddEnquiry={() => {}}
         />
       </div>
 
