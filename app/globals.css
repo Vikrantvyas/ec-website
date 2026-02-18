@@ -48,10 +48,26 @@ h3 {
   letter-spacing: -0.01em;
 }
 
+/* 📱 Mobile spacing (header + bottom nav) */
+@media (max-width: 768px) {
+  body {
+    padding-top: 56px;    /* MobileHeader */
+    padding-bottom: 64px; /* MobileBottomNav */
+  }
+}
+
+/* 💻 Desktop spacing (fixed header) */
+@media (min-width: 769px) {
+  body {
+    padding-top: 56px; /* DesktopHeader */
+  }
+}
+
 /* =========================================
    ✨ SOFT YOUTH ANIMATIONS (GLOBAL)
    ========================================= */
 
+/* Fade + slide up on load */
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -63,10 +79,12 @@ h3 {
   }
 }
 
+/* Utility animation class */
 .animate-fadeUp {
   animation: fadeUp 0.6s ease-out both;
 }
 
+/* Delay helpers */
 .animate-fadeUp.delay-100 {
   animation-delay: 0.1s;
 }
@@ -76,9 +94,10 @@ h3 {
 }
 
 /* =========================================
-   🌈 YOUTH POLISH HELPERS
+   🌈 YOUTH POLISH HELPERS (OPTIONAL USE)
    ========================================= */
 
+/* Smooth hover everywhere */
 .hover-lift {
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
