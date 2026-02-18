@@ -74,9 +74,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 overflow-x-hidden">
 
-      {/* ===== MOBILE TOP BAR ===== */}
+      {/* MOBILE TOP BAR */}
       <div className="md:hidden flex items-center justify-between bg-[#0a1f44] text-white px-4 py-3 sticky top-0 z-40">
         <button onClick={() => setMobileOpen(true)}>
           <Menu size={24} />
@@ -85,10 +85,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <div className="w-6" />
       </div>
 
-      <div className="flex">
+      <div className="flex w-full">
 
-        {/* ===== DESKTOP SIDEBAR ===== */}
-        <aside className="hidden md:flex w-16 bg-[#0a1f44] flex-col items-center py-6 space-y-6 shadow-xl min-h-screen">
+        {/* DESKTOP SIDEBAR */}
+        <aside className="hidden md:flex w-16 bg-[#0a1f44] flex-col items-center py-6 space-y-6 shadow-xl min-h-screen shrink-0">
 
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -115,7 +115,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             );
           })}
 
-          <div className="mt-auto group relative">
+          <div className="mt-auto">
             <button
               onClick={handleLogout}
               className="p-3 rounded-lg bg-red-600 hover:bg-red-700 transition"
@@ -125,13 +125,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
         </aside>
 
-        {/* ===== MAIN CONTENT ===== */}
-        <main className="flex-1 p-4 md:p-6">
-          {children}
+        {/* MAIN CONTENT */}
+        <main className="flex-1 min-w-0 p-4 md:p-6">
+          <div className="w-full min-w-0 overflow-x-hidden">
+            {children}
+          </div>
         </main>
       </div>
 
-      {/* ===== MOBILE DRAWER ===== */}
+      {/* MOBILE DRAWER */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
@@ -150,16 +152,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <div className="p-4 space-y-4">
               {menuItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href;
 
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 p-2 rounded-lg ${
-                      isActive ? "bg-gray-200" : "hover:bg-gray-100"
-                    }`}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100"
                   >
                     <Icon size={18} />
                     <span>{item.name}</span>
@@ -169,7 +168,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-3 p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 w-full"
+                className="flex items-center gap-3 p-2 rounded-lg bg-red-100 text-red-600 w-full"
               >
                 <LogOut size={18} />
                 Logout
