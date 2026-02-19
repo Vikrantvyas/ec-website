@@ -45,7 +45,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       }
 
       const { data } = await supabase.auth.getSession();
-
       if (!data.session) {
         router.push("/admin/login");
       } else {
@@ -64,82 +63,74 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Checking authentication...</p>
+        Checking authentication...
       </div>
     );
   }
 
-  if (isLoginPage) {
-    return <>{children}</>;
-  }
+  if (isLoginPage) return <>{children}</>;
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <div className="flex bg-white">
 
-      {/* MOBILE TOP BAR */}
-      <div className="md:hidden flex items-center justify-between bg-[#0a1f44] text-white px-4 py-3 sticky top-0 z-40">
-        <button onClick={() => setMobileOpen(true)}>
-          <Menu size={24} />
-        </button>
-        <span className="font-semibold">Admin Panel</span>
-        <div className="w-6" />
-      </div>
+      {/* ICON BAR */}
+      <aside className="hidden md:flex w-11 bg-[#0a1f44] flex-col items-center border-r border-gray-200">
 
-      <div className="flex">
-
-        {/* DESKTOP ICON SIDEBAR */}
-        <aside className="hidden md:flex w-14 bg-[#0a1f44] flex-col items-center py-6 space-y-5 shadow-md min-h-screen shrink-0">
+        <div className="flex flex-col items-center gap-2 pt-2 flex-1">
 
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive =
+              item.href === "/admin"
+                ? pathname === "/admin"
+                : pathname.startsWith(item.href);
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="group relative flex items-center justify-center"
+                className="group relative"
               >
                 <div
-                  className={`p-2.5 rounded-lg transition ${
+                  className={`p-2 rounded-md transition ${
                     isActive
                       ? "bg-[#163d7a]"
                       : "hover:bg-[#163d7a]"
                   }`}
                 >
-                  <Icon size={20} className="text-white" />
+                  <Icon size={18} className="text-white" />
                 </div>
 
                 {/* Tooltip */}
-                <span className="absolute left-12 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow-lg">
+                <span className="absolute left-9 top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
                   {item.name}
                 </span>
               </Link>
             );
           })}
+        </div>
 
-          <div className="mt-auto group relative">
-            <button
-              onClick={handleLogout}
-              className="p-2.5 rounded-lg bg-red-600 hover:bg-red-700 transition"
-            >
-              <LogOut size={18} className="text-white" />
-            </button>
+        {/* Logout fixed bottom */}
+        <div className="pb-3 group relative">
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-md bg-red-600 hover:bg-red-700 transition"
+          >
+            <LogOut size={16} className="text-white" />
+          </button>
 
-            <span className="absolute left-12 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow-lg">
-              Logout
-            </span>
-          </div>
-        </aside>
+          <span className="absolute left-9 top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+            Logout
+          </span>
+        </div>
+      </aside>
 
-        {/* MAIN CONTENT */}
-        <main className="flex-1 bg-white min-w-0">
-          <div className="w-full h-full px-6 py-5">
-            {children}
-          </div>
-        </main>
-
-      </div>
+      {/* MAIN CONTENT */}
+      <main className="flex-1 min-w-0">
+        <div className="w-full px-4 py-3">
+          {children}
+        </div>
+      </main>
 
       {/* MOBILE DRAWER */}
       {mobileOpen && (
@@ -148,27 +139,25 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             className="absolute inset-0 bg-black opacity-50"
             onClick={() => setMobileOpen(false)}
           />
-
           <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-xl">
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="font-semibold">Menu</h2>
               <button onClick={() => setMobileOpen(false)}>
-                <X size={22} />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-3">
               {menuItems.map((item) => {
                 const Icon = item.icon;
-
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100"
+                    className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-100"
                   >
-                    <Icon size={18} />
+                    <Icon size={16} />
                     <span>{item.name}</span>
                   </Link>
                 );
@@ -176,9 +165,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-3 p-2 rounded-lg bg-red-100 text-red-600 w-full"
+                className="flex items-center gap-3 p-2 rounded-md bg-red-100 text-red-600 w-full"
               >
-                <LogOut size={18} />
+                <LogOut size={16} />
                 Logout
               </button>
             </div>

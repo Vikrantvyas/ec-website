@@ -11,8 +11,8 @@ export default function EnquiryPage() {
   return (
     <div className="flex h-full">
 
-      {/* Sidebar (Slim) */}
-      <div className="w-[340px] border-r bg-white shrink-0">
+      {/* Sidebar */}
+      <div className="w-[420px] border-r border-gray-200 bg-white shrink-0">
 
         <EnqSidebar
           onSelectEnquiry={(enq) => {
