@@ -74,7 +74,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] overflow-x-hidden">
+    <div className="min-h-screen bg-white overflow-x-hidden">
 
       {/* MOBILE TOP BAR */}
       <div className="md:hidden flex items-center justify-between bg-[#0a1f44] text-white px-4 py-3 sticky top-0 z-40">
@@ -87,8 +87,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
       <div className="flex">
 
-        {/* DESKTOP SIDEBAR */}
-        <aside className="hidden md:flex w-20 bg-[#0a1f44] flex-col items-center py-8 space-y-8 shadow-xl min-h-screen">
+        {/* DESKTOP ICON SIDEBAR */}
+        <aside className="hidden md:flex w-14 bg-[#0a1f44] flex-col items-center py-6 space-y-5 shadow-md min-h-screen shrink-0">
 
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -98,30 +98,43 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`p-3 rounded-xl transition ${
-                  isActive
-                    ? "bg-[#163d7a]"
-                    : "hover:bg-[#163d7a]"
-                }`}
+                className="group relative flex items-center justify-center"
               >
-                <Icon size={22} className="text-white" />
+                <div
+                  className={`p-2.5 rounded-lg transition ${
+                    isActive
+                      ? "bg-[#163d7a]"
+                      : "hover:bg-[#163d7a]"
+                  }`}
+                >
+                  <Icon size={20} className="text-white" />
+                </div>
+
+                {/* Tooltip */}
+                <span className="absolute left-12 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow-lg">
+                  {item.name}
+                </span>
               </Link>
             );
           })}
 
-          <div className="mt-auto">
+          <div className="mt-auto group relative">
             <button
               onClick={handleLogout}
-              className="p-3 rounded-xl bg-red-600 hover:bg-red-700 transition"
+              className="p-2.5 rounded-lg bg-red-600 hover:bg-red-700 transition"
             >
-              <LogOut size={20} className="text-white" />
+              <LogOut size={18} className="text-white" />
             </button>
+
+            <span className="absolute left-12 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow-lg">
+              Logout
+            </span>
           </div>
         </aside>
 
         {/* MAIN CONTENT */}
-        <main className="flex-1 p-8">
-          <div className="bg-white rounded-2xl shadow-sm border p-6 min-h-[calc(100vh-80px)]">
+        <main className="flex-1 bg-white min-w-0">
+          <div className="w-full h-full px-6 py-5">
             {children}
           </div>
         </main>
