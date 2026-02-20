@@ -22,167 +22,170 @@ export default function BatchAttendanceTab({
   };
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="flex flex-col h-full bg-white">
 
-      {/* ================= Batch Assignment ================= */}
-      <Section title="Batch Assignment">
+      {/* ================= CONTENT AREA ================= */}
+      <div className="flex-1 px-4 py-4 space-y-8">
 
-        <Grid>
-          <Select 
-            label="Course"
-            name="batchCourse"
-            value={formData.batchCourse}
-            onChange={handleChange}
-            options={[
-              "Spoken English",
-              "Basic Computer",
-              "Tally",
-              "Graphic Design",
-              "Web Development"
-            ]}
-          />
+        {/* ================= Batch Assignment ================= */}
+        <Section title="Batch Assignment">
 
-          <Select
-            label="Batch Name"
-            name="batchName"
-            value={formData.batchName}
-            onChange={handleChange}
-            options={[
-              "Morning A",
-              "Morning B",
-              "Afternoon",
-              "Evening A",
-              "Evening B"
-            ]}
-          />
+          <Grid>
+            <Select 
+              label="Course"
+              name="batchCourse"
+              value={formData.batchCourse}
+              onChange={handleChange}
+              options={[
+                "Spoken English",
+                "Basic Computer",
+                "Tally",
+                "Graphic Design",
+                "Web Development"
+              ]}
+            />
 
-          <Select
-            label="Trainer"
-            name="trainer"
-            value={formData.trainer}
-            onChange={handleChange}
-            options={[
-              "Trainer 1",
-              "Trainer 2",
-              "Trainer 3"
-            ]}
-          />
+            <Select
+              label="Batch Name"
+              name="batchName"
+              value={formData.batchName}
+              onChange={handleChange}
+              options={[
+                "Morning A",
+                "Morning B",
+                "Afternoon",
+                "Evening A",
+                "Evening B"
+              ]}
+            />
 
-          <Field
-            label="Start Date"
-            type="date"
-            name="batchStartDate"
-            value={formData.batchStartDate}
-            onChange={handleChange}
-          />
-        </Grid>
+            <Select
+              label="Trainer"
+              name="trainer"
+              value={formData.trainer}
+              onChange={handleChange}
+              options={[
+                "Trainer 1",
+                "Trainer 2",
+                "Trainer 3"
+              ]}
+            />
 
-        <Grid>
-          <Field
-            label="Batch Timing"
-            name="batchTiming"
-            value={formData.batchTiming}
-            onChange={handleChange}
-            placeholder="10:00 AM - 11:00 AM"
-          />
+            <Field
+              label="Start Date"
+              type="date"
+              name="batchStartDate"
+              value={formData.batchStartDate}
+              onChange={handleChange}
+            />
+          </Grid>
 
-          <Field
-            label="Duration (Months)"
-            type="number"
-            name="batchDuration"
-            value={formData.batchDuration}
-            onChange={handleChange}
-          />
+          <Grid>
+            <Field
+              label="Batch Timing"
+              name="batchTiming"
+              value={formData.batchTiming}
+              onChange={handleChange}
+              placeholder="10:00 AM - 11:00 AM"
+            />
 
-          <Field
-            label="Expected End Date"
-            type="date"
-            name="batchEndDate"
-            value={formData.batchEndDate}
-            onChange={handleChange}
-          />
+            <Field
+              label="Duration (Months)"
+              type="number"
+              name="batchDuration"
+              value={formData.batchDuration}
+              onChange={handleChange}
+            />
 
-          <Select
-            label="Status"
-            name="batchStatus"
-            value={formData.batchStatus}
-            onChange={handleChange}
-            options={[
-              "Active",
-              "Completed",
-              "Transferred",
-              "Dropped"
-            ]}
-          />
-        </Grid>
+            <Field
+              label="Expected End Date"
+              type="date"
+              name="batchEndDate"
+              value={formData.batchEndDate}
+              onChange={handleChange}
+            />
 
-        <div className="flex justify-end pt-4">
-          <button
-            type="button"
-            className="px-6 py-2 rounded bg-green-600 text-white text-sm font-medium hover:bg-green-700"
-          >
-            Assign Batch
-          </button>
-        </div>
+            <Select
+              label="Status"
+              name="batchStatus"
+              value={formData.batchStatus}
+              onChange={handleChange}
+              options={[
+                "Active",
+                "Completed",
+                "Transferred",
+                "Dropped"
+              ]}
+            />
+          </Grid>
 
-      </Section>
+          <div className="flex justify-end pt-4">
+            <button
+              type="button"
+              className="px-4 py-2 rounded bg-green-600 text-white text-sm font-medium hover:bg-green-700"
+            >
+              Assign Batch
+            </button>
+          </div>
 
-
-      {/* ================= Attendance Summary ================= */}
-      <Section title="Attendance Summary">
-
-        <div className="grid grid-cols-4 gap-6 text-sm">
-
-          <SummaryCard title="Total Classes" value="0" />
-          <SummaryCard title="Present" value="0" />
-          <SummaryCard title="Absent" value="0" />
-          <SummaryCard title="Attendance %" value="0%" highlight />
-
-        </div>
-
-      </Section>
+        </Section>
 
 
-      {/* ================= Attendance Records ================= */}
-      <Section title="Attendance Records">
+        {/* ================= Attendance Summary ================= */}
+        <Section title="Attendance Summary">
 
-        <div className="overflow-x-auto border rounded">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <SummaryCard title="Total Classes" value="0" />
+            <SummaryCard title="Present" value="0" />
+            <SummaryCard title="Absent" value="0" />
+            <SummaryCard title="Attendance %" value="0%" highlight />
+          </div>
 
-          <table className="min-w-full text-sm">
+        </Section>
 
-            <thead className="bg-gray-100">
-              <tr className="text-left">
-                <th className="px-4 py-2">Date</th>
-                <th className="px-4 py-2">Day</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Marked By</th>
-                <th className="px-4 py-2">Remark</th>
-              </tr>
-            </thead>
 
-            <tbody>
-              <tr className="border-t">
-                <td className="px-4 py-2 text-gray-500">
-                  No Attendance Records Yet
-                </td>
-                <td colSpan={4}></td>
-              </tr>
-            </tbody>
+        {/* ================= Attendance Records ================= */}
+        <Section title="Attendance Records">
 
-          </table>
+          <div className="overflow-x-auto border rounded">
 
-        </div>
+            <table className="min-w-full text-sm">
 
-      </Section>
+              <thead className="bg-gray-100">
+                <tr className="text-left">
+                  <th className="px-4 py-2">Date</th>
+                  <th className="px-4 py-2">Day</th>
+                  <th className="px-4 py-2">Status</th>
+                  <th className="px-4 py-2">Marked By</th>
+                  <th className="px-4 py-2">Remark</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr className="border-t">
+                  <td className="px-4 py-2 text-gray-500">
+                    No Attendance Records Yet
+                  </td>
+                  <td colSpan={4}></td>
+                </tr>
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </Section>
+
+      </div>
 
 
       {/* ================= Navigation ================= */}
-      <div className="flex justify-between pt-6 border-t">
+      <div className="border-t bg-gray-50 px-4 py-3 flex justify-between">
 
         <button
           type="button"
           onClick={prevTab}
-          className="px-6 py-2 rounded border text-sm font-medium hover:bg-gray-100"
+          className="px-4 py-2 rounded border text-sm font-medium hover:bg-gray-100"
         >
           Previous
         </button>
@@ -190,9 +193,9 @@ export default function BatchAttendanceTab({
         <button
           type="button"
           onClick={nextTab}
-          className="px-6 py-2 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+          className="px-4 py-2 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
         >
-          Next
+          Next →
         </button>
 
       </div>
@@ -206,8 +209,8 @@ export default function BatchAttendanceTab({
 
 function Section({ title, children }: any) {
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-800 border-b pb-2">
+    <div className="space-y-3">
+      <h2 className="text-base font-semibold text-gray-800 border-b pb-2">
         {title}
       </h2>
       {children}
@@ -217,7 +220,7 @@ function Section({ title, children }: any) {
 
 function Grid({ children }: any) {
   return (
-    <div className="grid grid-cols-4 gap-6 text-sm">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
       {children}
     </div>
   );
@@ -226,14 +229,14 @@ function Grid({ children }: any) {
 function Field({ label, name, type = "text", value, onChange, placeholder = "" }: any) {
   return (
     <div className="flex flex-col">
-      <label className="mb-2 text-gray-600 text-sm">{label}</label>
+      <label className="mb-1 text-xs text-gray-600">{label}</label>
       <input
         name={name}
         type={type}
         value={value || ""}
         onChange={onChange}
         placeholder={placeholder}
-        className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>
   );
@@ -242,12 +245,12 @@ function Field({ label, name, type = "text", value, onChange, placeholder = "" }
 function Select({ label, name, value, options, onChange }: any) {
   return (
     <div className="flex flex-col">
-      <label className="mb-2 text-gray-600 text-sm">{label}</label>
+      <label className="mb-1 text-xs text-gray-600">{label}</label>
       <select
         name={name}
         value={value || ""}
         onChange={onChange}
-        className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         {options.map((opt: string, i: number) => (
           <option key={i} value={opt}>
