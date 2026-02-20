@@ -71,75 +71,80 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   if (isLoginPage) return <>{children}</>;
 
   return (
-    <div className="flex bg-white">
+    <div className="h-screen flex overflow-hidden bg-white">
 
-      {/* ICON BAR */}
-      <aside className="hidden md:flex w-11 bg-[#0a1f44] flex-col items-center border-r border-gray-200">
+      {/* ICON BAR DESKTOP */}
+      <aside className="hidden md:flex w-14 bg-[#0a1f44] flex-col items-center py-3 space-y-3 relative">
 
-        <div className="flex flex-col items-center gap-2 pt-2 flex-1">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const isActive =
+            item.href === "/admin"
+              ? pathname === "/admin"
+              : pathname.startsWith(item.href);
 
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              item.href === "/admin"
-                ? pathname === "/admin"
-                : pathname.startsWith(item.href);
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="group relative"
+          return (
+            <Link key={item.href} href={item.href} className="group relative">
+              <div
+                className={`p-2 rounded-md transition ${
+                  isActive ? "bg-[#163d7a]" : "hover:bg-[#163d7a]"
+                }`}
               >
-                <div
-                  className={`p-2 rounded-md transition ${
-                    isActive
-                      ? "bg-[#163d7a]"
-                      : "hover:bg-[#163d7a]"
-                  }`}
-                >
-                  <Icon size={18} className="text-white" />
-                </div>
+                <Icon size={18} className="text-white" />
+              </div>
 
-                {/* Tooltip */}
-                <span className="absolute left-9 top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
-                  {item.name}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
+              {/* Tooltip FIXED */}
+              <span className="absolute left-12 top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-[999] pointer-events-none">
+                {item.name}
+              </span>
+            </Link>
+          );
+        })}
 
-        {/* Logout fixed bottom */}
-        <div className="pb-3 group relative">
-          <button
-            onClick={handleLogout}
-            className="p-2 rounded-md bg-red-600 hover:bg-red-700 transition"
-          >
+        {/* Logout just below settings */}
+        <button
+          onClick={handleLogout}
+          className="group relative mt-2"
+        >
+          <div className="p-2 rounded-md bg-red-600 hover:bg-red-700 transition">
             <LogOut size={16} className="text-white" />
-          </button>
+          </div>
 
-          <span className="absolute left-9 top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+          <span className="absolute left-12 top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-[999] pointer-events-none">
             Logout
           </span>
-        </div>
+        </button>
       </aside>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 min-w-0">
-        <div className="w-full px-4 py-3">
-          {children}
+      {/* PAGE AREA */}
+      <div className="flex-1 flex flex-col h-full min-w-0">
+
+        {/* MOBILE TOP BAR */}
+        <div className="md:hidden flex items-center justify-between px-4 h-14 border-b bg-white shrink-0">
+          <button onClick={() => setMobileOpen(true)}>
+            <Menu size={22} />
+          </button>
+          <span className="font-semibold">Admin Panel</span>
+          <div />
         </div>
-      </main>
+
+        {/* SCROLLABLE CONTENT */}
+        <main className="flex-1 overflow-auto">
+          <div className="h-full px-4 py-4">
+            {children}
+          </div>
+        </main>
+      </div>
 
       {/* MOBILE DRAWER */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
-            className="absolute inset-0 bg-black opacity-50"
+            className="absolute inset-0 bg-black/40"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-xl">
+          <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-xl flex flex-col">
+
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="font-semibold">Menu</h2>
               <button onClick={() => setMobileOpen(false)}>
@@ -147,7 +152,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </button>
             </div>
 
-            <div className="p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 return (
