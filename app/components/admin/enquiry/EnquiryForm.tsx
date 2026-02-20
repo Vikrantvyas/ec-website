@@ -1,3 +1,4 @@
+return <div style={{background:"red",color:"white"}}>TEST</div>
 "use client";
 
 import {
@@ -10,7 +11,7 @@ import {
   lastEducationOptions,
   genderOptions,
   maritalStatusOptions,
-} from "./constants";   // ✅ FIXED HERE
+} from "./constants";
 
 interface Props {
   formData: any;
@@ -40,9 +41,10 @@ export default function EnquiryFormTab({
   };
 
   return (
-    <div className="p-6">
+    <div className="py-4">
 
-      <div className="grid grid-cols-4 gap-6 text-sm">
+      {/* RESPONSIVE GRID FIX */}
+      <div className="grid grid-cols-1 gap-5 text-sm bg-yellow-100">
 
         <Field label="Enquiry Date" name="enquiryDate" type="date" value={formData.enquiryDate} onChange={handleChange} />
         <Field label="Enquiry Time" name="enquiryTime" type="time" value={formData.enquiryTime} onChange={handleChange} />
@@ -82,6 +84,7 @@ export default function EnquiryFormTab({
 
       </div>
 
+      {/* Remark Section */}
       <div className="mt-8">
         <label className="block mb-2 text-sm font-medium text-gray-700">
           Remark
@@ -96,7 +99,7 @@ export default function EnquiryFormTab({
         <div className="flex justify-end mt-4">
           <button
             onClick={handleNext}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm font-medium"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm font-medium w-full sm:w-auto"
           >
             Next
           </button>
@@ -116,7 +119,7 @@ function Field({ label, name, type = "text", value, onChange }: any) {
         type={type}
         value={value || ""}
         onChange={onChange}
-        className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>
   );
@@ -130,7 +133,7 @@ function Select({ label, name, value, options, onChange }: any) {
         name={name}
         value={value || ""}
         onChange={onChange}
-        className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         {options.map((opt: string, i: number) => (
           <option key={i} value={opt}>
