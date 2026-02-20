@@ -34,10 +34,11 @@ export default function EnquiryFormTab({
   return (
     <div className="flex flex-col h-full bg-white">
 
-      {/* FORM GRID */}
-      <div className="flex-1 px-4 py-3">
+      {/* FORM AREA */}
+      <div className="flex-1 px-4 py-4 overflow-auto">
 
-        <div className="grid grid-cols-4 gap-3 text-xs">
+        {/* MOBILE-FIRST RESPONSIVE GRID */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 text-sm">
 
           <Input label="Enquiry Date" name="enquiryDate" type="date" value={formData.enquiryDate} onChange={handleChange} />
           <Input label="Enquiry Time" name="enquiryTime" type="time" value={formData.enquiryTime} onChange={handleChange} />
@@ -69,15 +70,15 @@ export default function EnquiryFormTab({
           <Input label="Counsellor" name="counsellor" value={formData.counsellor} onChange={handleChange} />
           <Dropdown label="Status" name="status" value={formData.status} options={["New Enquiry","Follow-up","Converted"]} onChange={handleChange} />
 
-          {/* Remark Full Width */}
-          <div className="col-span-4 flex flex-col">
-            <label className="mb-1 text-gray-500">Remark</label>
+          {/* Remark Responsive */}
+          <div className="col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4 flex flex-col">
+            <label className="mb-1 text-gray-600 text-sm">Remark</label>
             <textarea
               name="remark"
               value={formData.remark}
               onChange={handleChange}
-              rows={2}
-              className="border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+              rows={3}
+              className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -85,10 +86,10 @@ export default function EnquiryFormTab({
       </div>
 
       {/* ACTION BAR */}
-      <div className="border-t bg-gray-50 px-4 py-2 flex justify-end">
+      <div className="border-t bg-gray-50 px-4 py-3">
         <button
           onClick={nextTab}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-1.5 rounded text-xs font-medium"
+          className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto px-6 py-2 rounded text-sm font-medium"
         >
           Next →
         </button>
@@ -103,13 +104,13 @@ export default function EnquiryFormTab({
 function Input({ label, name, type = "text", value, onChange }: any) {
   return (
     <div className="flex flex-col">
-      <label className="mb-1 text-gray-500">{label}</label>
+      <label className="mb-1 text-gray-600 text-sm">{label}</label>
       <input
         name={name}
         type={type}
         value={value || ""}
         onChange={onChange}
-        className="border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>
   );
@@ -120,12 +121,12 @@ function Input({ label, name, type = "text", value, onChange }: any) {
 function Dropdown({ label, name, options, value, onChange }: any) {
   return (
     <div className="flex flex-col">
-      <label className="mb-1 text-gray-500">{label}</label>
+      <label className="mb-1 text-gray-600 text-sm">{label}</label>
       <select
         name={name}
         value={value || ""}
         onChange={onChange}
-        className="border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         {(options || []).map((opt: string, i: number) => (
           <option key={i} value={opt}>

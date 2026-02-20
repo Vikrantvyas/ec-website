@@ -46,25 +46,34 @@ export default function EnqMainPanel({
     setFormData({});
   };
 
-  // If viewing existing student
+  // ===== Existing Student View =====
   if (!isNewEnquiry && selectedStudent) {
     return (
-      <div className="w-full bg-white min-h-screen">
-        <StudentDetailsView selectedStudent={selectedStudent} />
+      <div className="h-full w-full flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-auto p-4">
+          <StudentDetailsView selectedStudent={selectedStudent} />
+        </div>
       </div>
     );
   }
 
+  // ===== New Enquiry View =====
   return (
-    <div className="w-full bg-white min-h-screen">
+    <div className="h-full w-full flex flex-col overflow-hidden">
 
-      <div className="max-w-full overflow-x-hidden">
-        <EnquiryTabs
-          tabs={tabs}
-          currentTab={currentTab}
-          setCurrentTab={setCurrentTab}
-        />
+      {/* Tabs */}
+      <div className="shrink-0 border-b bg-white">
+        <div className="px-4">
+          <EnquiryTabs
+            tabs={tabs}
+            currentTab={currentTab}
+            setCurrentTab={setCurrentTab}
+          />
+        </div>
+      </div>
 
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-auto px-4 py-4">
         <TabContent
           currentTab={currentTab}
           formData={formData}
