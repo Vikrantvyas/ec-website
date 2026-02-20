@@ -1,6 +1,4 @@
-return <div style={{background:"red",color:"white"}}>TEST</div>
 "use client";
-
 import {
   branchOptions,
   enquiryMethodOptions,
