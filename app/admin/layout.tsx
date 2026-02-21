@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   X,
+  Globe,
 } from "lucide-react";
 
 const menuItems = [
@@ -62,7 +63,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         Checking authentication...
       </div>
     );
@@ -71,11 +72,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   if (isLoginPage) return <>{children}</>;
 
   return (
-    <div className="h-screen flex overflow-hidden bg-white">
+    <div className="fixed inset-0 flex bg-white">
 
       {/* ICON BAR DESKTOP */}
-      <aside className="hidden md:flex w-14 bg-[#0a1f44] flex-col items-center py-3 space-y-3 relative">
-
+      <aside className="hidden md:flex w-14 bg-[#0a1f44] flex-col items-center py-3 space-y-3">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -93,7 +93,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <Icon size={18} className="text-white" />
               </div>
 
-              {/* Tooltip FIXED */}
               <span className="absolute left-12 top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-[999] pointer-events-none">
                 {item.name}
               </span>
@@ -101,26 +100,42 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           );
         })}
 
-        {/* Logout just below settings */}
-        <button
-          onClick={handleLogout}
-          className="group relative mt-2"
-        >
+        <button onClick={handleLogout} className="mt-2">
           <div className="p-2 rounded-md bg-red-600 hover:bg-red-700 transition">
             <LogOut size={16} className="text-white" />
           </div>
-
-          <span className="absolute left-12 top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-[999] pointer-events-none">
-            Logout
-          </span>
         </button>
       </aside>
 
       {/* PAGE AREA */}
-      <div className="flex-1 flex flex-col h-full min-w-0">
+      <div className="flex-1 flex flex-col min-w-0">
+
+        {/* DESKTOP TOP HEADER */}
+        <div className="hidden md:flex items-center justify-between px-6 h-12 bg-[#0a1f44] text-white">
+          <h1 className="text-sm font-semibold">
+            Admin Panel
+          </h1>
+
+          <div className="flex items-center gap-6 text-sm">
+            <Link
+              href="/"
+              className="flex items-center gap-2 hover:text-gray-300 transition"
+            >
+              <Globe size={16} />
+              View Website
+            </Link>
+
+            <button
+              onClick={handleLogout}
+              className="hover:text-red-300 transition"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
 
         {/* MOBILE TOP BAR */}
-        <div className="md:hidden flex items-center justify-between px-4 h-14 border-b bg-white shrink-0">
+        <div className="md:hidden flex items-center justify-between px-4 h-14 bg-[#0a1f44] text-white">
           <button onClick={() => setMobileOpen(true)}>
             <Menu size={22} />
           </button>
@@ -128,9 +143,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <div />
         </div>
 
-        {/* SCROLLABLE CONTENT */}
+        {/* CONTENT */}
         <main className="flex-1 overflow-auto">
-          <div className="h-full px-4 py-4">
+          <div className="px-4 py-4">
             {children}
           </div>
         </main>
@@ -167,6 +182,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   </Link>
                 );
               })}
+
+              <Link
+                href="/"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-100"
+              >
+                <Globe size={16} />
+                View Website
+              </Link>
 
               <button
                 onClick={handleLogout}
