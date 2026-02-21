@@ -25,7 +25,7 @@ export default function BatchAttendanceTab({
     <div className="flex flex-col h-full bg-white">
 
       {/* ================= CONTENT AREA ================= */}
-      <div className="flex-1 px-4 py-4 space-y-8">
+      <div className="flex-1 px-2 sm:px-4 pt-2 pb-4 overflow-auto space-y-8">
 
         {/* ================= Batch Assignment ================= */}
         <Section title="Batch Assignment">
@@ -122,7 +122,7 @@ export default function BatchAttendanceTab({
           <div className="flex justify-end pt-4">
             <button
               type="button"
-              className="px-4 py-2 rounded bg-green-600 text-white text-sm font-medium hover:bg-green-700"
+              className="px-4 py-2 rounded-md bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition"
             >
               Assign Batch
             </button>
@@ -147,12 +147,12 @@ export default function BatchAttendanceTab({
         {/* ================= Attendance Records ================= */}
         <Section title="Attendance Records">
 
-          <div className="overflow-x-auto border rounded">
+          <div className="overflow-x-auto border border-gray-200 rounded-md shadow-sm">
 
             <table className="min-w-full text-sm">
 
-              <thead className="bg-gray-100">
-                <tr className="text-left">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr className="text-left text-gray-600">
                   <th className="px-4 py-2">Date</th>
                   <th className="px-4 py-2">Day</th>
                   <th className="px-4 py-2">Status</th>
@@ -162,8 +162,8 @@ export default function BatchAttendanceTab({
               </thead>
 
               <tbody>
-                <tr className="border-t">
-                  <td className="px-4 py-2 text-gray-500">
+                <tr className="border-t border-gray-200">
+                  <td className="px-4 py-3 text-gray-500">
                     No Attendance Records Yet
                   </td>
                   <td colSpan={4}></td>
@@ -180,12 +180,13 @@ export default function BatchAttendanceTab({
 
 
       {/* ================= Navigation ================= */}
-      <div className="border-t bg-gray-50 px-4 py-3 flex justify-between">
+      <div className="border-t border-gray-200 bg-white px-4 py-3 pb-12 flex justify-between">
 
         <button
           type="button"
           onClick={prevTab}
-          className="px-4 py-2 rounded border text-sm font-medium hover:bg-gray-100"
+          className="px-4 py-2 rounded-md border border-gray-300 text-sm font-medium 
+          hover:bg-gray-50 transition"
         >
           Previous
         </button>
@@ -193,7 +194,8 @@ export default function BatchAttendanceTab({
         <button
           type="button"
           onClick={nextTab}
-          className="px-4 py-2 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+          className="px-6 py-2 rounded-md bg-blue-600 text-white text-sm font-medium 
+          hover:bg-blue-700 transition"
         >
           Next →
         </button>
@@ -209,8 +211,8 @@ export default function BatchAttendanceTab({
 
 function Section({ title, children }: any) {
   return (
-    <div className="space-y-3">
-      <h2 className="text-base font-semibold text-gray-800 border-b pb-2">
+    <div className="space-y-4">
+      <h2 className="text-base font-semibold text-gray-800 border-b border-gray-200 pb-2">
         {title}
       </h2>
       {children}
@@ -220,7 +222,7 @@ function Section({ title, children }: any) {
 
 function Grid({ children }: any) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 text-sm">
       {children}
     </div>
   );
@@ -229,14 +231,15 @@ function Grid({ children }: any) {
 function Field({ label, name, type = "text", value, onChange, placeholder = "" }: any) {
   return (
     <div className="flex flex-col">
-      <label className="mb-1 text-xs text-gray-600">{label}</label>
+      <label className="mb-1 text-sm text-gray-600">{label}</label>
       <input
         name={name}
         type={type}
         value={value || ""}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border border-gray-300 bg-white rounded-md px-3 py-2 text-sm shadow-sm 
+        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
       />
     </div>
   );
@@ -245,12 +248,13 @@ function Field({ label, name, type = "text", value, onChange, placeholder = "" }
 function Select({ label, name, value, options, onChange }: any) {
   return (
     <div className="flex flex-col">
-      <label className="mb-1 text-xs text-gray-600">{label}</label>
+      <label className="mb-1 text-sm text-gray-600">{label}</label>
       <select
         name={name}
         value={value || ""}
         onChange={onChange}
-        className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border border-gray-300 bg-white rounded-md px-3 py-2 text-sm shadow-sm 
+        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
       >
         {options.map((opt: string, i: number) => (
           <option key={i} value={opt}>
@@ -265,16 +269,12 @@ function Select({ label, name, value, options, onChange }: any) {
 function SummaryCard({ title, value, highlight }: any) {
   return (
     <div
-      className={`border rounded p-4 ${
-        highlight ? "bg-blue-50 border-blue-300" : "bg-white"
+      className={`border border-gray-200 rounded-md p-4 shadow-sm ${
+        highlight ? "bg-blue-50" : "bg-white"
       }`}
     >
       <div className="text-gray-500 text-xs">{title}</div>
-      <div
-        className={`text-lg font-semibold ${
-          highlight ? "text-blue-600" : "text-gray-800"
-        }`}
-      >
+      <div className={`text-lg font-semibold ${highlight ? "text-blue-600" : "text-gray-800"}`}>
         {value}
       </div>
     </div>
