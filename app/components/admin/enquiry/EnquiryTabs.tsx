@@ -10,24 +10,32 @@ export default function EnquiryTabs({
   setCurrentTab,
 }: Props) {
   return (
-    <div className="sticky top-0 z-20 bg-white border-b px-6">
-      <div className="flex gap-6 overflow-x-auto">
+    <div className="bg-white">
+
+      {/* Tabs Row */}
+      <div className="flex gap-8 overflow-x-auto border-b border-gray-200">
 
         {tabs.map((tab, index) => (
           <button
             key={tab}
             onClick={() => setCurrentTab(index)}
-            className={`py-3 text-sm font-medium whitespace-nowrap border-b-2 transition ${
+            className={`py-3 text-sm font-medium whitespace-nowrap transition relative ${
               currentTab === index
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-600 hover:text-gray-800"
+                ? "text-blue-600"
+                : "text-gray-600 hover:text-gray-800"
             }`}
           >
             {tab}
+
+            {/* Active Indicator Line */}
+            {currentTab === index && (
+              <span className="absolute left-0 right-0 -bottom-[1px] h-[2px] bg-blue-600 rounded-full" />
+            )}
           </button>
         ))}
 
       </div>
+
     </div>
   );
 }

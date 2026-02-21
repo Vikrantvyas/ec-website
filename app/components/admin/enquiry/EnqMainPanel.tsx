@@ -49,7 +49,7 @@ export default function EnqMainPanel({
   // ===== Existing Student View =====
   if (!isNewEnquiry && selectedStudent) {
     return (
-      <div className="h-full w-full flex flex-col overflow-hidden">
+      <div className="h-full w-full flex flex-col overflow-hidden bg-white">
         <div className="flex-1 overflow-auto p-4">
           <StudentDetailsView selectedStudent={selectedStudent} />
         </div>
@@ -59,11 +59,11 @@ export default function EnqMainPanel({
 
   // ===== New Enquiry View =====
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden">
+    <div className="h-full w-full flex flex-col overflow-hidden bg-white">
 
-      {/* Tabs */}
-      <div className="shrink-0 border-b bg-white">
-        <div className="px-4">
+      {/* Tabs (Single Clean Grey Separator) */}
+      <div className="shrink-0 bg-white border-b border-gray-200">
+        <div className="px-4 pt-3">
           <EnquiryTabs
             tabs={tabs}
             currentTab={currentTab}
@@ -72,8 +72,8 @@ export default function EnqMainPanel({
         </div>
       </div>
 
-      {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-auto px-4 py-4">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-auto px-4 pt-3 pb-2 bg-white">
         <TabContent
           currentTab={currentTab}
           formData={formData}

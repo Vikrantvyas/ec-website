@@ -11,10 +11,10 @@ export default function EnquiryPage() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-full relative">
+    <div className="flex h-full relative overflow-hidden bg-white">
 
-      {/* ===== MOBILE TOP BAR (ONLY MOBILE) ===== */}
-      <div className="md:hidden absolute top-0 left-0 right-0 h-12 bg-white border-b flex items-center px-4 z-20">
+      {/* ===== MOBILE TOP BAR ===== */}
+      <div className="md:hidden absolute top-0 left-0 right-0 h-12 bg-white border-b border-gray-200 flex items-center px-4 z-20">
         <button
           onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           className="flex items-center gap-2 text-sm font-medium"
@@ -24,10 +24,8 @@ export default function EnquiryPage() {
         </button>
       </div>
 
-      {/* ===== SIDEBAR ===== */}
-
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block w-[420px] border-r border-gray-200 bg-white shrink-0">
+      {/* ===== DESKTOP SIDEBAR ===== */}
+      <div className="hidden md:block shrink-0">
         <EnqSidebar
           onSelectEnquiry={(enq) => {
             setSelectedLead(enq);
@@ -40,7 +38,7 @@ export default function EnquiryPage() {
         />
       </div>
 
-      {/* Mobile Sidebar Overlay */}
+      {/* ===== MOBILE SIDEBAR ===== */}
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-30 md:hidden">
           <div
@@ -65,7 +63,7 @@ export default function EnquiryPage() {
       )}
 
       {/* ===== MAIN PANEL ===== */}
-      <div className="flex-1 bg-white min-w-0 md:pt-0 pt-12">
+      <div className="flex-1 min-w-0 md:pt-0 pt-12 overflow-hidden">
         <EnqMainPanel
           selectedStudent={selectedLead}
           isNewEnquiry={isNewEnquiry}
