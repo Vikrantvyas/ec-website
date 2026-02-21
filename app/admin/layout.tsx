@@ -17,10 +17,15 @@ import {
   Menu,
   X,
   Globe,
+  UserRoundPlus,
+  GraduationCap,
+  ChevronRight,
 } from "lucide-react";
 
 const menuItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Lead", href: "/admin/lead", icon: UserRoundPlus },
+  { name: "Admission", href: "/admin/admission", icon: GraduationCap },
   { name: "Enquiry", href: "/admin/enquiry", icon: UserPlus },
   { name: "Students", href: "/admin/students", icon: Users },
   { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
@@ -71,6 +76,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   if (isLoginPage) return <>{children}</>;
 
+  const currentPathName =
+    pathname.split("/")[2]?.charAt(0).toUpperCase() +
+    pathname.split("/")[2]?.slice(1);
+
   return (
     <div className="fixed inset-0 flex bg-white">
 
@@ -110,11 +119,19 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {/* PAGE AREA */}
       <div className="flex-1 flex flex-col min-w-0">
 
-        {/* DESKTOP TOP HEADER */}
+        {/* DESKTOP HEADER */}
         <div className="hidden md:flex items-center justify-between px-6 h-12 bg-[#0a1f44] text-white">
-          <h1 className="text-sm font-semibold">
-            Admin Panel
-          </h1>
+          
+          {/* BREADCRUMB */}
+          <div className="flex items-center text-sm font-semibold gap-2">
+            <span>Admin Panel</span>
+            {pathname !== "/admin" && (
+              <>
+                <ChevronRight size={14} />
+                <span>{currentPathName}</span>
+              </>
+            )}
+          </div>
 
           <div className="flex items-center gap-6 text-sm">
             <Link
@@ -139,15 +156,22 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <button onClick={() => setMobileOpen(true)}>
             <Menu size={22} />
           </button>
-          <span className="font-semibold">Admin Panel</span>
+
+          <div className="flex items-center text-sm font-semibold gap-2">
+            <span>Admin</span>
+            {pathname !== "/admin" && (
+              <>
+                <ChevronRight size={14} />
+                <span>{currentPathName}</span>
+              </>
+            )}
+          </div>
+
           <div />
         </div>
 
-        {/* CONTENT */}
         <main className="flex-1 overflow-auto">
-          <div className="px-4 py-4">
-            {children}
-          </div>
+          <div className="px-4 py-4">{children}</div>
         </main>
       </div>
 
