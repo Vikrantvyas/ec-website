@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
-  Phone,
-  MessageCircle,
   ChevronDown,
   ChevronUp,
   Search,
-  Filter,
 } from "lucide-react";
 
 type FollowUp = {
@@ -22,9 +19,17 @@ type Lead = {
   course: string;
   branch: string;
   status: string;
-  nextFollowUp: string;
-  remark: string;
+  enquiryDate: string;
   followUps: FollowUp[];
+};
+
+const today = new Date();
+
+const daysAgo = (dateStr: string) => {
+  const d = new Date(dateStr);
+  return Math.floor(
+    (today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)
+  );
 };
 
 const dummyLeads: Lead[] = [
@@ -34,12 +39,14 @@ const dummyLeads: Lead[] = [
     mobile: "9876543210",
     course: "Spoken English",
     branch: "Nanda Nagar",
-    status: "Interested",
-    nextFollowUp: "Today 5 PM",
-    remark: "Demo attend kiya",
+    status: "Admission",
+    enquiryDate: "2026-02-18",
     followUps: [
-      { date: "10 Feb", note: "Initial enquiry" },
-      { date: "15 Feb", note: "Demo given" },
+      { date: "2026-02-18", note: "Initial enquiry" },
+      { date: "2026-02-19", note: "Demo done" },
+      { date: "2026-02-20", note: "Interested" },
+      { date: "2026-02-21", note: "Confirmed" },
+      { date: "2026-02-22", note: "Admission done" },
     ],
   },
   {
@@ -48,178 +55,210 @@ const dummyLeads: Lead[] = [
     mobile: "9123456780",
     course: "Basic Computer",
     branch: "Bapat Square",
-    status: "Not Interested",
-    nextFollowUp: "—",
-    remark: "Fees high lag rahi",
-    followUps: [{ date: "12 Feb", note: "Price issue" }],
+    status: "Demo",
+    enquiryDate: "2026-02-15",
+    followUps: [
+      { date: "2026-02-15", note: "Asked for demo" },
+      { date: "2026-02-17", note: "Demo scheduled" },
+    ],
   },
-  ...Array.from({ length: 8 }).map((_, i) => ({
-    id: i + 3,
-    name: `Lead ${i + 3}`,
+  {
+    id: 3,
+    name: "Aman Singh",
     mobile: "9000000000",
     course: "Tally",
     branch: "Aurobindo",
-    status: "Follow-up Pending",
-    nextFollowUp: "Tomorrow",
-    remark: "Thinking",
-    followUps: [{ date: "5 Feb", note: "Asked to call later" }],
+    status: "Not Interested",
+    enquiryDate: "2026-02-10",
+    followUps: [
+      { date: "2026-02-10", note: "Price concern" },
+    ],
+  },
+  ...Array.from({ length: 7 }).map((_, i) => ({
+    id: i + 4,
+    name: `Lead ${i + 4}`,
+    mobile: "9000000000",
+    course: "Spoken English",
+    branch: ["Nanda Nagar", "Bapat Square", "Aurobindo"][i % 3],
+    status: "Follow-up",
+    enquiryDate: "2026-02-12",
+    followUps: [
+      { date: "2026-02-13", note: "Call later" },
+      { date: "2026-02-14", note: "Busy" },
+    ],
   })),
 ];
 
 export default function CallingPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [leads, setLeads] = useState(dummyLeads);
-  const [newNote, setNewNote] = useState("");
+  const [branchFilter, setBranchFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("Latest");
 
-  const filteredLeads = leads.filter((lead) => {
-    const matchesSearch = lead.name
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    const matchesStatus =
-      statusFilter === "All" || lead.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredLeads = useMemo(() => {
+    let data = [...dummyLeads];
 
-  const addFollowUp = (id: number) => {
-    if (!newNote.trim()) return;
-
-    setLeads((prev) =>
-      prev.map((lead) =>
-        lead.id === id
-          ? {
-              ...lead,
-              followUps: [
-                ...lead.followUps,
-                { date: "Today", note: newNote },
-              ],
-            }
-          : lead
-      )
+    // Latest first by default
+    data.sort(
+      (a, b) =>
+        new Date(b.enquiryDate).getTime() -
+        new Date(a.enquiryDate).getTime()
     );
 
-    setNewNote("");
+    if (branchFilter !== "All") {
+      data = data.filter((l) => l.branch === branchFilter);
+    }
+
+    if (search) {
+      data = data.filter((l) =>
+        l.name.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    if (sortBy === "Oldest") {
+      data.sort(
+        (a, b) =>
+          new Date(a.enquiryDate).getTime() -
+          new Date(b.enquiryDate).getTime()
+      );
+    }
+
+    if (sortBy === "Most Followups") {
+      data.sort((a, b) => b.followUps.length - a.followUps.length);
+    }
+
+    return data;
+  }, [search, branchFilter, sortBy]);
+
+  const frameColor = (status: string) => {
+    if (status === "Admission") return "border-green-600";
+    if (status === "Demo") return "border-green-300";
+    if (status === "Not Interested") return "border-red-300";
+    return "border-gray-200";
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* STICKY FILTER BAR */}
-      <div className="sticky top-0 z-40 bg-white shadow-sm p-3 space-y-2">
-        <div className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-md">
-          <Search size={16} />
-          <input
-            type="text"
-            placeholder="Search by name..."
-            className="bg-transparent outline-none w-full text-sm"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+      {/* TOP FILTER SECTION */}
+      <div className="sticky top-0 z-40 bg-white p-3 shadow-sm space-y-2">
 
         <div className="flex gap-2 overflow-x-auto text-xs">
-          {["All", "Interested", "Not Interested", "Follow-up Pending"].map(
-            (status) => (
+          {["All", "Nanda Nagar", "Bapat Square", "Aurobindo"].map(
+            (b) => (
               <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
-                className={`px-3 py-1 rounded-full whitespace-nowrap ${
-                  statusFilter === status
+                key={b}
+                onClick={() => setBranchFilter(b)}
+                className={`px-3 py-1 rounded-full ${
+                  branchFilter === b
                     ? "bg-blue-600 text-white"
                     : "bg-gray-200"
                 }`}
               >
-                {status}
+                {b}
               </button>
             )
           )}
         </div>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Search..."
+            className="flex-1 border rounded px-2 py-1 text-xs"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <select
+            className="border rounded px-2 py-1 text-xs"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="Latest">Latest</option>
+            <option value="Oldest">Oldest</option>
+            <option value="Most Followups">Most Followups</option>
+          </select>
+        </div>
       </div>
 
-      {/* LEADS LIST */}
+      {/* LEADS */}
       <div className="p-3 space-y-3 pb-24">
         {filteredLeads.map((lead) => {
-          const isExpanded = expandedId === lead.id;
+          const enquiryDays = daysAgo(lead.enquiryDate);
+          const lastFU =
+            lead.followUps.length > 0
+              ? daysAgo(lead.followUps[lead.followUps.length - 1].date)
+              : "-";
 
           return (
             <div
               key={lead.id}
-              className="bg-white rounded-xl shadow-sm border p-3 space-y-2"
+              className={`bg-white border-l-4 ${frameColor(
+                lead.status
+              )} rounded shadow-sm p-3 text-xs`}
             >
-              {/* TOP LINE */}
-              <div className="flex justify-between items-start">
+              {/* 4 LINE MAX */}
+              <div className="flex justify-between">
                 <div>
-                  <h2 className="font-semibold text-sm">{lead.name}</h2>
-                  <p className="text-xs text-gray-500">
+                  <p className="font-semibold">
+                    {lead.name}
+                    <span className="text-gray-400 ml-2">
+                      {new Date(lead.enquiryDate)
+                        .toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                        })}
+                    </span>
+                  </p>
+                  <p>
                     {lead.course} | {lead.branch}
                   </p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Status: {lead.status}
+                  <p>
+                    Enq: {enquiryDays}d | Last FU: {lastFU}d | FU:{" "}
+                    {lead.followUps.length}
                   </p>
-                  <p className="text-xs text-red-600">
-                    Next: {lead.nextFollowUp}
-                  </p>
+                  <p>Status: {lead.status}</p>
                 </div>
 
                 <button
                   onClick={() =>
-                    setExpandedId(isExpanded ? null : lead.id)
+                    setExpandedId(
+                      expandedId === lead.id ? null : lead.id
+                    )
                   }
                 >
-                  {isExpanded ? (
-                    <ChevronUp size={18} />
+                  {expandedId === lead.id ? (
+                    <ChevronUp size={16} />
                   ) : (
-                    <ChevronDown size={18} />
+                    <ChevronDown size={16} />
                   )}
                 </button>
               </div>
 
-              {/* ACTION BUTTONS */}
-              <div className="flex gap-2">
-                <a
-                  href={`tel:${lead.mobile}`}
-                  className="flex-1 flex items-center justify-center gap-1 bg-green-600 text-white text-xs py-2 rounded-md"
-                >
-                  <Phone size={14} /> Call
-                </a>
-
+              {/* TEXT LINKS */}
+              <div className="flex gap-4 mt-2 text-blue-600">
+                <a href={`tel:${lead.mobile}`}>Call</a>
                 <a
                   href={`https://wa.me/91${lead.mobile}`}
                   target="_blank"
-                  className="flex-1 flex items-center justify-center gap-1 bg-green-500 text-white text-xs py-2 rounded-md"
                 >
-                  <MessageCircle size={14} /> WhatsApp
+                  WhatsApp
                 </a>
               </div>
 
-              {/* EXPANDED SECTION */}
-              {isExpanded && (
-                <div className="mt-3 border-t pt-2 space-y-2 text-xs">
-                  <div>
-                    <p className="font-medium">Previous Follow-ups:</p>
-                    {lead.followUps.map((fu, index) => (
-                      <p key={index} className="text-gray-600">
-                        {fu.date} - {fu.note}
+              {/* EXPAND */}
+              {expandedId === lead.id && (
+                <div className="mt-3 border-t pt-2 space-y-1 text-gray-600">
+                  {lead.followUps
+                    .slice(-5)
+                    .reverse()
+                    .map((fu, i) => (
+                      <p key={i}>
+                        {new Date(fu.date).toLocaleDateString()} –{" "}
+                        {fu.note}
                       </p>
                     ))}
-                  </div>
-
-                  <div className="space-y-1">
-                    <input
-                      type="text"
-                      placeholder="Add new follow-up note..."
-                      className="w-full border rounded-md px-2 py-1 text-xs"
-                      value={newNote}
-                      onChange={(e) => setNewNote(e.target.value)}
-                    />
-                    <button
-                      onClick={() => addFollowUp(lead.id)}
-                      className="w-full bg-blue-600 text-white py-1 rounded-md"
-                    >
-                      Save Follow-up
-                    </button>
-                  </div>
                 </div>
               )}
             </div>
