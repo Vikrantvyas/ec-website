@@ -19,7 +19,7 @@ export default function LeadPage() {
   }, []);
 
   const [formData, setFormData] = useState<any>({
-    branch: "Nanda Ngr",
+    branch: "",   // ❌ no default branch
     enquiryDate: formattedDate,
     enquiryTime: formattedTime,
     method: "Visit",
@@ -64,6 +64,10 @@ export default function LeadPage() {
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
+    if (!formData.branch) {
+      alert("Please select branch first.");
+      return;
+    }
     console.log("Lead Saved:", formData);
   };
 
@@ -73,23 +77,38 @@ export default function LeadPage() {
     <div className="w-full px-3 sm:px-6 py-4 bg-white">
       <form onSubmit={handleSubmit} className="space-y-8 text-sm">
 
-        {/* Branch badges */}
+        {/* ===== Branch Section ===== */}
         {(!isMobile || step === 1) && (
-          <div className="flex flex-wrap gap-3">
-            {branches.map((b) => (
-              <button
-                key={b}
-                type="button"
-                onClick={() => setFormData({ ...formData, branch: b })}
-                className={`px-4 py-2 rounded-full border
-                  ${formData.branch === b
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-white border-gray-300"
-                  }`}
-              >
-                {b}
-              </button>
-            ))}
+          <div className="space-y-2">
+
+            <p className="text-sm font-semibold text-gray-700">
+              Select Branch
+            </p>
+
+            <div className={`
+              flex gap-2
+              ${isMobile ? "flex-nowrap overflow-x-auto" : "flex-wrap"}
+            `}>
+              {branches.map((b) => (
+                <button
+                  key={b}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, branch: b })}
+                  className={`
+                    whitespace-nowrap
+                    ${isMobile ? "px-3 py-1 text-xs" : "px-4 py-2 text-sm"}
+                    rounded-full border transition
+                    ${formData.branch === b
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white border-gray-300"
+                    }
+                  `}
+                >
+                  {b}
+                </button>
+              ))}
+            </div>
+
           </div>
         )}
 
@@ -203,9 +222,16 @@ export default function LeadPage() {
             )}
 
             {step < 3 ? (
-              <button type="button"
+              <button
+                type="button"
+                disabled={!formData.branch}
                 onClick={() => setStep(step + 1)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md">
+                className={`px-4 py-2 rounded-md text-white
+                  ${formData.branch
+                    ? "bg-blue-600"
+                    : "bg-gray-400 cursor-not-allowed"
+                  }`}
+              >
                 Next
               </button>
             ) : (
@@ -220,8 +246,15 @@ export default function LeadPage() {
         {/* Desktop Save */}
         {!isMobile && (
           <div className="flex justify-end">
-            <button type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded-md">
+            <button
+              type="submit"
+              disabled={!formData.branch}
+              className={`px-6 py-2 rounded-md text-white
+                ${formData.branch
+                  ? "bg-blue-600"
+                  : "bg-gray-400 cursor-not-allowed"
+                }`}
+            >
               Save Lead
             </button>
           </div>
