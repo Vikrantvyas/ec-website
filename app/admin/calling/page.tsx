@@ -1,20 +1,18 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  Search,
-} from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 type FollowUp = {
   date: string;
   note: string;
+  type: string;
 };
 
 type Lead = {
   id: number;
   name: string;
+  gender: "Male" | "Female";
   mobile: string;
   course: string;
   branch: string;
@@ -32,73 +30,50 @@ const daysAgo = (dateStr: string) => {
   );
 };
 
-const dummyLeads: Lead[] = [
-  {
-    id: 1,
-    name: "Rahul Sharma",
-    mobile: "9876543210",
-    course: "Spoken English",
-    branch: "Nanda Nagar",
-    status: "Admission",
-    enquiryDate: "2026-02-18",
-    followUps: [
-      { date: "2026-02-18", note: "Initial enquiry" },
-      { date: "2026-02-19", note: "Demo done" },
-      { date: "2026-02-20", note: "Interested" },
-      { date: "2026-02-21", note: "Confirmed" },
-      { date: "2026-02-22", note: "Admission done" },
-    ],
-  },
-  {
-    id: 2,
-    name: "Priya Verma",
-    mobile: "9123456780",
-    course: "Basic Computer",
-    branch: "Bapat Square",
-    status: "Demo",
-    enquiryDate: "2026-02-15",
-    followUps: [
-      { date: "2026-02-15", note: "Asked for demo" },
-      { date: "2026-02-17", note: "Demo scheduled" },
-    ],
-  },
-  {
-    id: 3,
-    name: "Aman Singh",
-    mobile: "9000000000",
-    course: "Tally",
-    branch: "Aurobindo",
-    status: "Not Interested",
-    enquiryDate: "2026-02-10",
-    followUps: [
-      { date: "2026-02-10", note: "Price concern" },
-    ],
-  },
-  ...Array.from({ length: 7 }).map((_, i) => ({
-    id: i + 4,
-    name: `Lead ${i + 4}`,
-    mobile: "9000000000",
-    course: "Spoken English",
-    branch: ["Nanda Nagar", "Bapat Square", "Aurobindo"][i % 3],
-    status: "Follow-up",
-    enquiryDate: "2026-02-12",
-    followUps: [
-      { date: "2026-02-13", note: "Call later" },
-      { date: "2026-02-14", note: "Busy" },
-    ],
-  })),
+const callTypes = [
+  "Call Received",
+  "Not Received",
+  "Cut the Call",
+  "Received by Someone Else",
+  "He Will Call Soon",
+  "Will Visit Soon",
+  "Call Me Later",
 ];
 
+const generateFollowUps = (): FollowUp[] => [
+  { date: "2026-02-01", note: "Initial enquiry", type: "Call Received" },
+  { date: "2026-02-03", note: "Call back later", type: "Call Me Later" },
+  { date: "2026-02-05", note: "Not reachable", type: "Not Received" },
+  { date: "2026-02-07", note: "Interested", type: "Call Received" },
+  { date: "2026-02-09", note: "Follow up again", type: "Call Received" },
+];
+
+const dummyLeads: Lead[] = Array.from({ length: 10 }).map((_, i) => ({
+  id: i + 1,
+  name: i % 2 === 0 ? `Priya ${i}` : `Rahul ${i}`,
+  gender: i % 2 === 0 ? "Female" : "Male",
+  mobile: `900000000${i}`,
+  course: ["Spoken English", "Basic Computer", "Tally"][i % 3],
+  branch: ["Nanda Nagar", "Bapat Square", "Aurobindo"][i % 3],
+  status: ["Admission", "Demo", "Not Interested"][i % 3],
+  enquiryDate: `2026-02-${10 - i}`,
+  followUps: generateFollowUps(),
+}));
+
 export default function CallingPage() {
+  const [leads, setLeads] = useState(dummyLeads);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [branchFilter, setBranchFilter] = useState("All");
   const [sortBy, setSortBy] = useState("Latest");
+  const [primaryFilter, setPrimaryFilter] = useState("All");
+  const [subFilter, setSubFilter] = useState("All");
+  const [selectedCallType, setSelectedCallType] = useState("");
+  const [showAll, setShowAll] = useState<number | null>(null);
 
   const filteredLeads = useMemo(() => {
-    let data = [...dummyLeads];
+    let data = [...leads];
 
-    // Latest first by default
     data.sort(
       (a, b) =>
         new Date(b.enquiryDate).getTime() -
@@ -115,6 +90,14 @@ export default function CallingPage() {
       );
     }
 
+    if (primaryFilter === "Gender" && subFilter !== "All") {
+      data = data.filter((l) => l.gender === subFilter);
+    }
+
+    if (primaryFilter === "Status" && subFilter !== "All") {
+      data = data.filter((l) => l.status === subFilter);
+    }
+
     if (sortBy === "Oldest") {
       data.sort(
         (a, b) =>
@@ -128,13 +111,37 @@ export default function CallingPage() {
     }
 
     return data;
-  }, [search, branchFilter, sortBy]);
+  }, [leads, search, branchFilter, sortBy, primaryFilter, subFilter]);
 
   const frameColor = (status: string) => {
     if (status === "Admission") return "border-green-600";
-    if (status === "Demo") return "border-green-300";
+    if (status === "Demo") return "border-blue-500";
     if (status === "Not Interested") return "border-red-300";
     return "border-gray-200";
+  };
+
+  const addFollowUp = (leadId: number) => {
+    if (!selectedCallType) return;
+
+    setLeads((prev) =>
+      prev.map((lead) =>
+        lead.id === leadId
+          ? {
+              ...lead,
+              followUps: [
+                ...lead.followUps,
+                {
+                  date: new Date().toISOString(),
+                  note: selectedCallType,
+                  type: selectedCallType,
+                },
+              ],
+            }
+          : lead
+      )
+    );
+
+    setSelectedCallType("");
   };
 
   return (
@@ -143,25 +150,59 @@ export default function CallingPage() {
       {/* TOP FILTER SECTION */}
       <div className="sticky top-0 z-40 bg-white p-3 shadow-sm space-y-2">
 
+        {/* Branch Filter */}
         <div className="flex gap-2 overflow-x-auto text-xs">
-          {["All", "Nanda Nagar", "Bapat Square", "Aurobindo"].map(
-            (b) => (
-              <button
-                key={b}
-                onClick={() => setBranchFilter(b)}
-                className={`px-3 py-1 rounded-full ${
-                  branchFilter === b
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200"
-                }`}
-              >
-                {b}
-              </button>
-            )
-          )}
+          {["All", "Nanda Nagar", "Bapat Square", "Aurobindo"].map((b) => (
+            <button
+              key={b}
+              onClick={() => setBranchFilter(b)}
+              className={`px-3 py-1 rounded-full ${
+                branchFilter === b
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200"
+              }`}
+            >
+              {b}
+            </button>
+          ))}
         </div>
 
-        <div className="flex gap-2">
+        {/* Search + Sorting + Dynamic Filter */}
+        <div className="flex gap-2 flex-wrap">
+          <select
+            className="border px-2 py-1 text-xs rounded"
+            onChange={(e) => {
+              setPrimaryFilter(e.target.value);
+              setSubFilter("All");
+            }}
+          >
+            <option>All</option>
+            <option>Gender</option>
+            <option>Status</option>
+          </select>
+
+          {primaryFilter !== "All" && (
+            <select
+              className="border px-2 py-1 text-xs rounded"
+              onChange={(e) => setSubFilter(e.target.value)}
+            >
+              <option>All</option>
+              {primaryFilter === "Gender" && (
+                <>
+                  <option>Male</option>
+                  <option>Female</option>
+                </>
+              )}
+              {primaryFilter === "Status" && (
+                <>
+                  <option>Demo</option>
+                  <option>Admission</option>
+                  <option>Not Interested</option>
+                </>
+              )}
+            </select>
+          )}
+
           <input
             type="text"
             placeholder="Search..."
@@ -189,7 +230,10 @@ export default function CallingPage() {
           const lastFU =
             lead.followUps.length > 0
               ? daysAgo(lead.followUps[lead.followUps.length - 1].date)
-              : "-";
+              : 0;
+
+          const lastFUColor =
+            lastFU > 7 ? "text-red-600" : "text-gray-600";
 
           return (
             <div
@@ -198,26 +242,29 @@ export default function CallingPage() {
                 lead.status
               )} rounded shadow-sm p-3 text-xs`}
             >
-              {/* 4 LINE MAX */}
               <div className="flex justify-between">
                 <div>
-                  <p className="font-semibold">
+                  <p
+                    className={`font-semibold ${
+                      lead.gender === "Female"
+                        ? "text-pink-600"
+                        : ""
+                    }`}
+                  >
                     {lead.name}
                     <span className="text-gray-400 ml-2">
-                      {new Date(lead.enquiryDate)
-                        .toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                        })}
+                      {new Date(lead.enquiryDate).toLocaleDateString(
+                        "en-GB",
+                        { day: "2-digit", month: "short" }
+                      )}{" "}
+                      ({enquiryDays} D -{" "}
+                      <span className={lastFUColor}>
+                        {lastFU} D
+                      </span>{" "}
+                      - {lead.followUps.length} Calls)
                     </span>
                   </p>
-                  <p>
-                    {lead.course} | {lead.branch}
-                  </p>
-                  <p>
-                    Enq: {enquiryDays}d | Last FU: {lastFU}d | FU:{" "}
-                    {lead.followUps.length}
-                  </p>
+                  <p>{lead.course} | {lead.branch}</p>
                   <p>Status: {lead.status}</p>
                 </div>
 
@@ -236,22 +283,23 @@ export default function CallingPage() {
                 </button>
               </div>
 
-              {/* TEXT LINKS */}
               <div className="flex gap-4 mt-2 text-blue-600">
                 <a href={`tel:${lead.mobile}`}>Call</a>
                 <a
                   href={`https://wa.me/91${lead.mobile}`}
                   target="_blank"
+                  className="text-green-700 font-semibold"
                 >
                   WhatsApp
                 </a>
               </div>
 
-              {/* EXPAND */}
               {expandedId === lead.id && (
-                <div className="mt-3 border-t pt-2 space-y-1 text-gray-600">
-                  {lead.followUps
-                    .slice(-5)
+                <div className="mt-3 border-t pt-2 space-y-2 text-gray-600">
+                  {(showAll === lead.id
+                    ? lead.followUps
+                    : lead.followUps.slice(-5)
+                  )
                     .reverse()
                     .map((fu, i) => (
                       <p key={i}>
@@ -259,6 +307,60 @@ export default function CallingPage() {
                         {fu.note}
                       </p>
                     ))}
+
+                  {lead.followUps.length > 5 && (
+                    <button
+                      className="text-blue-600 text-xs"
+                      onClick={() =>
+                        setShowAll(
+                          showAll === lead.id ? null : lead.id
+                        )
+                      }
+                    >
+                      {showAll === lead.id ? "Hide" : "See All"}
+                    </button>
+                  )}
+
+                  <div className="flex gap-2 mt-2">
+                    <select
+                      className="border px-2 py-1 text-xs rounded"
+                      value={selectedCallType}
+                      onChange={(e) =>
+                        setSelectedCallType(e.target.value)
+                      }
+                    >
+                      <option value="">Select Call Result</option>
+                      {callTypes.map((c) => (
+                        <option key={c}>{c}</option>
+                      ))}
+                    </select>
+
+                    <button
+                      onClick={() => addFollowUp(lead.id)}
+                      className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                    >
+                      Save
+                    </button>
+                  </div>
+
+                  <select
+                    className="border px-2 py-1 rounded text-xs"
+                    value={lead.status}
+                    onChange={(e) =>
+                      setLeads((prev) =>
+                        prev.map((l) =>
+                          l.id === lead.id
+                            ? { ...l, status: e.target.value }
+                            : l
+                        )
+                      )
+                    }
+                  >
+                    <option>Demo</option>
+                    <option>Admission</option>
+                    <option>Not Interested</option>
+                  </select>
+
                 </div>
               )}
             </div>
