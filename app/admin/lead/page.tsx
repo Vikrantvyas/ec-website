@@ -19,7 +19,7 @@ export default function LeadPage() {
   }, []);
 
   const [formData, setFormData] = useState<any>({
-    branch: "",   // ❌ no default branch
+    branch: "",
     enquiryDate: formattedDate,
     enquiryTime: formattedTime,
     method: "Visit",
@@ -38,12 +38,21 @@ export default function LeadPage() {
     age: "",
     maritalStatus: "",
     profession: "Student",
+
     education: "",
-    schoolTiming: "",
+    educationTiming: "",
+    contactTime: "",
+
+    department: "",
     course: "",
     preferredTiming: "",
-    counsellor: "",
+
     status: "Fresh",
+    action: "",
+    nextFollowDate: "",
+    nextFollowTime: "",
+    counsellor: "",
+
     remark: "",
   });
 
@@ -73,42 +82,37 @@ export default function LeadPage() {
 
   const branches = ["Nanda Ngr", "Bapat Sq.", "Aurobindo"];
 
+  const courseOptions =
+    formData.department === "English"
+      ? ["Spoken English", "Basic English", "Advanced English"]
+      : formData.department === "Computer"
+      ? ["Basic Computer", "Tally", "Typing", "Advanced Computer"]
+      : [];
+
   return (
     <div className="w-full px-3 sm:px-6 py-4 bg-white">
       <form onSubmit={handleSubmit} className="space-y-8 text-sm">
 
-        {/* ===== Branch Section ===== */}
+        {/* Branch */}
         {(!isMobile || step === 1) && (
           <div className="space-y-2">
-
-            <p className="text-sm font-semibold text-gray-700">
-              Select Branch
-            </p>
-
-            <div className={`
-              flex gap-2
-              ${isMobile ? "flex-nowrap overflow-x-auto" : "flex-wrap"}
-            `}>
+            <p className="text-sm font-semibold text-gray-700">Select Branch</p>
+            <div className={`flex gap-2 ${isMobile ? "flex-nowrap overflow-x-auto" : "flex-wrap"}`}>
               {branches.map((b) => (
                 <button
                   key={b}
                   type="button"
                   onClick={() => setFormData({ ...formData, branch: b })}
-                  className={`
-                    whitespace-nowrap
-                    ${isMobile ? "px-3 py-1 text-xs" : "px-4 py-2 text-sm"}
-                    rounded-full border transition
+                  className={`whitespace-nowrap px-3 py-1 rounded-full border
                     ${formData.branch === b
                       ? "bg-blue-600 text-white border-blue-600"
                       : "bg-white border-gray-300"
-                    }
-                  `}
+                    }`}
                 >
                   {b}
                 </button>
               ))}
             </div>
-
           </div>
         )}
 
@@ -117,14 +121,10 @@ export default function LeadPage() {
           <Block title="Basic Info">
             <Input label="Date" name="enquiryDate" value={formData.enquiryDate} readOnly />
             <Input label="Time" name="enquiryTime" value={formData.enquiryTime} readOnly />
-            <Dropdown label="Method" name="method"
-              value={formData.method}
-              options={["Visit","Call","WhatsApp","Social Media"]}
-              onChange={handleChange}/>
-            <Dropdown label="Channel" name="channel"
-              value={formData.channel}
-              options={["Main Board","Friend","Google","Instagram","Banner"]}
-              onChange={handleChange}/>
+            <Dropdown label="Method" name="method" value={formData.method}
+              options={["Visit","Call","WhatsApp","Social Media"]} onChange={handleChange}/>
+            <Dropdown label="Channel" name="channel" value={formData.channel}
+              options={["Main Board","Friend","Google","Instagram","Banner"]} onChange={handleChange}/>
           </Block>
         )}
 
@@ -132,132 +132,76 @@ export default function LeadPage() {
         {(!isMobile || step === 2) && (
           <Block title="Student Contact">
             <Input label="Enquired By" name="enquiredBy" value={formData.enquiredBy} onChange={handleChange}/>
-            <Dropdown label="For" name="forWhom"
-              value={formData.forWhom}
-              options={["Self","Brother","Sister","Friend","Child"]}
-              onChange={handleChange}/>
+            <Dropdown label="For" name="forWhom" value={formData.forWhom}
+              options={["Self","Brother","Sister","Friend","Child"]} onChange={handleChange}/>
             <Input label="Student Name" name="studentName" value={formData.studentName} onChange={handleChange}/>
-            <Dropdown label="Area" name="area"
-              value={formData.area}
-              options={["Alwasa","Vijay Nagar","Bhawarkua","Rajendra Nagar"]}
-              onChange={handleChange}/>
+            <Dropdown label="Area" name="area" value={formData.area}
+              options={["Alwasa","Vijay Nagar","Bhawarkua","Rajendra Nagar"]} onChange={handleChange}/>
             <Input label="Mobile" name="mobileNumber" value={formData.mobileNumber} onChange={handleChange}/>
-            <Dropdown label="Mobile Owner" name="mobileOwner"
-              value={formData.mobileOwner}
-              options={["Self","Father","Mother","Guardian"]}
-              onChange={handleChange}/>
-            <Input label="WhatsApp" name="whatsappNumber" value={formData.whatsappNumber} onChange={handleChange}/>
-            <Dropdown label="WhatsApp Owner" name="whatsappOwner"
-              value={formData.whatsappOwner}
-              options={["Self","Father","Mother","Guardian"]}
-              onChange={handleChange}/>
           </Block>
         )}
 
         {/* BLOCK 3 */}
         {(!isMobile || step === 3) && (
-          <Block title="Profile & Course Interest">
-
+          <Block title="Profile">
             <Input label="Age" name="age" type="number" value={formData.age} onChange={handleChange}/>
+            <Dropdown label="Gender" name="gender" value={formData.gender}
+              options={["Male","Female","Other"]} onChange={handleChange}/>
+            <Dropdown label="Profession" name="profession" value={formData.profession}
+              options={["Student","Job","Business","Housewife","Other"]} onChange={handleChange}/>
+            <Input label="School / College / Job" name="education" value={formData.education} onChange={handleChange}/>
+            <Input label="School / College / Job Timing" name="educationTiming" value={formData.educationTiming} onChange={handleChange}/>
+            <Input label="Best Time To Contact" name="contactTime" value={formData.contactTime} onChange={handleChange}/>
+          </Block>
+        )}
 
-            <Dropdown label="Gender" name="gender"
-              value={formData.gender}
-              options={["Male","Female","Other"]}
+        {/* BLOCK 4 */}
+        {(!isMobile || step === 4) && (
+          <Block title="Course Selection">
+            <Dropdown label="Department" name="department"
+              value={formData.department}
+              options={["English","Computer"]}
               onChange={handleChange}/>
-
-            <Dropdown label="Marital Status" name="maritalStatus"
-              value={formData.maritalStatus}
-              options={["Single","Married"]}
-              onChange={handleChange}/>
-
-            <Dropdown label="Profession" name="profession"
-              value={formData.profession}
-              options={["Student","Job","Business","Housewife","Other"]}
-              onChange={handleChange}/>
-
-            <Input label="School / College" name="education" value={formData.education} onChange={handleChange}/>
-
-            <Input label="School / College Timing" name="schoolTiming" value={formData.schoolTiming} onChange={handleChange}/>
-
             <Dropdown label="Course" name="course"
               value={formData.course}
-              options={["Spoken English","Basic Computer","Tally","Typing","Advanced Computer"]}
+              options={courseOptions}
               onChange={handleChange}/>
-
-            <Input label="Preferred Timing" name="preferredTiming" value={formData.preferredTiming} onChange={handleChange}/>
-
-            <Dropdown label="Counsellor" name="counsellor"
-              value={formData.counsellor}
-              options={["Counsellor 1"]}
+            <Input label="Preferred Timing" name="preferredTiming"
+              value={formData.preferredTiming}
               onChange={handleChange}/>
+          </Block>
+        )}
 
+        {/* BLOCK 5 */}
+        {(!isMobile || step === 5) && (
+          <Block title="Counselling & Action">
             <Dropdown label="Status" name="status"
               value={formData.status}
               options={["Fresh","Interested","Follow-Up","Admitted","Not Interested","No Response"]}
               onChange={handleChange}/>
-
+            <Dropdown label="Action" name="action"
+              value={formData.action}
+              options={["Call Again","Send Details","Demo Arrange","Visit Reminder"]}
+              onChange={handleChange}/>
+            <Input label="Next Follow-Up Date" type="date"
+              name="nextFollowDate" value={formData.nextFollowDate}
+              onChange={handleChange}/>
+            <Input label="Next Follow-Up Time" type="time"
+              name="nextFollowTime" value={formData.nextFollowTime}
+              onChange={handleChange}/>
+            <Dropdown label="Counsellor" name="counsellor"
+              value={formData.counsellor}
+              options={["Counsellor 1"]}
+              onChange={handleChange}/>
             <div className="col-span-full">
               <label className="mb-1 text-gray-600 block">Remark</label>
-              <textarea
-                name="remark"
+              <textarea name="remark"
                 value={formData.remark}
                 onChange={handleChange}
                 rows={3}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              />
+                className="w-full border border-gray-300 rounded-md px-3 py-2"/>
             </div>
-
           </Block>
-        )}
-
-        {/* Mobile Navigation */}
-        {isMobile && (
-          <div className={`flex ${step === 1 ? "justify-end" : "justify-between"}`}>
-            {step > 1 && (
-              <button type="button"
-                onClick={() => setStep(step - 1)}
-                className="bg-gray-300 px-4 py-2 rounded-md">
-                Back
-              </button>
-            )}
-
-            {step < 3 ? (
-              <button
-                type="button"
-                disabled={!formData.branch}
-                onClick={() => setStep(step + 1)}
-                className={`px-4 py-2 rounded-md text-white
-                  ${formData.branch
-                    ? "bg-blue-600"
-                    : "bg-gray-400 cursor-not-allowed"
-                  }`}
-              >
-                Next
-              </button>
-            ) : (
-              <button type="submit"
-                className="bg-green-600 text-white px-6 py-2 rounded-md">
-                Save Lead
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Desktop Save */}
-        {!isMobile && (
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={!formData.branch}
-              className={`px-6 py-2 rounded-md text-white
-                ${formData.branch
-                  ? "bg-blue-600"
-                  : "bg-gray-400 cursor-not-allowed"
-                }`}
-            >
-              Save Lead
-            </button>
-          </div>
         )}
 
       </form>
@@ -270,7 +214,7 @@ function Block({ title, children }: any) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-md w-full">
       <h3 className="text-blue-700 font-semibold mb-4">{title}</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {children}
       </div>
     </div>
@@ -305,6 +249,7 @@ function Dropdown({ label, name, value, options, onChange }: any) {
         onChange={onChange}
         className="border border-gray-300 rounded-md px-3 py-2"
       >
+        <option value="">Select</option>
         {options.map((opt: string, i: number) => (
           <option key={i} value={opt}>{opt}</option>
         ))}
