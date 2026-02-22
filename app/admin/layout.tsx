@@ -20,6 +20,7 @@ import {
   UserRoundPlus,
   GraduationCap,
   ChevronRight,
+  PhoneCall,
 } from "lucide-react";
 
 const menuItems = [
@@ -27,6 +28,7 @@ const menuItems = [
   { name: "Lead", href: "/admin/lead", icon: UserRoundPlus },
   { name: "Admission", href: "/admin/admission", icon: GraduationCap },
   { name: "Enquiry", href: "/admin/enquiry", icon: UserPlus },
+  { name: "Calling", href: "/admin/calling", icon: PhoneCall },
   { name: "Students", href: "/admin/students", icon: Users },
   { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
   { name: "Fees", href: "/admin/fees", icon: CreditCard },
