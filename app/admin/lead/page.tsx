@@ -1,21 +1,53 @@
 "use client";
 
-import { useState } from "react";
-import {
-  branchOptions,
-  enquiryMethodOptions,
-  sourceOptions,
-  areaOptions,
-  enquiredForOptions,
-  ownerOptions,
-  lastEducationOptions,
-  genderOptions,
-  maritalStatusOptions,
-} from "@/app/components/admin/enquiry/constants";
+import { useEffect, useState } from "react";
 
 export default function LeadPage() {
 
-  const [formData, setFormData] = useState<any>({});
+  const today = new Date();
+  const formattedDate = today.toISOString().split("T")[0];
+  const formattedTime = today.toTimeString().slice(0, 5);
+
+  const [step, setStep] = useState(1);
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+
+  const [formData, setFormData] = useState<any>({
+    branch: "Nanda Nagar",
+
+    enquiryDate: formattedDate,
+    enquiryTime: formattedTime,
+    method: "Visit",
+    channel: "Main Board",
+
+    enquiredBy: "",
+    forWhom: "Self",
+    studentName: "",
+    mobileNumber: "",
+    mobileOwner: "Self",
+    whatsappNumber: "",
+    whatsappOwner: "Self",
+    area: "",
+
+    gender: "",
+    age: "",
+    maritalStatus: "",
+    profession: "Student",
+    education: "",
+    schoolTiming: "",
+    course: "",
+    preferredTiming: "",
+    counsellor: "",
+    status: "Fresh",
+    remark: "",
+  });
+
+  useEffect(() => {
+    setFormData((prev: any) => ({
+      ...prev,
+      studentName: prev.enquiredBy,
+      whatsappNumber: prev.mobileNumber,
+    }));
+  }, [formData.enquiredBy, formData.mobileNumber]);
 
   const handleChange = (e: any) => {
     setFormData({
@@ -24,109 +56,196 @@ export default function LeadPage() {
     });
   };
 
+  const branches = ["Nanda Nagar", "Bapat Sq.", "Aurobindo"];
+
   return (
-    <div className="w-full bg-white p-4">
+    <div className="w-full p-6 bg-white">
+      <form className="space-y-8 text-sm">
 
-      
-      <form className="space-y-6">
+        {/* ===== Branch Badge ===== */}
+        <div className="flex flex-wrap gap-3">
+          {branches.map((b) => (
+            <button
+              key={b}
+              type="button"
+              onClick={() => setFormData({ ...formData, branch: b })}
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition
+                ${formData.branch === b
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-600 border-gray-300 hover:bg-blue-50"
+                }`}
+            >
+              {b}
+            </button>
+          ))}
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 text-sm">
+        {/* ================= BLOCK 1 ================= */}
+        {(!isMobile || step === 1) && (
+          <Block title="Basic Info">
+            <Input label="Date" name="enquiryDate" value={formData.enquiryDate} readOnly />
+            <Input label="Time" name="enquiryTime" value={formData.enquiryTime} readOnly />
+            <Dropdown label="Method" name="method"
+              value={formData.method}
+              options={["Visit","Call","WhatsApp","Social Media"]}
+              onChange={handleChange}/>
+            <Dropdown label="Channel" name="channel"
+              value={formData.channel}
+              options={["Main Board","Friend","Google","Instagram","Banner"]}
+              onChange={handleChange}/>
+          </Block>
+        )}
 
-          <Input label="Enquiry Date" name="enquiryDate" type="date" value={formData.enquiryDate} onChange={handleChange} />
-          <Input label="Enquiry Time" name="enquiryTime" type="time" value={formData.enquiryTime} onChange={handleChange} />
-          <Dropdown label="Branch" name="branch" value={formData.branch} options={branchOptions} onChange={handleChange} />
-          <Dropdown label="Method" name="enquiryMethod" value={formData.enquiryMethod} options={enquiryMethodOptions} onChange={handleChange} />
-          <Dropdown label="Source" name="source" value={formData.source} options={sourceOptions} onChange={handleChange} />
+        {/* ================= BLOCK 2 ================= */}
+        {(!isMobile || step === 2) && (
+          <Block title="Student Contact">
+            <Input label="Enquired By" name="enquiredBy" value={formData.enquiredBy} onChange={handleChange}/>
+            <Dropdown label="For" name="forWhom"
+              value={formData.forWhom}
+              options={["Self","Brother","Sister","Friend","Child"]}
+              onChange={handleChange}/>
+            <Input label="Student Name" name="studentName" value={formData.studentName} onChange={handleChange}/>
+            <Dropdown label="Area" name="area"
+              value={formData.area}
+              options={["Alwasa","Vijay Nagar","Bhawarkua","Rajendra Nagar"]}
+              onChange={handleChange}/>
+            <Input label="Mobile" name="mobileNumber" value={formData.mobileNumber} onChange={handleChange}/>
+            <Dropdown label="Mobile Owner" name="mobileOwner"
+              value={formData.mobileOwner}
+              options={["Self","Father","Mother","Guardian"]}
+              onChange={handleChange}/>
+            <Input label="WhatsApp" name="whatsappNumber" value={formData.whatsappNumber} onChange={handleChange}/>
+            <Dropdown label="WhatsApp Owner" name="whatsappOwner"
+              value={formData.whatsappOwner}
+              options={["Self","Father","Mother","Guardian"]}
+              onChange={handleChange}/>
+          </Block>
+        )}
 
-          <Input label="Enquired By" name="enquiredBy" value={formData.enquiredBy} onChange={handleChange} />
-          <Dropdown label="For" name="enquiredFor" value={formData.enquiredFor} options={enquiredForOptions} onChange={handleChange} />
-          <Input label="Student Name" name="studentName" value={formData.studentName} onChange={handleChange} />
-          <Input label="DOB" name="dob" type="date" value={formData.dob} onChange={handleChange} />
-          <Dropdown label="Gender" name="gender" value={formData.gender} options={genderOptions} onChange={handleChange} />
+        {/* ================= BLOCK 3 ================= */}
+        {(!isMobile || step === 3) && (
+          <Block title="Profile & Course Interest">
+            <Dropdown label="Gender" name="gender"
+              value={formData.gender}
+              options={["Male","Female","Other"]}
+              onChange={handleChange}/>
+            <Input label="Age" name="age" type="number" value={formData.age} onChange={handleChange}/>
+            <Dropdown label="Marital Status" name="maritalStatus"
+              value={formData.maritalStatus}
+              options={["Single","Married"]}
+              onChange={handleChange}/>
+            <Dropdown label="Profession" name="profession"
+              value={formData.profession}
+              options={["Student","Job","Business","Housewife","Other"]}
+              onChange={handleChange}/>
+            <Input label="School / College" name="education" value={formData.education} onChange={handleChange}/>
+            <Input label="School / College Timing" name="schoolTiming" value={formData.schoolTiming} onChange={handleChange}/>
+            <Dropdown label="Course" name="course"
+              value={formData.course}
+              options={["Spoken English","Basic Computer","Tally","Typing","Advanced Computer"]}
+              onChange={handleChange}/>
+            <Input label="Preferred Timing" name="preferredTiming" value={formData.preferredTiming} onChange={handleChange}/>
+            <Dropdown label="Counsellor" name="counsellor"
+              value={formData.counsellor}
+              options={["Counsellor 1"]}
+              onChange={handleChange}/>
+            <Dropdown label="Status" name="status"
+              value={formData.status}
+              options={["Fresh","Interested","Follow-Up","Admitted","Not Interested","No Response"]}
+              onChange={handleChange}/>
+            <div className="col-span-full">
+              <label className="mb-1 text-gray-600 block">Remark</label>
+              <textarea
+                name="remark"
+                value={formData.remark}
+                onChange={handleChange}
+                rows={3}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+          </Block>
+        )}
 
-          <Dropdown label="Marital" name="maritalStatus" value={formData.maritalStatus} options={maritalStatusOptions} onChange={handleChange} />
-          <Dropdown label="Area" name="area" value={formData.area} options={areaOptions} onChange={handleChange} />
-          <Input label="Mobile" name="mobileNumber" value={formData.mobileNumber} onChange={handleChange} />
-          <Dropdown label="Owner" name="mobileOwner" value={formData.mobileOwner} options={ownerOptions} onChange={handleChange} />
-          <Input label="WhatsApp" name="whatsappAlternateNumber" value={formData.whatsappAlternateNumber} onChange={handleChange} />
-
-          <Dropdown label="Owner" name="whatsappAlternateOwner" value={formData.whatsappAlternateOwner} options={ownerOptions} onChange={handleChange} />
-          <Input label="Profession" name="profession" value={formData.profession} onChange={handleChange} />
-          <Dropdown label="Education" name="lastEducation" value={formData.lastEducation} options={lastEducationOptions} onChange={handleChange} />
-          <Input label="Institute" name="educationInstitute" value={formData.educationInstitute} onChange={handleChange} />
-          <Input label="Timing" name="instituteTiming" value={formData.instituteTiming} onChange={handleChange} />
-
-          <Input label="Course" name="courses" value={formData.courses} onChange={handleChange} />
-          <Input label="Pref Time" name="preferredTiming" value={formData.preferredTiming} onChange={handleChange} />
-          <Input label="Counsellor" name="counsellor" value={formData.counsellor} onChange={handleChange} />
-          <Dropdown label="Status" name="status" value={formData.status} options={["New Enquiry","Follow-up","Converted"]} onChange={handleChange} />
-
-          <div className="xl:col-span-5 flex flex-col">
-            <label className="mb-1 text-gray-600 text-sm">Remark</label>
-            <textarea
-              name="remark"
-              value={formData.remark || ""}
-              onChange={handleChange}
-              rows={3}
-              className="w-full border border-gray-300 bg-white rounded-md px-3 py-2 text-sm shadow-sm 
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-            />
+        {/* ===== Mobile Navigation ===== */}
+        {isMobile && (
+          <div className="flex justify-between">
+            {step > 1 && (
+              <button type="button"
+                onClick={() => setStep(step - 1)}
+                className="bg-gray-300 px-4 py-2 rounded-md">
+                Back
+              </button>
+            )}
+            {step < 3 ? (
+              <button type="button"
+                onClick={() => setStep(step + 1)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md">
+                Next
+              </button>
+            ) : (
+              <button className="bg-green-600 text-white px-6 py-2 rounded-md">
+                Save Lead
+              </button>
+            )}
           </div>
+        )}
 
-        </div>
-
-        <div className="flex justify-end pt-4">
-          <button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm font-medium transition"
-          >
-            Save Lead
-          </button>
-        </div>
+        {/* ===== Desktop Save ===== */}
+        {!isMobile && (
+          <div className="flex justify-end">
+            <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+              Save Lead
+            </button>
+          </div>
+        )}
 
       </form>
-
     </div>
   );
 }
 
+/* BLOCK */
+function Block({ title, children }: any) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-md">
+      <h3 className="text-blue-700 font-semibold mb-4">{title}</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        {children}
+      </div>
+    </div>
+  );
+}
 
-/* ---------- INPUT ---------- */
-
-function Input({ label, name, type = "text", value, onChange }: any) {
+/* INPUT */
+function Input({ label, name, type="text", value, onChange, readOnly }: any) {
   return (
     <div className="flex flex-col">
-      <label className="mb-1 text-gray-600 text-sm">{label}</label>
+      <label className="mb-1 text-gray-600">{label}</label>
       <input
         name={name}
         type={type}
         value={value || ""}
+        readOnly={readOnly}
         onChange={onChange}
-        className="w-full border border-gray-300 bg-white rounded-md px-3 py-2 text-sm shadow-sm 
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+        className="border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
       />
     </div>
   );
 }
 
-
-/* ---------- DROPDOWN ---------- */
-
-function Dropdown({ label, name, options, value, onChange }: any) {
+/* DROPDOWN */
+function Dropdown({ label, name, value, options, onChange }: any) {
   return (
     <div className="flex flex-col">
-      <label className="mb-1 text-gray-600 text-sm">{label}</label>
+      <label className="mb-1 text-gray-600">{label}</label>
       <select
         name={name}
         value={value || ""}
         onChange={onChange}
-        className="w-full border border-gray-300 bg-white rounded-md px-3 py-2 text-sm shadow-sm 
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+        className="border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
       >
-        {(options || []).map((opt: string, i: number) => (
-          <option key={i} value={opt}>
-            {opt}
-          </option>
+        {options.map((opt: string, i: number) => (
+          <option key={i} value={opt}>{opt}</option>
         ))}
       </select>
     </div>
