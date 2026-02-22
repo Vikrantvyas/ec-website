@@ -9,7 +9,6 @@ export default function LeadPage() {
   const formattedTime = today.toTimeString().slice(0, 5);
 
   const [step, setStep] = useState(1);
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
 
   const [formData, setFormData] = useState<any>({
     branch: "Nanda Nagar",
@@ -59,29 +58,31 @@ export default function LeadPage() {
   const branches = ["Nanda Nagar", "Bapat Sq.", "Aurobindo"];
 
   return (
-    <div className="w-full p-6 bg-white">
+    <div className="w-full px-3 sm:px-6 py-4 bg-white">
       <form className="space-y-8 text-sm">
 
-        {/* ===== Branch Badge ===== */}
-        <div className="flex flex-wrap gap-3">
-          {branches.map((b) => (
-            <button
-              key={b}
-              type="button"
-              onClick={() => setFormData({ ...formData, branch: b })}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition
-                ${formData.branch === b
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white text-gray-600 border-gray-300 hover:bg-blue-50"
-                }`}
-            >
-              {b}
-            </button>
-          ))}
-        </div>
+        {/* ===== Branch Badge (Only Step 1 Mobile) ===== */}
+        {step === 1 && (
+          <div className="flex flex-wrap gap-3">
+            {branches.map((b) => (
+              <button
+                key={b}
+                type="button"
+                onClick={() => setFormData({ ...formData, branch: b })}
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition
+                  ${formData.branch === b
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white text-gray-600 border-gray-300 hover:bg-blue-50"
+                  }`}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* ================= BLOCK 1 ================= */}
-        {(!isMobile || step === 1) && (
+        {step === 1 && (
           <Block title="Basic Info">
             <Input label="Date" name="enquiryDate" value={formData.enquiryDate} readOnly />
             <Input label="Time" name="enquiryTime" value={formData.enquiryTime} readOnly />
@@ -97,7 +98,7 @@ export default function LeadPage() {
         )}
 
         {/* ================= BLOCK 2 ================= */}
-        {(!isMobile || step === 2) && (
+        {step === 2 && (
           <Block title="Student Contact">
             <Input label="Enquired By" name="enquiredBy" value={formData.enquiredBy} onChange={handleChange}/>
             <Dropdown label="For" name="forWhom"
@@ -123,7 +124,7 @@ export default function LeadPage() {
         )}
 
         {/* ================= BLOCK 3 ================= */}
-        {(!isMobile || step === 3) && (
+        {step === 3 && (
           <Block title="Profile & Course Interest">
             <Dropdown label="Gender" name="gender"
               value={formData.gender}
@@ -167,37 +168,35 @@ export default function LeadPage() {
         )}
 
         {/* ===== Mobile Navigation ===== */}
-        {isMobile && (
-          <div className="flex justify-between">
-            {step > 1 && (
-              <button type="button"
-                onClick={() => setStep(step - 1)}
-                className="bg-gray-300 px-4 py-2 rounded-md">
-                Back
-              </button>
-            )}
-            {step < 3 ? (
-              <button type="button"
-                onClick={() => setStep(step + 1)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md">
-                Next
-              </button>
-            ) : (
-              <button className="bg-green-600 text-white px-6 py-2 rounded-md">
-                Save Lead
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* ===== Desktop Save ===== */}
-        {!isMobile && (
-          <div className="flex justify-end">
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+        <div className="flex justify-between sm:hidden">
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={() => setStep(step - 1)}
+              className="bg-gray-300 px-4 py-2 rounded-md">
+              Back
+            </button>
+          )}
+          {step < 3 ? (
+            <button
+              type="button"
+              onClick={() => setStep(step + 1)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md">
+              Next
+            </button>
+          ) : (
+            <button className="bg-green-600 text-white px-6 py-2 rounded-md">
               Save Lead
             </button>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* ===== Desktop Save ===== */}
+        <div className="hidden sm:flex justify-end">
+          <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+            Save Lead
+          </button>
+        </div>
 
       </form>
     </div>
@@ -207,7 +206,7 @@ export default function LeadPage() {
 /* BLOCK */
 function Block({ title, children }: any) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-md">
+    <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-md w-full">
       <h3 className="text-blue-700 font-semibold mb-4">{title}</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {children}
