@@ -9,10 +9,17 @@ export default function LeadPage() {
   const formattedTime = today.toTimeString().slice(0, 5);
 
   const [step, setStep] = useState(1);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const [formData, setFormData] = useState<any>({
     branch: "Nanda Nagar",
-
     enquiryDate: formattedDate,
     enquiryTime: formattedTime,
     method: "Visit",
@@ -55,24 +62,29 @@ export default function LeadPage() {
     });
   };
 
+  const handleSubmit = (e: any) => {
+    e.preventDefault(); // 🔥 prevent reload
+    console.log("Lead Saved:", formData);
+  };
+
   const branches = ["Nanda Nagar", "Bapat Sq.", "Aurobindo"];
 
   return (
     <div className="w-full px-3 sm:px-6 py-4 bg-white">
-      <form className="space-y-8 text-sm">
+      <form onSubmit={handleSubmit} className="space-y-8 text-sm">
 
-        {/* ===== Branch Badge (Only Step 1 Mobile) ===== */}
-        {step === 1 && (
+        {/* Branch badges only mobile step 1 */}
+        {(!isMobile || step === 1) && (
           <div className="flex flex-wrap gap-3">
             {branches.map((b) => (
               <button
                 key={b}
                 type="button"
                 onClick={() => setFormData({ ...formData, branch: b })}
-                className={`px-4 py-2 rounded-full text-sm font-medium border transition
+                className={`px-4 py-2 rounded-full border
                   ${formData.branch === b
                     ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-white text-gray-600 border-gray-300 hover:bg-blue-50"
+                    : "bg-white border-gray-300"
                   }`}
               >
                 {b}
@@ -81,8 +93,8 @@ export default function LeadPage() {
           </div>
         )}
 
-        {/* ================= BLOCK 1 ================= */}
-        {step === 1 && (
+        {/* Block 1 */}
+        {(!isMobile || step === 1) && (
           <Block title="Basic Info">
             <Input label="Date" name="enquiryDate" value={formData.enquiryDate} readOnly />
             <Input label="Time" name="enquiryTime" value={formData.enquiryTime} readOnly />
@@ -97,8 +109,8 @@ export default function LeadPage() {
           </Block>
         )}
 
-        {/* ================= BLOCK 2 ================= */}
-        {step === 2 && (
+        {/* Block 2 */}
+        {(!isMobile || step === 2) && (
           <Block title="Student Contact">
             <Input label="Enquired By" name="enquiredBy" value={formData.enquiredBy} onChange={handleChange}/>
             <Dropdown label="For" name="forWhom"
@@ -123,32 +135,13 @@ export default function LeadPage() {
           </Block>
         )}
 
-        {/* ================= BLOCK 3 ================= */}
-        {step === 3 && (
+        {/* Block 3 */}
+        {(!isMobile || step === 3) && (
           <Block title="Profile & Course Interest">
+            <Input label="Age" name="age" type="number" value={formData.age} onChange={handleChange}/>
             <Dropdown label="Gender" name="gender"
               value={formData.gender}
               options={["Male","Female","Other"]}
-              onChange={handleChange}/>
-            <Input label="Age" name="age" type="number" value={formData.age} onChange={handleChange}/>
-            <Dropdown label="Marital Status" name="maritalStatus"
-              value={formData.maritalStatus}
-              options={["Single","Married"]}
-              onChange={handleChange}/>
-            <Dropdown label="Profession" name="profession"
-              value={formData.profession}
-              options={["Student","Job","Business","Housewife","Other"]}
-              onChange={handleChange}/>
-            <Input label="School / College" name="education" value={formData.education} onChange={handleChange}/>
-            <Input label="School / College Timing" name="schoolTiming" value={formData.schoolTiming} onChange={handleChange}/>
-            <Dropdown label="Course" name="course"
-              value={formData.course}
-              options={["Spoken English","Basic Computer","Tally","Typing","Advanced Computer"]}
-              onChange={handleChange}/>
-            <Input label="Preferred Timing" name="preferredTiming" value={formData.preferredTiming} onChange={handleChange}/>
-            <Dropdown label="Counsellor" name="counsellor"
-              value={formData.counsellor}
-              options={["Counsellor 1"]}
               onChange={handleChange}/>
             <Dropdown label="Status" name="status"
               value={formData.status}
@@ -161,42 +154,44 @@ export default function LeadPage() {
                 value={formData.remark}
                 onChange={handleChange}
                 rows={3}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
               />
             </div>
           </Block>
         )}
 
-        {/* ===== Mobile Navigation ===== */}
-        <div className="flex justify-between sm:hidden">
-          {step > 1 && (
-            <button
-              type="button"
-              onClick={() => setStep(step - 1)}
-              className="bg-gray-300 px-4 py-2 rounded-md">
-              Back
-            </button>
-          )}
-          {step < 3 ? (
-            <button
-              type="button"
-              onClick={() => setStep(step + 1)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md">
-              Next
-            </button>
-          ) : (
-            <button className="bg-green-600 text-white px-6 py-2 rounded-md">
+        {/* Mobile Navigation */}
+        {isMobile && (
+          <div className="flex justify-between">
+            {step > 1 && (
+              <button type="button" onClick={() => setStep(step - 1)}
+                className="bg-gray-300 px-4 py-2 rounded-md">
+                Back
+              </button>
+            )}
+            {step < 3 ? (
+              <button type="button" onClick={() => setStep(step + 1)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md">
+                Next
+              </button>
+            ) : (
+              <button type="submit"
+                className="bg-green-600 text-white px-6 py-2 rounded-md">
+                Save Lead
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Desktop Save */}
+        {!isMobile && (
+          <div className="flex justify-end">
+            <button type="submit"
+              className="bg-blue-600 text-white px-6 py-2 rounded-md">
               Save Lead
             </button>
-          )}
-        </div>
-
-        {/* ===== Desktop Save ===== */}
-        <div className="hidden sm:flex justify-end">
-          <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
-            Save Lead
-          </button>
-        </div>
+          </div>
+        )}
 
       </form>
     </div>
@@ -226,7 +221,7 @@ function Input({ label, name, type="text", value, onChange, readOnly }: any) {
         value={value || ""}
         readOnly={readOnly}
         onChange={onChange}
-        className="border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+        className="border border-gray-300 rounded-md px-3 py-2"
       />
     </div>
   );
@@ -241,7 +236,7 @@ function Dropdown({ label, name, value, options, onChange }: any) {
         name={name}
         value={value || ""}
         onChange={onChange}
-        className="border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+        className="border border-gray-300 rounded-md px-3 py-2"
       >
         {options.map((opt: string, i: number) => (
           <option key={i} value={opt}>{opt}</option>
