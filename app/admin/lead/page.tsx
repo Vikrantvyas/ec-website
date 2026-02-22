@@ -19,7 +19,7 @@ export default function LeadPage() {
   }, []);
 
   const [formData, setFormData] = useState<any>({
-    branch: "Nanda Nagar",
+    branch: "Nanda Ngr",
     enquiryDate: formattedDate,
     enquiryTime: formattedTime,
     method: "Visit",
@@ -63,17 +63,17 @@ export default function LeadPage() {
   };
 
   const handleSubmit = (e: any) => {
-    e.preventDefault(); // 🔥 prevent reload
+    e.preventDefault();
     console.log("Lead Saved:", formData);
   };
 
-  const branches = ["Nanda Nagar", "Bapat Sq.", "Aurobindo"];
+  const branches = ["Nanda Ngr", "Bapat Sq.", "Aurobindo"];
 
   return (
     <div className="w-full px-3 sm:px-6 py-4 bg-white">
       <form onSubmit={handleSubmit} className="space-y-8 text-sm">
 
-        {/* Branch badges only mobile step 1 */}
+        {/* Branch badges */}
         {(!isMobile || step === 1) && (
           <div className="flex flex-wrap gap-3">
             {branches.map((b) => (
@@ -93,7 +93,7 @@ export default function LeadPage() {
           </div>
         )}
 
-        {/* Block 1 */}
+        {/* BLOCK 1 */}
         {(!isMobile || step === 1) && (
           <Block title="Basic Info">
             <Input label="Date" name="enquiryDate" value={formData.enquiryDate} readOnly />
@@ -109,7 +109,7 @@ export default function LeadPage() {
           </Block>
         )}
 
-        {/* Block 2 */}
+        {/* BLOCK 2 */}
         {(!isMobile || step === 2) && (
           <Block title="Student Contact">
             <Input label="Enquired By" name="enquiredBy" value={formData.enquiredBy} onChange={handleChange}/>
@@ -135,18 +135,48 @@ export default function LeadPage() {
           </Block>
         )}
 
-        {/* Block 3 */}
+        {/* BLOCK 3 */}
         {(!isMobile || step === 3) && (
           <Block title="Profile & Course Interest">
+
             <Input label="Age" name="age" type="number" value={formData.age} onChange={handleChange}/>
+
             <Dropdown label="Gender" name="gender"
               value={formData.gender}
               options={["Male","Female","Other"]}
               onChange={handleChange}/>
+
+            <Dropdown label="Marital Status" name="maritalStatus"
+              value={formData.maritalStatus}
+              options={["Single","Married"]}
+              onChange={handleChange}/>
+
+            <Dropdown label="Profession" name="profession"
+              value={formData.profession}
+              options={["Student","Job","Business","Housewife","Other"]}
+              onChange={handleChange}/>
+
+            <Input label="School / College" name="education" value={formData.education} onChange={handleChange}/>
+
+            <Input label="School / College Timing" name="schoolTiming" value={formData.schoolTiming} onChange={handleChange}/>
+
+            <Dropdown label="Course" name="course"
+              value={formData.course}
+              options={["Spoken English","Basic Computer","Tally","Typing","Advanced Computer"]}
+              onChange={handleChange}/>
+
+            <Input label="Preferred Timing" name="preferredTiming" value={formData.preferredTiming} onChange={handleChange}/>
+
+            <Dropdown label="Counsellor" name="counsellor"
+              value={formData.counsellor}
+              options={["Counsellor 1"]}
+              onChange={handleChange}/>
+
             <Dropdown label="Status" name="status"
               value={formData.status}
               options={["Fresh","Interested","Follow-Up","Admitted","Not Interested","No Response"]}
               onChange={handleChange}/>
+
             <div className="col-span-full">
               <label className="mb-1 text-gray-600 block">Remark</label>
               <textarea
@@ -157,20 +187,24 @@ export default function LeadPage() {
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
               />
             </div>
+
           </Block>
         )}
 
         {/* Mobile Navigation */}
         {isMobile && (
-          <div className="flex justify-between">
+          <div className={`flex ${step === 1 ? "justify-end" : "justify-between"}`}>
             {step > 1 && (
-              <button type="button" onClick={() => setStep(step - 1)}
+              <button type="button"
+                onClick={() => setStep(step - 1)}
                 className="bg-gray-300 px-4 py-2 rounded-md">
                 Back
               </button>
             )}
+
             {step < 3 ? (
-              <button type="button" onClick={() => setStep(step + 1)}
+              <button type="button"
+                onClick={() => setStep(step + 1)}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md">
                 Next
               </button>
