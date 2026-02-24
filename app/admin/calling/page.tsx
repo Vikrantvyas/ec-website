@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 type FollowUp = {
@@ -67,6 +68,8 @@ const dummyLeads: Lead[] = Array.from({ length: 10 }).map((_, i) => {
 });
 
 export default function CallingPage() {
+  const router = useRouter();
+
   const [leads, setLeads] = useState(dummyLeads);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
@@ -79,7 +82,6 @@ export default function CallingPage() {
   const filteredLeads = useMemo(() => {
     let data = [...leads];
 
-    // Default Latest
     data.sort(
       (a, b) =>
         new Date(b.enquiryDate).getTime() -
@@ -166,11 +168,10 @@ export default function CallingPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* FILTERS */}
+      {/* FILTERS (UNCHANGED) */}
       <div className="sticky top-0 z-40 bg-white p-3 shadow-sm space-y-2">
 
         <div className="flex gap-2 flex-wrap text-xs">
-          {/* Branch */}
           <select
             className="border px-2 py-1 rounded"
             value={filter1}
@@ -182,7 +183,6 @@ export default function CallingPage() {
             <option>Aurobindo</option>
           </select>
 
-          {/* Category */}
           <select
             className="border px-2 py-1 rounded"
             value={filter2}
@@ -197,7 +197,6 @@ export default function CallingPage() {
             <option>Sort</option>
           </select>
 
-          {/* Dependent */}
           <select
             className="border px-2 py-1 rounded"
             value={filter3}
@@ -250,7 +249,13 @@ export default function CallingPage() {
             )} rounded shadow-sm p-3 text-xs`}
           >
             <div className="flex justify-between">
-              <div>
+              {/* CLICKABLE CARD CONTENT */}
+              <div
+                className="cursor-pointer"
+                onClick={() =>
+                  router.push(`/admin/calling/lead/${lead.id}`)
+                }
+              >
                 <p className="font-semibold">
                   {lead.name}
                   <span className="text-gray-400 ml-2">
@@ -265,8 +270,6 @@ export default function CallingPage() {
 
                 <p className="flex items-center gap-2">
                   Status: {lead.status}
-
-                  {/* Compact Vercel-style Attendance */}
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100">
                     {lead.attendanceLast10.map((signal, idx) => (
                       <span
@@ -281,11 +284,12 @@ export default function CallingPage() {
               </div>
 
               <button
-                onClick={() =>
+                onClick={(e) => {
+                  e.stopPropagation();
                   setExpandedId(
                     expandedId === lead.id ? null : lead.id
-                  )
-                }
+                  );
+                }}
               >
                 {expandedId === lead.id ? (
                   <ChevronUp size={16} />
@@ -304,10 +308,8 @@ export default function CallingPage() {
 
             {expandedId === lead.id && (
               <div className="mt-3 border-t pt-2 space-y-2 text-gray-600">
-                {(showAll === lead.id
-                  ? lead.followUps
-                  : lead.followUps.slice(-5)
-                )
+                {lead.followUps
+                  .slice(-5)
                   .reverse()
                   .map((fu, i) => (
                     <p key={i}>
@@ -337,24 +339,6 @@ export default function CallingPage() {
                     Save
                   </button>
                 </div>
-
-                <select
-                  className="border px-2 py-1 rounded text-xs"
-                  value={lead.status}
-                  onChange={(e) =>
-                    setLeads((prev) =>
-                      prev.map((l) =>
-                        l.id === lead.id
-                          ? { ...l, status: e.target.value }
-                          : l
-                      )
-                    )
-                  }
-                >
-                  <option>Demo</option>
-                  <option>Admission</option>
-                  <option>Not Interested</option>
-                </select>
               </div>
             )}
           </div>
