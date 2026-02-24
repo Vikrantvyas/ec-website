@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import FiltersBar from "@/app/components/admin/calling/FiltersBar";
+import LeadCard from "@/app/components/admin/calling/LeadCard";
 
 type FollowUp = {
   date: string;
@@ -24,16 +24,6 @@ type Lead = {
   followUps: FollowUp[];
   attendanceLast10: AttendanceSignal[];
 };
-
-const callTypes = [
-  "Call Received",
-  "Not Received",
-  "Cut the Call",
-  "Received by Someone Else",
-  "He Will Call Soon",
-  "Will Visit Soon",
-  "Call Me Later",
-];
 
 const generateFollowUps = (): FollowUp[] => [
   { date: "2026-02-01", note: "Initial enquiry", type: "Call Received" },
@@ -68,8 +58,6 @@ const dummyLeads: Lead[] = Array.from({ length: 10 }).map((_, i) => {
 });
 
 export default function CallingPage() {
-  const router = useRouter();
-
   const [leads, setLeads] = useState(dummyLeads);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
@@ -77,7 +65,6 @@ export default function CallingPage() {
   const [filter2, setFilter2] = useState("All");
   const [filter3, setFilter3] = useState("All");
   const [selectedCallType, setSelectedCallType] = useState("");
-  const [showAll, setShowAll] = useState<number | null>(null);
 
   const filteredLeads = useMemo(() => {
     let data = [...leads];
@@ -128,19 +115,6 @@ export default function CallingPage() {
     return data;
   }, [leads, search, filter1, filter2, filter3]);
 
-  const frameColor = (status: string) => {
-    if (status === "Admission") return "border-green-600";
-    if (status === "Demo") return "border-blue-500";
-    if (status === "Not Interested") return "border-red-300";
-    return "border-gray-200";
-  };
-
-  const attendanceColor = (signal: AttendanceSignal) => {
-    if (signal === "P") return "bg-green-500";
-    if (signal === "A") return "bg-red-500";
-    return "bg-gray-300";
-  };
-
   const addFollowUp = (leadId: number) => {
     if (!selectedCallType) return;
 
@@ -168,180 +142,28 @@ export default function CallingPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* FILTERS (UNCHANGED) */}
-      <div className="sticky top-0 z-40 bg-white p-3 shadow-sm space-y-2">
+      <FiltersBar
+        filter1={filter1}
+        setFilter1={setFilter1}
+        filter2={filter2}
+        setFilter2={setFilter2}
+        filter3={filter3}
+        setFilter3={setFilter3}
+        search={search}
+        setSearch={setSearch}
+      />
 
-        <div className="flex gap-2 flex-wrap text-xs">
-          <select
-            className="border px-2 py-1 rounded"
-            value={filter1}
-            onChange={(e) => setFilter1(e.target.value)}
-          >
-            <option>All</option>
-            <option>Nanda Nagar</option>
-            <option>Bapat Square</option>
-            <option>Aurobindo</option>
-          </select>
-
-          <select
-            className="border px-2 py-1 rounded"
-            value={filter2}
-            onChange={(e) => {
-              setFilter2(e.target.value);
-              setFilter3("All");
-            }}
-          >
-            <option>All</option>
-            <option>Gender</option>
-            <option>Status</option>
-            <option>Sort</option>
-          </select>
-
-          <select
-            className="border px-2 py-1 rounded"
-            value={filter3}
-            onChange={(e) => setFilter3(e.target.value)}
-          >
-            <option>All</option>
-
-            {filter2 === "Gender" && (
-              <>
-                <option>Male</option>
-                <option>Female</option>
-              </>
-            )}
-
-            {filter2 === "Status" && (
-              <>
-                <option>Demo</option>
-                <option>Admission</option>
-                <option>Not Interested</option>
-              </>
-            )}
-
-            {filter2 === "Sort" && (
-              <>
-                <option>Oldest</option>
-                <option>Most Followups</option>
-                <option>A - Z</option>
-                <option>Z - A</option>
-              </>
-            )}
-          </select>
-        </div>
-
-        <input
-          type="text"
-          placeholder="Search..."
-          className="w-full border rounded px-2 py-1 text-xs"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {/* LEADS */}
       <div className="p-3 space-y-3 pb-24">
         {filteredLeads.map((lead) => (
-          <div
+          <LeadCard
             key={lead.id}
-            className={`bg-white border-l-4 ${frameColor(
-              lead.status
-            )} rounded shadow-sm p-3 text-xs`}
-          >
-            <div className="flex justify-between">
-              {/* CLICKABLE CARD CONTENT */}
-              <div
-                className="cursor-pointer"
-                onClick={() =>
-                  router.push(`/admin/calling/lead/${lead.id}`)
-                }
-              >
-                <p className="font-semibold">
-                  {lead.name}
-                  <span className="text-gray-400 ml-2">
-                    {new Date(lead.enquiryDate).toLocaleDateString(
-                      "en-GB",
-                      { day: "2-digit", month: "short" }
-                    )} ({lead.followUps.length} Calls)
-                  </span>
-                </p>
-
-                <p>{lead.course} | {lead.branch}</p>
-
-                <p className="flex items-center gap-2">
-                  Status: {lead.status}
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100">
-                    {lead.attendanceLast10.map((signal, idx) => (
-                      <span
-                        key={idx}
-                        className={`h-2 w-2 rounded-full ${attendanceColor(
-                          signal
-                        )}`}
-                      />
-                    ))}
-                  </span>
-                </p>
-              </div>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExpandedId(
-                    expandedId === lead.id ? null : lead.id
-                  );
-                }}
-              >
-                {expandedId === lead.id ? (
-                  <ChevronUp size={16} />
-                ) : (
-                  <ChevronDown size={16} />
-                )}
-              </button>
-            </div>
-
-            <div className="flex gap-4 mt-2 text-blue-600">
-              <a href={`tel:${lead.mobile}`}>Call</a>
-              <a href={`https://wa.me/91${lead.mobile}`} target="_blank">
-                WhatsApp
-              </a>
-            </div>
-
-            {expandedId === lead.id && (
-              <div className="mt-3 border-t pt-2 space-y-2 text-gray-600">
-                {lead.followUps
-                  .slice(-5)
-                  .reverse()
-                  .map((fu, i) => (
-                    <p key={i}>
-                      {new Date(fu.date).toLocaleDateString()} –{" "}
-                      {fu.note}
-                    </p>
-                  ))}
-
-                <div className="flex gap-2 mt-2">
-                  <select
-                    className="border px-2 py-1 text-xs rounded"
-                    value={selectedCallType}
-                    onChange={(e) =>
-                      setSelectedCallType(e.target.value)
-                    }
-                  >
-                    <option value="">Select Call Result</option>
-                    {callTypes.map((c) => (
-                      <option key={c}>{c}</option>
-                    ))}
-                  </select>
-
-                  <button
-                    onClick={() => addFollowUp(lead.id)}
-                    className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+            lead={lead}
+            expandedId={expandedId}
+            setExpandedId={setExpandedId}
+            selectedCallType={selectedCallType}
+            setSelectedCallType={setSelectedCallType}
+            addFollowUp={addFollowUp}
+          />
         ))}
       </div>
     </div>
