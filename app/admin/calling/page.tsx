@@ -8,6 +8,7 @@ type FollowUp = {
   date: string;
   note: string;
   type: string;
+  mood?: string;
 };
 
 type AttendanceSignal = "P" | "A" | "N";
@@ -26,11 +27,23 @@ type Lead = {
 };
 
 const generateFollowUps = (): FollowUp[] => [
-  { date: "2026-02-01", note: "Initial enquiry", type: "Call Received" },
-  { date: "2026-02-03", note: "Call back later", type: "Call Me Later" },
-  { date: "2026-02-05", note: "Not reachable", type: "Not Received" },
-  { date: "2026-02-07", note: "Interested", type: "Call Received" },
-  { date: "2026-02-09", note: "Follow up again", type: "Call Received" },
+  {
+    date: "2026-02-02",
+    type: "Received by Student",
+    mood: "Wants Demo",
+    note: "He'll join morning batch",
+  },
+  {
+    date: "2026-02-06",
+    type: "Not Received",
+    note: "",
+  },
+  {
+    date: "2026-02-09",
+    type: "Received by Parent",
+    mood: "Thinking",
+    note: "",
+  },
 ];
 
 const generateAttendance = (joined: boolean): AttendanceSignal[] => {
@@ -41,7 +54,7 @@ const generateAttendance = (joined: boolean): AttendanceSignal[] => {
 };
 
 const dummyLeads: Lead[] = Array.from({ length: 10 }).map((_, i) => {
-  const status = ["Admission", "Demo", "Not Interested"][i % 3];
+  const status = ["Hot", "Warm", "Cold", "Closed"][i % 4];
 
   return {
     id: i + 1,
@@ -53,71 +66,31 @@ const dummyLeads: Lead[] = Array.from({ length: 10 }).map((_, i) => {
     status,
     enquiryDate: `2026-02-${10 - i}`,
     followUps: generateFollowUps(),
-    attendanceLast10: generateAttendance(status !== "Not Interested"),
+    attendanceLast10: generateAttendance(status !== "Closed"),
   };
 });
 
 export default function CallingPage() {
   const [leads, setLeads] = useState(dummyLeads);
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [search, setSearch] = useState("");
-  const [filter1, setFilter1] = useState("All");
-  const [filter2, setFilter2] = useState("All");
-  const [filter3, setFilter3] = useState("All");
-  const [selectedCallType, setSelectedCallType] = useState("");
 
   const filteredLeads = useMemo(() => {
-    let data = [...leads];
-
-    data.sort(
+    return [...leads].sort(
       (a, b) =>
         new Date(b.enquiryDate).getTime() -
         new Date(a.enquiryDate).getTime()
     );
+  }, [leads]);
 
-    if (filter1 !== "All") {
-      data = data.filter((l) => l.branch === filter1);
+  const addFollowUp = (
+    leadId: number,
+    data: {
+      result: string;
+      mood?: string;
+      remark?: string;
+      status: string;
     }
-
-    if (filter2 === "Gender" && filter3 !== "All") {
-      data = data.filter((l) => l.gender === filter3);
-    }
-
-    if (filter2 === "Status" && filter3 !== "All") {
-      data = data.filter((l) => l.status === filter3);
-    }
-
-    if (filter2 === "Sort") {
-      if (filter3 === "Oldest") {
-        data.sort(
-          (a, b) =>
-            new Date(a.enquiryDate).getTime() -
-            new Date(b.enquiryDate).getTime()
-        );
-      }
-      if (filter3 === "Most Followups") {
-        data.sort((a, b) => b.followUps.length - a.followUps.length);
-      }
-      if (filter3 === "A - Z") {
-        data.sort((a, b) => a.name.localeCompare(b.name));
-      }
-      if (filter3 === "Z - A") {
-        data.sort((a, b) => b.name.localeCompare(a.name));
-      }
-    }
-
-    if (search) {
-      data = data.filter((l) =>
-        l.name.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    return data;
-  }, [leads, search, filter1, filter2, filter3]);
-
-  const addFollowUp = (leadId: number) => {
-    if (!selectedCallType) return;
-
+  ) => {
     setLeads((prev) =>
       prev.map((lead) =>
         lead.id === leadId
@@ -127,39 +100,23 @@ export default function CallingPage() {
                 ...lead.followUps,
                 {
                   date: new Date().toISOString(),
-                  note: selectedCallType,
-                  type: selectedCallType,
+                  type: data.result,
+                  mood: data.mood,
+                  note: data.remark || "",
                 },
               ],
-              status:
-                selectedCallType === "Admission"
-                  ? "Admission"
-                  : selectedCallType === "Demo Scheduled"
-                  ? "Demo"
-                  : selectedCallType === "Not Interested"
-                  ? "Not Interested"
-                  : lead.status,
+              status: data.status,
             }
           : lead
       )
     );
 
     setExpandedId(null);
-    setSelectedCallType("");
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <FiltersBar
-        filter1={filter1}
-        setFilter1={setFilter1}
-        filter2={filter2}
-        setFilter2={setFilter2}
-        filter3={filter3}
-        setFilter3={setFilter3}
-        search={search}
-        setSearch={setSearch}
-      />
+      <FiltersBar />
 
       <div className="p-3 space-y-3 pb-24">
         {filteredLeads.map((lead) => (
@@ -168,8 +125,6 @@ export default function CallingPage() {
             lead={lead}
             expandedId={expandedId}
             setExpandedId={setExpandedId}
-            selectedCallType={selectedCallType}
-            setSelectedCallType={setSelectedCallType}
             addFollowUp={addFollowUp}
           />
         ))}

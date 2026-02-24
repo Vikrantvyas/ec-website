@@ -16,15 +16,30 @@ type Props = {
   }) => void;
 };
 
-const purposes = [
-  "Fresh Enquiry",
-  "Follow Up",
+/* ================= PURPOSE (Sectioned) ================= */
+
+const enquiryPurposes = [
+  "Fresh Enquiry Follow-up",
+  "General Follow-up",
+];
+
+const demoPurposes = [
   "Demo Reminder",
+  "Demo Feedback",
+];
+
+const admissionPurposes = [
+  "Admission Discussion",
+  "Admission Confirmation",
+];
+
+const studentPurposes = [
   "Fee Reminder",
   "Absent Alert",
   "Feedback Call",
-  "General Call",
 ];
+
+/* ================= CALL RESULT ================= */
 
 const positiveResults = [
   "Received by Student",
@@ -36,11 +51,15 @@ const neutralResults = [
   "Not Received",
   "Not Reachable",
   "Switched Off",
-  "Not in Service",
   "Voice Issue",
 ];
 
-const negativeResults = ["Cut the Call"];
+const negativeResults = [
+  "Cut the Call",
+  "Not in Service",
+];
+
+/* ================= STUDENT MOOD ================= */
 
 const positiveMoods = [
   "Very Interested",
@@ -63,8 +82,9 @@ const negativeMoods = [
   "Not Interested",
   "Joined Somewhere Else",
   "Fees Too High",
-  "Language Not Required",
 ];
+
+/* ================= NEXT FOLLOW UP ================= */
 
 const followUpOptions = [
   "Call in Evening",
@@ -75,7 +95,9 @@ const followUpOptions = [
   "Select Date",
 ];
 
-const baseStatusOptions = ["Cold", "Warm", "Hot", "Open", "Closed"];
+/* ================= STATUS ================= */
+
+const statusOptions = ["Cold", "Warm", "Hot", "Closed"];
 
 export default function InlineCallingForm({
   leadId,
@@ -92,13 +114,7 @@ export default function InlineCallingForm({
 
   const dateRef = useRef<HTMLInputElement>(null);
 
-  const isNegative = negativeResults.includes(result);
-  const isNeutral = neutralResults.includes(result);
-
-  const needsDatePicker =
-    nextAction === "Select Date" ||
-    mood === "Wants Demo" ||
-    mood === "Wants Admission";
+  /* ================= AUTO DATE ================= */
 
   useEffect(() => {
     if (!nextAction) return;
@@ -121,6 +137,8 @@ export default function InlineCallingForm({
     }
   }, [nextAction]);
 
+  const needsDatePicker = nextAction === "Select Date";
+
   useEffect(() => {
     if (needsDatePicker) {
       setTimeout(() => {
@@ -129,22 +147,26 @@ export default function InlineCallingForm({
     }
   }, [needsDatePicker]);
 
-  const autoStatus = useMemo(() => {
-    if (isNegative) return "Closed";
-    if (isNeutral) return "Cold";
+  /* ================= AUTO STATUS ================= */
 
+  const autoStatus = useMemo(() => {
+    if (negativeResults.includes(result)) return "Closed";
     if (negativeMoods.includes(mood)) return "Closed";
+
     if (positiveMoods.includes(mood)) return "Hot";
     if (neutralMoods.includes(mood)) return "Warm";
+    if (neutralResults.includes(result)) return "Cold";
 
-    return "Open";
-  }, [result, mood, isNeutral, isNegative]);
+    return "Warm";
+  }, [result, mood]);
 
   useEffect(() => {
     if (result) {
       setStatus(autoStatus);
     }
   }, [autoStatus, result]);
+
+  /* ================= SAVE ================= */
 
   const handleSave = () => {
     if (!purpose || !result) return;
@@ -172,24 +194,44 @@ export default function InlineCallingForm({
   return (
     <div className="space-y-2 mt-2 text-xs">
 
+      {/* PURPOSE */}
       <select
         className="w-full border px-2 py-1 rounded"
         value={purpose}
         onChange={(e) => setPurpose(e.target.value)}
       >
         <option value="">Calling Purpose</option>
-        {purposes.map((p) => (
-          <option key={p}>{p}</option>
-        ))}
+
+        <optgroup label="📥 Enquiry">
+          {enquiryPurposes.map((p) => (
+            <option key={p}>{p}</option>
+          ))}
+        </optgroup>
+
+        <optgroup label="🎓 Demo">
+          {demoPurposes.map((p) => (
+            <option key={p}>{p}</option>
+          ))}
+        </optgroup>
+
+        <optgroup label="📝 Admission">
+          {admissionPurposes.map((p) => (
+            <option key={p}>{p}</option>
+          ))}
+        </optgroup>
+
+        <optgroup label="👨‍🎓 Existing Student">
+          {studentPurposes.map((p) => (
+            <option key={p}>{p}</option>
+          ))}
+        </optgroup>
       </select>
 
+      {/* RESULT */}
       <select
         className="w-full border px-2 py-1 rounded"
         value={result}
-        onChange={(e) => {
-          setResult(e.target.value);
-          setNextCallDate("");
-        }}
+        onChange={(e) => setResult(e.target.value)}
       >
         <option value="">Call Result</option>
 
@@ -212,6 +254,7 @@ export default function InlineCallingForm({
         </optgroup>
       </select>
 
+      {/* STUDENT MOOD */}
       <select
         className="w-full border px-2 py-1 rounded"
         value={mood}
@@ -238,6 +281,7 @@ export default function InlineCallingForm({
         </optgroup>
       </select>
 
+      {/* NEXT FOLLOW UP */}
       <select
         className="w-full border px-2 py-1 rounded"
         value={nextAction}
@@ -252,6 +296,7 @@ export default function InlineCallingForm({
         ))}
       </select>
 
+      {/* DATE PICKER */}
       {needsDatePicker && (
         <input
           ref={dateRef}
@@ -262,17 +307,19 @@ export default function InlineCallingForm({
         />
       )}
 
+      {/* STATUS */}
       <select
         className="w-full border px-2 py-1 rounded"
         value={status}
         onChange={(e) => setStatus(e.target.value)}
       >
         <option value="">Status</option>
-        {baseStatusOptions.map((s) => (
+        {statusOptions.map((s) => (
           <option key={s}>{s}</option>
         ))}
       </select>
 
+      {/* REMARK */}
       <textarea
         className="w-full border px-2 py-1 rounded"
         placeholder="Remark"

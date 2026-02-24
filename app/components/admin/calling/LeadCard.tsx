@@ -7,7 +7,8 @@ import InlineCallingForm from "./InlineCallingForm";
 type FollowUp = {
   date: string;
   note: string;
-  type: string;
+  type: string;   // Call Result
+  mood?: string;  // Student Mood
 };
 
 type AttendanceSignal = "P" | "A" | "N";
@@ -29,8 +30,6 @@ type Props = {
   lead: Lead;
   expandedId: number | null;
   setExpandedId: (id: number | null) => void;
-  selectedCallType: string;
-  setSelectedCallType: (val: string) => void;
   addFollowUp: (id: number) => void;
 };
 
@@ -50,10 +49,30 @@ export default function LeadCard({
   };
 
   const frameColor = (status: string) => {
-    if (status === "Admission") return "border-green-600";
-    if (status === "Demo") return "border-blue-500";
-    if (status === "Not Interested") return "border-red-300";
+    if (status === "Hot") return "border-red-500";
+    if (status === "Warm") return "border-yellow-500";
+    if (status === "Cold") return "border-blue-400";
+    if (status === "Closed") return "border-gray-400";
     return "border-gray-200";
+  };
+
+  const resultColor = (type: string) => {
+    if (
+      type === "Received by Student" ||
+      type === "Received by Parent"
+    )
+      return "text-green-600";
+
+    if (
+      type === "Phone Busy" ||
+      type === "Not Received" ||
+      type === "Not Reachable" ||
+      type === "Switched Off" ||
+      type === "Voice Issue"
+    )
+      return "text-blue-600";
+
+    return "text-red-600";
   };
 
   return (
@@ -68,7 +87,6 @@ export default function LeadCard({
       <div className="flex justify-between items-start">
         <div className="flex-1">
 
-          {/* Lead Name → Profile */}
           <p
             className="font-semibold text-blue-600 underline cursor-pointer"
             onClick={(e) => {
@@ -104,7 +122,6 @@ export default function LeadCard({
           </p>
         </div>
 
-        {/* Arrow Icon (visual only) */}
         <div className="ml-2">
           {isExpanded ? (
             <ChevronUp size={16} />
@@ -114,13 +131,11 @@ export default function LeadCard({
         </div>
       </div>
 
-      {/* Call / WhatsApp */}
       <div
         className="flex gap-4 mt-2 text-blue-600"
         onClick={(e) => e.stopPropagation()}
       >
         <a href={`tel:${lead.mobile}`}>Call</a>
-
         <a
           href={`https://wa.me/91${lead.mobile}`}
           target="_blank"
@@ -129,21 +144,51 @@ export default function LeadCard({
         </a>
       </div>
 
-      {/* Expanded Section */}
       {isExpanded && (
         <div
-          className="mt-3 border-t pt-2 space-y-2 text-gray-600"
+          className="mt-3 border-t pt-2 space-y-3 text-gray-700"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Last 5 Followups */}
           {lead.followUps
             .slice(-5)
             .reverse()
-            .map((fu, i) => (
-              <p key={i}>
-                {new Date(fu.date).toLocaleDateString()} – {fu.note}
-              </p>
-            ))}
+            .map((fu, i) => {
+              const isReceived =
+                fu.type === "Received by Student" ||
+                fu.type === "Received by Parent";
+
+              return (
+                <div
+                  key={i}
+                  className="bg-gray-50 p-2 rounded"
+                >
+                  {/* Date */}
+                  <p className="font-semibold text-gray-800">
+                    {new Date(fu.date).toLocaleDateString(
+                      "en-GB",
+                      { day: "2-digit", month: "short", year: "2-digit" }
+                    )}
+                  </p>
+
+                  {/* Call Result - Mood */}
+                  <p className={`${resultColor(fu.type)} font-medium`}>
+                    {fu.type}
+                    {isReceived && fu.mood && (
+                      <span className="text-gray-600 font-normal">
+                        {" - "}{fu.mood}
+                      </span>
+                    )}
+                  </p>
+
+                  {/* Remark (only if exists) */}
+                  {fu.note && (
+                    <p className="text-gray-600">
+                      Remark - {fu.note}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
 
           <InlineCallingForm
             leadId={lead.id}
