@@ -21,15 +21,6 @@ type Lead = {
   followUps: FollowUp[];
 };
 
-const today = new Date();
-
-const daysAgo = (dateStr: string) => {
-  const d = new Date(dateStr);
-  return Math.floor(
-    (today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)
-  );
-};
-
 const callTypes = [
   "Call Received",
   "Not Received",
@@ -64,10 +55,10 @@ export default function CallingPage() {
   const [leads, setLeads] = useState(dummyLeads);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
-  const [branchFilter, setBranchFilter] = useState("All");
   const [sortBy, setSortBy] = useState("Latest");
-  const [primaryFilter, setPrimaryFilter] = useState("All");
-  const [subFilter, setSubFilter] = useState("All");
+  const [filter1, setFilter1] = useState("All");
+  const [filter2, setFilter2] = useState("All");
+  const [filter3, setFilter3] = useState("All");
   const [selectedCallType, setSelectedCallType] = useState("");
   const [showAll, setShowAll] = useState<number | null>(null);
 
@@ -80,22 +71,22 @@ export default function CallingPage() {
         new Date(a.enquiryDate).getTime()
     );
 
-    if (branchFilter !== "All") {
-      data = data.filter((l) => l.branch === branchFilter);
+    if (filter1 !== "All") {
+      data = data.filter((l) => l.branch === filter1);
+    }
+
+    if (filter2 === "Gender" && filter3 !== "All") {
+      data = data.filter((l) => l.gender === filter3);
+    }
+
+    if (filter2 === "Status" && filter3 !== "All") {
+      data = data.filter((l) => l.status === filter3);
     }
 
     if (search) {
       data = data.filter((l) =>
         l.name.toLowerCase().includes(search.toLowerCase())
       );
-    }
-
-    if (primaryFilter === "Gender" && subFilter !== "All") {
-      data = data.filter((l) => l.gender === subFilter);
-    }
-
-    if (primaryFilter === "Status" && subFilter !== "All") {
-      data = data.filter((l) => l.status === subFilter);
     }
 
     if (sortBy === "Oldest") {
@@ -111,7 +102,7 @@ export default function CallingPage() {
     }
 
     return data;
-  }, [leads, search, branchFilter, sortBy, primaryFilter, subFilter]);
+  }, [leads, search, sortBy, filter1, filter2, filter3]);
 
   const frameColor = (status: string) => {
     if (status === "Admission") return "border-green-600";
@@ -147,33 +138,31 @@ export default function CallingPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* TOP FILTER SECTION */}
+      {/* TOP FILTERS */}
       <div className="sticky top-0 z-40 bg-white p-3 shadow-sm space-y-2">
 
-        {/* Branch Filter */}
-        <div className="flex gap-2 overflow-x-auto text-xs">
-          {["All", "Nanda Nagar", "Bapat Square", "Aurobindo"].map((b) => (
-            <button
-              key={b}
-              onClick={() => setBranchFilter(b)}
-              className={`px-3 py-1 rounded-full ${
-                branchFilter === b
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200"
-              }`}
-            >
-              {b}
-            </button>
-          ))}
-        </div>
+        {/* 3 Dependent Dropdowns */}
+        <div className="flex gap-2 flex-wrap text-xs">
 
-        {/* Search + Sorting + Dynamic Filter */}
-        <div className="flex gap-2 flex-wrap">
+          {/* Branch */}
           <select
-            className="border px-2 py-1 text-xs rounded"
+            className="border px-2 py-1 rounded"
+            value={filter1}
+            onChange={(e) => setFilter1(e.target.value)}
+          >
+            <option>All</option>
+            <option>Nanda Nagar</option>
+            <option>Bapat Square</option>
+            <option>Aurobindo</option>
+          </select>
+
+          {/* Category */}
+          <select
+            className="border px-2 py-1 rounded"
+            value={filter2}
             onChange={(e) => {
-              setPrimaryFilter(e.target.value);
-              setSubFilter("All");
+              setFilter2(e.target.value);
+              setFilter3("All");
             }}
           >
             <option>All</option>
@@ -181,38 +170,31 @@ export default function CallingPage() {
             <option>Status</option>
           </select>
 
-          {primaryFilter !== "All" && (
-            <select
-              className="border px-2 py-1 text-xs rounded"
-              onChange={(e) => setSubFilter(e.target.value)}
-            >
-              <option>All</option>
-              {primaryFilter === "Gender" && (
-                <>
-                  <option>Male</option>
-                  <option>Female</option>
-                </>
-              )}
-              {primaryFilter === "Status" && (
-                <>
-                  <option>Demo</option>
-                  <option>Admission</option>
-                  <option>Not Interested</option>
-                </>
-              )}
-            </select>
-          )}
-
-          <input
-            type="text"
-            placeholder="Search..."
-            className="flex-1 border rounded px-2 py-1 text-xs"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-
+          {/* Value */}
           <select
-            className="border rounded px-2 py-1 text-xs"
+            className="border px-2 py-1 rounded"
+            value={filter3}
+            onChange={(e) => setFilter3(e.target.value)}
+          >
+            <option>All</option>
+            {filter2 === "Gender" && (
+              <>
+                <option>Male</option>
+                <option>Female</option>
+              </>
+            )}
+            {filter2 === "Status" && (
+              <>
+                <option>Demo</option>
+                <option>Admission</option>
+                <option>Not Interested</option>
+              </>
+            )}
+          </select>
+
+          {/* Sorting */}
+          <select
+            className="border px-2 py-1 rounded"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
@@ -220,152 +202,139 @@ export default function CallingPage() {
             <option value="Oldest">Oldest</option>
             <option value="Most Followups">Most Followups</option>
           </select>
+
         </div>
+
+        {/* Search below dropdowns */}
+        <input
+          type="text"
+          placeholder="Search..."
+          className="w-full border rounded px-2 py-1 text-xs"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
       </div>
 
       {/* LEADS */}
       <div className="p-3 space-y-3 pb-24">
-        {filteredLeads.map((lead) => {
-          const enquiryDays = daysAgo(lead.enquiryDate);
-          const lastFU =
-            lead.followUps.length > 0
-              ? daysAgo(lead.followUps[lead.followUps.length - 1].date)
-              : 0;
-
-          const lastFUColor =
-            lastFU > 7 ? "text-red-600" : "text-gray-600";
-
-          return (
-            <div
-              key={lead.id}
-              className={`bg-white border-l-4 ${frameColor(
-                lead.status
-              )} rounded shadow-sm p-3 text-xs`}
-            >
-              <div className="flex justify-between">
-                <div>
-                  <p
-                    className={`font-semibold ${
-                      lead.gender === "Female"
-                        ? "text-pink-600"
-                        : ""
-                    }`}
-                  >
-                    {lead.name}
-                    <span className="text-gray-400 ml-2">
-                      {new Date(lead.enquiryDate).toLocaleDateString(
-                        "en-GB",
-                        { day: "2-digit", month: "short" }
-                      )}{" "}
-                      ({enquiryDays} D -{" "}
-                      <span className={lastFUColor}>
-                        {lastFU} D
-                      </span>{" "}
-                      - {lead.followUps.length} Calls)
-                    </span>
-                  </p>
-                  <p>{lead.course} | {lead.branch}</p>
-                  <p>Status: {lead.status}</p>
-                </div>
-
-                <button
-                  onClick={() =>
-                    setExpandedId(
-                      expandedId === lead.id ? null : lead.id
-                    )
-                  }
-                >
-                  {expandedId === lead.id ? (
-                    <ChevronUp size={16} />
-                  ) : (
-                    <ChevronDown size={16} />
-                  )}
-                </button>
+        {filteredLeads.map((lead) => (
+          <div
+            key={lead.id}
+            className={`bg-white border-l-4 ${frameColor(
+              lead.status
+            )} rounded shadow-sm p-3 text-xs`}
+          >
+            <div className="flex justify-between">
+              <div>
+                <p className="font-semibold">
+                  {lead.name}
+                  <span className="text-gray-400 ml-2">
+                    {new Date(lead.enquiryDate).toLocaleDateString(
+                      "en-GB",
+                      { day: "2-digit", month: "short" }
+                    )}{" "}
+                    ({lead.followUps.length} Calls)
+                  </span>
+                </p>
+                <p>{lead.course} | {lead.branch}</p>
+                <p>Status: {lead.status}</p>
               </div>
 
-              <div className="flex gap-4 mt-2 text-blue-600">
-                <a href={`tel:${lead.mobile}`}>Call</a>
-                <a
-                  href={`https://wa.me/91${lead.mobile}`}
-                  target="_blank"
-                  className="text-green-700 font-semibold"
-                >
-                  WhatsApp
-                </a>
-              </div>
-
-              {expandedId === lead.id && (
-                <div className="mt-3 border-t pt-2 space-y-2 text-gray-600">
-                  {(showAll === lead.id
-                    ? lead.followUps
-                    : lead.followUps.slice(-5)
+              <button
+                onClick={() =>
+                  setExpandedId(
+                    expandedId === lead.id ? null : lead.id
                   )
-                    .reverse()
-                    .map((fu, i) => (
-                      <p key={i}>
-                        {new Date(fu.date).toLocaleDateString()} –{" "}
-                        {fu.note}
-                      </p>
-                    ))}
+                }
+              >
+                {expandedId === lead.id ? (
+                  <ChevronUp size={16} />
+                ) : (
+                  <ChevronDown size={16} />
+                )}
+              </button>
+            </div>
 
-                  {lead.followUps.length > 5 && (
-                    <button
-                      className="text-blue-600 text-xs"
-                      onClick={() =>
-                        setShowAll(
-                          showAll === lead.id ? null : lead.id
-                        )
-                      }
-                    >
-                      {showAll === lead.id ? "Hide" : "See All"}
-                    </button>
-                  )}
+            <div className="flex gap-4 mt-2 text-blue-600">
+              <a href={`tel:${lead.mobile}`}>Call</a>
+              <a href={`https://wa.me/91${lead.mobile}`} target="_blank">
+                WhatsApp
+              </a>
+            </div>
 
-                  <div className="flex gap-2 mt-2">
-                    <select
-                      className="border px-2 py-1 text-xs rounded"
-                      value={selectedCallType}
-                      onChange={(e) =>
-                        setSelectedCallType(e.target.value)
-                      }
-                    >
-                      <option value="">Select Call Result</option>
-                      {callTypes.map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
-                    </select>
+            {expandedId === lead.id && (
+              <div className="mt-3 border-t pt-2 space-y-2 text-gray-600">
 
-                    <button
-                      onClick={() => addFollowUp(lead.id)}
-                      className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
-                    >
-                      Save
-                    </button>
-                  </div>
+                {(showAll === lead.id
+                  ? lead.followUps
+                  : lead.followUps.slice(-5)
+                )
+                  .reverse()
+                  .map((fu, i) => (
+                    <p key={i}>
+                      {new Date(fu.date).toLocaleDateString()} –{" "}
+                      {fu.note}
+                    </p>
+                  ))}
 
-                  <select
-                    className="border px-2 py-1 rounded text-xs"
-                    value={lead.status}
-                    onChange={(e) =>
-                      setLeads((prev) =>
-                        prev.map((l) =>
-                          l.id === lead.id
-                            ? { ...l, status: e.target.value }
-                            : l
-                        )
+                {lead.followUps.length > 5 && (
+                  <button
+                    className="text-blue-600 text-xs"
+                    onClick={() =>
+                      setShowAll(
+                        showAll === lead.id ? null : lead.id
                       )
                     }
                   >
-                    <option>Demo</option>
-                    <option>Admission</option>
-                    <option>Not Interested</option>
+                    {showAll === lead.id ? "Hide" : "See All"}
+                  </button>
+                )}
+
+                <div className="flex gap-2 mt-2">
+                  <select
+                    className="border px-2 py-1 text-xs rounded"
+                    value={selectedCallType}
+                    onChange={(e) =>
+                      setSelectedCallType(e.target.value)
+                    }
+                  >
+                    <option value="">Select Call Result</option>
+                    {callTypes.map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
                   </select>
 
+                  <button
+                    onClick={() => addFollowUp(lead.id)}
+                    className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                  >
+                    Save
+                  </button>
                 </div>
-              )}
-            </div>
-          );
-        })}
+
+                <select
+                  className="border px-2 py-1 rounded text-xs"
+                  value={lead.status}
+                  onChange={(e) =>
+                    setLeads((prev) =>
+                      prev.map((l) =>
+                        l.id === lead.id
+                          ? { ...l, status: e.target.value }
+                          : l
+                      )
+                    )
+                  }
+                >
+                  <option>Demo</option>
+                  <option>Admission</option>
+                  <option>Not Interested</option>
+                </select>
+
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
