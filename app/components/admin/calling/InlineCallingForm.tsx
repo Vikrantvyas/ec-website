@@ -140,12 +140,19 @@ export default function InlineCallingForm({
       </select>
 
       {/* Next Call Date */}
-      <input
-        type="date"
-        className="w-full border px-2 py-1 rounded"
-        value={nextCallDate}
-        onChange={(e) => setNextCallDate(e.target.value)}
-      />
+     <input
+  type="text"
+  placeholder="mm/dd/yyyy"
+  className="w-full border px-2 py-1 rounded"
+  value={nextCallDate}
+  onFocus={(e) => (e.target.type = "date")}
+  onBlur={(e) => {
+    if (!e.target.value) {
+      e.target.type = "text";
+    }
+  }}
+  onChange={(e) => setNextCallDate(e.target.value)}
+/>
 
       {/* Status Update */}
       <select
