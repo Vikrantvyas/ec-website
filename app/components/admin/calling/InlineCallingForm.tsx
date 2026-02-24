@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
 type Props = {
   leadId: number;
@@ -8,51 +8,74 @@ type Props = {
   onSave: (data: {
     purpose: string;
     result: string;
-    action: string;
+    mood: string;
+    nextAction: string;
     nextCallDate: string;
     status: string;
+    remark: string;
   }) => void;
 };
 
 const purposes = [
-  "Admission",
+  "Fresh Enquiry",
+  "Follow Up",
+  "Demo Reminder",
   "Fee Reminder",
   "Absent Alert",
-  "Assignment Reminder",
-  "Feedback",
-  "Holiday Info",
-  "General Follow-up",
+  "Feedback Call",
+  "General Call",
 ];
 
-const callResults = [
-  "Received",
+const positiveResults = [
+  "Received by Student",
+  "Received by Parent",
+];
+
+const neutralResults = [
+  "Phone Busy",
   "Not Received",
+  "Not Reachable",
   "Switched Off",
-  "Busy",
-  "Answered",
-  "Received by Someone Else",
-  "Network Issue",
+  "Not in Service",
+  "Voice Issue",
 ];
 
-const nextFollowUpOptions = [
+const negativeResults = ["Cut the Call"];
+
+const positiveMoods = [
+  "Very Interested",
+  "Interested",
+  "Wants Demo",
+  "Wants Admission",
+  "Will Visit Institute",
+  "Fees Ready",
+];
+
+const neutralMoods = [
+  "Call Back Later",
+  "Thinking",
+  "Need Time",
+  "Discussing with Family",
+  "Asked for Details on WhatsApp",
+];
+
+const negativeMoods = [
+  "Not Interested",
+  "Joined Somewhere Else",
+  "Fees Too High",
+  "Language Not Required",
+];
+
+const followUpOptions = [
+  "Call in Evening",
   "Call Tomorrow",
   "Call After 3 Days",
   "Call After 7 Days",
-  "Call Next Month",
-  "Call in Evening",
-  "Select Custom Date",
-  "Visit Scheduled",
-  "Demo Scheduled",
-  "Never Call",
+  "Call After 1 Month",
+  "Select Date",
 ];
 
-const statusOptions = [
-  "Demo",
-  "Admission",
-  "Not Interested",
-  "Converted",
-  "Dropout",
-];
+const baseStatusOptions = ["Cold", "Warm", "Hot", "Open", "Closed"];
 
 export default function InlineCallingForm({
   leadId,
@@ -61,79 +84,89 @@ export default function InlineCallingForm({
 }: Props) {
   const [purpose, setPurpose] = useState("");
   const [result, setResult] = useState("");
-  const [action, setAction] = useState("");
+  const [mood, setMood] = useState("");
+  const [nextAction, setNextAction] = useState("");
   const [nextCallDate, setNextCallDate] = useState("");
   const [status, setStatus] = useState("");
+  const [remark, setRemark] = useState("");
 
   const dateRef = useRef<HTMLInputElement>(null);
 
+  const isNegative = negativeResults.includes(result);
+  const isNeutral = neutralResults.includes(result);
+
+  const needsDatePicker =
+    nextAction === "Select Date" ||
+    mood === "Wants Demo" ||
+    mood === "Wants Admission";
+
   useEffect(() => {
-    if (!action) return;
+    if (!nextAction) return;
 
     const today = new Date();
     const next = new Date();
 
-    if (action === "Call Tomorrow") {
+    if (nextAction === "Call Tomorrow") {
       next.setDate(today.getDate() + 1);
-      setNextCallDate(next.toISOString().split("T")[0]);
-    } 
-    else if (action === "Call After 3 Days") {
+    } else if (nextAction === "Call After 3 Days") {
       next.setDate(today.getDate() + 3);
-      setNextCallDate(next.toISOString().split("T")[0]);
-    } 
-    else if (action === "Call After 7 Days") {
+    } else if (nextAction === "Call After 7 Days") {
       next.setDate(today.getDate() + 7);
-      setNextCallDate(next.toISOString().split("T")[0]);
-    }
-    else if (action === "Call Next Month") {
+    } else if (nextAction === "Call After 1 Month") {
       next.setMonth(today.getMonth() + 1);
+    }
+
+    if (nextAction !== "Select Date") {
       setNextCallDate(next.toISOString().split("T")[0]);
     }
-    else if (action === "Call in Evening") {
-      // Same day follow up
-      setNextCallDate(today.toISOString().split("T")[0]);
-    }
-    else if (action === "Never Call") {
-      setNextCallDate("");
-    }
-    else {
-      setNextCallDate("");
-    }
-  }, [action]);
+  }, [nextAction]);
 
   useEffect(() => {
-    if (
-      action === "Select Custom Date" ||
-      action === "Visit Scheduled" ||
-      action === "Demo Scheduled"
-    ) {
+    if (needsDatePicker) {
       setTimeout(() => {
         dateRef.current?.showPicker?.();
       }, 100);
     }
-  }, [action]);
+  }, [needsDatePicker]);
 
-  const shouldShowDate =
-    action === "Select Custom Date" ||
-    action === "Visit Scheduled" ||
-    action === "Demo Scheduled";
+  const autoStatus = useMemo(() => {
+    if (isNegative) return "Closed";
+    if (isNeutral) return "Cold";
+
+    if (negativeMoods.includes(mood)) return "Closed";
+    if (positiveMoods.includes(mood)) return "Hot";
+    if (neutralMoods.includes(mood)) return "Warm";
+
+    return "Open";
+  }, [result, mood, isNeutral, isNegative]);
+
+  useEffect(() => {
+    if (result) {
+      setStatus(autoStatus);
+    }
+  }, [autoStatus, result]);
 
   const handleSave = () => {
     if (!purpose || !result) return;
+    if (!remark.trim()) return;
 
     onSave({
       purpose,
       result,
-      action,
+      mood,
+      nextAction,
       nextCallDate,
       status,
+      remark,
     });
 
     setPurpose("");
     setResult("");
-    setAction("");
+    setMood("");
+    setNextAction("");
     setNextCallDate("");
     setStatus("");
+    setRemark("");
   };
 
   return (
@@ -153,26 +186,73 @@ export default function InlineCallingForm({
       <select
         className="w-full border px-2 py-1 rounded"
         value={result}
-        onChange={(e) => setResult(e.target.value)}
+        onChange={(e) => {
+          setResult(e.target.value);
+          setNextCallDate("");
+        }}
       >
         <option value="">Call Result</option>
-        {callResults.map((r) => (
-          <option key={r}>{r}</option>
-        ))}
+
+        <optgroup label="🟢 Positive">
+          {positiveResults.map((r) => (
+            <option key={r}>{r}</option>
+          ))}
+        </optgroup>
+
+        <optgroup label="🔵 Neutral">
+          {neutralResults.map((r) => (
+            <option key={r}>{r}</option>
+          ))}
+        </optgroup>
+
+        <optgroup label="🔴 Negative">
+          {negativeResults.map((r) => (
+            <option key={r}>{r}</option>
+          ))}
+        </optgroup>
       </select>
 
       <select
         className="w-full border px-2 py-1 rounded"
-        value={action}
-        onChange={(e) => setAction(e.target.value)}
+        value={mood}
+        onChange={(e) => setMood(e.target.value)}
+      >
+        <option value="">Student's Mood</option>
+
+        <optgroup label="🟢 Positive">
+          {positiveMoods.map((m) => (
+            <option key={m}>{m}</option>
+          ))}
+        </optgroup>
+
+        <optgroup label="🔵 Neutral">
+          {neutralMoods.map((m) => (
+            <option key={m}>{m}</option>
+          ))}
+        </optgroup>
+
+        <optgroup label="🔴 Negative">
+          {negativeMoods.map((m) => (
+            <option key={m}>{m}</option>
+          ))}
+        </optgroup>
+      </select>
+
+      <select
+        className="w-full border px-2 py-1 rounded"
+        value={nextAction}
+        onChange={(e) => {
+          setNextAction(e.target.value);
+          setNextCallDate("");
+        }}
       >
         <option value="">Next Follow Up</option>
-        {nextFollowUpOptions.map((a) => (
+        {followUpOptions.map((a) => (
           <option key={a}>{a}</option>
         ))}
       </select>
 
-      {shouldShowDate && (
+      {needsDatePicker && (
         <input
           ref={dateRef}
           type="date"
@@ -187,11 +267,18 @@ export default function InlineCallingForm({
         value={status}
         onChange={(e) => setStatus(e.target.value)}
       >
-        <option value="">Select Status</option>
-        {statusOptions.map((s) => (
+        <option value="">Status</option>
+        {baseStatusOptions.map((s) => (
           <option key={s}>{s}</option>
         ))}
       </select>
+
+      <textarea
+        className="w-full border px-2 py-1 rounded"
+        placeholder="Remark"
+        value={remark}
+        onChange={(e) => setRemark(e.target.value)}
+      />
 
       <button
         onClick={handleSave}
