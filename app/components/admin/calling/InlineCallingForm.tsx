@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 type Props = {
   leadId: number;
@@ -38,9 +38,12 @@ const nextFollowUpOptions = [
   "Call Tomorrow",
   "Call After 3 Days",
   "Call After 7 Days",
-  "No Further Call",
+  "Call Next Month",
+  "Call in Evening",
+  "Select Custom Date",
   "Visit Scheduled",
   "Demo Scheduled",
+  "Never Call",
 ];
 
 const statusOptions = [
@@ -62,6 +65,8 @@ export default function InlineCallingForm({
   const [nextCallDate, setNextCallDate] = useState("");
   const [status, setStatus] = useState("");
 
+  const dateRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!action) return;
 
@@ -70,17 +75,48 @@ export default function InlineCallingForm({
 
     if (action === "Call Tomorrow") {
       next.setDate(today.getDate() + 1);
-    } else if (action === "Call After 3 Days") {
+      setNextCallDate(next.toISOString().split("T")[0]);
+    } 
+    else if (action === "Call After 3 Days") {
       next.setDate(today.getDate() + 3);
-    } else if (action === "Call After 7 Days") {
+      setNextCallDate(next.toISOString().split("T")[0]);
+    } 
+    else if (action === "Call After 7 Days") {
       next.setDate(today.getDate() + 7);
-    } else {
-      setNextCallDate("");
-      return;
+      setNextCallDate(next.toISOString().split("T")[0]);
     }
-
-    setNextCallDate(next.toISOString().split("T")[0]);
+    else if (action === "Call Next Month") {
+      next.setMonth(today.getMonth() + 1);
+      setNextCallDate(next.toISOString().split("T")[0]);
+    }
+    else if (action === "Call in Evening") {
+      // Same day follow up
+      setNextCallDate(today.toISOString().split("T")[0]);
+    }
+    else if (action === "Never Call") {
+      setNextCallDate("");
+    }
+    else {
+      setNextCallDate("");
+    }
   }, [action]);
+
+  useEffect(() => {
+    if (
+      action === "Select Custom Date" ||
+      action === "Visit Scheduled" ||
+      action === "Demo Scheduled"
+    ) {
+      setTimeout(() => {
+        dateRef.current?.showPicker?.();
+      }, 100);
+    }
+  }, [action]);
+
+  const shouldShowDate =
+    action === "Select Custom Date" ||
+    action === "Visit Scheduled" ||
+    action === "Demo Scheduled";
 
   const handleSave = () => {
     if (!purpose || !result) return;
@@ -103,7 +139,6 @@ export default function InlineCallingForm({
   return (
     <div className="space-y-2 mt-2 text-xs">
 
-      {/* Calling Purpose */}
       <select
         className="w-full border px-2 py-1 rounded"
         value={purpose}
@@ -115,7 +150,6 @@ export default function InlineCallingForm({
         ))}
       </select>
 
-      {/* Call Result */}
       <select
         className="w-full border px-2 py-1 rounded"
         value={result}
@@ -127,7 +161,6 @@ export default function InlineCallingForm({
         ))}
       </select>
 
-      {/* Next Follow Up (Fixed Placeholder) */}
       <select
         className="w-full border px-2 py-1 rounded"
         value={action}
@@ -139,22 +172,16 @@ export default function InlineCallingForm({
         ))}
       </select>
 
-      {/* Next Call Date */}
-     <input
-  type="text"
-  placeholder="mm/dd/yyyy"
-  className="w-full border px-2 py-1 rounded"
-  value={nextCallDate}
-  onFocus={(e) => (e.target.type = "date")}
-  onBlur={(e) => {
-    if (!e.target.value) {
-      e.target.type = "text";
-    }
-  }}
-  onChange={(e) => setNextCallDate(e.target.value)}
-/>
+      {shouldShowDate && (
+        <input
+          ref={dateRef}
+          type="date"
+          className="w-full border px-2 py-1 rounded"
+          value={nextCallDate}
+          onChange={(e) => setNextCallDate(e.target.value)}
+        />
+      )}
 
-      {/* Status Update */}
       <select
         className="w-full border px-2 py-1 rounded"
         value={status}
