@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
+import InlineCallingForm from "./InlineCallingForm";
 
 type FollowUp = {
   date: string;
@@ -28,8 +29,8 @@ type Props = {
   lead: Lead;
   expandedId: number | null;
   setExpandedId: (id: number | null) => void;
-  selectedCallType: string;
-  setSelectedCallType: (val: string) => void;
+  selectedCallType: string; // kept for now (not used)
+  setSelectedCallType: (val: string) => void; // kept for now (not used)
   addFollowUp: (id: number) => void;
 };
 
@@ -37,11 +38,10 @@ export default function LeadCard({
   lead,
   expandedId,
   setExpandedId,
-  selectedCallType,
-  setSelectedCallType,
   addFollowUp,
 }: Props) {
   const router = useRouter();
+  const isExpanded = expandedId === lead.id;
 
   const attendanceColor = (signal: AttendanceSignal) => {
     if (signal === "P") return "bg-green-500";
@@ -55,18 +55,6 @@ export default function LeadCard({
     if (status === "Not Interested") return "border-red-300";
     return "border-gray-200";
   };
-
-  const callTypes = [
-    "Call Received",
-    "Not Received",
-    "Cut the Call",
-    "Received by Someone Else",
-    "He Will Call Soon",
-    "Will Visit Soon",
-    "Call Me Later",
-  ];
-
-  const isExpanded = expandedId === lead.id;
 
   return (
     <div
@@ -99,7 +87,6 @@ export default function LeadCard({
           <p className="flex items-center gap-2">
             Status: {lead.status}
 
-            {/* Compact Attendance */}
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100">
               {lead.attendanceLast10.map((signal, idx) => (
                 <span
@@ -150,39 +137,29 @@ export default function LeadCard({
       {/* Expanded Section */}
       {isExpanded && (
         <div className="mt-3 border-t pt-2 space-y-2 text-gray-600">
+
+          {/* Last 5 Followups */}
           {lead.followUps
             .slice(-5)
             .reverse()
             .map((fu, i) => (
               <p key={i}>
-                {new Date(fu.date).toLocaleDateString()} –{" "}
-                {fu.note}
+                {new Date(fu.date).toLocaleDateString()} – {fu.note}
               </p>
             ))}
 
-          <div className="flex gap-2 mt-2">
-            <select
-              className="border px-2 py-1 text-xs rounded"
-              value={selectedCallType}
-              onChange={(e) =>
-                setSelectedCallType(e.target.value)
-              }
-            >
-              <option value="">
-                Select Call Result
-              </option>
-              {callTypes.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
+          {/* Inline Calling Form */}
+          <InlineCallingForm
+            leadId={lead.id}
+            currentStatus={lead.status}
+            onSave={(data) => {
+              // For now just add basic followup
+              addFollowUp(lead.id);
 
-            <button
-              onClick={() => addFollowUp(lead.id)}
-              className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
-            >
-              Save
-            </button>
-          </div>
+              // Collapse after save (Option B)
+              setExpandedId(null);
+            }}
+          />
         </div>
       )}
     </div>
