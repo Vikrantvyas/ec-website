@@ -29,8 +29,8 @@ type Props = {
   lead: Lead;
   expandedId: number | null;
   setExpandedId: (id: number | null) => void;
-  selectedCallType: string; // kept for now (not used)
-  setSelectedCallType: (val: string) => void; // kept for now (not used)
+  selectedCallType: string;
+  setSelectedCallType: (val: string) => void;
   addFollowUp: (id: number) => void;
 };
 
@@ -60,19 +60,24 @@ export default function LeadCard({
     <div
       className={`bg-white border-l-4 ${frameColor(
         lead.status
-      )} rounded shadow-sm p-3 text-xs`}
+      )} rounded shadow-sm p-3 text-xs cursor-pointer`}
+      onClick={() =>
+        setExpandedId(isExpanded ? null : lead.id)
+      }
     >
-      <div className="flex justify-between">
-        {/* PROFILE CLICK AREA */}
-        <div
-          className="cursor-pointer flex-1"
-          onClick={() =>
-            router.push(`/admin/profile/${lead.id}`)
-          }
-        >
-          <p className="font-semibold">
+      <div className="flex justify-between items-start">
+        <div className="flex-1">
+
+          {/* Lead Name → Profile */}
+          <p
+            className="font-semibold text-blue-600 underline cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/admin/profile/${lead.id}`);
+            }}
+          >
             {lead.name}
-            <span className="text-gray-400 ml-2">
+            <span className="text-gray-400 ml-2 no-underline">
               {new Date(lead.enquiryDate).toLocaleDateString(
                 "en-GB",
                 { day: "2-digit", month: "short" }
@@ -86,7 +91,6 @@ export default function LeadCard({
 
           <p className="flex items-center gap-2">
             Status: {lead.status}
-
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100">
               {lead.attendanceLast10.map((signal, idx) => (
                 <span
@@ -100,35 +104,26 @@ export default function LeadCard({
           </p>
         </div>
 
-        {/* Expand Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setExpandedId(isExpanded ? null : lead.id);
-          }}
-          className="ml-2"
-        >
+        {/* Arrow Icon (visual only) */}
+        <div className="ml-2">
           {isExpanded ? (
             <ChevronUp size={16} />
           ) : (
             <ChevronDown size={16} />
           )}
-        </button>
+        </div>
       </div>
 
       {/* Call / WhatsApp */}
-      <div className="flex gap-4 mt-2 text-blue-600">
-        <a
-          href={`tel:${lead.mobile}`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          Call
-        </a>
+      <div
+        className="flex gap-4 mt-2 text-blue-600"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <a href={`tel:${lead.mobile}`}>Call</a>
 
         <a
           href={`https://wa.me/91${lead.mobile}`}
           target="_blank"
-          onClick={(e) => e.stopPropagation()}
         >
           WhatsApp
         </a>
@@ -136,8 +131,10 @@ export default function LeadCard({
 
       {/* Expanded Section */}
       {isExpanded && (
-        <div className="mt-3 border-t pt-2 space-y-2 text-gray-600">
-
+        <div
+          className="mt-3 border-t pt-2 space-y-2 text-gray-600"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Last 5 Followups */}
           {lead.followUps
             .slice(-5)
@@ -148,15 +145,11 @@ export default function LeadCard({
               </p>
             ))}
 
-          {/* Inline Calling Form */}
           <InlineCallingForm
             leadId={lead.id}
             currentStatus={lead.status}
-            onSave={(data) => {
-              // For now just add basic followup
+            onSave={() => {
               addFollowUp(lead.id);
-
-              // Collapse after save (Option B)
               setExpandedId(null);
             }}
           />
