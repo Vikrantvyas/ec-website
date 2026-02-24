@@ -34,7 +34,7 @@ const callResults = [
   "Network Issue",
 ];
 
-const actions = [
+const nextFollowUpOptions = [
   "Call Tomorrow",
   "Call After 3 Days",
   "Call After 7 Days",
@@ -101,15 +101,15 @@ export default function InlineCallingForm({
   };
 
   return (
-    <div className="space-y-2 mt-2">
+    <div className="space-y-2 mt-2 text-xs">
 
       {/* Calling Purpose */}
       <select
-        className="w-full border px-2 py-1 rounded text-xs"
+        className="w-full border px-2 py-1 rounded"
         value={purpose}
         onChange={(e) => setPurpose(e.target.value)}
       >
-        <option value="">Select Calling Purpose</option>
+        <option value="">Calling Purpose</option>
         {purposes.map((p) => (
           <option key={p}>{p}</option>
         ))}
@@ -117,24 +117,24 @@ export default function InlineCallingForm({
 
       {/* Call Result */}
       <select
-        className="w-full border px-2 py-1 rounded text-xs"
+        className="w-full border px-2 py-1 rounded"
         value={result}
         onChange={(e) => setResult(e.target.value)}
       >
-        <option value="">Select Call Result</option>
+        <option value="">Call Result</option>
         {callResults.map((r) => (
           <option key={r}>{r}</option>
         ))}
       </select>
 
-      {/* Action */}
+      {/* Next Follow Up (Fixed Placeholder) */}
       <select
-        className="w-full border px-2 py-1 rounded text-xs"
+        className="w-full border px-2 py-1 rounded"
         value={action}
         onChange={(e) => setAction(e.target.value)}
       >
-        <option value="">Select Action</option>
-        {actions.map((a) => (
+        <option value="">Next Follow Up</option>
+        {nextFollowUpOptions.map((a) => (
           <option key={a}>{a}</option>
         ))}
       </select>
@@ -142,14 +142,14 @@ export default function InlineCallingForm({
       {/* Next Call Date */}
       <input
         type="date"
-        className="w-full border px-2 py-1 rounded text-xs"
+        className="w-full border px-2 py-1 rounded"
         value={nextCallDate}
         onChange={(e) => setNextCallDate(e.target.value)}
       />
 
       {/* Status Update */}
       <select
-        className="w-full border px-2 py-1 rounded text-xs"
+        className="w-full border px-2 py-1 rounded"
         value={status}
         onChange={(e) => setStatus(e.target.value)}
       >
@@ -161,9 +161,9 @@ export default function InlineCallingForm({
 
       <button
         onClick={handleSave}
-        className="w-full bg-blue-600 text-white py-1 rounded text-xs font-medium"
+        className="w-full bg-blue-600 text-white py-1 rounded"
       >
-        Save Call Log
+        Save
       </button>
     </div>
   );
