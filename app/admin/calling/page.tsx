@@ -9,6 +9,8 @@ type FollowUp = {
   type: string;
 };
 
+type AttendanceSignal = "P" | "A" | "N";
+
 type Lead = {
   id: number;
   name: string;
@@ -19,6 +21,7 @@ type Lead = {
   status: string;
   enquiryDate: string;
   followUps: FollowUp[];
+  attendanceLast10: AttendanceSignal[];
 };
 
 const callTypes = [
@@ -39,17 +42,29 @@ const generateFollowUps = (): FollowUp[] => [
   { date: "2026-02-09", note: "Follow up again", type: "Call Received" },
 ];
 
-const dummyLeads: Lead[] = Array.from({ length: 10 }).map((_, i) => ({
-  id: i + 1,
-  name: i % 2 === 0 ? `Priya ${i}` : `Rahul ${i}`,
-  gender: i % 2 === 0 ? "Female" : "Male",
-  mobile: `900000000${i}`,
-  course: ["Spoken English", "Basic Computer", "Tally"][i % 3],
-  branch: ["Nanda Nagar", "Bapat Square", "Aurobindo"][i % 3],
-  status: ["Admission", "Demo", "Not Interested"][i % 3],
-  enquiryDate: `2026-02-${10 - i}`,
-  followUps: generateFollowUps(),
-}));
+const generateAttendance = (joined: boolean): AttendanceSignal[] => {
+  if (!joined) return Array(10).fill("N");
+  return Array.from({ length: 10 }).map((_, i) =>
+    i % 3 === 0 ? "A" : "P"
+  );
+};
+
+const dummyLeads: Lead[] = Array.from({ length: 10 }).map((_, i) => {
+  const status = ["Admission", "Demo", "Not Interested"][i % 3];
+
+  return {
+    id: i + 1,
+    name: i % 2 === 0 ? `Priya ${i}` : `Rahul ${i}`,
+    gender: i % 2 === 0 ? "Female" : "Male",
+    mobile: `900000000${i}`,
+    course: ["Spoken English", "Basic Computer", "Tally"][i % 3],
+    branch: ["Nanda Nagar", "Bapat Square", "Aurobindo"][i % 3],
+    status,
+    enquiryDate: `2026-02-${10 - i}`,
+    followUps: generateFollowUps(),
+    attendanceLast10: generateAttendance(status !== "Not Interested"),
+  };
+});
 
 export default function CallingPage() {
   const [leads, setLeads] = useState(dummyLeads);
@@ -111,6 +126,12 @@ export default function CallingPage() {
     return "border-gray-200";
   };
 
+  const attendanceColor = (signal: AttendanceSignal) => {
+    if (signal === "P") return "bg-green-500";
+    if (signal === "A") return "bg-red-500";
+    return "bg-gray-300";
+  };
+
   const addFollowUp = (leadId: number) => {
     if (!selectedCallType) return;
 
@@ -138,13 +159,10 @@ export default function CallingPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* TOP FILTERS */}
+      {/* TOP FILTERS — unchanged */}
       <div className="sticky top-0 z-40 bg-white p-3 shadow-sm space-y-2">
 
-        {/* 3 Dependent Dropdowns */}
         <div className="flex gap-2 flex-wrap text-xs">
-
-          {/* Branch */}
           <select
             className="border px-2 py-1 rounded"
             value={filter1}
@@ -156,7 +174,6 @@ export default function CallingPage() {
             <option>Aurobindo</option>
           </select>
 
-          {/* Category */}
           <select
             className="border px-2 py-1 rounded"
             value={filter2}
@@ -170,7 +187,6 @@ export default function CallingPage() {
             <option>Status</option>
           </select>
 
-          {/* Value */}
           <select
             className="border px-2 py-1 rounded"
             value={filter3}
@@ -192,7 +208,6 @@ export default function CallingPage() {
             )}
           </select>
 
-          {/* Sorting */}
           <select
             className="border px-2 py-1 rounded"
             value={sortBy}
@@ -202,10 +217,8 @@ export default function CallingPage() {
             <option value="Oldest">Oldest</option>
             <option value="Most Followups">Most Followups</option>
           </select>
-
         </div>
 
-        {/* Search below dropdowns */}
         <input
           type="text"
           placeholder="Search..."
@@ -213,7 +226,6 @@ export default function CallingPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-
       </div>
 
       {/* LEADS */}
@@ -233,12 +245,25 @@ export default function CallingPage() {
                     {new Date(lead.enquiryDate).toLocaleDateString(
                       "en-GB",
                       { day: "2-digit", month: "short" }
-                    )}{" "}
-                    ({lead.followUps.length} Calls)
+                    )} ({lead.followUps.length} Calls)
                   </span>
                 </p>
+
                 <p>{lead.course} | {lead.branch}</p>
+
                 <p>Status: {lead.status}</p>
+
+                {/* Attendance Dots */}
+                <div className="flex gap-1 mt-1">
+                  {lead.attendanceLast10.map((signal, idx) => (
+                    <span
+                      key={idx}
+                      className={`h-2 w-2 rounded-full ${attendanceColor(
+                        signal
+                      )}`}
+                    />
+                  ))}
+                </div>
               </div>
 
               <button
@@ -265,7 +290,6 @@ export default function CallingPage() {
 
             {expandedId === lead.id && (
               <div className="mt-3 border-t pt-2 space-y-2 text-gray-600">
-
                 {(showAll === lead.id
                   ? lead.followUps
                   : lead.followUps.slice(-5)
@@ -277,19 +301,6 @@ export default function CallingPage() {
                       {fu.note}
                     </p>
                   ))}
-
-                {lead.followUps.length > 5 && (
-                  <button
-                    className="text-blue-600 text-xs"
-                    onClick={() =>
-                      setShowAll(
-                        showAll === lead.id ? null : lead.id
-                      )
-                    }
-                  >
-                    {showAll === lead.id ? "Hide" : "See All"}
-                  </button>
-                )}
 
                 <div className="flex gap-2 mt-2">
                   <select
@@ -330,7 +341,6 @@ export default function CallingPage() {
                   <option>Admission</option>
                   <option>Not Interested</option>
                 </select>
-
               </div>
             )}
           </div>
