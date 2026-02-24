@@ -70,7 +70,6 @@ export default function CallingPage() {
   const [leads, setLeads] = useState(dummyLeads);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("Latest");
   const [filter1, setFilter1] = useState("All");
   const [filter2, setFilter2] = useState("All");
   const [filter3, setFilter3] = useState("All");
@@ -80,6 +79,7 @@ export default function CallingPage() {
   const filteredLeads = useMemo(() => {
     let data = [...leads];
 
+    // Default Latest
     data.sort(
       (a, b) =>
         new Date(b.enquiryDate).getTime() -
@@ -98,26 +98,33 @@ export default function CallingPage() {
       data = data.filter((l) => l.status === filter3);
     }
 
+    if (filter2 === "Sort") {
+      if (filter3 === "Oldest") {
+        data.sort(
+          (a, b) =>
+            new Date(a.enquiryDate).getTime() -
+            new Date(b.enquiryDate).getTime()
+        );
+      }
+      if (filter3 === "Most Followups") {
+        data.sort((a, b) => b.followUps.length - a.followUps.length);
+      }
+      if (filter3 === "A - Z") {
+        data.sort((a, b) => a.name.localeCompare(b.name));
+      }
+      if (filter3 === "Z - A") {
+        data.sort((a, b) => b.name.localeCompare(a.name));
+      }
+    }
+
     if (search) {
       data = data.filter((l) =>
         l.name.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    if (sortBy === "Oldest") {
-      data.sort(
-        (a, b) =>
-          new Date(a.enquiryDate).getTime() -
-          new Date(b.enquiryDate).getTime()
-      );
-    }
-
-    if (sortBy === "Most Followups") {
-      data.sort((a, b) => b.followUps.length - a.followUps.length);
-    }
-
     return data;
-  }, [leads, search, sortBy, filter1, filter2, filter3]);
+  }, [leads, search, filter1, filter2, filter3]);
 
   const frameColor = (status: string) => {
     if (status === "Admission") return "border-green-600";
@@ -159,10 +166,11 @@ export default function CallingPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* TOP FILTERS — unchanged */}
+      {/* FILTERS */}
       <div className="sticky top-0 z-40 bg-white p-3 shadow-sm space-y-2">
 
         <div className="flex gap-2 flex-wrap text-xs">
+          {/* Branch */}
           <select
             className="border px-2 py-1 rounded"
             value={filter1}
@@ -174,6 +182,7 @@ export default function CallingPage() {
             <option>Aurobindo</option>
           </select>
 
+          {/* Category */}
           <select
             className="border px-2 py-1 rounded"
             value={filter2}
@@ -185,20 +194,24 @@ export default function CallingPage() {
             <option>All</option>
             <option>Gender</option>
             <option>Status</option>
+            <option>Sort</option>
           </select>
 
+          {/* Dependent */}
           <select
             className="border px-2 py-1 rounded"
             value={filter3}
             onChange={(e) => setFilter3(e.target.value)}
           >
             <option>All</option>
+
             {filter2 === "Gender" && (
               <>
                 <option>Male</option>
                 <option>Female</option>
               </>
             )}
+
             {filter2 === "Status" && (
               <>
                 <option>Demo</option>
@@ -206,16 +219,15 @@ export default function CallingPage() {
                 <option>Not Interested</option>
               </>
             )}
-          </select>
 
-          <select
-            className="border px-2 py-1 rounded"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="Latest">Latest</option>
-            <option value="Oldest">Oldest</option>
-            <option value="Most Followups">Most Followups</option>
+            {filter2 === "Sort" && (
+              <>
+                <option>Oldest</option>
+                <option>Most Followups</option>
+                <option>A - Z</option>
+                <option>Z - A</option>
+              </>
+            )}
           </select>
         </div>
 
@@ -251,19 +263,21 @@ export default function CallingPage() {
 
                 <p>{lead.course} | {lead.branch}</p>
 
-                <p>Status: {lead.status}</p>
+                <p className="flex items-center gap-2">
+                  Status: {lead.status}
 
-                {/* Attendance Dots */}
-                <div className="flex gap-1 mt-1">
-                  {lead.attendanceLast10.map((signal, idx) => (
-                    <span
-                      key={idx}
-                      className={`h-2 w-2 rounded-full ${attendanceColor(
-                        signal
-                      )}`}
-                    />
-                  ))}
-                </div>
+                  {/* Compact Vercel-style Attendance */}
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100">
+                    {lead.attendanceLast10.map((signal, idx) => (
+                      <span
+                        key={idx}
+                        className={`h-2 w-2 rounded-full ${attendanceColor(
+                          signal
+                        )}`}
+                      />
+                    ))}
+                  </span>
+                </p>
               </div>
 
               <button
