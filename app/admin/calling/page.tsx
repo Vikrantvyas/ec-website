@@ -131,17 +131,25 @@ export default function CallingPage() {
                   type: selectedCallType,
                 },
               ],
+              status:
+                selectedCallType === "Admission"
+                  ? "Admission"
+                  : selectedCallType === "Demo Scheduled"
+                  ? "Demo"
+                  : selectedCallType === "Not Interested"
+                  ? "Not Interested"
+                  : lead.status,
             }
           : lead
       )
     );
 
+    setExpandedId(null);
     setSelectedCallType("");
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       <FiltersBar
         filter1={filter1}
         setFilter1={setFilter1}
