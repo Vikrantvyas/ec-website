@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import InlineCallingForm from "./InlineCallingForm";
 
 type FollowUp = {
@@ -49,6 +50,7 @@ export default function LeadCard({
 }: Props) {
   const router = useRouter();
   const isExpanded = expandedId === lead.id;
+  const [openFU, setOpenFU] = useState<number | null>(null);
 
   const attendanceColor = (signal: AttendanceSignal) => {
     if (signal === "P") return "bg-green-500";
@@ -95,7 +97,8 @@ export default function LeadCard({
       <div className="flex justify-between items-start">
         <div className="flex-1">
 
-          <p
+          {/* PROFILE ONLY ON NAME */}
+          <span
             className="font-semibold text-blue-600 underline cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
@@ -103,13 +106,14 @@ export default function LeadCard({
             }}
           >
             {lead.name}
-            <span className="text-gray-400 ml-2 no-underline">
-              {new Date(lead.enquiryDate).toLocaleDateString(
-                "en-GB",
-                { day: "2-digit", month: "short" }
-              )} ({lead.followUps.length} Calls)
-            </span>
-          </p>
+          </span>
+
+          <span className="text-gray-400 ml-2">
+            {new Date(lead.enquiryDate).toLocaleDateString(
+              "en-GB",
+              { day: "2-digit", month: "short" }
+            )} ({lead.followUps.length} Calls)
+          </span>
 
           <p>
             {lead.course} | {lead.branch}
@@ -121,9 +125,7 @@ export default function LeadCard({
               {lead.attendanceLast10.map((signal, idx) => (
                 <span
                   key={idx}
-                  className={`h-2 w-2 rounded-full ${attendanceColor(
-                    signal
-                  )}`}
+                  className={`h-2 w-2 rounded-full ${attendanceColor(signal)}`}
                 />
               ))}
             </span>
@@ -139,6 +141,7 @@ export default function LeadCard({
         </div>
       </div>
 
+      {/* STOP PROPAGATION FOR CALL BUTTONS */}
       <div
         className="flex gap-4 mt-2 text-blue-600"
         onClick={(e) => e.stopPropagation()}
@@ -154,42 +157,57 @@ export default function LeadCard({
 
       {isExpanded && (
         <div
-          className="mt-3 border-t pt-2 space-y-3 text-gray-700"
+          className="mt-3 border-t pt-2 space-y-2 text-gray-700"
           onClick={(e) => e.stopPropagation()}
         >
           {lead.followUps
             .slice(-5)
             .reverse()
             .map((fu, i) => {
-              const isReceived =
-                fu.type === "Received by Student" ||
-                fu.type === "Received by Parent";
+              const hasExtra = fu.mood || fu.note;
+              const isOpen = openFU === i;
 
               return (
-                <div key={i} className="bg-gray-50 p-2 rounded">
-                  {/* Date */}
-                  <p className="font-semibold text-gray-800">
-                    {new Date(fu.date).toLocaleDateString(
-                      "en-GB",
-                      { day: "2-digit", month: "short", year: "2-digit" }
-                    )}
-                  </p>
-
-                  {/* Call Result - Mood */}
-                  <p className={`${resultColor(fu.type)} font-medium`}>
-                    {fu.type}
-                    {isReceived && fu.mood && (
-                      <span className="text-gray-600 font-normal">
-                        {" - "}{fu.mood}
+                <div
+                  key={i}
+                  className={`${hasExtra ? "bg-gray-50 rounded" : "bg-white"}`}
+                >
+                  {/* TOP ROW */}
+                  <div
+                    className={`flex justify-between items-center p-2 ${
+                      hasExtra ? "cursor-pointer" : ""
+                    }`}
+                    onClick={(e) => {
+                      if (!hasExtra) return;
+                      e.stopPropagation();
+                      setOpenFU(isOpen ? null : i);
+                    }}
+                  >
+                    <p className="font-semibold text-gray-800">
+                      {new Date(fu.date).toLocaleDateString(
+                        "en-GB",
+                        { day: "2-digit", month: "short", year: "2-digit" }
+                      )}{" "}
+                      -{" "}
+                      <span className={resultColor(fu.type)}>
+                        {fu.type}
                       </span>
-                    )}
-                  </p>
-
-                  {/* Remark */}
-                  {fu.note && (
-                    <p className="text-gray-600">
-                      Remark - {fu.note}
                     </p>
+
+                    {hasExtra &&
+                      (isOpen ? (
+                        <ChevronUp size={14} />
+                      ) : (
+                        <ChevronDown size={14} />
+                      ))}
+                  </div>
+
+                  {/* EXPANDED DETAILS */}
+                  {hasExtra && isOpen && (
+                    <div className="px-2 pb-2 space-y-1 text-gray-600">
+                      {fu.mood && <p>Mood - {fu.mood}</p>}
+                      {fu.note && <p>Remark - {fu.note}</p>}
+                    </div>
                   )}
                 </div>
               );
