@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 type Option = {
   label: string;
   value: string;
+  color?: "green" | "blue" | "red";
 };
 
 type Props = {
@@ -24,7 +25,6 @@ export default function BottomSheetSelect({
   const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  /* Detect Screen Size */
   useEffect(() => {
     const checkScreen = () => {
       setIsMobile(window.innerWidth < 768);
@@ -34,7 +34,6 @@ export default function BottomSheetSelect({
     return () => window.removeEventListener("resize", checkScreen);
   }, []);
 
-  /* Lock Scroll on Mobile */
   useEffect(() => {
     if (isMobile && open) {
       document.body.style.overflow = "hidden";
@@ -43,7 +42,6 @@ export default function BottomSheetSelect({
     }
   }, [open, isMobile]);
 
-  /* Outside Click Close (Desktop) */
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -64,9 +62,21 @@ export default function BottomSheetSelect({
     };
   }, [open, isMobile]);
 
+  const colorClasses = (color?: string) => {
+    switch (color) {
+      case "green":
+        return "text-green-600 border-l-4 border-green-500";
+      case "blue":
+        return "text-blue-600 border-l-4 border-blue-500";
+      case "red":
+        return "text-red-600 border-l-4 border-red-500";
+      default:
+        return "";
+    }
+  };
+
   return (
     <div ref={containerRef} className="relative w-full">
-      {/* Trigger */}
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -75,10 +85,9 @@ export default function BottomSheetSelect({
         {value || label}
       </button>
 
-      {/* ================= MOBILE MODE ================= */}
+      {/* MOBILE */}
       {isMobile && (
         <>
-          {/* Overlay */}
           {open && (
             <div
               className="fixed inset-0 bg-black/40 z-40"
@@ -86,7 +95,6 @@ export default function BottomSheetSelect({
             />
           )}
 
-          {/* Bottom Sheet */}
           <div
             className={`fixed bottom-0 left-0 right-0 bg-white z-50 rounded-t-2xl transition-transform duration-300 ${
               open ? "translate-y-0" : "translate-y-full"
@@ -105,18 +113,11 @@ export default function BottomSheetSelect({
                     onChange(opt.value);
                     setOpen(false);
                   }}
-                  className={`px-4 py-3 flex justify-between items-center text-sm border-b cursor-pointer ${
+                  className={`px-4 py-3 flex justify-between items-center text-sm cursor-pointer ${
                     value === opt.value ? "bg-gray-100" : ""
-                  }`}
+                  } ${colorClasses(opt.color)}`}
                 >
                   {opt.label}
-                  <div
-                    className={`h-4 w-4 rounded-full border ${
-                      value === opt.value
-                        ? "bg-blue-600 border-blue-600"
-                        : "border-gray-400"
-                    }`}
-                  />
                 </div>
               ))}
             </div>
@@ -124,7 +125,7 @@ export default function BottomSheetSelect({
         </>
       )}
 
-      {/* ================= DESKTOP MODE ================= */}
+      {/* DESKTOP */}
       {!isMobile && open && (
         <div className="absolute z-50 mt-2 w-full bg-white border rounded-lg shadow-lg max-h-64 overflow-y-auto">
           {options.map((opt) => (
@@ -136,7 +137,7 @@ export default function BottomSheetSelect({
               }}
               className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
                 value === opt.value ? "bg-gray-100 font-medium" : ""
-              }`}
+              } ${colorClasses(opt.color)}`}
             >
               {opt.label}
             </div>

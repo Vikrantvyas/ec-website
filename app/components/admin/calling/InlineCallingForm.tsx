@@ -195,16 +195,28 @@ export default function InlineCallingForm({
         onChange={setPurpose}
       />
 
-      {/* RESULT + MOOD (Same Row) */}
+      {/* RESULT + MOOD */}
       <div className="grid grid-cols-2 gap-2">
         <BottomSheetSelect
           label="Call Result"
           value={result}
           options={[
-            ...positiveResults,
-            ...neutralResults,
-            ...negativeResults,
-          ].map((r) => ({ label: r, value: r }))}
+            ...positiveResults.map((r) => ({
+              label: r,
+              value: r,
+              color: "green",
+            })),
+            ...neutralResults.map((r) => ({
+              label: r,
+              value: r,
+              color: "blue",
+            })),
+            ...negativeResults.map((r) => ({
+              label: r,
+              value: r,
+              color: "red",
+            })),
+          ]}
           onChange={setResult}
         />
 
@@ -212,10 +224,22 @@ export default function InlineCallingForm({
           label="Student's Mood"
           value={mood}
           options={[
-            ...positiveMoods,
-            ...neutralMoods,
-            ...negativeMoods,
-          ].map((m) => ({ label: m, value: m }))}
+            ...positiveMoods.map((m) => ({
+              label: m,
+              value: m,
+              color: "green",
+            })),
+            ...neutralMoods.map((m) => ({
+              label: m,
+              value: m,
+              color: "blue",
+            })),
+            ...negativeMoods.map((m) => ({
+              label: m,
+              value: m,
+              color: "red",
+            })),
+          ]}
           onChange={setMood}
         />
       </div>
