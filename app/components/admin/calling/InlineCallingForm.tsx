@@ -181,92 +181,48 @@ export default function InlineCallingForm({
   };
 
   return (
-    <div className="space-y-1.5 mt-2 text-xs">
+    <div className="space-y-1 mt-2 text-xs">
 
       {/* PURPOSE */}
       <select
-        className="w-full border px-2 py-1 rounded"
+        className="w-full border px-2 py-0.5 rounded"
         value={purpose}
         onChange={(e) => setPurpose(e.target.value)}
       >
         <option value="">Calling Purpose</option>
-
-        {enquiryPurposes.map((p) => (
-          <option key={p}>{p}</option>
-        ))}
-
-        <option disabled>────────</option>
-
-        {demoPurposes.map((p) => (
-          <option key={p}>{p}</option>
-        ))}
-
-        <option disabled>────────</option>
-
-        {admissionPurposes.map((p) => (
-          <option key={p}>{p}</option>
-        ))}
-
-        <option disabled>────────</option>
-
-        {studentPurposes.map((p) => (
-          <option key={p}>{p}</option>
-        ))}
+        {enquiryPurposes.map((p) => <option key={p}>{p}</option>)}
+        {demoPurposes.map((p) => <option key={p}>{p}</option>)}
+        {admissionPurposes.map((p) => <option key={p}>{p}</option>)}
+        {studentPurposes.map((p) => <option key={p}>{p}</option>)}
       </select>
 
       {/* RESULT */}
       <select
-        className="w-full border px-2 py-1 rounded"
+        className="w-full border px-2 py-0.5 rounded"
         value={result}
         onChange={(e) => setResult(e.target.value)}
       >
         <option value="">Call Result</option>
-
-        {positiveResults.map((r) => (
-          <option key={r} className="text-green-600">{r}</option>
-        ))}
-
-        <option disabled>────────</option>
-
-        {neutralResults.map((r) => (
-          <option key={r} className="text-blue-600">{r}</option>
-        ))}
-
-        <option disabled>────────</option>
-
-        {negativeResults.map((r) => (
-          <option key={r} className="text-red-600">{r}</option>
+        {[...positiveResults, ...neutralResults, ...negativeResults].map((r) => (
+          <option key={r}>{r}</option>
         ))}
       </select>
 
       {/* MOOD */}
       <select
-        className="w-full border px-2 py-1 rounded"
+        className="w-full border px-2 py-0.5 rounded"
         value={mood}
         onChange={(e) => setMood(e.target.value)}
       >
         <option value="">Student's Mood</option>
-
-        {positiveMoods.map((m) => (
-          <option key={m} className="text-green-600">{m}</option>
-        ))}
-
-        <option disabled>────────</option>
-
-        {neutralMoods.map((m) => (
-          <option key={m} className="text-blue-600">{m}</option>
-        ))}
-
-        <option disabled>────────</option>
-
-        {negativeMoods.map((m) => (
-          <option key={m} className="text-red-600">{m}</option>
+        {[...positiveMoods, ...neutralMoods, ...negativeMoods].map((m) => (
+          <option key={m}>{m}</option>
         ))}
       </select>
 
       {/* NEXT FOLLOW UP */}
       <select
-        className="w-full border px-2 py-1 rounded"
+        className="w-full border px-2 py-0.5 rounded"
         value={nextAction}
         onChange={(e) => {
           setNextAction(e.target.value);
@@ -283,7 +239,7 @@ export default function InlineCallingForm({
         <input
           ref={dateRef}
           type="date"
-          className="w-full border px-2 py-1 rounded"
+          className="w-full border px-2 py-0.5 rounded"
           value={nextCallDate}
           onChange={(e) => setNextCallDate(e.target.value)}
         />
@@ -291,7 +247,7 @@ export default function InlineCallingForm({
 
       {/* STATUS */}
       <select
-        className="w-full border px-2 py-1 rounded"
+        className="w-full border px-2 py-0.5 rounded"
         value={status}
         onChange={(e) => setStatus(e.target.value)}
       >
@@ -303,7 +259,8 @@ export default function InlineCallingForm({
 
       {/* REMARK */}
       <textarea
-        className="w-full border px-2 py-1 rounded"
+        className="w-full border px-2 py-0.5 rounded"
+        rows={2}
         placeholder="Remark"
         value={remark}
         onChange={(e) => setRemark(e.target.value)}
