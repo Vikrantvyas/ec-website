@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
+import BottomSheetSelect from "@/app/components/ui/BottomSheetSelect";
 
 type Props = {
   leadId: number;
@@ -16,7 +17,7 @@ type Props = {
   }) => void;
 };
 
-/* ================= PURPOSE ================= */
+/* ================= DATA ================= */
 
 const enquiryPurposes = [
   "Fresh Enquiry Follow-up",
@@ -39,8 +40,6 @@ const studentPurposes = [
   "Feedback Call",
 ];
 
-/* ================= CALL RESULT ================= */
-
 const positiveResults = [
   "Received by Student",
   "Received by Parent",
@@ -58,8 +57,6 @@ const negativeResults = [
   "Cut the Call",
   "Not in Service",
 ];
-
-/* ================= STUDENT MOOD ================= */
 
 const positiveMoods = [
   "Very Interested",
@@ -84,8 +81,6 @@ const negativeMoods = [
   "Fees Too High",
 ];
 
-/* ================= NEXT FOLLOW UP ================= */
-
 const followUpOptions = [
   "Call in Evening",
   "Call Tomorrow",
@@ -94,8 +89,6 @@ const followUpOptions = [
   "Call After 1 Month",
   "Select Date",
 ];
-
-/* ================= STATUS ================= */
 
 const statusOptions = ["Cold", "Warm", "Hot", "Closed"];
 
@@ -114,7 +107,7 @@ export default function InlineCallingForm({
 
   const dateRef = useRef<HTMLInputElement>(null);
 
-  /* AUTO DATE */
+  /* ================= AUTO DATE ================= */
 
   useEffect(() => {
     if (!nextAction) return;
@@ -122,10 +115,14 @@ export default function InlineCallingForm({
     const today = new Date();
     const next = new Date();
 
-    if (nextAction === "Call Tomorrow") next.setDate(today.getDate() + 1);
-    else if (nextAction === "Call After 3 Days") next.setDate(today.getDate() + 3);
-    else if (nextAction === "Call After 7 Days") next.setDate(today.getDate() + 7);
-    else if (nextAction === "Call After 1 Month") next.setMonth(today.getMonth() + 1);
+    if (nextAction === "Call Tomorrow")
+      next.setDate(today.getDate() + 1);
+    else if (nextAction === "Call After 3 Days")
+      next.setDate(today.getDate() + 3);
+    else if (nextAction === "Call After 7 Days")
+      next.setDate(today.getDate() + 7);
+    else if (nextAction === "Call After 1 Month")
+      next.setMonth(today.getMonth() + 1);
 
     if (nextAction !== "Select Date") {
       setNextCallDate(next.toISOString().split("T")[0]);
@@ -142,7 +139,7 @@ export default function InlineCallingForm({
     }
   }, [needsDatePicker]);
 
-  /* AUTO STATUS */
+  /* ================= AUTO STATUS ================= */
 
   const autoStatus = useMemo(() => {
     if (negativeResults.includes(result)) return "Closed";
@@ -156,6 +153,8 @@ export default function InlineCallingForm({
   useEffect(() => {
     if (result) setStatus(autoStatus);
   }, [autoStatus, result]);
+
+  /* ================= SAVE ================= */
 
   const handleSave = () => {
     if (!purpose || !result) return;
@@ -181,85 +180,85 @@ export default function InlineCallingForm({
   };
 
   return (
-    <div className="space-y-1 mt-2 text-xs">
+    <div className="space-y-2 mt-3 text-xs">
 
       {/* PURPOSE */}
-      <select
-        className="w-full border px-2 py-0.5 rounded"
+      <BottomSheetSelect
+        label="Calling Purpose"
         value={purpose}
-        onChange={(e) => setPurpose(e.target.value)}
-      >
-        <option value="">Calling Purpose</option>
-        {enquiryPurposes.map((p) => <option key={p}>{p}</option>)}
-        {demoPurposes.map((p) => <option key={p}>{p}</option>)}
-        {admissionPurposes.map((p) => <option key={p}>{p}</option>)}
-        {studentPurposes.map((p) => <option key={p}>{p}</option>)}
-      </select>
+        options={[
+          ...enquiryPurposes,
+          ...demoPurposes,
+          ...admissionPurposes,
+          ...studentPurposes,
+        ].map((p) => ({ label: p, value: p }))}
+        onChange={setPurpose}
+      />
 
-      {/* RESULT */}
-      <select
-        className="w-full border px-2 py-0.5 rounded"
-        value={result}
-        onChange={(e) => setResult(e.target.value)}
-      >
-        <option value="">Call Result</option>
-        {[...positiveResults, ...neutralResults, ...negativeResults].map((r) => (
-          <option key={r}>{r}</option>
-        ))}
-      </select>
+      {/* RESULT + MOOD (Same Row) */}
+      <div className="grid grid-cols-2 gap-2">
+        <BottomSheetSelect
+          label="Call Result"
+          value={result}
+          options={[
+            ...positiveResults,
+            ...neutralResults,
+            ...negativeResults,
+          ].map((r) => ({ label: r, value: r }))}
+          onChange={setResult}
+        />
 
-      {/* MOOD */}
-      <select
-        className="w-full border px-2 py-0.5 rounded"
-        value={mood}
-        onChange={(e) => setMood(e.target.value)}
-      >
-        <option value="">Student's Mood</option>
-        {[...positiveMoods, ...neutralMoods, ...negativeMoods].map((m) => (
-          <option key={m}>{m}</option>
-        ))}
-      </select>
+        <BottomSheetSelect
+          label="Student's Mood"
+          value={mood}
+          options={[
+            ...positiveMoods,
+            ...neutralMoods,
+            ...negativeMoods,
+          ].map((m) => ({ label: m, value: m }))}
+          onChange={setMood}
+        />
+      </div>
 
-      {/* NEXT FOLLOW UP */}
-      <select
-        className="w-full border px-2 py-0.5 rounded"
-        value={nextAction}
-        onChange={(e) => {
-          setNextAction(e.target.value);
-          setNextCallDate("");
-        }}
-      >
-        <option value="">Next Follow Up</option>
-        {followUpOptions.map((a) => (
-          <option key={a}>{a}</option>
-        ))}
-      </select>
+      {/* NEXT FOLLOW UP + STATUS */}
+      <div className="grid grid-cols-2 gap-2">
+        <BottomSheetSelect
+          label="Next Follow Up"
+          value={nextAction}
+          options={followUpOptions.map((a) => ({
+            label: a,
+            value: a,
+          }))}
+          onChange={(val) => {
+            setNextAction(val);
+            setNextCallDate("");
+          }}
+        />
+
+        <BottomSheetSelect
+          label="Status"
+          value={status}
+          options={statusOptions.map((s) => ({
+            label: s,
+            value: s,
+          }))}
+          onChange={setStatus}
+        />
+      </div>
 
       {needsDatePicker && (
         <input
           ref={dateRef}
           type="date"
-          className="w-full border px-2 py-0.5 rounded"
+          className="w-full border px-2 py-1 rounded text-sm"
           value={nextCallDate}
           onChange={(e) => setNextCallDate(e.target.value)}
         />
       )}
 
-      {/* STATUS */}
-      <select
-        className="w-full border px-2 py-0.5 rounded"
-        value={status}
-        onChange={(e) => setStatus(e.target.value)}
-      >
-        <option value="">Status</option>
-        {statusOptions.map((s) => (
-          <option key={s}>{s}</option>
-        ))}
-      </select>
-
       {/* REMARK */}
       <textarea
-        className="w-full border px-2 py-0.5 rounded"
+        className="w-full border px-2 py-1 rounded text-sm"
         rows={2}
         placeholder="Remark"
         value={remark}
@@ -268,7 +267,7 @@ export default function InlineCallingForm({
 
       <button
         onClick={handleSave}
-        className="w-full bg-blue-600 text-white py-1 rounded"
+        className="w-full bg-blue-600 text-white py-2 rounded text-sm font-medium"
       >
         Save
       </button>
