@@ -16,7 +16,7 @@ type Props = {
   }) => void;
 };
 
-/* ================= PURPOSE (Sectioned) ================= */
+/* ================= PURPOSE ================= */
 
 const enquiryPurposes = [
   "Fresh Enquiry Follow-up",
@@ -114,7 +114,7 @@ export default function InlineCallingForm({
 
   const dateRef = useRef<HTMLInputElement>(null);
 
-  /* ================= AUTO DATE ================= */
+  /* AUTO DATE */
 
   useEffect(() => {
     if (!nextAction) return;
@@ -122,15 +122,10 @@ export default function InlineCallingForm({
     const today = new Date();
     const next = new Date();
 
-    if (nextAction === "Call Tomorrow") {
-      next.setDate(today.getDate() + 1);
-    } else if (nextAction === "Call After 3 Days") {
-      next.setDate(today.getDate() + 3);
-    } else if (nextAction === "Call After 7 Days") {
-      next.setDate(today.getDate() + 7);
-    } else if (nextAction === "Call After 1 Month") {
-      next.setMonth(today.getMonth() + 1);
-    }
+    if (nextAction === "Call Tomorrow") next.setDate(today.getDate() + 1);
+    else if (nextAction === "Call After 3 Days") next.setDate(today.getDate() + 3);
+    else if (nextAction === "Call After 7 Days") next.setDate(today.getDate() + 7);
+    else if (nextAction === "Call After 1 Month") next.setMonth(today.getMonth() + 1);
 
     if (nextAction !== "Select Date") {
       setNextCallDate(next.toISOString().split("T")[0]);
@@ -147,26 +142,20 @@ export default function InlineCallingForm({
     }
   }, [needsDatePicker]);
 
-  /* ================= AUTO STATUS ================= */
+  /* AUTO STATUS */
 
   const autoStatus = useMemo(() => {
     if (negativeResults.includes(result)) return "Closed";
     if (negativeMoods.includes(mood)) return "Closed";
-
     if (positiveMoods.includes(mood)) return "Hot";
     if (neutralMoods.includes(mood)) return "Warm";
     if (neutralResults.includes(result)) return "Cold";
-
     return "Warm";
   }, [result, mood]);
 
   useEffect(() => {
-    if (result) {
-      setStatus(autoStatus);
-    }
+    if (result) setStatus(autoStatus);
   }, [autoStatus, result]);
-
-  /* ================= SAVE ================= */
 
   const handleSave = () => {
     if (!purpose || !result) return;
@@ -192,7 +181,7 @@ export default function InlineCallingForm({
   };
 
   return (
-    <div className="space-y-2 mt-2 text-xs">
+    <div className="space-y-1.5 mt-2 text-xs">
 
       {/* PURPOSE */}
       <select
@@ -202,29 +191,27 @@ export default function InlineCallingForm({
       >
         <option value="">Calling Purpose</option>
 
-        <optgroup label="📥 Enquiry">
-          {enquiryPurposes.map((p) => (
-            <option key={p}>{p}</option>
-          ))}
-        </optgroup>
+        {enquiryPurposes.map((p) => (
+          <option key={p}>{p}</option>
+        ))}
 
-        <optgroup label="🎓 Demo">
-          {demoPurposes.map((p) => (
-            <option key={p}>{p}</option>
-          ))}
-        </optgroup>
+        <option disabled>────────</option>
 
-        <optgroup label="📝 Admission">
-          {admissionPurposes.map((p) => (
-            <option key={p}>{p}</option>
-          ))}
-        </optgroup>
+        {demoPurposes.map((p) => (
+          <option key={p}>{p}</option>
+        ))}
 
-        <optgroup label="👨‍🎓 Existing Student">
-          {studentPurposes.map((p) => (
-            <option key={p}>{p}</option>
-          ))}
-        </optgroup>
+        <option disabled>────────</option>
+
+        {admissionPurposes.map((p) => (
+          <option key={p}>{p}</option>
+        ))}
+
+        <option disabled>────────</option>
+
+        {studentPurposes.map((p) => (
+          <option key={p}>{p}</option>
+        ))}
       </select>
 
       {/* RESULT */}
@@ -235,26 +222,24 @@ export default function InlineCallingForm({
       >
         <option value="">Call Result</option>
 
-        <optgroup label="🟢 Positive">
-          {positiveResults.map((r) => (
-            <option key={r}>{r}</option>
-          ))}
-        </optgroup>
+        {positiveResults.map((r) => (
+          <option key={r} className="text-green-600">{r}</option>
+        ))}
 
-        <optgroup label="🔵 Neutral">
-          {neutralResults.map((r) => (
-            <option key={r}>{r}</option>
-          ))}
-        </optgroup>
+        <option disabled>────────</option>
 
-        <optgroup label="🔴 Negative">
-          {negativeResults.map((r) => (
-            <option key={r}>{r}</option>
-          ))}
-        </optgroup>
+        {neutralResults.map((r) => (
+          <option key={r} className="text-blue-600">{r}</option>
+        ))}
+
+        <option disabled>────────</option>
+
+        {negativeResults.map((r) => (
+          <option key={r} className="text-red-600">{r}</option>
+        ))}
       </select>
 
-      {/* STUDENT MOOD */}
+      {/* MOOD */}
       <select
         className="w-full border px-2 py-1 rounded"
         value={mood}
@@ -262,23 +247,21 @@ export default function InlineCallingForm({
       >
         <option value="">Student's Mood</option>
 
-        <optgroup label="🟢 Positive">
-          {positiveMoods.map((m) => (
-            <option key={m}>{m}</option>
-          ))}
-        </optgroup>
+        {positiveMoods.map((m) => (
+          <option key={m} className="text-green-600">{m}</option>
+        ))}
 
-        <optgroup label="🔵 Neutral">
-          {neutralMoods.map((m) => (
-            <option key={m}>{m}</option>
-          ))}
-        </optgroup>
+        <option disabled>────────</option>
 
-        <optgroup label="🔴 Negative">
-          {negativeMoods.map((m) => (
-            <option key={m}>{m}</option>
-          ))}
-        </optgroup>
+        {neutralMoods.map((m) => (
+          <option key={m} className="text-blue-600">{m}</option>
+        ))}
+
+        <option disabled>────────</option>
+
+        {negativeMoods.map((m) => (
+          <option key={m} className="text-red-600">{m}</option>
+        ))}
       </select>
 
       {/* NEXT FOLLOW UP */}
@@ -296,7 +279,6 @@ export default function InlineCallingForm({
         ))}
       </select>
 
-      {/* DATE PICKER */}
       {needsDatePicker && (
         <input
           ref={dateRef}
