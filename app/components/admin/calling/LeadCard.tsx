@@ -7,8 +7,8 @@ import InlineCallingForm from "./InlineCallingForm";
 type FollowUp = {
   date: string;
   note: string;
-  type: string;   // Call Result
-  mood?: string;  // Student Mood
+  type: string;
+  mood?: string;
 };
 
 type AttendanceSignal = "P" | "A" | "N";
@@ -30,7 +30,15 @@ type Props = {
   lead: Lead;
   expandedId: number | null;
   setExpandedId: (id: number | null) => void;
-  addFollowUp: (id: number) => void;
+  addFollowUp: (
+    id: number,
+    data: {
+      result: string;
+      mood?: string;
+      remark?: string;
+      status: string;
+    }
+  ) => void;
 };
 
 export default function LeadCard({
@@ -158,10 +166,7 @@ export default function LeadCard({
                 fu.type === "Received by Parent";
 
               return (
-                <div
-                  key={i}
-                  className="bg-gray-50 p-2 rounded"
-                >
+                <div key={i} className="bg-gray-50 p-2 rounded">
                   {/* Date */}
                   <p className="font-semibold text-gray-800">
                     {new Date(fu.date).toLocaleDateString(
@@ -180,7 +185,7 @@ export default function LeadCard({
                     )}
                   </p>
 
-                  {/* Remark (only if exists) */}
+                  {/* Remark */}
                   {fu.note && (
                     <p className="text-gray-600">
                       Remark - {fu.note}
@@ -193,8 +198,13 @@ export default function LeadCard({
           <InlineCallingForm
             leadId={lead.id}
             currentStatus={lead.status}
-            onSave={() => {
-              addFollowUp(lead.id);
+            onSave={(data) => {
+              addFollowUp(lead.id, {
+                result: data.result,
+                mood: data.mood,
+                remark: data.remark,
+                status: data.status,
+              });
               setExpandedId(null);
             }}
           />
