@@ -204,17 +204,17 @@ export default function InlineCallingForm({
             ...positiveResults.map((r) => ({
               label: r,
               value: r,
-              color: "green",
+              color: "green" as const,
             })),
             ...neutralResults.map((r) => ({
               label: r,
               value: r,
-              color: "blue",
+              color: "blue" as const,
             })),
             ...negativeResults.map((r) => ({
               label: r,
               value: r,
-              color: "red",
+              color: "red" as const,
             })),
           ]}
           onChange={setResult}
@@ -227,17 +227,17 @@ export default function InlineCallingForm({
             ...positiveMoods.map((m) => ({
               label: m,
               value: m,
-              color: "green",
+              color: "green" as const,
             })),
             ...neutralMoods.map((m) => ({
               label: m,
               value: m,
-              color: "blue",
+              color: "blue" as const,
             })),
             ...negativeMoods.map((m) => ({
               label: m,
               value: m,
-              color: "red",
+              color: "red" as const,
             })),
           ]}
           onChange={setMood}
