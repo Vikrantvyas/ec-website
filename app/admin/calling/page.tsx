@@ -26,28 +26,41 @@ type Lead = {
   attendanceLast10: AttendanceSignal[];
 };
 
+/* ====== DUMMY FOLLOW UPS (5+) ====== */
+
 const generateFollowUps = (): FollowUp[] => [
   {
-    date: "2026-02-02",
+    date: "2026-02-01",
     type: "Received by Student",
     mood: "Wants Demo",
     note: "He'll join morning batch",
   },
   {
-    date: "2026-02-06",
+    date: "2026-02-03",
     type: "Not Received",
     note: "",
   },
   {
-    date: "2026-02-09",
+    date: "2026-02-05",
     type: "Received by Parent",
     mood: "Thinking",
     note: "",
   },
+  {
+    date: "2026-02-07",
+    type: "Phone Busy",
+    note: "",
+  },
+  {
+    date: "2026-02-09",
+    type: "Received by Student",
+    mood: "Interested",
+    note: "Asked for fee details",
+  },
 ];
 
-const generateAttendance = (joined: boolean): AttendanceSignal[] => {
-  if (!joined) return Array(10).fill("N");
+const generateAttendance = (active: boolean): AttendanceSignal[] => {
+  if (!active) return Array(10).fill("N");
   return Array.from({ length: 10 }).map((_, i) =>
     i % 3 === 0 ? "A" : "P"
   );
@@ -74,13 +87,30 @@ export default function CallingPage() {
   const [leads, setLeads] = useState(dummyLeads);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
+  /* ====== FILTER STATES (Required for FiltersBar) ====== */
+
+  const [search, setSearch] = useState("");
+  const [filter1, setFilter1] = useState("All");
+  const [filter2, setFilter2] = useState("All");
+  const [filter3, setFilter3] = useState("All");
+
   const filteredLeads = useMemo(() => {
-    return [...leads].sort(
+    let data = [...leads];
+
+    data.sort(
       (a, b) =>
         new Date(b.enquiryDate).getTime() -
         new Date(a.enquiryDate).getTime()
     );
-  }, [leads]);
+
+    if (search) {
+      data = data.filter((l) =>
+        l.name.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    return data;
+  }, [leads, search]);
 
   const addFollowUp = (
     leadId: number,
@@ -116,7 +146,17 @@ export default function CallingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <FiltersBar />
+
+      <FiltersBar
+        filter1={filter1}
+        setFilter1={setFilter1}
+        filter2={filter2}
+        setFilter2={setFilter2}
+        filter3={filter3}
+        setFilter3={setFilter3}
+        search={search}
+        setSearch={setSearch}
+      />
 
       <div className="p-3 space-y-3 pb-24">
         {filteredLeads.map((lead) => (
