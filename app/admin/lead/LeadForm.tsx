@@ -28,7 +28,6 @@ export default function LeadForm() {
       return;
     }
 
-    // 🔒 Confirmation before saving
     const confirmSave = window.confirm(
       "Are you sure you want to save this lead?"
     );
@@ -77,7 +76,11 @@ export default function LeadForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 text-sm">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-8 text-sm"
+      noValidate
+    >
 
       {/* Branch */}
       {(!isMobile || step === 1) && (
@@ -101,7 +104,7 @@ export default function LeadForm() {
         </div>
       )}
 
-      {/* BLOCK 1 */}
+      {/* BLOCKS SAME AS BEFORE */}
       {(!isMobile || step === 1) && (
         <Block title="Basic Info">
           <Input label="Date" name="enquiryDate" value={formData.enquiryDate} readOnly />
@@ -117,7 +120,6 @@ export default function LeadForm() {
         </Block>
       )}
 
-      {/* BLOCK 2 */}
       {(!isMobile || step === 2) && (
         <Block title="Student Contact">
           <Input label="Enquired By" name="enquiredBy" value={formData.enquiredBy} onChange={handleChange} />
@@ -134,7 +136,6 @@ export default function LeadForm() {
         </Block>
       )}
 
-      {/* BLOCK 3 */}
       {(!isMobile || step === 3) && (
         <Block title="Profile">
           <Input label="Age" name="age" type="number" value={formData.age} onChange={handleChange} />
@@ -156,7 +157,6 @@ export default function LeadForm() {
         </Block>
       )}
 
-      {/* BLOCK 4 */}
       {(!isMobile || step === 4) && (
         <Block title="Course Selection">
           <SelectField label="Department" value={formData.department}
@@ -171,7 +171,6 @@ export default function LeadForm() {
         </Block>
       )}
 
-      {/* BLOCK 5 */}
       {(!isMobile || step === 5) && (
         <Block title="Counselling & Action">
           <SelectField label="Status" value={formData.status}
@@ -201,7 +200,6 @@ export default function LeadForm() {
         </Block>
       )}
 
-      {/* MOBILE NAVIGATION FIXED */}
       {isMobile && (
         <div className={`flex ${step === 1 ? "justify-end" : "justify-between"}`}>
           {step > 1 && (
@@ -217,12 +215,11 @@ export default function LeadForm() {
           {step < 5 ? (
             <button
               type="button"
-              disabled={!formData.branch}
-              onClick={() => setStep(step + 1)}
-              className={`px-4 py-2 rounded-md text-white
-                ${formData.branch
-                  ? "bg-blue-600"
-                  : "bg-gray-400 cursor-not-allowed"}`}
+              onClick={(e) => {
+                e.preventDefault();
+                setStep(step + 1);
+              }}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md"
             >
               Next
             </button>
@@ -238,7 +235,6 @@ export default function LeadForm() {
         </div>
       )}
 
-      {/* DESKTOP SAVE */}
       {!isMobile && (
         <div className="flex justify-end">
           <button
