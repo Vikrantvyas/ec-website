@@ -7,12 +7,10 @@ export default function useLeadForm() {
   const formattedDate = now.toISOString().split("T")[0];
   const formattedTime = now.toTimeString().slice(0, 5);
 
-  // Auto Next Day
   const nextDay = new Date();
   nextDay.setDate(nextDay.getDate() + 1);
   const nextFollowDate = nextDay.toISOString().split("T")[0];
 
-  // Auto +24 Hours
   const nextTime = new Date();
   nextTime.setHours(nextTime.getHours() + 24);
   const nextFollowTime = nextTime.toTimeString().slice(0, 5);
@@ -39,9 +37,6 @@ export default function useLeadForm() {
     forWhom: "Self",
     studentName: "",
     mobileNumber: "",
-    mobileOwner: "Self",
-    whatsappNumber: "",
-    whatsappOwner: "Self",
     area: "",
 
     gender: "Male",
@@ -50,16 +45,13 @@ export default function useLeadForm() {
     profession: "Student",
 
     education: "",
-    schoolTiming: "",
-    contactTime: "",
+    schoolCollegeJob: "",
+    schoolTiming: "Morning",
+    contactTime: "2 PM - 5 PM",
 
-    // 🔥 Department Updated
     department: "English",
-
-    // 🔥 Multi Select Course (Array)
     course: ["Spoken English"],
 
-    // 🔥 Preferred Timing + Batch
     preferredTiming: "Any Time",
     preferredBatch: "8 AM",
 
@@ -80,6 +72,7 @@ export default function useLeadForm() {
     setFormData((prev: any) => {
       let updated = { ...prev, [name]: value };
 
+      // Auto Student Name
       if (name === "forWhom") {
         updated.studentName =
           value === "Self" ? prev.enquiredBy : "";
@@ -89,8 +82,34 @@ export default function useLeadForm() {
         updated.studentName = value;
       }
 
-      if (name === "mobileNumber") {
-        updated.whatsappNumber = value;
+      // Age Based Smart Logic
+      if (name === "age") {
+        const ageNum = parseInt(value);
+
+        if (!isNaN(ageNum)) {
+
+          // Marital
+          updated.maritalStatus = ageNum >= 25 ? "Married" : "Single";
+
+          // Profession
+          updated.profession = ageNum >= 25 ? "Job" : "Student";
+
+          // Education
+          if (ageNum <= 10) updated.education = "4th";
+          else if (ageNum <= 14) updated.education = "8th";
+          else if (ageNum <= 17) updated.education = "10th";
+          else if (ageNum <= 20) updated.education = "12th";
+          else if (ageNum <= 23) updated.education = "Graduate";
+          else updated.education = "Post Graduate";
+        }
+      }
+
+      // Smart Contact Time Logic
+      if (name === "schoolTiming") {
+        if (value === "Morning") updated.contactTime = "2 PM - 5 PM";
+        if (value === "Afternoon") updated.contactTime = "6 PM - 8 PM";
+        if (value === "Evening") updated.contactTime = "10 AM - 12 PM";
+        if (value === "Night") updated.contactTime = "9 AM - 11 AM";
       }
 
       return updated;
@@ -99,7 +118,6 @@ export default function useLeadForm() {
 
   const branches = ["Nanda Ngr", "Bapat Sq.", "Aurobindo"];
 
-  // 🔥 Course Logic Updated
   const courseOptions =
     formData.department === "English"
       ? ["Spoken English", "Basic English", "Advanced English"]
