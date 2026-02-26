@@ -28,6 +28,12 @@ export default function LeadForm() {
       return;
     }
 
+    // 🔒 Confirmation before saving
+    const confirmSave = window.confirm(
+      "Are you sure you want to save this lead?"
+    );
+    if (!confirmSave) return;
+
     setLoading(true);
 
     const { error } = await supabase.from("leads").insert([{
@@ -63,6 +69,7 @@ export default function LeadForm() {
 
     if (error) {
       alert("Error saving lead");
+      console.error(error);
     } else {
       alert("Lead saved successfully");
       window.location.reload();
@@ -94,7 +101,6 @@ export default function LeadForm() {
         </div>
       )}
 
-      {/* SAME 5 BLOCKS AS ORIGINAL */}
       {/* BLOCK 1 */}
       {(!isMobile || step === 1) && (
         <Block title="Basic Info">
@@ -195,32 +201,44 @@ export default function LeadForm() {
         </Block>
       )}
 
-      {/* MOBILE NAV */}
+      {/* MOBILE NAVIGATION FIXED */}
       {isMobile && (
         <div className={`flex ${step === 1 ? "justify-end" : "justify-between"}`}>
           {step > 1 && (
-            <button type="button" onClick={() => setStep(step - 1)} className="bg-gray-300 px-4 py-2 rounded-md">
+            <button
+              type="button"
+              onClick={() => setStep(step - 1)}
+              className="bg-gray-300 px-4 py-2 rounded-md"
+            >
               Back
             </button>
           )}
+
           {step < 5 ? (
             <button
               type="button"
               disabled={!formData.branch}
               onClick={() => setStep(step + 1)}
               className={`px-4 py-2 rounded-md text-white
-                ${formData.branch ? "bg-blue-600" : "bg-gray-400 cursor-not-allowed"}`}
+                ${formData.branch
+                  ? "bg-blue-600"
+                  : "bg-gray-400 cursor-not-allowed"}`}
             >
               Next
             </button>
           ) : (
-            <button type="submit" disabled={loading} className="bg-green-600 text-white px-6 py-2 rounded-md">
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-green-600 text-white px-6 py-2 rounded-md"
+            >
               {loading ? "Saving..." : "Save Lead"}
             </button>
           )}
         </div>
       )}
 
+      {/* DESKTOP SAVE */}
       {!isMobile && (
         <div className="flex justify-end">
           <button
