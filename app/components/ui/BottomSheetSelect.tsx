@@ -63,13 +63,12 @@ export default function BottomSheetSelect({
     };
   }, [open, isMobile]);
 
-  // 🔥 Detect direction (desktop only)
   useEffect(() => {
     if (!open || isMobile || !containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
-    const dropdownHeight = 260; // approx height
+    const dropdownHeight = 260;
 
     setOpenUpward(spaceBelow < dropdownHeight);
   }, [open, isMobile]);
@@ -94,11 +93,8 @@ export default function BottomSheetSelect({
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className="
-          w-full px-3 py-2 rounded-md text-left text-sm bg-white
+          w-full h-[42px] px-3 rounded-lg text-left text-sm bg-white
           border border-gray-300
-          shadow-[0_1px_2px_rgba(0,0,0,0.06)]
-          hover:shadow-[0_4px_10px_rgba(0,0,0,0.08)]
-          hover:border-gray-400
           focus:outline-none
           focus:ring-2 focus:ring-blue-500 focus:border-blue-500
           transition
