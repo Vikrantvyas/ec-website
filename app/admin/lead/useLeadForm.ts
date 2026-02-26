@@ -2,9 +2,20 @@ import { useEffect, useState } from "react";
 
 export default function useLeadForm() {
 
-  const today = new Date();
-  const formattedDate = today.toISOString().split("T")[0];
-  const formattedTime = today.toTimeString().slice(0, 5);
+  const now = new Date();
+
+  const formattedDate = now.toISOString().split("T")[0];
+  const formattedTime = now.toTimeString().slice(0, 5);
+
+  // Auto Next Day
+  const nextDay = new Date();
+  nextDay.setDate(nextDay.getDate() + 1);
+  const nextFollowDate = nextDay.toISOString().split("T")[0];
+
+  // Auto +24 Hours
+  const nextTime = new Date();
+  nextTime.setHours(nextTime.getHours() + 24);
+  const nextFollowTime = nextTime.toTimeString().slice(0, 5);
 
   const [step, setStep] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
@@ -33,23 +44,32 @@ export default function useLeadForm() {
     whatsappOwner: "Self",
     area: "",
 
-    gender: "",
+    gender: "Male",
     age: "",
-    maritalStatus: "",
+    maritalStatus: "Single",
     profession: "Student",
 
     education: "",
     schoolTiming: "",
     contactTime: "",
 
-    department: "",
-    course: "",
-    preferredTiming: "",
+    // 🔥 Department Updated
+    department: "English",
 
-    status: "Fresh",
-    action: "",
-    nextFollowDate: "",
-    nextFollowTime: "",
+    // 🔥 Multi Select Course (Array)
+    course: ["Spoken English"],
+
+    // 🔥 Preferred Timing + Batch
+    preferredTiming: "Any Time",
+    preferredBatch: "8 AM",
+
+    leadChances: "Medium",
+    leadStage: "Lead",
+
+    action: "Call Again",
+    nextFollowDate: nextFollowDate,
+    nextFollowTime: nextFollowTime,
+
     counsellor: "",
     remark: "",
   });
@@ -79,11 +99,22 @@ export default function useLeadForm() {
 
   const branches = ["Nanda Ngr", "Bapat Sq.", "Aurobindo"];
 
+  // 🔥 Course Logic Updated
   const courseOptions =
     formData.department === "English"
       ? ["Spoken English", "Basic English", "Advanced English"]
       : formData.department === "Computer"
       ? ["Basic Computer", "Tally", "Typing", "Advanced Computer"]
+      : formData.department === "Eng & Com"
+      ? [
+          "Spoken English",
+          "Basic English",
+          "Advanced English",
+          "Basic Computer",
+          "Tally",
+          "Typing",
+          "Advanced Computer",
+        ]
       : [];
 
   const mapOptions = (arr: string[]) =>
