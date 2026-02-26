@@ -162,11 +162,14 @@ export default function LeadForm() {
           onChange={(val: string) => setFormData({ ...formData, profession: val })}
         />
 
-        <Input
+        <SelectField
           label="Education"
-          name="education"
           value={formData.education}
-          onChange={handleChange}
+          options={mapOptions([
+            "4th","5th","6th","7th","8th","9th",
+            "10th","11th","12th","Graduate","Post Graduate"
+          ])}
+          onChange={(val: string) => setFormData({ ...formData, education: val })}
         />
 
         <Input
@@ -176,18 +179,26 @@ export default function LeadForm() {
           onChange={handleChange}
         />
 
-        <Input
+        <SelectField
           label="School / College / Job Timing"
-          name="schoolTiming"
           value={formData.schoolTiming}
-          onChange={handleChange}
+          options={mapOptions(["Morning","Afternoon","Evening","Night"])}
+          onChange={(val: string) =>
+            setFormData({ ...formData, schoolTiming: val })}
         />
 
-        <Input
+        <SelectField
           label="Best Time To Contact"
-          name="contactTime"
           value={formData.contactTime}
-          onChange={handleChange}
+          options={mapOptions([
+            "8 AM - 10 AM",
+            "10 AM - 12 PM",
+            "12 AM - 4 PM",
+            "4 PM - 7 PM",
+            "7 PM - 9 PM"
+          ])}
+          onChange={(val: string) =>
+            setFormData({ ...formData, contactTime: val })}
         />
       </Block>
 
@@ -196,7 +207,7 @@ export default function LeadForm() {
         <SelectField
           label="Department"
           value={formData.department}
-          options={mapOptions(["English", "Computer", "Eng & Com"])}
+          options={mapOptions(["English","Computer","Eng & Com"])}
           onChange={(val: string) =>
             setFormData({ ...formData, department: val, course: [] })
           }
@@ -215,10 +226,9 @@ export default function LeadForm() {
         <SelectField
           label="Preferred Timing"
           value={formData.preferredTiming}
-          options={mapOptions(["Any Time", "Morning", "Noon", "Evening", "Night"])}
+          options={mapOptions(["Any Time","Morning","Noon","Evening","Night"])}
           onChange={(val: string) =>
-            setFormData({ ...formData, preferredTiming: val })
-          }
+            setFormData({ ...formData, preferredTiming: val })}
         />
 
         <SelectField
@@ -230,17 +240,16 @@ export default function LeadForm() {
             "4 PM","5 PM","6 PM","7 PM","8 PM"
           ])}
           onChange={(val: string) =>
-            setFormData({ ...formData, preferredBatch: val })
-          }
+            setFormData({ ...formData, preferredBatch: val })}
         />
       </Block>
 
-      {/* BLOCK 5 */}
+      {/* BLOCK 5 unchanged */}
       <Block title="Counselling & Action">
         <SelectField
           label="Lead Chances"
           value={formData.leadChances}
-          options={mapOptions(["Low", "Medium", "High"])}
+          options={mapOptions(["Low","Medium","High"])}
           onChange={(val: string) =>
             setFormData({ ...formData, leadChances: val })}
         />
@@ -248,7 +257,10 @@ export default function LeadForm() {
         <SelectField
           label="Lead Stage"
           value={formData.leadStage}
-          options={mapOptions(["Lead", "Demo Scheduled", "Demo Continue", "Admitted", "Alumni"])}
+          options={mapOptions([
+            "Lead","Demo Scheduled","Demo Continue",
+            "Admitted","Alumni"
+          ])}
           onChange={(val: string) =>
             setFormData({ ...formData, leadStage: val })}
         />
@@ -256,7 +268,10 @@ export default function LeadForm() {
         <SelectField
           label="Action"
           value={formData.action}
-          options={mapOptions(["Call Again", "Send Details", "Demo Arrange", "Visit Reminder"])}
+          options={mapOptions([
+            "Call Again","Send Details",
+            "Demo Arrange","Visit Reminder"
+          ])}
           onChange={(val: string) =>
             setFormData({ ...formData, action: val })}
         />

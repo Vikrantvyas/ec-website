@@ -101,11 +101,16 @@ export function SelectField({
             );
             onChange(selected);
           }}
-          className="w-full min-h-[120px] px-3 py-2 rounded-lg border border-gray-300 bg-white
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full min-h-[150px] px-3 py-3 rounded-lg border border-gray-300 bg-white
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                     space-y-2"
         >
           {options.map((o: any) => (
-            <option key={o.value} value={o.value}>
+            <option
+              key={o.value}
+              value={o.value}
+              className="py-2"
+            >
               {o.label}
             </option>
           ))}
