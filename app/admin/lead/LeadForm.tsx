@@ -1,10 +1,14 @@
 "use client";
 
+import { useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import useLeadForm from "./useLeadForm";
 import { Block, Input, SelectField, TextArea } from "@/app/components/forms/lead/LeadFormFields";
 
 export default function LeadForm() {
+
+  const studentRef = useRef<HTMLInputElement>(null);
+  const mobileRef = useRef<HTMLInputElement>(null);
 
   const {
     formData,
@@ -14,7 +18,8 @@ export default function LeadForm() {
     setLoading,
     branches,
     courseOptions,
-    mapOptions
+    mapOptions,
+    resetForm
   } = useLeadForm();
 
   const handleSubmit = async (e: any) => {
@@ -25,9 +30,19 @@ export default function LeadForm() {
       return;
     }
 
-    const confirmSave = window.confirm(
-      "Are you sure you want to save this lead?"
-    );
+    if (!formData.studentName.trim()) {
+      alert("Student Name is required.");
+      studentRef.current?.focus();
+      return;
+    }
+
+    if (!/^\d{10}$/.test(formData.mobileNumber)) {
+      alert("Enter valid 10 digit mobile number.");
+      mobileRef.current?.focus();
+      return;
+    }
+
+    const confirmSave = window.confirm("Are you sure you want to save this lead?");
     if (!confirmSave) return;
 
     setLoading(true);
@@ -61,7 +76,7 @@ export default function LeadForm() {
       lead_stage: formData.leadStage,
       action: formData.action,
       next_follow_date: formData.nextFollowDate || null,
-      next_follow_time: formData.nextFollowTime,
+      next_follow_time: formData.nextFollowTime || null,
       counsellor: formData.counsellor,
       remark: formData.remark,
     }]);
@@ -73,7 +88,7 @@ export default function LeadForm() {
       console.error(error);
     } else {
       alert("Lead saved successfully");
-      window.location.reload();
+      resetForm();
     }
   };
 
@@ -100,42 +115,78 @@ export default function LeadForm() {
         </div>
       </div>
 
-      {/* BLOCK 1 */}
-      <Block title="Basic Info">
-        <Input label="Date" name="enquiryDate" value={formData.enquiryDate} readOnly />
-        <Input label="Time" name="enquiryTime" value={formData.enquiryTime} readOnly />
-        <SelectField
-          label="Method"
-          value={formData.method}
-          options={mapOptions(["Visit", "Call", "WhatsApp", "Social Media"])}
-          onChange={(val: string) => setFormData({ ...formData, method: val })}
-        />
-        <SelectField
-          label="Channel"
-          value={formData.channel}
-          options={mapOptions(["Main Board", "Friend", "Google", "Instagram", "Banner"])}
-          onChange={(val: string) => setFormData({ ...formData, channel: val })}
-        />
-      </Block>
+      {!formData.branch ? null : (
+        <>
+          {/* BLOCK 1 unchanged */}
+<Block title="Basic Info">
+            <Input label="Date" name="enquiryDate" value={formData.enquiryDate} readOnly />
+            <Input label="Time" name="enquiryTime" value={formData.enquiryTime} readOnly />
+            <SelectField
+              label="Method"
+              value={formData.method}
+              options={mapOptions(["Visit", "Call", "WhatsApp", "Social Media"])}
+              onChange={(val: string) => setFormData({ ...formData, method: val })}
+            />
+            <SelectField
+              label="Channel"
+              value={formData.channel}
+              options={mapOptions(["Main Board", "Friend", "Google", "Instagram", "Banner"])}
+              onChange={(val: string) => setFormData({ ...formData, channel: val })}
+            />
+          </Block>
+          {/* BLOCK 2 */}
+          <Block title="Student Contact">
+            <Input label="Enquired By" name="enquiredBy" value={formData.enquiredBy} onChange={handleChange} />
 
-      {/* BLOCK 2 */}
-      <Block title="Student Contact">
-        <Input label="Enquired By" name="enquiredBy" value={formData.enquiredBy} onChange={handleChange} />
-        <SelectField
-          label="For"
-          value={formData.forWhom}
-          options={mapOptions(["Self", "Brother", "Sister", "Friend", "Child"])}
-          onChange={(val: string) => setFormData({ ...formData, forWhom: val })}
-        />
-        <Input label="Student Name" name="studentName" value={formData.studentName} onChange={handleChange} />
-        <SelectField
-          label="Area"
-          value={formData.area}
-          options={mapOptions(["Alwasa", "Vijay Nagar", "Bhawarkua", "Rajendra Nagar"])}
-          onChange={(val: string) => setFormData({ ...formData, area: val })}
-        />
-        <Input label="Mobile" name="mobileNumber" value={formData.mobileNumber} onChange={handleChange} />
-      </Block>
+            <SelectField
+              label="For"
+              value={formData.forWhom}
+              options={mapOptions(["Self", "Brother", "Sister", "Friend", "Child"])}
+              onChange={(val: string) => {
+                setFormData(prev => ({
+                  ...prev,
+                  forWhom: val,
+                  studentName: val === "Self" ? prev.enquiredBy : ""
+                }));
+
+                if (val !== "Self") {
+                  setTimeout(() => studentRef.current?.focus(), 100);
+                }
+              }}
+            />
+
+            <Input
+              label="Student Name *"
+              name="studentName"
+              value={formData.studentName}
+              onChange={handleChange}
+              ref={studentRef}
+            />
+
+            <Input
+              label="Mobile *"
+              name="mobileNumber"
+              value={formData.mobileNumber}
+              onChange={handleChange}
+              ref={mobileRef}
+            />
+
+            <Input
+              label="WhatsApp / Alternate Number"
+              name="alternateNumber"
+              value={formData.alternateNumber}
+              onChange={handleChange}
+            />
+
+            <Input label="City" name="city" value={formData.city} onChange={handleChange} />
+
+            <SelectField
+              label="Area"
+              value={formData.area}
+              options={mapOptions(["Alwasa", "Vijay Nagar", "Bhawarkua", "Rajendra Nagar"])}
+              onChange={(val: string) => setFormData({ ...formData, area: val })}
+            />
+          </Block>
 
       {/* BLOCK 3 */}
       <Block title="Profile">
@@ -295,15 +346,17 @@ export default function LeadForm() {
         />
       </Block>
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={!formData.branch || loading}
-          className="px-6 py-2 rounded-md text-white bg-blue-600"
-        >
-          {loading ? "Saving..." : "Save Lead"}
-        </button>
-      </div>
+       <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-2 rounded-md text-white bg-blue-600"
+            >
+              {loading ? "Saving..." : "Save Lead"}
+            </button>
+          </div>
+        </>
+      )}
 
     </form>
   );
