@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function useLeadForm() {
 
   const now = new Date();
 
   const formattedDate = now.toISOString().split("T")[0];
-  const formattedTime = now.toTimeString().slice(0, 5);
+  const formattedTime = now.toTimeString().slice(0, 8);
 
   const nextDay = new Date();
   nextDay.setDate(nextDay.getDate() + 1);
@@ -13,20 +13,9 @@ export default function useLeadForm() {
 
   const nextTime = new Date();
   nextTime.setHours(nextTime.getHours() + 24);
-  const nextFollowTime = nextTime.toTimeString().slice(0, 5);
+  const nextFollowTime = nextTime.toTimeString().slice(0, 8);
 
-  const [step, setStep] = useState(1);
-  const [isMobile, setIsMobile] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  const [formData, setFormData] = useState<any>({
+  const initialState = {
     branch: "",
     enquiryDate: formattedDate,
     enquiryTime: formattedTime,
@@ -37,6 +26,8 @@ export default function useLeadForm() {
     forWhom: "Self",
     studentName: "",
     mobileNumber: "",
+    alternateNumber: "",
+    city: "Indore",
     area: "",
 
     gender: "Male",
@@ -64,22 +55,33 @@ export default function useLeadForm() {
 
     counsellor: "",
     remark: "",
-  });
+  };
+
+  const [formData, setFormData] = useState<any>(initialState);
+  const [loading, setLoading] = useState(false);
+
+  const resetForm = () => {
+    setFormData(initialState);
+  };
 
   const handleChange = (e: any) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+
+    // Mobile cleaning
+    if (name === "mobileNumber" || name === "alternateNumber") {
+      value = value.replace("+91", "").replace(/\D/g, "").slice(0, 10);
+    }
 
     setFormData((prev: any) => {
       let updated = { ...prev, [name]: value };
 
-      // Auto Student Name
-      if (name === "forWhom") {
-        updated.studentName =
-          value === "Self" ? prev.enquiredBy : "";
-      }
-
+      // Auto copy EnquiredBy → StudentName (if Self)
       if (name === "enquiredBy" && prev.forWhom === "Self") {
         updated.studentName = value;
+      }
+
+      if (name === "forWhom") {
+        updated.studentName = value === "Self" ? prev.enquiredBy : "";
       }
 
       // Age Based Smart Logic
@@ -88,23 +90,38 @@ export default function useLeadForm() {
 
         if (!isNaN(ageNum)) {
 
-          // Marital
+          // Education logic (Age - 5 = Class)
+          const classLevel = ageNum - 5;
+
+          if (classLevel <= 0) {
+            updated.education = "";
+          }
+          else if (classLevel >= 1 && classLevel <= 9) {
+            updated.education = `${classLevel}th`;
+          }
+          else if (classLevel === 10) {
+            updated.education = "10th";
+          }
+          else if (classLevel === 11) {
+            updated.education = "11th";
+          }
+          else if (classLevel === 12) {
+            updated.education = "12th";
+          }
+          else if (classLevel >= 13 && classLevel <= 15) {
+            updated.education = "Graduate";
+          }
+          else if (classLevel > 15) {
+            updated.education = "Post Graduate";
+          }
+
+          // Marital & Profession logic
           updated.maritalStatus = ageNum >= 25 ? "Married" : "Single";
-
-          // Profession
           updated.profession = ageNum >= 25 ? "Job" : "Student";
-
-          // Education
-          if (ageNum <= 10) updated.education = "4th";
-          else if (ageNum <= 14) updated.education = "8th";
-          else if (ageNum <= 17) updated.education = "10th";
-          else if (ageNum <= 20) updated.education = "12th";
-          else if (ageNum <= 23) updated.education = "Graduate";
-          else updated.education = "Post Graduate";
         }
       }
 
-      // Smart Contact Time Logic
+      // Contact time auto adjust
       if (name === "schoolTiming") {
         if (value === "Morning") updated.contactTime = "2 PM - 5 PM";
         if (value === "Afternoon") updated.contactTime = "6 PM - 8 PM";
@@ -123,8 +140,7 @@ export default function useLeadForm() {
       ? ["Spoken English", "Basic English", "Advanced English"]
       : formData.department === "Computer"
       ? ["Basic Computer", "Tally", "Typing", "Advanced Computer"]
-      : formData.department === "Eng & Com"
-      ? [
+      : [
           "Spoken English",
           "Basic English",
           "Advanced English",
@@ -132,8 +148,7 @@ export default function useLeadForm() {
           "Tally",
           "Typing",
           "Advanced Computer",
-        ]
-      : [];
+        ];
 
   const mapOptions = (arr: string[]) =>
     arr.map((item) => ({ label: item, value: item }));
@@ -142,13 +157,11 @@ export default function useLeadForm() {
     formData,
     setFormData,
     handleChange,
-    step,
-    setStep,
-    isMobile,
     loading,
     setLoading,
     branches,
     courseOptions,
-    mapOptions
+    mapOptions,
+    resetForm
   };
 }
