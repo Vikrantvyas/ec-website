@@ -143,7 +143,7 @@ export default function LeadForm() {
               value={formData.forWhom}
               options={mapOptions(["Self", "Brother", "Sister", "Friend", "Child"])}
               onChange={(val: string) => {
-                setFormData(prev => ({
+                setFormData((prev: any) => ({
                   ...prev,
                   forWhom: val,
                   studentName: val === "Self" ? prev.enquiredBy : ""
