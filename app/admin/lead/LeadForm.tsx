@@ -85,13 +85,12 @@ export default function LeadForm() {
       {formData.branch && (
         <>
           <LeadMainBlocks
-            formData={formData}
-            setFormData={setFormData}
-            handleChange={handleChange}
-            branches={branches}
-            courseOptions={courseOptions}
-            mapOptions={mapOptions}
-          />
+  formData={formData}
+  setFormData={setFormData}
+  handleChange={handleChange}
+  courseOptions={courseOptions}
+  mapOptions={mapOptions}
+/>
 
           {/* BUTTON SECTION */}
           <div className="flex justify-between items-center">
