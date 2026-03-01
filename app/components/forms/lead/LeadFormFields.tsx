@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import BottomSheetSelect from "@/app/components/ui/BottomSheetSelect";
 
 export function Block({ title, children }: any) {
@@ -16,32 +17,41 @@ export function Block({ title, children }: any) {
   );
 }
 
-export function Input({
-  label,
-  name,
-  type = "text",
-  value,
-  onChange,
-  readOnly
-}: any) {
-  return (
-    <div className="flex flex-col">
-      <label className="mb-1 text-gray-600 text-sm font-medium">
-        {label}
-      </label>
+/* ✅ FIXED INPUT WITH forwardRef */
+export const Input = React.forwardRef<HTMLInputElement, any>(
+  (
+    {
+      label,
+      name,
+      type = "text",
+      value,
+      onChange,
+      readOnly
+    },
+    ref
+  ) => {
+    return (
+      <div className="flex flex-col">
+        <label className="mb-1 text-gray-600 text-sm font-medium">
+          {label}
+        </label>
 
-      <input
-        name={name}
-        type={type}
-        value={value || ""}
-        readOnly={readOnly}
-        onChange={onChange}
-        className="w-full h-[44px] px-3 rounded-lg border border-gray-300 bg-white
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-      />
-    </div>
-  );
-}
+        <input
+          ref={ref}
+          name={name}
+          type={type}
+          value={value || ""}
+          readOnly={readOnly}
+          onChange={onChange}
+          className="w-full h-[44px] px-3 rounded-lg border border-gray-300 bg-white
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+    );
+  }
+);
+
+Input.displayName = "Input";
 
 export function TextArea({
   label,
@@ -106,11 +116,7 @@ export function SelectField({
                      space-y-2"
         >
           {options.map((o: any) => (
-            <option
-              key={o.value}
-              value={o.value}
-              className="py-2"
-            >
+            <option key={o.value} value={o.value}>
               {o.label}
             </option>
           ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import useLeadForm from "./useLeadForm";
 import LeadMainBlocks from "@/app/components/forms/lead/LeadMainBlocks";
@@ -8,6 +8,9 @@ import GroupEntryModal from "@/app/components/forms/lead/GroupEntryModal";
 import { buildLeadPayload } from "@/lib/helpers/buildLeadPayload";
 
 export default function LeadForm() {
+
+  const studentRef = useRef<HTMLInputElement>(null);
+  const mobileRef = useRef<HTMLInputElement>(null);
 
   const {
     formData,
@@ -24,13 +27,29 @@ export default function LeadForm() {
   const [groupOpen, setGroupOpen] = useState(false);
   const [groupMembers, setGroupMembers] = useState<any[]>([]);
 
+  const isPrimaryValid =
+    formData.studentName?.trim() &&
+    /^\d{10}$/.test(formData.mobileNumber);
+
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    if (!formData.branch) return alert("Select branch");
-    if (!formData.studentName.trim()) return alert("Student Name required");
-    if (!/^\d{10}$/.test(formData.mobileNumber))
-      return alert("Enter valid 10 digit mobile");
+    if (!formData.branch) {
+      alert("Select branch");
+      return;
+    }
+
+    if (!formData.studentName.trim()) {
+      alert("Student Name required");
+      studentRef.current?.focus();
+      return;
+    }
+
+    if (!/^\d{10}$/.test(formData.mobileNumber)) {
+      alert("Enter valid 10 digit mobile");
+      mobileRef.current?.focus();
+      return;
+    }
 
     setLoading(true);
 
@@ -85,19 +104,25 @@ export default function LeadForm() {
       {formData.branch && (
         <>
           <LeadMainBlocks
-  formData={formData}
-  setFormData={setFormData}
-  handleChange={handleChange}
-  courseOptions={courseOptions}
-  mapOptions={mapOptions}
-/>
+            formData={formData}
+            setFormData={setFormData}
+            handleChange={handleChange}
+            courseOptions={courseOptions}
+            mapOptions={mapOptions}
+            studentRef={studentRef}
+            mobileRef={mobileRef}
+          />
 
           {/* BUTTON SECTION */}
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center pt-4">
             <button
               type="button"
+              disabled={!isPrimaryValid}
               onClick={() => setGroupOpen(true)}
-              className="px-4 py-2 border rounded-md"
+              className={`px-4 py-2 rounded-md text-white transition
+                ${isPrimaryValid
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-gray-400 cursor-not-allowed"}`}
             >
               ➕ Add Group Members
             </button>
@@ -105,7 +130,7 @@ export default function LeadForm() {
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 rounded-md text-white bg-blue-600"
+              className="px-6 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 transition"
             >
               {loading ? "Saving..." : "Save Lead"}
             </button>

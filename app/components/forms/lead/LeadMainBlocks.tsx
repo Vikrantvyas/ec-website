@@ -8,6 +8,8 @@ interface Props {
   handleChange: any;
   courseOptions: string[];
   mapOptions: any;
+  studentRef: React.RefObject<HTMLInputElement>;
+  mobileRef: React.RefObject<HTMLInputElement>;
 }
 
 export default function LeadMainBlocks({
@@ -15,7 +17,9 @@ export default function LeadMainBlocks({
   setFormData,
   handleChange,
   courseOptions,
-  mapOptions
+  mapOptions,
+  studentRef,
+  mobileRef
 }: Props) {
 
   return (
@@ -44,7 +48,12 @@ export default function LeadMainBlocks({
 
       {/* BLOCK 2 */}
       <Block title="Student Contact">
-        <Input label="Enquired By" name="enquiredBy" value={formData.enquiredBy} onChange={handleChange} />
+        <Input
+          label="Enquired By"
+          name="enquiredBy"
+          value={formData.enquiredBy}
+          onChange={handleChange}
+        />
 
         <SelectField
           label="For"
@@ -54,10 +63,35 @@ export default function LeadMainBlocks({
             setFormData({ ...formData, forWhom: val })}
         />
 
-        <Input label="Student Name *" name="studentName" value={formData.studentName} onChange={handleChange} />
-        <Input label="Mobile *" name="mobileNumber" value={formData.mobileNumber} onChange={handleChange} />
-        <Input label="WhatsApp / Alternate Number" name="alternateNumber" value={formData.alternateNumber} onChange={handleChange} />
-        <Input label="City" name="city" value={formData.city} onChange={handleChange} />
+        <Input
+          label="Student Name *"
+          name="studentName"
+          value={formData.studentName}
+          onChange={handleChange}
+          ref={studentRef}
+        />
+
+        <Input
+          label="Mobile *"
+          name="mobileNumber"
+          value={formData.mobileNumber}
+          onChange={handleChange}
+          ref={mobileRef}
+        />
+
+        <Input
+          label="WhatsApp / Alternate Number"
+          name="alternateNumber"
+          value={formData.alternateNumber}
+          onChange={handleChange}
+        />
+
+        <Input
+          label="City"
+          name="city"
+          value={formData.city}
+          onChange={handleChange}
+        />
 
         <SelectField
           label="Area"
@@ -70,7 +104,13 @@ export default function LeadMainBlocks({
 
       {/* BLOCK 3 */}
       <Block title="Profile">
-        <Input label="Age" name="age" type="number" value={formData.age} onChange={handleChange} />
+        <Input
+          label="Age"
+          name="age"
+          type="number"
+          value={formData.age}
+          onChange={handleChange}
+        />
 
         <SelectField
           label="Gender"
