@@ -6,8 +6,7 @@ interface Props {
   formData: any;
   setFormData: any;
   handleChange: any;
-  handleForChange: (val: string) => void;   // ✅ added
-  courseOptions: string[];
+    courseOptions: string[];
   mapOptions: any;
   studentRef: React.RefObject<HTMLInputElement | null>;
   mobileRef: React.RefObject<HTMLInputElement | null>;
@@ -18,7 +17,6 @@ export default function LeadMainBlocks({
   formData,
   setFormData,
   handleChange,
-  handleForChange,   // ✅ received
   courseOptions,
   mapOptions,
   studentRef,
