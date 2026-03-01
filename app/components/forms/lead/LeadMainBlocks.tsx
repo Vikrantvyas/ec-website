@@ -6,16 +6,19 @@ interface Props {
   formData: any;
   setFormData: any;
   handleChange: any;
+  handleForChange: (val: string) => void;   // ✅ added
   courseOptions: string[];
   mapOptions: any;
   studentRef: React.RefObject<HTMLInputElement | null>;
   mobileRef: React.RefObject<HTMLInputElement | null>;
+  cities: string[];
 }
 
 export default function LeadMainBlocks({
   formData,
   setFormData,
   handleChange,
+  handleForChange,   // ✅ received
   courseOptions,
   mapOptions,
   studentRef,
@@ -55,20 +58,34 @@ export default function LeadMainBlocks({
           onChange={handleChange}
         />
 
+        {/* ✅ UPDATED FOR SELECT */}
         <SelectField
-          label="For"
-          value={formData.forWhom}
-          options={mapOptions(["Self", "Brother", "Sister", "Friend", "Child"])}
-          onChange={(val: string) =>
-            setFormData({ ...formData, forWhom: val })}
-        />
+  label="For"
+  value={formData.forWhom}
+  options={mapOptions(["Self", "Brother", "Sister", "Friend", "Child"])}
+  onChange={(val: string) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      forWhom: val,
+      studentName: val === "Self" ? prev.enquiredBy : ""
+    }));
 
+    if (val !== "Self") {
+      setTimeout(() => {
+        studentRef.current?.focus();
+      }, 0);
+    }
+  }}
+/>
+
+        {/* Student Name */}
         <Input
           label="Student Name *"
           name="studentName"
           value={formData.studentName}
           onChange={handleChange}
           ref={studentRef}
+          disabled={formData.forWhom === "Self"}
         />
 
         <Input
@@ -208,6 +225,7 @@ export default function LeadMainBlocks({
           label="Preferred Batch"
           value={formData.preferredBatch}
           options={mapOptions([
+            "Any Time",
             "8 AM","9 AM","10 AM","11 AM",
             "12 PM","1 PM","2 PM","3 PM",
             "4 PM","5 PM","6 PM","7 PM","8 PM"
