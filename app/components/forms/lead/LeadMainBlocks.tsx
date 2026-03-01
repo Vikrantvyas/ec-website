@@ -8,8 +8,8 @@ interface Props {
   handleChange: any;
   courseOptions: string[];
   mapOptions: any;
-  studentRef: React.RefObject<HTMLInputElement>;
-  mobileRef: React.RefObject<HTMLInputElement>;
+  studentRef: React.RefObject<HTMLInputElement | null>;
+  mobileRef: React.RefObject<HTMLInputElement | null>;
 }
 
 export default function LeadMainBlocks({
