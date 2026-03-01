@@ -17,7 +17,7 @@ export function Block({ title, children }: any) {
   );
 }
 
-/* ✅ FIXED INPUT WITH forwardRef */
+/* ✅ UPDATED INPUT WITH disabled SUPPORT */
 export const Input = React.forwardRef<HTMLInputElement, any>(
   (
     {
@@ -26,7 +26,8 @@ export const Input = React.forwardRef<HTMLInputElement, any>(
       type = "text",
       value,
       onChange,
-      readOnly
+      readOnly,
+      disabled = false
     },
     ref
   ) => {
@@ -42,9 +43,11 @@ export const Input = React.forwardRef<HTMLInputElement, any>(
           type={type}
           value={value || ""}
           readOnly={readOnly}
+          disabled={disabled}
           onChange={onChange}
-          className="w-full h-[44px] px-3 rounded-lg border border-gray-300 bg-white
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className={`w-full h-[44px] px-3 rounded-lg border border-gray-300
+                     ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"}
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
         />
       </div>
     );

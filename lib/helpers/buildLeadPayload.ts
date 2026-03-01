@@ -7,9 +7,13 @@ export const buildLeadPayload = (formData: any, override?: any) => {
     channel: formData.channel,
     enquired_by: formData.enquiredBy,
     for_whom: formData.forWhom,
+
     student_name: override?.student_name || formData.studentName,
     mobile_number: override?.mobile_number || formData.mobileNumber,
+    alternate_number: formData.alternateNumber || null,
+    city: formData.city || null,
     area: formData.area,
+
     gender: formData.gender,
     age: formData.age ? parseInt(formData.age) : null,
     marital_status: formData.maritalStatus,
@@ -18,17 +22,21 @@ export const buildLeadPayload = (formData: any, override?: any) => {
     school_college_job: formData.schoolCollegeJob,
     school_timing: formData.schoolTiming,
     contact_time: formData.contactTime,
+
     department: formData.department,
     course: Array.isArray(formData.course)
       ? formData.course.join(", ")
       : formData.course,
     preferred_timing: formData.preferredTiming,
     preferred_batch: formData.preferredBatch,
+
     lead_chances: formData.leadChances,
     lead_stage: formData.leadStage,
+
     action: formData.action,
     next_follow_date: formData.nextFollowDate || null,
     next_follow_time: formData.nextFollowTime || null,
+
     counsellor: formData.counsellor,
     remark: formData.remark,
   };

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function useLeadForm() {
 
@@ -44,7 +45,7 @@ export default function useLeadForm() {
     course: ["Spoken English"],
 
     preferredTiming: "Any Time",
-    preferredBatch: "8 AM",
+    preferredBatch: "Any Time",   // ✅ updated
 
     leadChances: "Medium",
     leadStage: "Lead",
@@ -59,6 +60,22 @@ export default function useLeadForm() {
 
   const [formData, setFormData] = useState<any>(initialState);
   const [loading, setLoading] = useState(false);
+  const [cities, setCities] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchCities();
+  }, []);
+
+  const fetchCities = async () => {
+    const { data, error } = await supabase
+      .from("cities")
+      .select("name")
+      .order("name", { ascending: true });
+
+    if (!error && data) {
+      setCities(data.map((c) => c.name));
+    }
+  };
 
   const resetForm = () => {
     setFormData(initialState);
@@ -67,7 +84,6 @@ export default function useLeadForm() {
   const handleChange = (e: any) => {
     let { name, value } = e.target;
 
-    // Mobile cleaning
     if (name === "mobileNumber" || name === "alternateNumber") {
       value = value.replace("+91", "").replace(/\D/g, "").slice(0, 10);
     }
@@ -75,47 +91,40 @@ export default function useLeadForm() {
     setFormData((prev: any) => {
       let updated = { ...prev, [name]: value };
 
-      // Auto copy EnquiredBy → StudentName (if Self)
+      // Self logic for student name
       if (name === "enquiredBy" && prev.forWhom === "Self") {
         updated.studentName = value;
       }
 
       if (name === "forWhom") {
-        updated.studentName = value === "Self" ? prev.enquiredBy : "";
-      }
+  if (value === "Self") {
+    updated.studentName = prev.enquiredBy;
+  } else {
+    updated.studentName = "";
+    setTimeout(() => {
+      const el = document.querySelector(
+        'input[name="studentName"]'
+      ) as HTMLInputElement | null;
+      el?.focus();
+    }, 0);
+  }
+}
 
-      // Age Based Smart Logic
+      // Age logic
       if (name === "age") {
         const ageNum = parseInt(value);
 
         if (!isNaN(ageNum)) {
-
-          // Education logic (Age - 5 = Class)
           const classLevel = ageNum - 5;
 
-          if (classLevel <= 0) {
-            updated.education = "";
-          }
-          else if (classLevel >= 1 && classLevel <= 9) {
-            updated.education = `${classLevel}th`;
-          }
-          else if (classLevel === 10) {
-            updated.education = "10th";
-          }
-          else if (classLevel === 11) {
-            updated.education = "11th";
-          }
-          else if (classLevel === 12) {
-            updated.education = "12th";
-          }
-          else if (classLevel >= 13 && classLevel <= 15) {
-            updated.education = "Graduate";
-          }
-          else if (classLevel > 15) {
-            updated.education = "Post Graduate";
-          }
+          if (classLevel <= 0) updated.education = "";
+          else if (classLevel >= 1 && classLevel <= 9) updated.education = `${classLevel}th`;
+          else if (classLevel === 10) updated.education = "10th";
+          else if (classLevel === 11) updated.education = "11th";
+          else if (classLevel === 12) updated.education = "12th";
+          else if (classLevel >= 13 && classLevel <= 15) updated.education = "Graduate";
+          else if (classLevel > 15) updated.education = "Post Graduate";
 
-          // Marital & Profession logic
           updated.maritalStatus = ageNum >= 25 ? "Married" : "Single";
           updated.profession = ageNum >= 25 ? "Job" : "Student";
         }
@@ -162,6 +171,8 @@ export default function useLeadForm() {
     branches,
     courseOptions,
     mapOptions,
-    resetForm
+    cities,
+    resetForm,
+    fetchCities
   };
 }

@@ -21,7 +21,9 @@ export default function LeadForm() {
     branches,
     courseOptions,
     mapOptions,
-    resetForm
+    cities,
+    resetForm,
+    fetchCities
   } = useLeadForm();
 
   const [groupOpen, setGroupOpen] = useState(false);
@@ -67,15 +69,43 @@ export default function LeadForm() {
         await supabase.from("leads").insert(groupPayload);
       }
 
+      if (formData.city?.trim()) {
+        const { error } = await supabase
+          .from("cities")
+          .insert([{ name: formData.city.trim() }]);
+
+        if (error && !error.message.includes("duplicate")) {
+          console.error(error);
+        }
+      }
+
+      await fetchCities();
+
       alert("Lead saved successfully");
       resetForm();
       setGroupMembers([]);
+
     } catch (err) {
       console.error(err);
       alert("Error saving lead");
     }
 
     setLoading(false);
+  };
+
+  /* ✅ CENTRALIZED FOR CHANGE HANDLER */
+  const handleForChange = (val: string) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      forWhom: val,
+      studentName: val === "Self" ? prev.enquiredBy : ""
+    }));
+
+    if (val !== "Self") {
+      setTimeout(() => {
+        studentRef.current?.focus();
+      }, 0);
+    }
   };
 
   return (
@@ -111,9 +141,9 @@ export default function LeadForm() {
             mapOptions={mapOptions}
             studentRef={studentRef}
             mobileRef={mobileRef}
+            cities={cities}
           />
 
-          {/* BUTTON SECTION */}
           <div className="flex justify-between items-center pt-4">
             <button
               type="button"
