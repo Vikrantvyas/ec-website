@@ -6,6 +6,16 @@ type Props = {
   onSaved: () => void;
 };
 
+type User = {
+  id: number;
+  name: string;
+  mobile: string;
+  email: string;
+  branch: string;
+  role: string;
+  status: string;
+};
+
 export default function UserForm({ onSaved }: Props) {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -14,10 +24,13 @@ export default function UserForm({ onSaved }: Props) {
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("Active");
 
+  const branches = ["Indore Vijay Nagar", "Indore Bhawarkua", "Online"];
+  const roles = ["Admin", "Counsellor", "Teacher"];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newUser = {
+    const newUser: User = {
       id: Date.now(),
       name,
       mobile,
@@ -67,19 +80,27 @@ export default function UserForm({ onSaved }: Props) {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        <input
+        <select
           className="border rounded-lg px-3 py-2"
-          placeholder="Branch"
           value={branch}
           onChange={(e) => setBranch(e.target.value)}
-        />
+        >
+          <option value="">Select Branch</option>
+          {branches.map((b) => (
+            <option key={b}>{b}</option>
+          ))}
+        </select>
 
-        <input
+        <select
           className="border rounded-lg px-3 py-2"
-          placeholder="Role"
           value={role}
           onChange={(e) => setRole(e.target.value)}
-        />
+        >
+          <option value="">Select Role</option>
+          {roles.map((r) => (
+            <option key={r}>{r}</option>
+          ))}
+        </select>
 
         <select
           className="border rounded-lg px-3 py-2"
