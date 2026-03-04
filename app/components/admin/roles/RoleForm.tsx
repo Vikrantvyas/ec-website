@@ -1,50 +1,68 @@
 "use client";
 
-import { useMemo } from "react";
-import { getBranches } from "@/lib/dummyBranchStore";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
+type Branch = {
+  id: number;
+  name: string;
+  status: "Active" | "Inactive";
+};
 
 type Props = {
   roleName: string;
   setRoleName: (v: string) => void;
-  selectedBranches: string[];
+  selectedBranches?: string[];
   setSelectedBranches: (v: string[]) => void;
-  selectedPermissions: string[];
+  selectedPermissions?: string[];
   setSelectedPermissions: (v: string[]) => void;
   editing: boolean;
   onSave: () => void;
   onCancel: () => void;
 };
 
-const dummyPermissions = [
+const systemPages = [
   "Dashboard",
-  "Leads View",
-  "Add Lead",
+  "Lead",
   "Admission",
+  "Enquiry",
+  "Calling",
   "Students",
   "Attendance",
   "Fees",
   "Reports",
   "Masters",
+  "Roles",
   "Settings",
-  "Role Management",
-  "User Management",
 ];
 
 export default function RoleForm({
   roleName,
   setRoleName,
-  selectedBranches,
+  selectedBranches = [],
   setSelectedBranches,
-  selectedPermissions,
+  selectedPermissions = [],
   setSelectedPermissions,
   editing,
   onSave,
   onCancel,
 }: Props) {
 
-  const branches = useMemo(() => {
-    return getBranches().filter((b) => b.status === "Active");
+  const [branches, setBranches] = useState<Branch[]>([]);
+
+  useEffect(() => {
+    loadBranches();
   }, []);
+
+  const loadBranches = async () => {
+    const { data } = await supabase
+      .from("branches")
+      .select("*")
+      .eq("status", "Active")
+      .order("name");
+
+    if (data) setBranches(data);
+  };
 
   const toggleBranch = (branch: string) => {
     setSelectedBranches(
@@ -99,7 +117,7 @@ export default function RoleForm({
       <div>
         <h2 className="font-semibold mb-2">Page Permissions</h2>
         <div className="grid md:grid-cols-3 gap-3">
-          {dummyPermissions.map((permission) => (
+          {systemPages.map((permission) => (
             <label
               key={permission}
               className="flex items-center gap-2 border rounded-md p-2 cursor-pointer"
