@@ -21,6 +21,7 @@ import {
   GraduationCap,
   ChevronRight,
   PhoneCall,
+  ShieldCheck,
 } from "lucide-react";
 
 const menuItems = [
@@ -34,6 +35,7 @@ const menuItems = [
   { name: "Fees", href: "/admin/fees", icon: CreditCard },
   { name: "Reports", href: "/admin/reports", icon: FileBarChart },
   { name: "Masters", href: "/admin/masters", icon: Database },
+  { name: "Roles", href: "/admin/roles", icon: ShieldCheck },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -124,7 +126,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         {/* DESKTOP HEADER */}
         <div className="hidden md:flex items-center justify-between px-6 h-12 bg-[#0a1f44] text-white">
           
-          {/* BREADCRUMB */}
           <div className="flex items-center text-sm font-semibold gap-2">
             <span>Admin Panel</span>
             {pathname !== "/admin" && (
