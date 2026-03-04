@@ -1,7 +1,19 @@
-export default function mastersPage() {
+"use client";
+
+import PermissionGuard from "@/app/components/admin/PermissionGuard";
+
+export default function MastersPage() {
+
   return (
-    <div>
-      <h1>Masters</h1>
-    </div>
+
+    <PermissionGuard page="Masters">
+
+      <div>
+        <h1>Masters</h1>
+      </div>
+
+    </PermissionGuard>
+
   );
+
 }

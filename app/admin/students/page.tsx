@@ -1,7 +1,19 @@
-export default function studentsPage() {
+"use client";
+
+import PermissionGuard from "@/app/components/admin/PermissionGuard";
+
+export default function StudentsPage() {
+
   return (
-    <div>
-      <h1>Students</h1>
-    </div>
+
+    <PermissionGuard page="Students">
+
+      <div>
+        <h1>Students</h1>
+      </div>
+
+    </PermissionGuard>
+
   );
+
 }

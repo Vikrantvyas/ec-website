@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import FiltersBar from "@/app/components/admin/calling/FiltersBar";
 import LeadCard from "@/app/components/admin/calling/LeadCard";
 
@@ -25,8 +26,6 @@ type Lead = {
   followUps: FollowUp[];
   attendanceLast10: AttendanceSignal[];
 };
-
-/* ====== DUMMY FOLLOW UPS (5+) ====== */
 
 const generateFollowUps = (): FollowUp[] => [
   {
@@ -84,10 +83,9 @@ const dummyLeads: Lead[] = Array.from({ length: 10 }).map((_, i) => {
 });
 
 export default function CallingPage() {
+
   const [leads, setLeads] = useState(dummyLeads);
   const [expandedId, setExpandedId] = useState<number | null>(null);
-
-  /* ====== FILTER STATES (Required for FiltersBar) ====== */
 
   const [search, setSearch] = useState("");
   const [filter1, setFilter1] = useState("All");
@@ -95,6 +93,7 @@ export default function CallingPage() {
   const [filter3, setFilter3] = useState("All");
 
   const filteredLeads = useMemo(() => {
+
     let data = [...leads];
 
     data.sort(
@@ -110,6 +109,7 @@ export default function CallingPage() {
     }
 
     return data;
+
   }, [leads, search]);
 
   const addFollowUp = (
@@ -121,6 +121,7 @@ export default function CallingPage() {
       status: string;
     }
   ) => {
+
     setLeads((prev) =>
       prev.map((lead) =>
         lead.id === leadId
@@ -142,33 +143,42 @@ export default function CallingPage() {
     );
 
     setExpandedId(null);
+
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
 
-      <FiltersBar
-        filter1={filter1}
-        setFilter1={setFilter1}
-        filter2={filter2}
-        setFilter2={setFilter2}
-        filter3={filter3}
-        setFilter3={setFilter3}
-        search={search}
-        setSearch={setSearch}
-      />
+    <PermissionGuard page="Calling">
 
-      <div className="p-3 space-y-3 pb-24">
-        {filteredLeads.map((lead) => (
-          <LeadCard
-            key={lead.id}
-            lead={lead}
-            expandedId={expandedId}
-            setExpandedId={setExpandedId}
-            addFollowUp={addFollowUp}
-          />
-        ))}
+      <div className="min-h-screen bg-gray-50">
+
+        <FiltersBar
+          filter1={filter1}
+          setFilter1={setFilter1}
+          filter2={filter2}
+          setFilter2={setFilter2}
+          filter3={filter3}
+          setFilter3={setFilter3}
+          search={search}
+          setSearch={setSearch}
+        />
+
+        <div className="p-3 space-y-3 pb-24">
+          {filteredLeads.map((lead) => (
+            <LeadCard
+              key={lead.id}
+              lead={lead}
+              expandedId={expandedId}
+              setExpandedId={setExpandedId}
+              addFollowUp={addFollowUp}
+            />
+          ))}
+        </div>
+
       </div>
-    </div>
+
+    </PermissionGuard>
+
   );
+
 }
