@@ -3,7 +3,8 @@
 import { ReactNode, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, getUserPermissions } from "@/lib/supabaseClient";
+import { PermissionProvider, usePermissions } from "@/lib/permissionsContext";
 import {
   LayoutDashboard,
   UserPlus,
@@ -39,31 +40,43 @@ const menuItems = [
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+function AdminLayoutContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { setPermissions, permissions } = usePermissions();
+
   const [loading, setLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isLoginPage = pathname === "/admin/login";
+  const publicRoutes = [
+    "/admin/login",
+    "/admin/signup",
+    "/admin/forgot-password",
+  ];
+
+  const isPublicPage = publicRoutes.includes(pathname);
 
   useEffect(() => {
     const checkAuth = async () => {
-      if (isLoginPage) {
+
+      if (isPublicPage) {
         setLoading(false);
         return;
       }
 
       const { data } = await supabase.auth.getSession();
+
       if (!data.session) {
         router.push("/admin/login");
       } else {
+        const perms = await getUserPermissions();
+        setPermissions(perms);
         setLoading(false);
       }
     };
 
     checkAuth();
-  }, [router, isLoginPage]);
+  }, [router, pathname, setPermissions]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -78,7 +91,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  if (isLoginPage) return <>{children}</>;
+  if (isPublicPage) return <>{children}</>;
+
+  const filteredMenu = menuItems.filter((item) =>
+    permissions.includes(item.name)
+  );
 
   const currentPathName =
     pathname.split("/")[2]?.charAt(0).toUpperCase() +
@@ -89,7 +106,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
       {/* ICON BAR DESKTOP */}
       <aside className="hidden md:flex w-14 bg-[#0a1f44] flex-col items-center py-3 space-y-3">
-        {menuItems.map((item) => {
+        {filteredMenu.map((item) => {
           const Icon = item.icon;
           const isActive =
             item.href === "/admin"
@@ -125,7 +142,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         {/* DESKTOP HEADER */}
         <div className="hidden md:flex items-center justify-between px-6 h-12 bg-[#0a1f44] text-white">
-          
+
           <div className="flex items-center text-sm font-semibold gap-2">
             <span>Admin Panel</span>
             {pathname !== "/admin" && (
@@ -195,7 +212,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {menuItems.map((item) => {
+              {filteredMenu.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
@@ -231,5 +248,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminLayout({ children }: { children: ReactNode }) {
+  return (
+    <PermissionProvider>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </PermissionProvider>
   );
 }
