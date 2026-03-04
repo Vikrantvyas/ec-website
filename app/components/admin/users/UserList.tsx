@@ -18,6 +18,7 @@ type User = {
 
 export default function UserList({ refreshKey }: Props) {
   const [users, setUsers] = useState<User[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const loadUsers = () => {
     const data = JSON.parse(localStorage.getItem("users") || "[]");
@@ -32,6 +33,14 @@ export default function UserList({ refreshKey }: Props) {
     const filtered = users.filter((u) => u.id !== id);
     localStorage.setItem("users", JSON.stringify(filtered));
     setUsers(filtered);
+  };
+
+  const updateUser = (id: number, field: keyof User, value: string) => {
+    const updated = users.map((u) =>
+      u.id === id ? { ...u, [field]: value } : u
+    );
+    setUsers(updated);
+    localStorage.setItem("users", JSON.stringify(updated));
   };
 
   return (
@@ -54,13 +63,72 @@ export default function UserList({ refreshKey }: Props) {
         <tbody>
           {users.map((u) => (
             <tr key={u.id} className="border-b">
-              <td className="py-2">{u.name}</td>
-              <td>{u.mobile}</td>
-              <td>{u.email}</td>
+
+              <td className="py-2">
+                {editingId === u.id ? (
+                  <input
+                    className="border px-2 py-1 rounded"
+                    value={u.name}
+                    onChange={(e) =>
+                      updateUser(u.id, "name", e.target.value)
+                    }
+                  />
+                ) : (
+                  u.name
+                )}
+              </td>
+
+              <td>
+                {editingId === u.id ? (
+                  <input
+                    className="border px-2 py-1 rounded"
+                    value={u.mobile}
+                    onChange={(e) =>
+                      updateUser(u.id, "mobile", e.target.value)
+                    }
+                  />
+                ) : (
+                  u.mobile
+                )}
+              </td>
+
+              <td>
+                {editingId === u.id ? (
+                  <input
+                    className="border px-2 py-1 rounded"
+                    value={u.email}
+                    onChange={(e) =>
+                      updateUser(u.id, "email", e.target.value)
+                    }
+                  />
+                ) : (
+                  u.email
+                )}
+              </td>
+
               <td>{u.branch}</td>
+
               <td>{u.role}</td>
+
               <td>{u.status}</td>
-              <td className="text-right">
+
+              <td className="text-right space-x-3">
+                {editingId === u.id ? (
+                  <button
+                    className="text-green-600"
+                    onClick={() => setEditingId(null)}
+                  >
+                    Save
+                  </button>
+                ) : (
+                  <button
+                    className="text-blue-600"
+                    onClick={() => setEditingId(u.id)}
+                  >
+                    Edit
+                  </button>
+                )}
+
                 <button
                   onClick={() => deleteUser(u.id)}
                   className="text-red-600"
@@ -68,6 +136,7 @@ export default function UserList({ refreshKey }: Props) {
                   Delete
                 </button>
               </td>
+
             </tr>
           ))}
 
@@ -78,6 +147,7 @@ export default function UserList({ refreshKey }: Props) {
               </td>
             </tr>
           )}
+
         </tbody>
       </table>
     </div>
