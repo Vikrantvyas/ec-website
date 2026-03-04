@@ -7,6 +7,16 @@ type Props = {
   refreshKey: number;
 };
 
+type Branch = {
+  id: string;
+  name: string;
+};
+
+type Role = {
+  id: string;
+  name: string;
+};
+
 type User = {
   id: string;
   name: string;
@@ -20,6 +30,10 @@ type User = {
 export default function UserList({ refreshKey }: Props) {
 
   const [users, setUsers] = useState<User[]>([]);
+  const [branches,setBranches] = useState<Branch[]>([]);
+  const [roles,setRoles] = useState<Role[]>([]);
+  const [branchId,setBranchId] = useState("");
+  const [roleId,setRoleId] = useState("");
 
   const loadUsers = async () => {
 
@@ -34,29 +48,76 @@ export default function UserList({ refreshKey }: Props) {
         branch:branches(name),
         role:roles(name)
       `)
-      .order("created_at", { ascending: false });
+      .order("created_at",{ascending:false});
 
-    if (data) setUsers(data as unknown as User[]);
+    if(data) setUsers(data as unknown as User[]);
   };
 
-  useEffect(() => {
-    loadUsers();
-  }, [refreshKey]);
+  const loadBranches = async () => {
 
-  const deleteUser = async (id: string) => {
+    const { data } = await supabase
+      .from("branches")
+      .select("id,name")
+      .eq("status","Active")
+      .order("name");
+
+    if(data) setBranches(data);
+  };
+
+  const loadRoles = async () => {
+
+    const { data } = await supabase
+      .from("roles")
+      .select("id,name")
+      .order("name");
+
+    if(data) setRoles(data);
+  };
+
+  useEffect(()=>{
+    loadUsers();
+    loadBranches();
+    loadRoles();
+  },[refreshKey]);
+
+  const approveUser = async (id:string)=>{
+
+    if(!branchId || !roleId){
+      alert("Select branch and role first");
+      return;
+    }
+
+    await supabase
+      .from("users")
+      .update({
+        branch_id:branchId,
+        role_id:roleId,
+        status:"Active"
+      })
+      .eq("id",id);
+
+    alert("User approved");
+
+    setBranchId("");
+    setRoleId("");
+
+    loadUsers();
+  };
+
+  const deleteUser = async (id:string)=>{
 
     const confirmDelete = confirm(
       "Are you sure you want to delete this user?"
     );
 
-    if (!confirmDelete) return;
+    if(!confirmDelete) return;
 
     await supabase
       .from("users")
       .delete()
-      .eq("id", id);
+      .eq("id",id);
 
-    alert("User deleted successfully");
+    alert("User deleted");
 
     loadUsers();
   };
@@ -84,7 +145,7 @@ export default function UserList({ refreshKey }: Props) {
 
         <tbody>
 
-          {users.map((u) => (
+          {users.map((u)=>(
 
             <tr key={u.id} className="border-b">
 
@@ -94,16 +155,83 @@ export default function UserList({ refreshKey }: Props) {
 
               <td>{u.email}</td>
 
-              <td>{u.branch?.name || "-"}</td>
+              <td>
 
-              <td>{u.role?.name || "-"}</td>
+                {u.status==="Pending" ? (
 
-              <td>{u.status}</td>
+                  <select
+                    className="border px-2 py-1"
+                    onChange={(e)=>setBranchId(e.target.value)}
+                  >
 
-              <td className="text-right">
+                    <option value="">Select</option>
+
+                    {branches.map((b)=>(
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+
+                  </select>
+
+                ):(
+                  u.branch?.name || "-"
+                )}
+
+              </td>
+
+              <td>
+
+                {u.status==="Pending" ? (
+
+                  <select
+                    className="border px-2 py-1"
+                    onChange={(e)=>setRoleId(e.target.value)}
+                  >
+
+                    <option value="">Select</option>
+
+                    {roles.map((r)=>(
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+
+                  </select>
+
+                ):(
+                  u.role?.name || "-"
+                )}
+
+              </td>
+
+              <td>
+
+                {u.status==="Pending" ? (
+                  <span className="text-orange-600">
+                    Pending
+                  </span>
+                ):(
+                  <span className="text-green-600">
+                    Active
+                  </span>
+                )}
+
+              </td>
+
+              <td className="text-right space-x-2">
+
+                {u.status==="Pending" && (
+                  <button
+                    onClick={()=>approveUser(u.id)}
+                    className="text-blue-600"
+                  >
+                    Approve
+                  </button>
+                )}
 
                 <button
-                  onClick={() => deleteUser(u.id)}
+                  onClick={()=>deleteUser(u.id)}
                   className="text-red-600"
                 >
                   Delete
@@ -114,14 +242,6 @@ export default function UserList({ refreshKey }: Props) {
             </tr>
 
           ))}
-
-          {users.length === 0 && (
-            <tr>
-              <td colSpan={7} className="py-6 text-center text-gray-500">
-                No users found
-              </td>
-            </tr>
-          )}
 
         </tbody>
 
