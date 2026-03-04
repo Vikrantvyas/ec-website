@@ -13,8 +13,8 @@ type User = {
   mobile: string;
   email: string;
   status: string;
-  branches?: { name: string };
-  roles?: { name: string };
+  branches?: { name: string }[];
+  roles?: { name: string }[];
 };
 
 export default function UserList({ refreshKey }: Props) {
@@ -36,7 +36,7 @@ export default function UserList({ refreshKey }: Props) {
       `)
       .order("created_at", { ascending: false });
 
-    if (data) setUsers(data);
+    if (data) setUsers(data as User[]);
   };
 
   useEffect(() => {
@@ -94,9 +94,9 @@ export default function UserList({ refreshKey }: Props) {
 
               <td>{u.email}</td>
 
-              <td>{u.branches?.name || "-"}</td>
+              <td>{u.branches?.[0]?.name || "-"}</td>
 
-              <td>{u.roles?.name || "-"}</td>
+              <td>{u.roles?.[0]?.name || "-"}</td>
 
               <td>{u.status}</td>
 
