@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import PermissionGuard from "@/app/components/admin/PermissionGuard";
 
 type Student = {
   id: string;
@@ -54,6 +55,7 @@ const studentsData: Student[] = [
 ];
 
 export default function AttendancePage() {
+
   const [selectedBranch, setSelectedBranch] = useState("All Branches");
   const [selectedBatch, setSelectedBatch] = useState<string | null>(null);
   const [attendanceState, setAttendanceState] = useState<Record<string, boolean>>({});
@@ -76,144 +78,168 @@ export default function AttendancePage() {
   }, [filteredStudents, attendanceState]);
 
   return (
-    <div className="bg-white min-h-screen">
 
-      <div className="p-4 max-w-full">
+    <PermissionGuard page="Attendance">
 
-        <div className="flex gap-2 overflow-x-auto mb-4">
-          {branches.map((branch) => (
-            <button
-              key={branch}
-              onClick={() => {
-                setSelectedBranch(branch);
-                setSelectedBatch(null);
-              }}
-              className={`px-4 py-2 rounded-full whitespace-nowrap text-sm ${
-                selectedBranch === branch
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200"
-              }`}
-            >
-              {branch}
-            </button>
-          ))}
-        </div>
+      <div className="bg-white min-h-screen">
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="p-4 max-w-full">
 
-          <div className="md:col-span-1 bg-white p-4 rounded-xl border">
-            <h2 className="font-semibold mb-3">Batches</h2>
-            <div className="space-y-3">
-              {filteredBatches.map((batch) => (
-                <div
-                  key={batch.id}
-                  onClick={() => setSelectedBatch(batch.id)}
-                  className={`p-3 rounded-lg border cursor-pointer ${
-                    selectedBatch === batch.id
-                      ? "border-blue-500 bg-blue-50"
-                      : ""
-                  }`}
-                >
-                  <div className="font-medium">{batch.name}</div>
-                  <div className="text-xs text-gray-500">
-                    {batch.branch} • {batch.time}
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="flex gap-2 overflow-x-auto mb-4">
+            {branches.map((branch) => (
+              <button
+                key={branch}
+                onClick={() => {
+                  setSelectedBranch(branch);
+                  setSelectedBatch(null);
+                }}
+                className={`px-4 py-2 rounded-full whitespace-nowrap text-sm ${
+                  selectedBranch === branch
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                {branch}
+              </button>
+            ))}
           </div>
 
-          <div className="md:col-span-2 bg-white p-4 rounded-xl border">
+          <div className="grid md:grid-cols-3 gap-6">
 
-            {!selectedBatch && (
-              <div className="text-gray-400 text-center py-20">
-                Select a batch to mark attendance
-              </div>
-            )}
+            <div className="md:col-span-1 bg-white p-4 rounded-xl border">
+              <h2 className="font-semibold mb-3">Batches</h2>
 
-            {selectedBatch && (
-              <>
-                <div className="flex justify-between items-center mb-4">
-                  <div className="font-semibold">
-                    Present: {presentCount} / {filteredStudents.length}
+              <div className="space-y-3">
+                {filteredBatches.map((batch) => (
+                  <div
+                    key={batch.id}
+                    onClick={() => setSelectedBatch(batch.id)}
+                    className={`p-3 rounded-lg border cursor-pointer ${
+                      selectedBatch === batch.id
+                        ? "border-blue-500 bg-blue-50"
+                        : ""
+                    }`}
+                  >
+                    <div className="font-medium">{batch.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {batch.branch} • {batch.time}
+                    </div>
                   </div>
+                ))}
+              </div>
+
+            </div>
+
+            <div className="md:col-span-2 bg-white p-4 rounded-xl border">
+
+              {!selectedBatch && (
+                <div className="text-gray-400 text-center py-20">
+                  Select a batch to mark attendance
                 </div>
+              )}
 
-                <div className="space-y-4">
-                  {filteredStudents.map((student, index) => {
-                    const isPresent = attendanceState[student.id] !== false;
+              {selectedBatch && (
+                <>
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="font-semibold">
+                      Present: {presentCount} / {filteredStudents.length}
+                    </div>
+                  </div>
 
-                    return (
-                      <div
-                        key={student.id}
-                        className={`p-4 rounded-xl border ${
-                          !isPresent ? "opacity-50" : ""
-                        }`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div
-                              className={`font-semibold ${
-                                student.dueAmount > 0 ? "text-red-600" : ""
+                  <div className="space-y-4">
+
+                    {filteredStudents.map((student, index) => {
+
+                      const isPresent = attendanceState[student.id] !== false;
+
+                      return (
+
+                        <div
+                          key={student.id}
+                          className={`p-4 rounded-xl border ${
+                            !isPresent ? "opacity-50" : ""
+                          }`}
+                        >
+
+                          <div className="flex justify-between items-start">
+
+                            <div>
+
+                              <div
+                                className={`font-semibold ${
+                                  student.dueAmount > 0 ? "text-red-600" : ""
+                                }`}
+                              >
+                                {index + 1}. {student.name} {"⭐".repeat(student.reviewStars)}
+                              </div>
+
+                              <div className="text-xs text-gray-500 mt-1">
+                                {student.joiningDate} • {student.course} • ₹
+                                {student.dueAmount > 0
+                                  ? `${student.dueAmount} Due`
+                                  : "Fees Clear"}
+                              </div>
+
+                              <div className="text-xs text-gray-400 mt-1">
+                                {student.batch} • {student.teacher}
+                              </div>
+
+                              <div className="flex gap-1 mt-2">
+                                {student.last15Days.map((day, i) => (
+                                  <span
+                                    key={i}
+                                    className={`w-2 h-2 rounded-full ${
+                                      day === "P"
+                                        ? "bg-green-500"
+                                        : "bg-red-500"
+                                    }`}
+                                  ></span>
+                                ))}
+                              </div>
+
+                            </div>
+
+                            <button
+                              onClick={() =>
+                                setAttendanceState((prev) => ({
+                                  ...prev,
+                                  [student.id]: !isPresent,
+                                }))
+                              }
+                              className={`w-14 h-7 rounded-full flex items-center px-1 transition ${
+                                isPresent ? "bg-green-500" : "bg-red-500"
                               }`}
                             >
-                              {index + 1}. {student.name}{" "}
-                              {"⭐".repeat(student.reviewStars)}
-                            </div>
+                              <div
+                                className={`w-5 h-5 bg-white rounded-full transform transition ${
+                                  isPresent ? "translate-x-7" : ""
+                                }`}
+                              ></div>
+                            </button>
 
-                            <div className="text-xs text-gray-500 mt-1">
-                              {student.joiningDate} • {student.course} • ₹
-                              {student.dueAmount > 0
-                                ? `${student.dueAmount} Due`
-                                : "Fees Clear"}
-                            </div>
-
-                            <div className="text-xs text-gray-400 mt-1">
-                              {student.batch} • {student.teacher}
-                            </div>
-
-                            <div className="flex gap-1 mt-2">
-                              {student.last15Days.map((day, i) => (
-                                <span
-                                  key={i}
-                                  className={`w-2 h-2 rounded-full ${
-                                    day === "P"
-                                      ? "bg-green-500"
-                                      : "bg-red-500"
-                                  }`}
-                                ></span>
-                              ))}
-                            </div>
                           </div>
 
-                          <button
-                            onClick={() =>
-                              setAttendanceState((prev) => ({
-                                ...prev,
-                                [student.id]: !isPresent,
-                              }))
-                            }
-                            className={`w-14 h-7 rounded-full flex items-center px-1 transition ${
-                              isPresent ? "bg-green-500" : "bg-red-500"
-                            }`}
-                          >
-                            <div
-                              className={`w-5 h-5 bg-white rounded-full transform transition ${
-                                isPresent ? "translate-x-7" : ""
-                              }`}
-                            ></div>
-                          </button>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
+
+                      );
+
+                    })}
+
+                  </div>
+
+                </>
+              )}
+
+            </div>
+
           </div>
 
         </div>
+
       </div>
-    </div>
+
+    </PermissionGuard>
+
   );
+
 }

@@ -1,27 +1,36 @@
 "use client";
 
 import { useState } from "react";
+import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import BranchForm from "@/app/components/admin/branches/BranchForm";
 import BranchList from "@/app/components/admin/branches/BranchList";
 
 export default function BranchesPage() {
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleSaved = () => {
-    setRefreshKey((prev) => prev + 1);
+  const [refreshKey,setRefreshKey] = useState(0);
+
+  const handleSaved = ()=>{
+    setRefreshKey((prev)=>prev+1);
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
 
-      <h1 className="text-2xl font-bold">
-        Branch Management
-      </h1>
+    <PermissionGuard page="Masters">
 
-      <BranchForm onSaved={handleSaved} />
+      <div className="max-w-4xl mx-auto space-y-8">
 
-      <BranchList refreshKey={refreshKey} />
+        <h1 className="text-2xl font-bold">
+          Branch Management
+        </h1>
 
-    </div>
+        <BranchForm onSaved={handleSaved} />
+
+        <BranchList refreshKey={refreshKey} />
+
+      </div>
+
+    </PermissionGuard>
+
   );
+
 }

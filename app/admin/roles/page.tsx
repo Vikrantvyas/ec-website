@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import RoleForm from "@/app/components/admin/roles/RoleForm";
 import RoleList from "@/app/components/admin/roles/RoleList";
 
@@ -68,32 +69,40 @@ export default function RolesPage() {
     setSelectedBranches(role.branch_access || []);
     setSelectedPermissions(role.permissions || []);
     setEditingId(role.id);
+
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
 
-      <h1 className="text-2xl font-bold">
-        Role Management
-      </h1>
+    <PermissionGuard page="Roles">
 
-      <RoleForm
-        roleName={roleName}
-        setRoleName={setRoleName}
-        selectedBranches={selectedBranches}
-        setSelectedBranches={setSelectedBranches}
-        selectedPermissions={selectedPermissions}
-        setSelectedPermissions={setSelectedPermissions}
-        editing={editingId !== null}
-        onSave={handleSave}
-        onCancel={resetForm}
-      />
+      <div className="max-w-6xl mx-auto space-y-8">
 
-      <RoleList
-        refreshKey={refreshKey}
-        onEdit={handleEdit}
-      />
+        <h1 className="text-2xl font-bold">
+          Role Management
+        </h1>
 
-    </div>
+        <RoleForm
+          roleName={roleName}
+          setRoleName={setRoleName}
+          selectedBranches={selectedBranches}
+          setSelectedBranches={setSelectedBranches}
+          selectedPermissions={selectedPermissions}
+          setSelectedPermissions={setSelectedPermissions}
+          editing={editingId !== null}
+          onSave={handleSave}
+          onCancel={resetForm}
+        />
+
+        <RoleList
+          refreshKey={refreshKey}
+          onEdit={handleEdit}
+        />
+
+      </div>
+
+    </PermissionGuard>
+
   );
+
 }

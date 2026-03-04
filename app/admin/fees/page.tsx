@@ -1,7 +1,19 @@
-export default function feespage() {
+"use client";
+
+import PermissionGuard from "@/app/components/admin/PermissionGuard";
+
+export default function FeesPage() {
+
   return (
-    <div>
-      <h1>Fees</h1>
-    </div>
+
+    <PermissionGuard page="Fees">
+
+      <div>
+        <h1>Fees</h1>
+      </div>
+
+    </PermissionGuard>
+
   );
+
 }
