@@ -25,6 +25,8 @@ type User = {
   status: string;
   branch?: { name: string };
   role?: { name: string };
+  branch_id?: string;
+  role_id?: string;
 };
 
 export default function UserList({ refreshKey }: Props) {
@@ -32,8 +34,10 @@ export default function UserList({ refreshKey }: Props) {
   const [users, setUsers] = useState<User[]>([]);
   const [branches,setBranches] = useState<Branch[]>([]);
   const [roles,setRoles] = useState<Role[]>([]);
+  const [editingId,setEditingId] = useState<string | null>(null);
   const [branchId,setBranchId] = useState("");
   const [roleId,setRoleId] = useState("");
+  const [status,setStatus] = useState("");
 
   const loadUsers = async () => {
 
@@ -45,6 +49,8 @@ export default function UserList({ refreshKey }: Props) {
         mobile,
         email,
         status,
+        branch_id,
+        role_id,
         branch:branches(name),
         role:roles(name)
       `)
@@ -122,6 +128,32 @@ export default function UserList({ refreshKey }: Props) {
     loadUsers();
   };
 
+  const startEdit = (u:User)=>{
+
+    setEditingId(u.id);
+    setBranchId(u.branch_id || "");
+    setRoleId(u.role_id || "");
+    setStatus(u.status);
+  };
+
+  const updateUser = async (id:string)=>{
+
+    await supabase
+      .from("users")
+      .update({
+        branch_id:branchId,
+        role_id:roleId,
+        status
+      })
+      .eq("id",id);
+
+    alert("User updated");
+
+    setEditingId(null);
+
+    loadUsers();
+  };
+
   return (
     <div className="bg-white border rounded-xl p-4">
 
@@ -157,14 +189,13 @@ export default function UserList({ refreshKey }: Props) {
 
               <td>
 
-                {u.status==="Pending" ? (
+                {editingId===u.id ? (
 
                   <select
                     className="border px-2 py-1"
+                    value={branchId}
                     onChange={(e)=>setBranchId(e.target.value)}
                   >
-
-                    <option value="">Select</option>
 
                     {branches.map((b)=>(
                       <option key={b.id} value={b.id}>
@@ -182,14 +213,13 @@ export default function UserList({ refreshKey }: Props) {
 
               <td>
 
-                {u.status==="Pending" ? (
+                {editingId===u.id ? (
 
                   <select
                     className="border px-2 py-1"
+                    value={roleId}
                     onChange={(e)=>setRoleId(e.target.value)}
                   >
-
-                    <option value="">Select</option>
 
                     {roles.map((r)=>(
                       <option key={r.id} value={r.id}>
@@ -207,14 +237,19 @@ export default function UserList({ refreshKey }: Props) {
 
               <td>
 
-                {u.status==="Pending" ? (
-                  <span className="text-orange-600">
-                    Pending
-                  </span>
+                {editingId===u.id ? (
+
+                  <select
+                    className="border px-2 py-1"
+                    value={status}
+                    onChange={(e)=>setStatus(e.target.value)}
+                  >
+                    <option>Active</option>
+                    <option>Inactive</option>
+                  </select>
+
                 ):(
-                  <span className="text-green-600">
-                    Active
-                  </span>
+                  u.status
                 )}
 
               </td>
@@ -227,6 +262,24 @@ export default function UserList({ refreshKey }: Props) {
                     className="text-blue-600"
                   >
                     Approve
+                  </button>
+                )}
+
+                {editingId===u.id ? (
+
+                  <button
+                    onClick={()=>updateUser(u.id)}
+                    className="text-green-600"
+                  >
+                    Save
+                  </button>
+
+                ):(
+                  <button
+                    onClick={()=>startEdit(u)}
+                    className="text-blue-600"
+                  >
+                    Edit
                   </button>
                 )}
 
