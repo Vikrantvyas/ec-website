@@ -1,53 +1,75 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 type Props = {
   refreshKey: number;
 };
 
 type User = {
-  id: number;
+  id: string;
   name: string;
   mobile: string;
   email: string;
-  branch: string;
-  role: string;
   status: string;
+  branches?: { name: string };
+  roles?: { name: string };
 };
 
 export default function UserList({ refreshKey }: Props) {
-  const [users, setUsers] = useState<User[]>([]);
-  const [editingId, setEditingId] = useState<number | null>(null);
 
-  const loadUsers = () => {
-    const data = JSON.parse(localStorage.getItem("users") || "[]");
-    setUsers(data);
+  const [users, setUsers] = useState<User[]>([]);
+
+  const loadUsers = async () => {
+
+    const { data } = await supabase
+      .from("users")
+      .select(`
+        id,
+        name,
+        mobile,
+        email,
+        status,
+        branches(name),
+        roles(name)
+      `)
+      .order("created_at", { ascending: false });
+
+    if (data) setUsers(data);
   };
 
   useEffect(() => {
     loadUsers();
   }, [refreshKey]);
 
-  const deleteUser = (id: number) => {
-    const filtered = users.filter((u) => u.id !== id);
-    localStorage.setItem("users", JSON.stringify(filtered));
-    setUsers(filtered);
-  };
+  const deleteUser = async (id: string) => {
 
-  const updateUser = (id: number, field: keyof User, value: string) => {
-    const updated = users.map((u) =>
-      u.id === id ? { ...u, [field]: value } : u
+    const confirmDelete = confirm(
+      "Are you sure you want to delete this user?"
     );
-    setUsers(updated);
-    localStorage.setItem("users", JSON.stringify(updated));
+
+    if (!confirmDelete) return;
+
+    await supabase
+      .from("users")
+      .delete()
+      .eq("id", id);
+
+    alert("User deleted successfully");
+
+    loadUsers();
   };
 
   return (
     <div className="bg-white border rounded-xl p-4">
-      <h2 className="text-lg font-medium mb-4">Users List</h2>
+
+      <h2 className="text-lg font-medium mb-4">
+        Users List
+      </h2>
 
       <table className="w-full text-sm">
+
         <thead>
           <tr className="border-b text-left">
             <th className="py-2">Name</th>
@@ -61,73 +83,24 @@ export default function UserList({ refreshKey }: Props) {
         </thead>
 
         <tbody>
+
           {users.map((u) => (
+
             <tr key={u.id} className="border-b">
 
-              <td className="py-2">
-                {editingId === u.id ? (
-                  <input
-                    className="border px-2 py-1 rounded"
-                    value={u.name}
-                    onChange={(e) =>
-                      updateUser(u.id, "name", e.target.value)
-                    }
-                  />
-                ) : (
-                  u.name
-                )}
-              </td>
+              <td className="py-2">{u.name}</td>
 
-              <td>
-                {editingId === u.id ? (
-                  <input
-                    className="border px-2 py-1 rounded"
-                    value={u.mobile}
-                    onChange={(e) =>
-                      updateUser(u.id, "mobile", e.target.value)
-                    }
-                  />
-                ) : (
-                  u.mobile
-                )}
-              </td>
+              <td>{u.mobile}</td>
 
-              <td>
-                {editingId === u.id ? (
-                  <input
-                    className="border px-2 py-1 rounded"
-                    value={u.email}
-                    onChange={(e) =>
-                      updateUser(u.id, "email", e.target.value)
-                    }
-                  />
-                ) : (
-                  u.email
-                )}
-              </td>
+              <td>{u.email}</td>
 
-              <td>{u.branch}</td>
+              <td>{u.branches?.name || "-"}</td>
 
-              <td>{u.role}</td>
+              <td>{u.roles?.name || "-"}</td>
 
               <td>{u.status}</td>
 
-              <td className="text-right space-x-3">
-                {editingId === u.id ? (
-                  <button
-                    className="text-green-600"
-                    onClick={() => setEditingId(null)}
-                  >
-                    Save
-                  </button>
-                ) : (
-                  <button
-                    className="text-blue-600"
-                    onClick={() => setEditingId(u.id)}
-                  >
-                    Edit
-                  </button>
-                )}
+              <td className="text-right">
 
                 <button
                   onClick={() => deleteUser(u.id)}
@@ -135,9 +108,11 @@ export default function UserList({ refreshKey }: Props) {
                 >
                   Delete
                 </button>
+
               </td>
 
             </tr>
+
           ))}
 
           {users.length === 0 && (
@@ -149,7 +124,9 @@ export default function UserList({ refreshKey }: Props) {
           )}
 
         </tbody>
+
       </table>
+
     </div>
   );
 }
