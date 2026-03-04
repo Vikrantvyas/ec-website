@@ -1,73 +1,84 @@
 "use client";
 
+import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
 type Props = {
-  branchName: string;
-  setBranchName: (v: string) => void;
-  status: "Active" | "Inactive";
-  setStatus: (v: "Active" | "Inactive") => void;
-  editing: boolean;
-  onSave: () => void;
-  onCancel: () => void;
+  onSaved?: () => void;
 };
 
-export default function BranchForm({
-  branchName,
-  setBranchName,
-  status,
-  setStatus,
-  editing,
-  onSave,
-  onCancel,
-}: Props) {
+export default function BranchForm({ onSaved }: Props) {
+  const [name, setName] = useState("");
+  const [status, setStatus] = useState("Active");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name.trim()) return;
+
+    const confirmSave = confirm("Add this branch?");
+    if (!confirmSave) return;
+
+    const { error } = await supabase
+      .from("branches")
+      .insert([
+        {
+          name,
+          status,
+        },
+      ]);
+
+    if (!error) {
+      alert("Branch added successfully");
+
+      setName("");
+      setStatus("Active");
+
+      if (onSaved) onSaved();
+    }
+  };
+
   return (
-    <div className="bg-white border rounded-lg p-6 space-y-6 shadow-sm">
+    <div className="bg-white border rounded-xl p-4">
 
-      <div>
-        <label className="block text-sm font-medium mb-1">
-          Branch Name
-        </label>
+      <h2 className="text-lg font-medium mb-4">
+        Add Branch
+      </h2>
+
+      <form
+        onSubmit={handleSubmit}
+        className="flex gap-4"
+      >
+
         <input
-          type="text"
-          value={branchName}
-          onChange={(e) => setBranchName(e.target.value)}
-          className="w-full border rounded-md px-3 h-10"
-          placeholder="Enter branch name"
+          className="border rounded-lg px-3 py-2 flex-1"
+          placeholder="Branch Name"
+          value={name}
+          onChange={(e) =>
+            setName(e.target.value)
+          }
         />
-      </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">
-          Status
-        </label>
         <select
+          className="border rounded-lg px-3 py-2"
           value={status}
           onChange={(e) =>
-            setStatus(e.target.value as "Active" | "Inactive")
+            setStatus(e.target.value)
           }
-          className="w-full border rounded-md px-3 h-10"
         >
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
+          <option>Active</option>
+          <option>Inactive</option>
         </select>
-      </div>
 
-      <div className="flex gap-3">
         <button
-          onClick={onSave}
-          className="bg-[#0a1f44] text-white px-6 h-10 rounded-md"
+          type="submit"
+          className="bg-black text-white px-4 py-2 rounded-lg"
         >
-          {editing ? "Update Branch" : "Save Branch"}
+          Save
         </button>
 
-        {editing && (
-          <button
-            onClick={onCancel}
-            className="border px-6 h-10 rounded-md"
-          >
-            Cancel
-          </button>
-        )}
-      </div>
+      </form>
+
     </div>
   );
 }
