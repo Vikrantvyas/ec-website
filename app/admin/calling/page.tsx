@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import FiltersBar from "@/app/components/admin/calling/FiltersBar";
 import LeadCard from "@/app/components/admin/calling/LeadCard";
+import { supabase } from "@/lib/supabaseClient";
 
 type FollowUp = {
   date: string;
@@ -27,70 +28,45 @@ type Lead = {
   attendanceLast10: AttendanceSignal[];
 };
 
-const generateFollowUps = (): FollowUp[] => [
-  {
-    date: "2026-02-01",
-    type: "Received by Student",
-    mood: "Wants Demo",
-    note: "He'll join morning batch",
-  },
-  {
-    date: "2026-02-03",
-    type: "Not Received",
-    note: "",
-  },
-  {
-    date: "2026-02-05",
-    type: "Received by Parent",
-    mood: "Thinking",
-    note: "",
-  },
-  {
-    date: "2026-02-07",
-    type: "Phone Busy",
-    note: "",
-  },
-  {
-    date: "2026-02-09",
-    type: "Received by Student",
-    mood: "Interested",
-    note: "Asked for fee details",
-  },
-];
-
-const generateAttendance = (active: boolean): AttendanceSignal[] => {
-  if (!active) return Array(10).fill("N");
-  return Array.from({ length: 10 }).map((_, i) =>
-    i % 3 === 0 ? "A" : "P"
-  );
-};
-
-const dummyLeads: Lead[] = Array.from({ length: 10 }).map((_, i) => {
-  const status = ["Hot", "Warm", "Cold", "Closed"][i % 4];
-
-  return {
-    id: i + 1,
-    name: i % 2 === 0 ? `Priya ${i}` : `Rahul ${i}`,
-    gender: i % 2 === 0 ? "Female" : "Male",
-    mobile: `900000000${i}`,
-    course: ["Spoken English", "Basic Computer", "Tally"][i % 3],
-    branch: ["Nanda Nagar", "Bapat Square", "Aurobindo"][i % 3],
-    status,
-    enquiryDate: `2026-02-${10 - i}`,
-    followUps: generateFollowUps(),
-    attendanceLast10: generateAttendance(status !== "Closed"),
-  };
-});
-
 export default function CallingPage() {
 
-  const [leads, setLeads] = useState(dummyLeads);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const [search, setSearch] = useState("");
   const [filter1, setFilter1] = useState("All");
   const [filter2, setFilter2] = useState("All");
   const [filter3, setFilter3] = useState("All");
+
+  useEffect(() => {
+    loadLeads();
+  }, []);
+
+  async function loadLeads() {
+
+    const { data } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!data) return;
+
+    const formatted: Lead[] = data.map((l: any) => ({
+      id: l.id,
+      name: l.student_name || "",
+      gender: l.gender || "Male",
+      mobile: l.mobile || "",
+      course: l.course || "",
+      branch: l.branch || "",
+      status: l.status || "Cold",
+      enquiryDate: l.created_at,
+      followUps: [],
+      attendanceLast10: Array(10).fill("N"),
+    }));
+
+    setLeads(formatted);
+
+  }
 
   const filteredLeads = useMemo(() => {
 
