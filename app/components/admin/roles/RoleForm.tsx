@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { adminMenu } from "@/lib/adminMenu";
 
 type Branch = {
   id: number;
@@ -20,22 +21,6 @@ type Props = {
   onSave: () => void;
   onCancel: () => void;
 };
-
-const systemPages = [
-  "Dashboard",
-  "Lead",
-  "Lead List",
-  "Admission",
-  "Enquiry",
-  "Calling",
-  "Students",
-  "Attendance",
-  "Fees",
-  "Reports",
-  "Masters",
-  "Roles",
-  "Settings",
-];
 
 export default function RoleForm({
   roleName,
@@ -81,6 +66,8 @@ export default function RoleForm({
     );
   };
 
+  const permissions = adminMenu.map((item) => item.name);
+
   return (
     <div className="bg-white border rounded-lg p-6 space-y-6 shadow-sm">
 
@@ -118,7 +105,7 @@ export default function RoleForm({
       <div>
         <h2 className="font-semibold mb-2">Page Permissions</h2>
         <div className="grid md:grid-cols-3 gap-3">
-          {systemPages.map((permission) => (
+          {permissions.map((permission) => (
             <label
               key={permission}
               className="flex items-center gap-2 border rounded-md p-2 cursor-pointer"
