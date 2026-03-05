@@ -45,7 +45,7 @@ export default function useLeadForm() {
     course: ["Spoken English"],
 
     preferredTiming: "Any Time",
-    preferredBatch: "Any Time",   // ✅ updated
+    preferredBatch: "Any Time",
 
     leadChances: "Medium",
     leadStage: "Lead",
@@ -61,12 +61,15 @@ export default function useLeadForm() {
   const [formData, setFormData] = useState<any>(initialState);
   const [loading, setLoading] = useState(false);
   const [cities, setCities] = useState<string[]>([]);
+  const [branches, setBranches] = useState<string[]>([]);
 
   useEffect(() => {
     fetchCities();
+    fetchBranches();
   }, []);
 
   const fetchCities = async () => {
+
     const { data, error } = await supabase
       .from("cities")
       .select("name")
@@ -75,6 +78,21 @@ export default function useLeadForm() {
     if (!error && data) {
       setCities(data.map((c) => c.name));
     }
+
+  };
+
+  const fetchBranches = async () => {
+
+    const { data, error } = await supabase
+      .from("branches")
+      .select("name")
+      .eq("status", "Active")
+      .order("name", { ascending: true });
+
+    if (!error && data) {
+      setBranches(data.map((b) => b.name));
+    }
+
   };
 
   const resetForm = () => {
@@ -82,6 +100,7 @@ export default function useLeadForm() {
   };
 
   const handleChange = (e: any) => {
+
     let { name, value } = e.target;
 
     if (name === "mobileNumber" || name === "alternateNumber") {
@@ -89,32 +108,38 @@ export default function useLeadForm() {
     }
 
     setFormData((prev: any) => {
+
       let updated = { ...prev, [name]: value };
 
-      // Self logic for student name
       if (name === "enquiredBy" && prev.forWhom === "Self") {
         updated.studentName = value;
       }
 
       if (name === "forWhom") {
-  if (value === "Self") {
-    updated.studentName = prev.enquiredBy;
-  } else {
-    updated.studentName = "";
-    setTimeout(() => {
-      const el = document.querySelector(
-        'input[name="studentName"]'
-      ) as HTMLInputElement | null;
-      el?.focus();
-    }, 0);
-  }
-}
 
-      // Age logic
+        if (value === "Self") {
+          updated.studentName = prev.enquiredBy;
+        } else {
+
+          updated.studentName = "";
+
+          setTimeout(() => {
+            const el = document.querySelector(
+              'input[name="studentName"]'
+            ) as HTMLInputElement | null;
+            el?.focus();
+          }, 0);
+
+        }
+
+      }
+
       if (name === "age") {
+
         const ageNum = parseInt(value);
 
         if (!isNaN(ageNum)) {
+
           const classLevel = ageNum - 5;
 
           if (classLevel <= 0) updated.education = "";
@@ -127,22 +152,25 @@ export default function useLeadForm() {
 
           updated.maritalStatus = ageNum >= 25 ? "Married" : "Single";
           updated.profession = ageNum >= 25 ? "Job" : "Student";
+
         }
+
       }
 
-      // Contact time auto adjust
       if (name === "schoolTiming") {
+
         if (value === "Morning") updated.contactTime = "2 PM - 5 PM";
         if (value === "Afternoon") updated.contactTime = "6 PM - 8 PM";
         if (value === "Evening") updated.contactTime = "10 AM - 12 PM";
         if (value === "Night") updated.contactTime = "9 AM - 11 AM";
+
       }
 
       return updated;
-    });
-  };
 
-  const branches = ["Nanda Ngr", "Bapat Sq.", "Aurobindo"];
+    });
+
+  };
 
   const courseOptions =
     formData.department === "English"
@@ -175,4 +203,5 @@ export default function useLeadForm() {
     resetForm,
     fetchCities
   };
+
 }
