@@ -16,7 +16,7 @@ type FollowUp = {
 type AttendanceSignal = "P" | "A" | "N";
 
 type Lead = {
-  id: number;
+  id: string;
   name: string;
   gender: "Male" | "Female";
   mobile: string;
@@ -31,7 +31,7 @@ type Lead = {
 export default function CallingPage() {
 
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [filter1, setFilter1] = useState("All");
@@ -76,6 +76,26 @@ export default function CallingPage() {
 
     if (!data) return;
 
+    const leadIds = data.map((l: any) => l.id);
+
+    const { data: followups } = await supabase
+      .from("lead_followups")
+      .select("*")
+      .in("lead_id", leadIds)
+      .order("created_at", { ascending: false });
+
+    const followupMap: any = {};
+
+    followups?.forEach((f: any) => {
+      if (!followupMap[f.lead_id]) followupMap[f.lead_id] = [];
+      followupMap[f.lead_id].push({
+        date: f.created_at,
+        type: f.result,
+        mood: f.mood,
+        note: f.remark,
+      });
+    });
+
     const formatted: Lead[] = data.map((l: any) => ({
       id: l.id,
       name: l.student_name || "",
@@ -85,7 +105,7 @@ export default function CallingPage() {
       branch: l.branch || "",
       status: l.status || "Cold",
       enquiryDate: l.created_at,
-      followUps: [],
+      followUps: followupMap[l.id] || [],
       attendanceLast10: Array(10).fill("N"),
     }));
 
@@ -114,7 +134,7 @@ export default function CallingPage() {
   }, [leads, search]);
 
   const addFollowUp = async (
-    leadId: number,
+    leadId: string,
     data: {
       result: string;
       mood?: string;
@@ -136,30 +156,11 @@ export default function CallingPage() {
       ]);
 
     if (error) {
-      console.error("Followup Insert Error:", error);
       alert(error.message);
       return;
     }
 
-    setLeads((prev) =>
-      prev.map((lead) =>
-        lead.id === leadId
-          ? {
-              ...lead,
-              followUps: [
-                ...lead.followUps,
-                {
-                  date: new Date().toISOString(),
-                  type: data.result,
-                  mood: data.mood,
-                  note: data.remark || "",
-                },
-              ],
-              status: data.status,
-            }
-          : lead
-      )
-    );
+    loadLeads();
 
     setExpandedId(null);
 
