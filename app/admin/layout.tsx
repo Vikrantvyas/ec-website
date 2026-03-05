@@ -23,11 +23,15 @@ import {
   ChevronRight,
   PhoneCall,
   ShieldCheck,
+  List,
 } from "lucide-react";
 
 const menuItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+
   { name: "Lead", href: "/admin/lead", icon: UserRoundPlus },
+  { name: "Lead List", href: "/admin/lead/list", icon: List },
+
   { name: "Admission", href: "/admin/admission", icon: GraduationCap },
   { name: "Enquiry", href: "/admin/enquiry", icon: UserPlus },
   { name: "Calling", href: "/admin/calling", icon: PhoneCall },
@@ -43,7 +47,7 @@ const menuItems = [
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { setPermissions, permissions } = usePermissions();
+  const { setPermissions, permissions, setBranchId } = usePermissions();
 
   const [loading, setLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -58,7 +62,6 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const checkAuth = async () => {
-
       if (isPublicPage) {
         setLoading(false);
         return;
@@ -71,12 +74,29 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
       } else {
         const perms = await getUserPermissions();
         setPermissions(perms);
+
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          const { data: userData } = await supabase
+            .from("users")
+            .select("branch_id")
+            .eq("email", user.email)
+            .single();
+
+          if (userData) {
+            setBranchId(userData.branch_id);
+          }
+        }
+
         setLoading(false);
       }
     };
 
     checkAuth();
-  }, [router, pathname, setPermissions]);
+  }, [router, pathname, setPermissions, setBranchId]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -104,7 +124,6 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
   return (
     <div className="fixed inset-0 flex bg-white">
 
-      {/* ICON BAR DESKTOP */}
       <aside className="hidden md:flex w-14 bg-[#0a1f44] flex-col items-center py-3 space-y-3">
         {filteredMenu.map((item) => {
           const Icon = item.icon;
@@ -137,10 +156,8 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
         </button>
       </aside>
 
-      {/* PAGE AREA */}
       <div className="flex-1 flex flex-col min-w-0">
 
-        {/* DESKTOP HEADER */}
         <div className="hidden md:flex items-center justify-between px-6 h-12 bg-[#0a1f44] text-white">
 
           <div className="flex items-center text-sm font-semibold gap-2">
@@ -171,7 +188,6 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        {/* MOBILE TOP BAR */}
         <div className="md:hidden flex items-center justify-between px-4 h-14 bg-[#0a1f44] text-white">
           <button onClick={() => setMobileOpen(true)}>
             <Menu size={22} />
@@ -195,7 +211,6 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
         </main>
       </div>
 
-      {/* MOBILE DRAWER */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
