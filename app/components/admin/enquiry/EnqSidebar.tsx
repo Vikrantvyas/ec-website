@@ -1,14 +1,7 @@
 "use client";
 
-import { useState } from "react";
-
-const dummyEnquiries = [
-  { id: 1, name: "Rahul Kumar", course: "Spoken English", status: "Follow up", date: "21/08/2025" },
-  { id: 2, name: "Priya Sharma", course: "Basic Computer", status: "New Enquiry", date: "20/08/2025" },
-  { id: 3, name: "Amit Singh", course: "Tally", status: "Converted", date: "19/08/2025" },
-  { id: 4, name: "Suman Verma", course: "Web Development", status: "New Enquiry", date: "18/08/2025" },
-  { id: 5, name: "Vijay Kumar", course: "Digital Marketing", status: "Follow up", date: "17/08/2025" },
-];
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 interface Props {
   onSelectEnquiry: (enquiry: any) => void;
@@ -20,12 +13,42 @@ export default function EnqSidebar({
   onNewEnquiry,
 }: Props) {
 
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [enquiries, setEnquiries] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    loadLeads();
+  }, []);
+
+  async function loadLeads() {
+
+    const { data } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!data) return;
+
+    const formatted = data.map((l: any) => ({
+      id: l.id,
+      name: l.student_name || "",
+      course: l.course || "",
+      date: new Date(l.created_at).toLocaleDateString("en-GB"),
+      raw: l,
+    }));
+
+    setEnquiries(formatted);
+
+  }
+
+  const filtered = enquiries.filter((e) =>
+    e.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <aside className="w-[320px] bg-white border-r border-gray-200 flex flex-col">
 
-      {/* Inner Wrapper (IMPORTANT FIX) */}
       <div className="px-4 pt-4">
 
         {/* Search */}
@@ -34,6 +57,8 @@ export default function EnqSidebar({
           <input
             type="text"
             placeholder="Search Student"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent outline-none text-sm"
           />
         </div>
@@ -43,9 +68,11 @@ export default function EnqSidebar({
           <button className="px-3 py-1.5 border rounded-full text-sm text-gray-600 hover:bg-gray-100">
             All
           </button>
+
           <button className="px-3 py-1.5 border rounded-full text-sm text-gray-600 hover:bg-gray-100">
             Follow-ups
           </button>
+
           <button
             onClick={onNewEnquiry}
             className="px-3 py-1.5 bg-blue-600 text-white rounded-full text-sm hover:bg-blue-700"
@@ -58,12 +85,14 @@ export default function EnqSidebar({
 
       {/* List */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 mt-4 space-y-2">
-        {dummyEnquiries.map((enquiry) => (
+
+        {filtered.map((enquiry) => (
+
           <div
             key={enquiry.id}
             onClick={() => {
               setSelectedId(enquiry.id);
-              onSelectEnquiry(enquiry);
+              onSelectEnquiry(enquiry.raw);
             }}
             className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition ${
               selectedId === enquiry.id
@@ -71,22 +100,25 @@ export default function EnqSidebar({
                 : "hover:bg-gray-50"
             }`}
           >
-            {/* Avatar */}
+
             <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold text-sm">
               {enquiry.name.charAt(0)}
             </div>
 
-            {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-gray-900 truncate">
                 {enquiry.name}
               </div>
+
               <div className="text-xs text-gray-500 truncate">
                 {enquiry.date} - {enquiry.course}
               </div>
             </div>
+
           </div>
+
         ))}
+
       </div>
 
     </aside>

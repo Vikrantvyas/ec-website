@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import BottomSheetSelect from "@/app/components/ui/BottomSheetSelect";
 
 type Props = {
-  leadId: number;
+  leadId: string;
   currentStatus: string;
   onSave: (data: {
     purpose: string;
@@ -97,6 +97,7 @@ export default function InlineCallingForm({
   currentStatus,
   onSave,
 }: Props) {
+
   const [purpose, setPurpose] = useState("");
   const [result, setResult] = useState("");
   const [mood, setMood] = useState("");
@@ -107,9 +108,8 @@ export default function InlineCallingForm({
 
   const dateRef = useRef<HTMLInputElement>(null);
 
-  /* ================= AUTO DATE ================= */
-
   useEffect(() => {
+
     if (!nextAction) return;
 
     const today = new Date();
@@ -127,36 +127,43 @@ export default function InlineCallingForm({
     if (nextAction !== "Select Date") {
       setNextCallDate(next.toISOString().split("T")[0]);
     }
+
   }, [nextAction]);
 
   const needsDatePicker = nextAction === "Select Date";
 
   useEffect(() => {
+
     if (needsDatePicker) {
+
       setTimeout(() => {
         dateRef.current?.showPicker?.();
       }, 100);
+
     }
+
   }, [needsDatePicker]);
 
-  /* ================= AUTO STATUS ================= */
-
   const autoStatus = useMemo(() => {
+
     if (negativeResults.includes(result)) return "Closed";
     if (negativeMoods.includes(mood)) return "Closed";
     if (positiveMoods.includes(mood)) return "Hot";
     if (neutralMoods.includes(mood)) return "Warm";
     if (neutralResults.includes(result)) return "Cold";
+
     return "Warm";
+
   }, [result, mood]);
 
   useEffect(() => {
+
     if (result) setStatus(autoStatus);
+
   }, [autoStatus, result]);
 
-  /* ================= SAVE ================= */
-
   const handleSave = () => {
+
     if (!purpose || !result) return;
     if (!remark.trim()) return;
 
@@ -177,12 +184,12 @@ export default function InlineCallingForm({
     setNextCallDate("");
     setStatus("");
     setRemark("");
+
   };
 
   return (
     <div className="space-y-2 mt-3 text-xs">
 
-      {/* PURPOSE */}
       <BottomSheetSelect
         label="Calling Purpose"
         value={purpose}
@@ -195,8 +202,8 @@ export default function InlineCallingForm({
         onChange={setPurpose}
       />
 
-      {/* RESULT + MOOD */}
       <div className="grid grid-cols-2 gap-2">
+
         <BottomSheetSelect
           label="Call Result"
           value={result}
@@ -242,10 +249,11 @@ export default function InlineCallingForm({
           ]}
           onChange={setMood}
         />
+
       </div>
 
-      {/* NEXT FOLLOW UP + STATUS */}
       <div className="grid grid-cols-2 gap-2">
+
         <BottomSheetSelect
           label="Next Follow Up"
           value={nextAction}
@@ -268,6 +276,7 @@ export default function InlineCallingForm({
           }))}
           onChange={setStatus}
         />
+
       </div>
 
       {needsDatePicker && (
@@ -280,25 +289,13 @@ export default function InlineCallingForm({
         />
       )}
 
-      {/* REMARK */}
       <textarea
-  className="
-    w-full 
-    border border-gray-300 
-    px-3 py-2 
-    rounded-md 
-    text-sm
-    shadow-[0_1px_2px_rgba(0,0,0,0.05)]
-    focus:outline-none
-    focus:ring-2 focus:ring-blue-500
-    focus:border-blue-500
-    transition
-  "
-  rows={2}
-  placeholder="Remark"
-  value={remark}
-  onChange={(e) => setRemark(e.target.value)}
-/>
+        className="w-full border border-gray-300 px-3 py-2 rounded-md text-sm"
+        rows={2}
+        placeholder="Remark"
+        value={remark}
+        onChange={(e) => setRemark(e.target.value)}
+      />
 
       <button
         onClick={handleSave}
@@ -306,6 +303,7 @@ export default function InlineCallingForm({
       >
         Save
       </button>
+
     </div>
   );
 }

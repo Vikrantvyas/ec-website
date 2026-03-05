@@ -15,7 +15,7 @@ type FollowUp = {
 type AttendanceSignal = "P" | "A" | "N";
 
 type Lead = {
-  id: number;
+  id: string;
   name: string;
   gender: "Male" | "Female";
   mobile: string;
@@ -29,10 +29,10 @@ type Lead = {
 
 type Props = {
   lead: Lead;
-  expandedId: number | null;
-  setExpandedId: (id: number | null) => void;
+  expandedId: string | null;
+  setExpandedId: (id: string | null) => void;
   addFollowUp: (
-    id: number,
+    id: string,
     data: {
       result: string;
       mood?: string;
@@ -97,7 +97,6 @@ export default function LeadCard({
       <div className="flex justify-between items-start">
         <div className="flex-1">
 
-          {/* PROFILE ONLY ON NAME */}
           <span
             className="font-semibold text-blue-600 underline cursor-pointer"
             onClick={(e) => {
@@ -141,7 +140,6 @@ export default function LeadCard({
         </div>
       </div>
 
-      {/* STOP PROPAGATION FOR CALL BUTTONS */}
       <div
         className="flex gap-4 mt-2 text-blue-600"
         onClick={(e) => e.stopPropagation()}
@@ -161,8 +159,7 @@ export default function LeadCard({
           onClick={(e) => e.stopPropagation()}
         >
           {lead.followUps
-            .slice(-5)
-            .reverse()
+            .slice(0, 5)
             .map((fu, i) => {
               const hasExtra = fu.mood || fu.note;
               const isOpen = openFU === i;
@@ -172,7 +169,6 @@ export default function LeadCard({
                   key={i}
                   className={`${hasExtra ? "bg-gray-50 rounded" : "bg-white"}`}
                 >
-                  {/* TOP ROW */}
                   <div
                     className={`flex justify-between items-center p-2 ${
                       hasExtra ? "cursor-pointer" : ""
@@ -202,7 +198,6 @@ export default function LeadCard({
                       ))}
                   </div>
 
-                  {/* EXPANDED DETAILS */}
                   {hasExtra && isOpen && (
                     <div className="px-2 pb-2 space-y-1 text-gray-600">
                       {fu.mood && <p>Mood - {fu.mood}</p>}
