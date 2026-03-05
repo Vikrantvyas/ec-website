@@ -68,10 +68,7 @@ export default function CallingPage() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (
-      roleData?.branch_access &&
-      roleData.branch_access.length > 0
-    ) {
+    if (roleData?.branch_access?.length) {
       query = query.in("branch", roleData.branch_access);
     }
 
@@ -116,7 +113,7 @@ export default function CallingPage() {
 
   }, [leads, search]);
 
-  const addFollowUp = (
+  const addFollowUp = async (
     leadId: number,
     data: {
       result: string;
@@ -125,6 +122,24 @@ export default function CallingPage() {
       status: string;
     }
   ) => {
+
+    const { error } = await supabase
+      .from("lead_followups")
+      .insert([
+        {
+          lead_id: leadId,
+          result: data.result,
+          mood: data.mood || "",
+          remark: data.remark || "",
+          status: data.status,
+        },
+      ]);
+
+    if (error) {
+      console.error("Followup Insert Error:", error);
+      alert(error.message);
+      return;
+    }
 
     setLeads((prev) =>
       prev.map((lead) =>
