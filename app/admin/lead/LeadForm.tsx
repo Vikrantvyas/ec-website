@@ -56,20 +56,25 @@ export default function LeadForm() {
     setLoading(true);
 
     try {
+
       const mainPayload = buildLeadPayload(formData);
       await supabase.from("leads").insert([mainPayload]);
 
       if (groupMembers.length > 0) {
+
         const groupPayload = groupMembers.map((m) =>
           buildLeadPayload(formData, {
             student_name: m.name,
             mobile_number: m.mobile,
           })
         );
+
         await supabase.from("leads").insert(groupPayload);
+
       }
 
       if (formData.city?.trim()) {
+
         const { error } = await supabase
           .from("cities")
           .insert([{ name: formData.city.trim() }]);
@@ -77,23 +82,29 @@ export default function LeadForm() {
         if (error && !error.message.includes("duplicate")) {
           console.error(error);
         }
+
       }
 
       await fetchCities();
 
       alert("Lead saved successfully");
+
       resetForm();
       setGroupMembers([]);
 
     } catch (err) {
+
       console.error(err);
       alert("Error saving lead");
+
     }
 
     setLoading(false);
+
   };
 
   const handleForChange = (val: string) => {
+
     setFormData((prev: any) => ({
       ...prev,
       forWhom: val,
@@ -105,33 +116,47 @@ export default function LeadForm() {
         studentRef.current?.focus();
       }, 0);
     }
+
   };
 
   return (
+
     <form onSubmit={handleSubmit} className="space-y-8 text-sm">
 
       {/* Branch */}
+
       <div className="space-y-2">
+
         <p className="font-semibold">Select Branch</p>
-        <div className="flex gap-2 flex-wrap">
+
+        <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1">
+
           {branches.map((b: string) => (
+
             <button
               key={b}
               type="button"
               onClick={() => setFormData({ ...formData, branch: b })}
-              className={`px-3 py-1 rounded-full border
-                ${formData.branch === b
+              className={`px-3 py-1 rounded-full border shrink-0
+              ${
+                formData.branch === b
                   ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white border-gray-300"}`}
+                  : "bg-white border-gray-300"
+              }`}
             >
               {b}
             </button>
+
           ))}
+
         </div>
+
       </div>
 
       {formData.branch && (
+
         <>
+
           <LeadMainBlocks
             formData={formData}
             setFormData={setFormData}
@@ -144,14 +169,17 @@ export default function LeadForm() {
           />
 
           <div className="flex justify-between items-center pt-4">
+
             <button
               type="button"
               disabled={!isPrimaryValid}
               onClick={() => setGroupOpen(true)}
               className={`px-4 py-2 rounded-md text-white transition
-                ${isPrimaryValid
+              ${
+                isPrimaryValid
                   ? "bg-green-600 hover:bg-green-700"
-                  : "bg-gray-400 cursor-not-allowed"}`}
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
             >
               ➕ Add Group Members
             </button>
@@ -163,8 +191,11 @@ export default function LeadForm() {
             >
               {loading ? "Saving..." : "Save Lead"}
             </button>
+
           </div>
+
         </>
+
       )}
 
       <GroupEntryModal
@@ -174,5 +205,7 @@ export default function LeadForm() {
       />
 
     </form>
+
   );
+
 }
