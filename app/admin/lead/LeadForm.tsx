@@ -93,7 +93,6 @@ export default function LeadForm() {
     setLoading(false);
   };
 
-  /* ✅ CENTRALIZED FOR CHANGE HANDLER */
   const handleForChange = (val: string) => {
     setFormData((prev: any) => ({
       ...prev,
