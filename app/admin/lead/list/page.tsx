@@ -14,10 +14,7 @@ export default function LeadListPage() {
 
     const fetchLeads = async () => {
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: userData } = await supabase
@@ -39,9 +36,7 @@ export default function LeadListPage() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      // Admin → all leads
       if (roleData?.name !== "Admin") {
-
         const branches = roleData?.branch_access || [];
 
         if (branches.length > 0) {
@@ -49,7 +44,6 @@ export default function LeadListPage() {
         } else {
           query = query.limit(0);
         }
-
       }
 
       const { data } = await query;
@@ -72,7 +66,7 @@ export default function LeadListPage() {
 
   return (
 
-    <PermissionGuard page="Lead">
+    <PermissionGuard page="Lead List">
 
       <div className="w-full px-6 py-6 bg-white">
 
