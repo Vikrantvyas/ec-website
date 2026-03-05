@@ -24,6 +24,7 @@ type Props = {
 const systemPages = [
   "Dashboard",
   "Lead",
+  "Lead List",
   "Admission",
   "Enquiry",
   "Calling",

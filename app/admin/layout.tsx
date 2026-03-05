@@ -5,44 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase, getUserPermissions } from "@/lib/supabaseClient";
 import { PermissionProvider, usePermissions } from "@/lib/permissionsContext";
+import { adminMenu } from "@/lib/adminMenu";
 import {
-  LayoutDashboard,
-  UserPlus,
-  Users,
-  CalendarCheck,
-  CreditCard,
-  FileBarChart,
-  Database,
-  Settings,
   LogOut,
   Menu,
   X,
   Globe,
-  UserRoundPlus,
-  GraduationCap,
   ChevronRight,
-  PhoneCall,
-  ShieldCheck,
-  List,
 } from "lucide-react";
-
-const menuItems = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-
-  { name: "Lead", href: "/admin/lead", icon: UserRoundPlus },
-  { name: "Lead List", href: "/admin/lead/list", icon: List },
-
-  { name: "Admission", href: "/admin/admission", icon: GraduationCap },
-  { name: "Enquiry", href: "/admin/enquiry", icon: UserPlus },
-  { name: "Calling", href: "/admin/calling", icon: PhoneCall },
-  { name: "Students", href: "/admin/students", icon: Users },
-  { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
-  { name: "Fees", href: "/admin/fees", icon: CreditCard },
-  { name: "Reports", href: "/admin/reports", icon: FileBarChart },
-  { name: "Masters", href: "/admin/masters", icon: Database },
-  { name: "Roles", href: "/admin/roles", icon: ShieldCheck },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
-];
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -113,7 +83,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
 
   if (isPublicPage) return <>{children}</>;
 
-  const filteredMenu = menuItems.filter((item) =>
+  const filteredMenu = adminMenu.filter((item) =>
     permissions.includes(item.name)
   );
 
