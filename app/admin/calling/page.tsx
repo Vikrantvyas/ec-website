@@ -44,10 +44,38 @@ export default function CallingPage() {
 
   async function loadLeads() {
 
-    const { data } = await supabase
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) return;
+
+    const userEmail = sessionData.session.user.email;
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("role_id")
+      .eq("email", userEmail)
+      .single();
+
+    if (!userData) return;
+
+    const { data: roleData } = await supabase
+      .from("roles")
+      .select("branch_access")
+      .eq("id", userData.role_id)
+      .single();
+
+    let query = supabase
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
+
+    if (
+      roleData?.branch_access &&
+      roleData.branch_access.length > 0
+    ) {
+      query = query.in("branch", roleData.branch_access);
+    }
+
+    const { data } = await query;
 
     if (!data) return;
 
