@@ -3,20 +3,16 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function CourseMaster() {
+export default function CityMaster() {
 
   const [name, setName] = useState("");
-  const [department, setDepartment] = useState("");
-
-  const [courses, setCourses] = useState<any[]>([]);
-  const [departments, setDepartments] = useState<any[]>([]);
-
+  const [cities, setCities] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const fetchDepartments = async () => {
+  const fetchCities = async () => {
 
     const { data, error } = await supabase
-      .from("departments")
+      .from("cities")
       .select("*")
       .order("name", { ascending: true });
 
@@ -26,34 +22,13 @@ export default function CourseMaster() {
     }
 
     if (data) {
-      setDepartments(data);
-    }
-
-  };
-
-  const fetchCourses = async () => {
-
-    const { data, error } = await supabase
-      .from("courses")
-      .select("*")
-      .order("name", { ascending: true });
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    if (data) {
-      setCourses(data);
+      setCities(data);
     }
 
   };
 
   useEffect(() => {
-
-    fetchDepartments();
-    fetchCourses();
-
+    fetchCities();
   }, []);
 
   const handleSubmit = async (e:any) => {
@@ -61,16 +36,12 @@ export default function CourseMaster() {
     e.preventDefault();
 
     if (!name.trim()) return;
-    if (!department) return;
 
     if (editingId) {
 
       const { error } = await supabase
-        .from("courses")
-        .update({
-          name: name.trim(),
-          department: department
-        })
+        .from("cities")
+        .update({ name: name.trim() })
         .eq("id", editingId);
 
       if (error) console.error(error);
@@ -80,43 +51,37 @@ export default function CourseMaster() {
     } else {
 
       const { error } = await supabase
-        .from("courses")
-        .insert([{
-          name: name.trim(),
-          department: department
-        }]);
+        .from("cities")
+        .insert([{ name: name.trim() }]);
 
       if (error) console.error(error);
 
     }
 
     setName("");
-    setDepartment("");
-
-    fetchCourses();
+    fetchCities();
 
   };
 
-  const handleEdit = (course:any) => {
+  const handleEdit = (city:any) => {
 
-    setName(course.name);
-    setDepartment(course.department);
-    setEditingId(course.id);
+    setName(city.name);
+    setEditingId(city.id);
 
   };
 
   const handleDelete = async (id:string) => {
 
-    if (!confirm("Delete course?")) return;
+    if (!confirm("Delete city?")) return;
 
     const { error } = await supabase
-      .from("courses")
+      .from("cities")
       .delete()
       .eq("id", id);
 
     if (error) console.error(error);
 
-    fetchCourses();
+    fetchCities();
 
   };
 
@@ -125,7 +90,7 @@ export default function CourseMaster() {
     <div className="space-y-6">
 
       <p className="font-semibold text-blue-600">
-        Course Master
+        City Master
       </p>
 
       <form
@@ -133,27 +98,9 @@ export default function CourseMaster() {
         className="flex gap-2"
       >
 
-        <select
-          value={department}
-          onChange={(e)=>setDepartment(e.target.value)}
-          className="rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-
-          <option value="">
-            Select Department
-          </option>
-
-          {departments.map((d)=>(
-            <option key={d.id} value={d.name}>
-              {d.name}
-            </option>
-          ))}
-
-        </select>
-
         <input
           type="text"
-          placeholder="Course Name"
+          placeholder="City Name"
           value={name}
           onChange={(e)=>setName(e.target.value)}
           className="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -177,11 +124,7 @@ export default function CourseMaster() {
             <tr>
 
               <th className="text-left p-3">
-                Department
-              </th>
-
-              <th className="text-left p-3">
-                Course
+                City
               </th>
 
               <th className="text-right p-3">
@@ -194,29 +137,25 @@ export default function CourseMaster() {
 
           <tbody>
 
-            {courses.map((course)=>(
+            {cities.map((city)=>(
 
-              <tr key={course.id} className="border-t">
-
-                <td className="p-3">
-                  {course.department}
-                </td>
+              <tr key={city.id} className="border-t">
 
                 <td className="p-3">
-                  {course.name}
+                  {city.name}
                 </td>
 
                 <td className="p-3 text-right space-x-2">
 
                   <button
-                    onClick={()=>handleEdit(course)}
+                    onClick={()=>handleEdit(city)}
                     className="text-blue-600"
                   >
                     Edit
                   </button>
 
                   <button
-                    onClick={()=>handleDelete(course.id)}
+                    onClick={()=>handleDelete(city.id)}
                     className="text-red-600"
                   >
                     Delete

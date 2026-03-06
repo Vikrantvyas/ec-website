@@ -17,7 +17,8 @@ export function Block({ title, children }: any) {
   );
 }
 
-/* ✅ UPDATED INPUT WITH disabled SUPPORT */
+/* INPUT FIELD */
+
 export const Input = React.forwardRef<HTMLInputElement, any>(
   (
     {
@@ -56,6 +57,8 @@ export const Input = React.forwardRef<HTMLInputElement, any>(
 
 Input.displayName = "Input";
 
+/* TEXTAREA */
+
 export function TextArea({
   label,
   name,
@@ -81,32 +84,44 @@ export function TextArea({
   );
 }
 
+/* SELECT FIELD */
+
 export function SelectField({
   label,
   value,
   options,
   onChange,
-  multiple = false
+  multiple = false,
+  defaultValue
 }: any) {
+
+  const finalValue = value ?? defaultValue ?? (multiple ? [] : "");
+
   return (
     <div className="flex flex-col">
       <label className="mb-1 text-gray-600 text-sm font-medium">
         {label}
       </label>
 
-      {!multiple ? (
+      {/* SINGLE SELECT */}
+
+      {!multiple && (
         <div className="w-full">
           <BottomSheetSelect
             label={label}
-            value={value}
+            value={finalValue}
             options={options}
             onChange={onChange}
           />
         </div>
-      ) : (
+      )}
+
+      {/* MULTI SELECT */}
+
+      {multiple && (
         <select
           multiple
-          value={value}
+          value={finalValue}
           onChange={(e) => {
             const selected = Array.from(
               e.target.selectedOptions,

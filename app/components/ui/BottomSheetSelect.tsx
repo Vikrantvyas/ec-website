@@ -21,10 +21,16 @@ export default function BottomSheetSelect({
   options,
   onChange,
 }: Props) {
+
   const [open, setOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
+  const [highlightIndex, setHighlightIndex] = useState(-1);
+
   const containerRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const searchBuffer = useRef("");
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const checkScreen = () => {
@@ -44,7 +50,9 @@ export default function BottomSheetSelect({
   }, [open, isMobile]);
 
   useEffect(() => {
+
     const handleClickOutside = (event: MouseEvent) => {
+
       if (
         !isMobile &&
         containerRef.current &&
@@ -52,6 +60,7 @@ export default function BottomSheetSelect({
       ) {
         setOpen(false);
       }
+
     };
 
     if (open) {
@@ -61,9 +70,11 @@ export default function BottomSheetSelect({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
+
   }, [open, isMobile]);
 
   useEffect(() => {
+
     if (!open || isMobile || !containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
@@ -71,24 +82,108 @@ export default function BottomSheetSelect({
     const dropdownHeight = 260;
 
     setOpenUpward(spaceBelow < dropdownHeight);
+
   }, [open, isMobile]);
 
+  useEffect(() => {
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+
+      if (!open || isMobile) return;
+
+      if (e.key === "ArrowDown") {
+
+        e.preventDefault();
+
+        setHighlightIndex((prev) => {
+          const next = Math.min(prev + 1, options.length - 1);
+          optionRefs.current[next]?.scrollIntoView({ block: "nearest" });
+          return next;
+        });
+
+      }
+
+      else if (e.key === "ArrowUp") {
+
+        e.preventDefault();
+
+        setHighlightIndex((prev) => {
+          const next = Math.max(prev - 1, 0);
+          optionRefs.current[next]?.scrollIntoView({ block: "nearest" });
+          return next;
+        });
+
+      }
+
+      else if (e.key === "Enter") {
+
+        if (highlightIndex >= 0) {
+          onChange(options[highlightIndex].value);
+          setOpen(false);
+        }
+
+      }
+
+      else if (e.key.length === 1) {
+
+        searchBuffer.current += e.key.toLowerCase();
+
+        const index = options.findIndex((opt) =>
+          opt.label.toLowerCase().startsWith(searchBuffer.current)
+        );
+
+        if (index >= 0) {
+
+          setHighlightIndex(index);
+
+          optionRefs.current[index]?.scrollIntoView({
+            block: "nearest",
+          });
+
+        }
+
+        if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
+        searchTimeout.current = setTimeout(() => {
+          searchBuffer.current = "";
+        }, 700);
+
+      }
+
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+
+  }, [open, options, highlightIndex, isMobile, onChange]);
+
   const colorClasses = (color?: string) => {
+
     switch (color) {
+
       case "green":
         return "text-green-600 border-l-4 border-green-500";
+
       case "blue":
         return "text-blue-600 border-l-4 border-blue-500";
+
       case "red":
         return "text-red-600 border-l-4 border-red-500";
+
       default:
         return "";
+
     }
+
   };
 
   return (
+
     <div ref={containerRef} className="relative w-full">
-      {/* BUTTON */}
+
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -101,6 +196,7 @@ export default function BottomSheetSelect({
           flex justify-between items-center
         "
       >
+
         <span>
           {value || <span className="text-gray-500">{label}</span>}
         </span>
@@ -116,9 +212,11 @@ export default function BottomSheetSelect({
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
+
       </button>
 
       {/* MOBILE */}
+
       {isMobile && (
         <>
           {open && (
@@ -133,13 +231,16 @@ export default function BottomSheetSelect({
               open ? "translate-y-0" : "translate-y-full"
             }`}
           >
+
             <div className="p-4 border-b font-semibold flex justify-between items-center">
               {label}
               <button onClick={() => setOpen(false)}>✕</button>
             </div>
 
             <div className="max-h-[60vh] overflow-y-auto">
-              {options.map((opt) => (
+
+              {options.map((opt, i) => (
+
                 <div
                   key={opt.value}
                   onClick={() => {
@@ -152,14 +253,19 @@ export default function BottomSheetSelect({
                 >
                   {opt.label}
                 </div>
+
               ))}
+
             </div>
+
           </div>
         </>
       )}
 
       {/* DESKTOP */}
+
       {!isMobile && open && (
+
         <div
           className={`
             absolute z-50 w-full bg-white border border-gray-300
@@ -168,22 +274,35 @@ export default function BottomSheetSelect({
             ${openUpward ? "bottom-full mb-2" : "top-full mt-2"}
           `}
         >
-          {options.map((opt) => (
+
+          {options.map((opt, i) => (
+
             <div
               key={opt.value}
+              ref={(el) => (optionRefs.current[i] = el)}
               onClick={() => {
                 onChange(opt.value);
                 setOpen(false);
               }}
-              className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 ${
-                value === opt.value ? "bg-gray-100 font-medium" : ""
+              className={`px-3 py-2 text-sm cursor-pointer ${
+                highlightIndex === i
+                  ? "bg-blue-100"
+                  : value === opt.value
+                  ? "bg-gray-100 font-medium"
+                  : "hover:bg-gray-50"
               } ${colorClasses(opt.color)}`}
             >
               {opt.label}
             </div>
+
           ))}
+
         </div>
+
       )}
+
     </div>
+
   );
+
 }

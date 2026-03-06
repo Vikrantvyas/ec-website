@@ -75,9 +75,16 @@ export default function LeadForm() {
 
       const mainPayload = buildLeadPayload(formData);
 
-      await supabase
+      const { error: mainError } = await supabase
         .from("leads")
         .insert([mainPayload]);
+
+      if (mainError) {
+        console.error(mainError);
+        alert("Error saving lead");
+        setLoading(false);
+        return;
+      }
 
       if (groupMembers.length > 0) {
 
@@ -88,9 +95,13 @@ export default function LeadForm() {
           })
         );
 
-        await supabase
+        const { error: groupError } = await supabase
           .from("leads")
           .insert(groupPayload);
+
+        if (groupError) {
+          console.error(groupError);
+        }
 
       }
 
@@ -116,7 +127,7 @@ export default function LeadForm() {
     } catch (err) {
 
       console.error(err);
-      alert("Error saving lead");
+      alert("Unexpected error saving lead");
 
     }
 
