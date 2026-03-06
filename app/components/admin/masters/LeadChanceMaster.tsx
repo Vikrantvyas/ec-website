@@ -5,45 +5,56 @@ import { supabase } from "@/lib/supabaseClient";
 
 export default function LeadChanceMaster() {
 
-  const [name,setName] = useState("");
-  const [items,setItems] = useState<any[]>([]);
-  const [editingId,setEditingId] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [items, setItems] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const fetchItems = async () => {
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("lead_chances")
       .select("*")
-      .order("name");
+      .order("name", { ascending: true });
 
-    if(data) setItems(data);
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    if (data) {
+      setItems(data);
+    }
 
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchItems();
-  },[]);
+  }, []);
 
-  const handleSubmit = async (e:any) => {
+  const handleSubmit = async (e: any) => {
 
     e.preventDefault();
 
-    if(!name.trim()) return;
+    if (!name.trim()) return;
 
-    if(editingId){
+    if (editingId) {
 
-      await supabase
+      const { error } = await supabase
         .from("lead_chances")
-        .update({ name })
-        .eq("id",editingId);
+        .update({ name: name.trim() })
+        .eq("id", editingId);
+
+      if (error) console.error(error);
 
       setEditingId(null);
 
     } else {
 
-      await supabase
+      const { error } = await supabase
         .from("lead_chances")
-        .insert([{ name }]);
+        .insert([{ name: name.trim() }]);
+
+      if (error) console.error(error);
 
     }
 
@@ -52,19 +63,23 @@ export default function LeadChanceMaster() {
 
   };
 
-  const handleEdit = (item:any) => {
+  const handleEdit = (item: any) => {
+
     setName(item.name);
     setEditingId(item.id);
+
   };
 
-  const handleDelete = async (id:string) => {
+  const handleDelete = async (id: string) => {
 
-    if(!confirm("Delete item?")) return;
+    if (!confirm("Delete item?")) return;
 
-    await supabase
+    const { error } = await supabase
       .from("lead_chances")
       .delete()
-      .eq("id",id);
+      .eq("id", id);
+
+    if (error) console.error(error);
 
     fetchItems();
 
@@ -78,13 +93,16 @@ export default function LeadChanceMaster() {
         Lead Chances Master
       </p>
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form
+        onSubmit={handleSubmit}
+        className="flex gap-2"
+      >
 
         <input
           type="text"
           placeholder="Lead Chance"
           value={name}
-          onChange={(e)=>setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
           className="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
@@ -103,30 +121,37 @@ export default function LeadChanceMaster() {
 
           <thead className="bg-gray-100">
             <tr>
-              <th className="text-left p-3">Lead Chance</th>
-              <th className="text-right p-3">Action</th>
+              <th className="text-left p-3">
+                Lead Chance
+              </th>
+
+              <th className="text-right p-3">
+                Action
+              </th>
             </tr>
           </thead>
 
           <tbody>
 
-            {items.map((item)=>(
+            {items.map((item) => (
 
               <tr key={item.id} className="border-t">
 
-                <td className="p-3">{item.name}</td>
+                <td className="p-3">
+                  {item.name}
+                </td>
 
                 <td className="p-3 text-right space-x-2">
 
                   <button
-                    onClick={()=>handleEdit(item)}
+                    onClick={() => handleEdit(item)}
                     className="text-blue-600"
                   >
                     Edit
                   </button>
 
                   <button
-                    onClick={()=>handleDelete(item.id)}
+                    onClick={() => handleDelete(item.id)}
                     className="text-red-600"
                   >
                     Delete

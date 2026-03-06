@@ -6,11 +6,24 @@ interface Props {
   formData: any;
   setFormData: any;
   handleChange: any;
-    courseOptions: string[];
+  courseOptions: string[];
   mapOptions: any;
+
   studentRef: React.RefObject<HTMLInputElement | null>;
   mobileRef: React.RefObject<HTMLInputElement | null>;
+
   cities: string[];
+
+  methods: string[];
+  channels: string[];
+  areas: string[];
+  leadFor: string[];
+  departments: string[];
+  courses: string[];
+  leadChances: string[];
+  leadStages: string[];
+  actions: string[];
+  counsellors: string[];
 }
 
 export default function LeadMainBlocks({
@@ -20,35 +33,65 @@ export default function LeadMainBlocks({
   courseOptions,
   mapOptions,
   studentRef,
-  mobileRef
+  mobileRef,
+
+  methods = [],
+  channels = [],
+  areas = [],
+  leadFor = [],
+  departments = [],
+  courses = [],
+  leadChances = [],
+  leadStages = [],
+  actions = [],
+  counsellors = []
 }: Props) {
 
   return (
     <>
-      {/* BLOCK 1 */}
+      {/* BASIC INFO */}
+
       <Block title="Basic Info">
-        <Input label="Date" name="enquiryDate" value={formData.enquiryDate} readOnly />
-        <Input label="Time" name="enquiryTime" value={formData.enquiryTime} readOnly />
+
+        <Input
+          label="Date"
+          name="enquiryDate"
+          value={formData.enquiryDate}
+          readOnly
+        />
+
+        <Input
+          label="Time"
+          name="enquiryTime"
+          value={formData.enquiryTime}
+          readOnly
+        />
 
         <SelectField
           label="Method"
           value={formData.method}
-          options={mapOptions(["Visit", "Call", "WhatsApp", "Social Media"])}
+          options={mapOptions(methods)}
           onChange={(val: string) =>
-            setFormData({ ...formData, method: val })}
+            setFormData({ ...formData, method: val })
+          }
         />
 
         <SelectField
           label="Channel"
           value={formData.channel}
-          options={mapOptions(["Main Board", "Friend", "Google", "Instagram", "Banner"])}
+          options={mapOptions(channels)}
           onChange={(val: string) =>
-            setFormData({ ...formData, channel: val })}
+            setFormData({ ...formData, channel: val })
+          }
         />
+
       </Block>
 
-      {/* BLOCK 2 */}
+
+      {/* STUDENT CONTACT */}
+
       <Block title="Student Contact">
+
         <Input
           label="Enquired By"
           name="enquiredBy"
@@ -56,27 +99,27 @@ export default function LeadMainBlocks({
           onChange={handleChange}
         />
 
-        {/* ✅ UPDATED FOR SELECT */}
         <SelectField
-  label="For"
-  value={formData.forWhom}
-  options={mapOptions(["Self", "Brother", "Sister", "Friend", "Child"])}
-  onChange={(val: string) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      forWhom: val,
-      studentName: val === "Self" ? prev.enquiredBy : ""
-    }));
+          label="For"
+          value={formData.forWhom}
+          options={mapOptions(leadFor)}
+          onChange={(val: string) => {
 
-    if (val !== "Self") {
-      setTimeout(() => {
-        studentRef.current?.focus();
-      }, 0);
-    }
-  }}
-/>
+            setFormData((prev: any) => ({
+              ...prev,
+              forWhom: val,
+              studentName: val === "Self" ? prev.enquiredBy : ""
+            }));
 
-        {/* Student Name */}
+            if (val !== "Self") {
+              setTimeout(() => {
+                studentRef.current?.focus();
+              }, 0);
+            }
+
+          }}
+        />
+
         <Input
           label="Student Name *"
           name="studentName"
@@ -111,14 +154,19 @@ export default function LeadMainBlocks({
         <SelectField
           label="Area"
           value={formData.area}
-          options={mapOptions(["Alwasa", "Vijay Nagar", "Bhawarkua", "Rajendra Nagar"])}
+          options={mapOptions(areas)}
           onChange={(val: string) =>
-            setFormData({ ...formData, area: val })}
+            setFormData({ ...formData, area: val })
+          }
         />
+
       </Block>
 
-      {/* BLOCK 3 */}
+
+      {/* PROFILE */}
+
       <Block title="Profile">
+
         <Input
           label="Age"
           name="age"
@@ -130,25 +178,28 @@ export default function LeadMainBlocks({
         <SelectField
           label="Gender"
           value={formData.gender}
-          options={mapOptions(["Male", "Female", "Other"])}
+          options={mapOptions(["Male","Female","Other"])}
           onChange={(val: string) =>
-            setFormData({ ...formData, gender: val })}
+            setFormData({ ...formData, gender: val })
+          }
         />
 
         <SelectField
           label="Marital Status"
           value={formData.maritalStatus}
-          options={mapOptions(["Single", "Married"])}
+          options={mapOptions(["Single","Married"])}
           onChange={(val: string) =>
-            setFormData({ ...formData, maritalStatus: val })}
+            setFormData({ ...formData, maritalStatus: val })
+          }
         />
 
         <SelectField
           label="Profession"
           value={formData.profession}
-          options={mapOptions(["Student", "Job", "Business", "Housewife", "Other"])}
+          options={mapOptions(["Student","Job","Business","Housewife","Other"])}
           onChange={(val: string) =>
-            setFormData({ ...formData, profession: val })}
+            setFormData({ ...formData, profession: val })
+          }
         />
 
         <SelectField
@@ -159,7 +210,8 @@ export default function LeadMainBlocks({
             "10th","11th","12th","Graduate","Post Graduate"
           ])}
           onChange={(val: string) =>
-            setFormData({ ...formData, education: val })}
+            setFormData({ ...formData, education: val })
+          }
         />
 
         <Input
@@ -169,100 +221,73 @@ export default function LeadMainBlocks({
           onChange={handleChange}
         />
 
-        <SelectField
-          label="School / College / Job Timing"
-          value={formData.schoolTiming}
-          options={mapOptions(["Morning","Afternoon","Evening","Night"])}
-          onChange={(val: string) =>
-            setFormData({ ...formData, schoolTiming: val })}
-        />
-
-        <SelectField
-          label="Best Time To Contact"
-          value={formData.contactTime}
-          options={mapOptions([
-            "8 AM - 10 AM",
-            "10 AM - 12 PM",
-            "12 AM - 4 PM",
-            "4 PM - 7 PM",
-            "7 PM - 9 PM"
-          ])}
-          onChange={(val: string) =>
-            setFormData({ ...formData, contactTime: val })}
-        />
       </Block>
 
-      {/* BLOCK 4 */}
+
+      {/* COURSE */}
+
       <Block title="Course Selection">
+
         <SelectField
           label="Department"
           value={formData.department}
-          options={mapOptions(["English","Computer","Eng & Com"])}
+          options={mapOptions(departments)}
           onChange={(val: string) =>
-            setFormData({ ...formData, department: val, course: [] })}
+            setFormData({ ...formData, department: val, course: [] })
+          }
         />
 
         <SelectField
           label="Course"
           value={formData.course}
-          options={mapOptions(courseOptions)}
+          options={mapOptions(courses)}
           multiple={true}
           onChange={(val: any) =>
-            setFormData({ ...formData, course: val })}
+            setFormData({ ...formData, course: val })
+          }
         />
 
-        <SelectField
-          label="Preferred Timing"
-          value={formData.preferredTiming}
-          options={mapOptions(["Any Time","Morning","Noon","Evening","Night"])}
-          onChange={(val: string) =>
-            setFormData({ ...formData, preferredTiming: val })}
-        />
-
-        <SelectField
-          label="Preferred Batch"
-          value={formData.preferredBatch}
-          options={mapOptions([
-            "Any Time",
-            "8 AM","9 AM","10 AM","11 AM",
-            "12 PM","1 PM","2 PM","3 PM",
-            "4 PM","5 PM","6 PM","7 PM","8 PM"
-          ])}
-          onChange={(val: string) =>
-            setFormData({ ...formData, preferredBatch: val })}
-        />
       </Block>
 
-      {/* BLOCK 5 */}
+
+      {/* COUNSELLING */}
+
       <Block title="Counselling & Action">
+
         <SelectField
           label="Lead Chances"
           value={formData.leadChances}
-          options={mapOptions(["Low","Medium","High"])}
+          options={mapOptions(leadChances)}
           onChange={(val: string) =>
-            setFormData({ ...formData, leadChances: val })}
+            setFormData({ ...formData, leadChances: val })
+          }
         />
 
         <SelectField
           label="Lead Stage"
           value={formData.leadStage}
-          options={mapOptions([
-            "Lead","Demo Scheduled","Demo Continue",
-            "Admitted","Alumni"
-          ])}
+          options={mapOptions(leadStages)}
           onChange={(val: string) =>
-            setFormData({ ...formData, leadStage: val })}
+            setFormData({ ...formData, leadStage: val })
+          }
         />
 
         <SelectField
           label="Action"
           value={formData.action}
-          options={mapOptions([
-            "Call Again","Send Details",
-            "Demo Arrange","Visit Reminder"
-          ])}
+          options={mapOptions(actions)}
           onChange={(val: string) =>
-            setFormData({ ...formData, action: val })}
+            setFormData({ ...formData, action: val })
+          }
+        />
+
+        <SelectField
+          label="Counsellor"
+          value={formData.counsellor}
+          options={mapOptions(counsellors)}
+          onChange={(val: string) =>
+            setFormData({ ...formData, counsellor: val })
+          }
         />
 
         <Input
@@ -281,20 +306,13 @@ export default function LeadMainBlocks({
           onChange={handleChange}
         />
 
-        <SelectField
-          label="Counsellor"
-          value={formData.counsellor}
-          options={mapOptions(["Counsellor 1","Counsellor 2","Counsellor 3"])}
-          onChange={(val: string) =>
-            setFormData({ ...formData, counsellor: val })}
-        />
-
         <TextArea
           label="Remark"
           name="remark"
           value={formData.remark}
           onChange={handleChange}
         />
+
       </Block>
     </>
   );

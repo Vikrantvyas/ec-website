@@ -5,45 +5,56 @@ import { supabase } from "@/lib/supabaseClient";
 
 export default function AreaMaster() {
 
-  const [name,setName] = useState("");
-  const [areas,setAreas] = useState<any[]>([]);
-  const [editingId,setEditingId] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [areas, setAreas] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const fetchAreas = async () => {
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("areas")
       .select("*")
-      .order("name");
+      .order("name", { ascending: true });
 
-    if(data) setAreas(data);
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    if (data) {
+      setAreas(data);
+    }
 
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchAreas();
-  },[]);
+  }, []);
 
-  const handleSubmit = async (e:any) => {
+  const handleSubmit = async (e: any) => {
 
     e.preventDefault();
 
-    if(!name.trim()) return;
+    if (!name.trim()) return;
 
-    if(editingId){
+    if (editingId) {
 
-      await supabase
+      const { error } = await supabase
         .from("areas")
-        .update({ name })
-        .eq("id",editingId);
+        .update({ name: name.trim() })
+        .eq("id", editingId);
+
+      if (error) console.error(error);
 
       setEditingId(null);
 
     } else {
 
-      await supabase
+      const { error } = await supabase
         .from("areas")
-        .insert([{ name }]);
+        .insert([{ name: name.trim() }]);
+
+      if (error) console.error(error);
 
     }
 
@@ -52,19 +63,23 @@ export default function AreaMaster() {
 
   };
 
-  const handleEdit = (a:any) => {
-    setName(a.name);
-    setEditingId(a.id);
+  const handleEdit = (area: any) => {
+
+    setName(area.name);
+    setEditingId(area.id);
+
   };
 
-  const handleDelete = async (id:string) => {
+  const handleDelete = async (id: string) => {
 
-    if(!confirm("Delete area?")) return;
+    if (!confirm("Delete area?")) return;
 
-    await supabase
+    const { error } = await supabase
       .from("areas")
       .delete()
-      .eq("id",id);
+      .eq("id", id);
+
+    if (error) console.error(error);
 
     fetchAreas();
 
@@ -78,13 +93,16 @@ export default function AreaMaster() {
         Area Master
       </p>
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form
+        onSubmit={handleSubmit}
+        className="flex gap-2"
+      >
 
         <input
           type="text"
           placeholder="Area Name"
           value={name}
-          onChange={(e)=>setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
           className="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
@@ -104,33 +122,38 @@ export default function AreaMaster() {
           <thead className="bg-gray-100">
 
             <tr>
-              <th className="text-left p-3">Area</th>
-              <th className="text-right p-3">Action</th>
+              <th className="text-left p-3">
+                Area
+              </th>
+
+              <th className="text-right p-3">
+                Action
+              </th>
             </tr>
 
           </thead>
 
           <tbody>
 
-            {areas.map((a)=>(
+            {areas.map((area) => (
 
-              <tr key={a.id} className="border-t">
+              <tr key={area.id} className="border-t">
 
                 <td className="p-3">
-                  {a.name}
+                  {area.name}
                 </td>
 
                 <td className="p-3 text-right space-x-2">
 
                   <button
-                    onClick={()=>handleEdit(a)}
+                    onClick={() => handleEdit(area)}
                     className="text-blue-600"
                   >
                     Edit
                   </button>
 
                   <button
-                    onClick={()=>handleDelete(a.id)}
+                    onClick={() => handleDelete(area.id)}
                     className="text-red-600"
                   >
                     Delete

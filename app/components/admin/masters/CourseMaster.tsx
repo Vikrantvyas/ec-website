@@ -5,45 +5,56 @@ import { supabase } from "@/lib/supabaseClient";
 
 export default function CourseMaster() {
 
-  const [name,setName] = useState("");
-  const [courses,setCourses] = useState<any[]>([]);
-  const [editingId,setEditingId] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [courses, setCourses] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const fetchCourses = async () => {
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("courses")
       .select("*")
-      .order("name");
+      .order("name", { ascending: true });
 
-    if(data) setCourses(data);
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    if (data) {
+      setCourses(data);
+    }
 
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchCourses();
-  },[]);
+  }, []);
 
-  const handleSubmit = async (e:any) => {
+  const handleSubmit = async (e: any) => {
 
     e.preventDefault();
 
-    if(!name.trim()) return;
+    if (!name.trim()) return;
 
-    if(editingId){
+    if (editingId) {
 
-      await supabase
+      const { error } = await supabase
         .from("courses")
-        .update({ name })
-        .eq("id",editingId);
+        .update({ name: name.trim() })
+        .eq("id", editingId);
+
+      if (error) console.error(error);
 
       setEditingId(null);
 
     } else {
 
-      await supabase
+      const { error } = await supabase
         .from("courses")
-        .insert([{ name }]);
+        .insert([{ name: name.trim() }]);
+
+      if (error) console.error(error);
 
     }
 
@@ -52,19 +63,23 @@ export default function CourseMaster() {
 
   };
 
-  const handleEdit = (c:any) => {
-    setName(c.name);
-    setEditingId(c.id);
+  const handleEdit = (course: any) => {
+
+    setName(course.name);
+    setEditingId(course.id);
+
   };
 
-  const handleDelete = async (id:string) => {
+  const handleDelete = async (id: string) => {
 
-    if(!confirm("Delete course?")) return;
+    if (!confirm("Delete course?")) return;
 
-    await supabase
+    const { error } = await supabase
       .from("courses")
       .delete()
-      .eq("id",id);
+      .eq("id", id);
+
+    if (error) console.error(error);
 
     fetchCourses();
 
@@ -78,13 +93,16 @@ export default function CourseMaster() {
         Course Master
       </p>
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form
+        onSubmit={handleSubmit}
+        className="flex gap-2"
+      >
 
         <input
           type="text"
           placeholder="Course Name"
           value={name}
-          onChange={(e)=>setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
           className="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
@@ -104,33 +122,38 @@ export default function CourseMaster() {
           <thead className="bg-gray-100">
 
             <tr>
-              <th className="text-left p-3">Course</th>
-              <th className="text-right p-3">Action</th>
+              <th className="text-left p-3">
+                Course
+              </th>
+
+              <th className="text-right p-3">
+                Action
+              </th>
             </tr>
 
           </thead>
 
           <tbody>
 
-            {courses.map((c)=>(
+            {courses.map((course) => (
 
-              <tr key={c.id} className="border-t">
+              <tr key={course.id} className="border-t">
 
                 <td className="p-3">
-                  {c.name}
+                  {course.name}
                 </td>
 
                 <td className="p-3 text-right space-x-2">
 
                   <button
-                    onClick={()=>handleEdit(c)}
+                    onClick={() => handleEdit(course)}
                     className="text-blue-600"
                   >
                     Edit
                   </button>
 
                   <button
-                    onClick={()=>handleDelete(c.id)}
+                    onClick={() => handleDelete(course.id)}
                     className="text-red-600"
                   >
                     Delete
