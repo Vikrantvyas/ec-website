@@ -1,119 +1,91 @@
 "use client";
 
 import { useState } from "react";
-import BranchesMaster from "@/app/components/admin/masters/BranchesMaster";
 
-interface MasterCategory {
-  label: string;
-  value: string;
-  subMasters: { label: string; value: string }[];
-}
-
-const masterCategories: MasterCategory[] = [
-
-  {
-    label: "Leads",
-    value: "leads",
-    subMasters: [
-      { label: "Areas", value: "areas" },
-      { label: "Branches", value: "branches" },
-      { label: "Counsellors", value: "counsellors" },
-      { label: "Sources", value: "sources" },
-      { label: "Education", value: "education" },
-      { label: "Institutes", value: "institutes" },
-      { label: "Profession Categories", value: "profession_categories" },
-    ],
-  },
-
-  {
-    label: "Courses",
-    value: "courses",
-    subMasters: [
-      { label: "Departments", value: "departments" },
-      { label: "Courses", value: "courses_master" },
-    ],
-  },
-
-  {
-    label: "Batch",
-    value: "batch",
-    subMasters: [
-      { label: "Batches", value: "batches" },
-      { label: "Teachers", value: "teachers" },
-    ],
-  },
-
-  {
-    label: "Attendance",
-    value: "attendance",
-    subMasters: [
-      { label: "Attendance Settings", value: "attendance_settings" },
-    ],
-  },
-
-  {
-    label: "Finance",
-    value: "finance",
-    subMasters: [
-      { label: "Payment Modes", value: "payment_modes" },
-    ],
-  },
-
-];
+import BranchMaster from "@/app/components/admin/masters/BranchMaster";
+import MethodMaster from "@/app/components/admin/masters/MethodMaster";
+import ChannelMaster from "@/app/components/admin/masters/ChannelMaster";
+import ForMaster from "@/app/components/admin/masters/ForMaster";
+import AreaMaster from "@/app/components/admin/masters/AreaMaster";
+import DepartmentMaster from "@/app/components/admin/masters/DepartmentMaster";
+import CourseMaster from "@/app/components/admin/masters/CourseMaster";
+import LeadChanceMaster from "@/app/components/admin/masters/LeadChanceMaster";
+import LeadStageMaster from "@/app/components/admin/masters/LeadStageMaster";
+import ActionMaster from "@/app/components/admin/masters/ActionMaster";
+import CounsellorMaster from "@/app/components/admin/masters/CounsellorMaster";
 
 export default function MastersPage() {
 
-  const [selectedCategory, setSelectedCategory] = useState("leads");
-  const [selectedMaster, setSelectedMaster] = useState("branches");
+  const [selectedCategory,setSelectedCategory] = useState("leads");
+  const [selectedMaster,setSelectedMaster] = useState("");
 
-  const currentMasters =
-    masterCategories.find((c) => c.value === selectedCategory)?.subMasters || [];
+  const masters = [
+    { label:"Branches", value:"branches" },
+    { label:"Method", value:"method" },
+    { label:"Channel", value:"channel" },
+    { label:"For", value:"for" },
+    { label:"Area", value:"area" },
+    { label:"Department", value:"department" },
+    { label:"Courses", value:"courses" },
+    { label:"Lead Chances", value:"lead_chances" },
+    { label:"Lead Stage", value:"lead_stage" },
+    { label:"Action", value:"action" },
+    { label:"Counsellor", value:"counsellor" }
+  ];
 
   return (
 
-    <div className="min-h-screen p-6">
+    <div className="space-y-6 text-sm p-6">
 
-      <div className="bg-white p-6 rounded-lg border">
+      {/* Dropdown Section */}
 
-        <div className="grid md:grid-cols-2 gap-4 mb-6">
+      <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
 
-          <div>
+        <div className="grid md:grid-cols-2 gap-4">
 
-            <label className="text-sm text-gray-600">
+          {/* Category */}
+
+          <div className="space-y-1">
+
+            <label className="text-gray-600 text-sm">
               Category
             </label>
 
             <select
-              className="w-full border rounded-lg p-2 mt-1"
+              className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={selectedCategory}
-              onChange={(e) => {
+              onChange={(e)=>{
                 setSelectedCategory(e.target.value);
                 setSelectedMaster("");
               }}
             >
-              {masterCategories.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
+              <option value="leads">
+                Leads
+              </option>
+
             </select>
 
           </div>
 
-          <div>
+          {/* Master */}
 
-            <label className="text-sm text-gray-600">
+          <div className="space-y-1">
+
+            <label className="text-gray-600 text-sm">
               Master
             </label>
 
             <select
-              className="w-full border rounded-lg p-2 mt-1"
+              className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={selectedMaster}
-              onChange={(e) => setSelectedMaster(e.target.value)}
+              onChange={(e)=>setSelectedMaster(e.target.value)}
             >
-              <option value="">Select Master</option>
 
-              {currentMasters.map((m) => (
+              <option value="">
+                Select Master
+              </option>
+
+              {masters.map((m)=>(
                 <option key={m.value} value={m.value}>
                   {m.label}
                 </option>
@@ -125,13 +97,29 @@ export default function MastersPage() {
 
         </div>
 
-        <div className="border rounded-lg p-6">
+      </div>
 
-          {selectedMaster === "branches" && <BranchesMaster />}
+      {/* Selected Master Component */}
+
+      {selectedMaster && (
+
+        <div className="bg-white rounded-xl shadow-sm p-6">
+
+          {selectedMaster === "branches" && <BranchMaster />}
+          {selectedMaster === "method" && <MethodMaster />}
+          {selectedMaster === "channel" && <ChannelMaster />}
+          {selectedMaster === "for" && <ForMaster />}
+          {selectedMaster === "area" && <AreaMaster />}
+          {selectedMaster === "department" && <DepartmentMaster />}
+          {selectedMaster === "courses" && <CourseMaster />}
+          {selectedMaster === "lead_chances" && <LeadChanceMaster />}
+          {selectedMaster === "lead_stage" && <LeadStageMaster />}
+          {selectedMaster === "action" && <ActionMaster />}
+          {selectedMaster === "counsellor" && <CounsellorMaster />}
 
         </div>
 
-      </div>
+      )}
 
     </div>
 
