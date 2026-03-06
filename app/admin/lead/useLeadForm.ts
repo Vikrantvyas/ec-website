@@ -23,8 +23,8 @@ export default function useLeadForm() {
     enquiryDate: formattedDate,
     enquiryTime: formattedTime,
 
-    method: "Call",
-    channel: "Visit",
+    method: "Visit",
+    channel: "Main Board",
 
     enquiredBy: "",
     forWhom: "Self",
