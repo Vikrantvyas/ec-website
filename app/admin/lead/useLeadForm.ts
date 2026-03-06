@@ -20,11 +20,11 @@ export default function useLeadForm() {
     branch: "",
     enquiryDate: formattedDate,
     enquiryTime: formattedTime,
-    method: "Visit",
-    channel: "Main Board",
+    method: "",
+    channel: "",
 
     enquiredBy: "",
-    forWhom: "Self",
+    forWhom: "",
     studentName: "",
     mobileNumber: "",
     alternateNumber: "",
@@ -38,19 +38,14 @@ export default function useLeadForm() {
 
     education: "",
     schoolCollegeJob: "",
-    schoolTiming: "Morning",
-    contactTime: "2 PM - 5 PM",
 
-    department: "English",
-    course: ["Spoken English"],
+    department: "",
+    course: [],
 
-    preferredTiming: "Any Time",
-    preferredBatch: "Any Time",
+    leadChances: "",
+    leadStage: "",
 
-    leadChances: "Medium",
-    leadStage: "Lead",
-
-    action: "Call Again",
+    action: "",
     nextFollowDate: nextFollowDate,
     nextFollowTime: nextFollowTime,
 
@@ -60,38 +55,167 @@ export default function useLeadForm() {
 
   const [formData, setFormData] = useState<any>(initialState);
   const [loading, setLoading] = useState(false);
+
   const [cities, setCities] = useState<string[]>([]);
   const [branches, setBranches] = useState<string[]>([]);
+  const [methods, setMethods] = useState<string[]>([]);
+  const [channels, setChannels] = useState<string[]>([]);
+  const [areas, setAreas] = useState<string[]>([]);
+  const [leadFor, setLeadFor] = useState<string[]>([]);
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [courses, setCourses] = useState<string[]>([]);
+  const [leadChances, setLeadChances] = useState<string[]>([]);
+  const [leadStages, setLeadStages] = useState<string[]>([]);
+  const [actions, setActions] = useState<string[]>([]);
+  const [counsellors, setCounsellors] = useState<string[]>([]);
 
   useEffect(() => {
+
     fetchCities();
     fetchBranches();
+    fetchMethods();
+    fetchChannels();
+    fetchAreas();
+    fetchLeadFor();
+    fetchDepartments();
+    fetchCourses();
+    fetchLeadChances();
+    fetchLeadStages();
+    fetchActions();
+    fetchCounsellors();
+
   }, []);
 
   const fetchCities = async () => {
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("cities")
       .select("name")
-      .order("name", { ascending: true });
+      .order("name");
 
-    if (!error && data) {
-      setCities(data.map((c) => c.name));
-    }
+    if (data) setCities(data.map((c:any) => c.name));
 
   };
 
   const fetchBranches = async () => {
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("branches")
       .select("name")
-      .eq("status", "Active")
-      .order("name", { ascending: true });
+      .eq("status","Active")
+      .order("name");
 
-    if (!error && data) {
-      setBranches(data.map((b) => b.name));
-    }
+    if (data) setBranches(data.map((b:any) => b.name));
+
+  };
+
+  const fetchMethods = async () => {
+
+    const { data } = await supabase
+      .from("methods")
+      .select("name")
+      .order("name");
+
+    if (data) setMethods(data.map((m:any) => m.name));
+
+  };
+
+  const fetchChannels = async () => {
+
+    const { data } = await supabase
+      .from("channels")
+      .select("name")
+      .order("name");
+
+    if (data) setChannels(data.map((c:any) => c.name));
+
+  };
+
+  const fetchAreas = async () => {
+
+    const { data } = await supabase
+      .from("areas")
+      .select("name")
+      .order("name");
+
+    if (data) setAreas(data.map((a:any) => a.name));
+
+  };
+
+  const fetchLeadFor = async () => {
+
+    const { data } = await supabase
+      .from("lead_for")
+      .select("name")
+      .order("name");
+
+    if (data) setLeadFor(data.map((l:any) => l.name));
+
+  };
+
+  const fetchDepartments = async () => {
+
+    const { data } = await supabase
+      .from("departments")
+      .select("name")
+      .order("name");
+
+    if (data) setDepartments(data.map((d:any) => d.name));
+
+  };
+
+  const fetchCourses = async () => {
+
+    const { data } = await supabase
+      .from("courses")
+      .select("name")
+      .order("name");
+
+    if (data) setCourses(data.map((c:any) => c.name));
+
+  };
+
+  const fetchLeadChances = async () => {
+
+    const { data } = await supabase
+      .from("lead_chances")
+      .select("name")
+      .order("name");
+
+    if (data) setLeadChances(data.map((l:any) => l.name));
+
+  };
+
+  const fetchLeadStages = async () => {
+
+    const { data } = await supabase
+      .from("lead_stages")
+      .select("name")
+      .order("name");
+
+    if (data) setLeadStages(data.map((l:any) => l.name));
+
+  };
+
+  const fetchActions = async () => {
+
+    const { data } = await supabase
+      .from("lead_actions")
+      .select("name")
+      .order("name");
+
+    if (data) setActions(data.map((a:any) => a.name));
+
+  };
+
+  const fetchCounsellors = async () => {
+
+    const { data } = await supabase
+      .from("counsellors")
+      .select("name")
+      .order("name");
+
+    if (data) setCounsellors(data.map((c:any) => c.name));
 
   };
 
@@ -99,109 +223,54 @@ export default function useLeadForm() {
     setFormData(initialState);
   };
 
-  const handleChange = (e: any) => {
+  const handleChange = (e:any) => {
 
     let { name, value } = e.target;
 
     if (name === "mobileNumber" || name === "alternateNumber") {
-      value = value.replace("+91", "").replace(/\D/g, "").slice(0, 10);
+      value = value.replace("+91","").replace(/\D/g,"").slice(0,10);
     }
 
-    setFormData((prev: any) => {
-
-      let updated = { ...prev, [name]: value };
-
-      if (name === "enquiredBy" && prev.forWhom === "Self") {
-        updated.studentName = value;
-      }
-
-      if (name === "forWhom") {
-
-        if (value === "Self") {
-          updated.studentName = prev.enquiredBy;
-        } else {
-
-          updated.studentName = "";
-
-          setTimeout(() => {
-            const el = document.querySelector(
-              'input[name="studentName"]'
-            ) as HTMLInputElement | null;
-            el?.focus();
-          }, 0);
-
-        }
-
-      }
-
-      if (name === "age") {
-
-        const ageNum = parseInt(value);
-
-        if (!isNaN(ageNum)) {
-
-          const classLevel = ageNum - 5;
-
-          if (classLevel <= 0) updated.education = "";
-          else if (classLevel >= 1 && classLevel <= 9) updated.education = `${classLevel}th`;
-          else if (classLevel === 10) updated.education = "10th";
-          else if (classLevel === 11) updated.education = "11th";
-          else if (classLevel === 12) updated.education = "12th";
-          else if (classLevel >= 13 && classLevel <= 15) updated.education = "Graduate";
-          else if (classLevel > 15) updated.education = "Post Graduate";
-
-          updated.maritalStatus = ageNum >= 25 ? "Married" : "Single";
-          updated.profession = ageNum >= 25 ? "Job" : "Student";
-
-        }
-
-      }
-
-      if (name === "schoolTiming") {
-
-        if (value === "Morning") updated.contactTime = "2 PM - 5 PM";
-        if (value === "Afternoon") updated.contactTime = "6 PM - 8 PM";
-        if (value === "Evening") updated.contactTime = "10 AM - 12 PM";
-        if (value === "Night") updated.contactTime = "9 AM - 11 AM";
-
-      }
-
-      return updated;
-
-    });
+    setFormData((prev:any)=>({
+      ...prev,
+      [name]: value
+    }));
 
   };
 
-  const courseOptions =
-    formData.department === "English"
-      ? ["Spoken English", "Basic English", "Advanced English"]
-      : formData.department === "Computer"
-      ? ["Basic Computer", "Tally", "Typing", "Advanced Computer"]
-      : [
-          "Spoken English",
-          "Basic English",
-          "Advanced English",
-          "Basic Computer",
-          "Tally",
-          "Typing",
-          "Advanced Computer",
-        ];
-
-  const mapOptions = (arr: string[]) =>
-    arr.map((item) => ({ label: item, value: item }));
+  const mapOptions = (arr:any[]=[]) =>
+    arr.map((item)=>({
+      label:item,
+      value:item
+    }));
 
   return {
+
     formData,
     setFormData,
     handleChange,
     loading,
     setLoading,
+
     branches,
-    courseOptions,
-    mapOptions,
+    methods,
+    channels,
+    areas,
+    leadFor,
+    departments,
+    courses,
+    leadChances,
+    leadStages,
+    actions,
+    counsellors,
+
     cities,
+
+    mapOptions,
+
     resetForm,
     fetchCities
+
   };
 
 }

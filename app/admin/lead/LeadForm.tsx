@@ -13,17 +13,32 @@ export default function LeadForm() {
   const mobileRef = useRef<HTMLInputElement>(null);
 
   const {
+
     formData,
     setFormData,
     handleChange,
+
     loading,
     setLoading,
+
     branches,
-    courseOptions,
+    methods,
+    channels,
+    areas,
+    leadFor,
+    departments,
+    courses,
+    leadChances,
+    leadStages,
+    actions,
+    counsellors,
+
     mapOptions,
     cities,
+
     resetForm,
     fetchCities
+
   } = useLeadForm();
 
   const [groupOpen, setGroupOpen] = useState(false);
@@ -33,7 +48,8 @@ export default function LeadForm() {
     formData.studentName?.trim() &&
     /^\d{10}$/.test(formData.mobileNumber);
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e:any) => {
+
     e.preventDefault();
 
     if (!formData.branch) {
@@ -58,18 +74,23 @@ export default function LeadForm() {
     try {
 
       const mainPayload = buildLeadPayload(formData);
-      await supabase.from("leads").insert([mainPayload]);
+
+      await supabase
+        .from("leads")
+        .insert([mainPayload]);
 
       if (groupMembers.length > 0) {
 
         const groupPayload = groupMembers.map((m) =>
-          buildLeadPayload(formData, {
+          buildLeadPayload(formData,{
             student_name: m.name,
-            mobile_number: m.mobile,
+            mobile_number: m.mobile
           })
         );
 
-        await supabase.from("leads").insert(groupPayload);
+        await supabase
+          .from("leads")
+          .insert(groupPayload);
 
       }
 
@@ -103,27 +124,11 @@ export default function LeadForm() {
 
   };
 
-  const handleForChange = (val: string) => {
-
-    setFormData((prev: any) => ({
-      ...prev,
-      forWhom: val,
-      studentName: val === "Self" ? prev.enquiredBy : ""
-    }));
-
-    if (val !== "Self") {
-      setTimeout(() => {
-        studentRef.current?.focus();
-      }, 0);
-    }
-
-  };
-
   return (
 
     <form onSubmit={handleSubmit} className="space-y-8 text-sm">
 
-      {/* Branch */}
+      {/* BRANCH */}
 
       <div className="space-y-2">
 
@@ -131,17 +136,17 @@ export default function LeadForm() {
 
         <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1">
 
-          {branches.map((b: string) => (
+          {branches.map((b:string)=>(
 
             <button
               key={b}
               type="button"
-              onClick={() => setFormData({ ...formData, branch: b })}
+              onClick={()=>setFormData({ ...formData, branch:b })}
               className={`px-3 py-1 rounded-full border shrink-0
               ${
                 formData.branch === b
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white border-gray-300"
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white border-gray-300"
               }`}
             >
               {b}
@@ -158,14 +163,29 @@ export default function LeadForm() {
         <>
 
           <LeadMainBlocks
+
             formData={formData}
             setFormData={setFormData}
             handleChange={handleChange}
-            courseOptions={courseOptions}
+
             mapOptions={mapOptions}
+
             studentRef={studentRef}
             mobileRef={mobileRef}
+
             cities={cities}
+
+            methods={methods}
+            channels={channels}
+            areas={areas}
+            leadFor={leadFor}
+            departments={departments}
+            courses={courses}
+            leadChances={leadChances}
+            leadStages={leadStages}
+            actions={actions}
+            counsellors={counsellors}
+
           />
 
           <div className="flex justify-between items-center pt-4">
@@ -173,12 +193,12 @@ export default function LeadForm() {
             <button
               type="button"
               disabled={!isPrimaryValid}
-              onClick={() => setGroupOpen(true)}
+              onClick={()=>setGroupOpen(true)}
               className={`px-4 py-2 rounded-md text-white transition
               ${
                 isPrimaryValid
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-gray-400 cursor-not-allowed"
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-gray-400 cursor-not-allowed"
               }`}
             >
               ➕ Add Group Members
@@ -200,8 +220,8 @@ export default function LeadForm() {
 
       <GroupEntryModal
         isOpen={groupOpen}
-        onClose={() => setGroupOpen(false)}
-        onSave={(members) => setGroupMembers(members)}
+        onClose={()=>setGroupOpen(false)}
+        onSave={(members)=>setGroupMembers(members)}
       />
 
     </form>
