@@ -6,8 +6,30 @@ import { supabase } from "@/lib/supabaseClient";
 export default function AreaMaster() {
 
   const [name, setName] = useState("");
+  const [city, setCity] = useState("");
+
   const [areas, setAreas] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
+
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const fetchCities = async () => {
+
+    const { data, error } = await supabase
+      .from("cities")
+      .select("*")
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    if (data) {
+      setCities(data);
+    }
+
+  };
 
   const fetchAreas = async () => {
 
@@ -28,20 +50,27 @@ export default function AreaMaster() {
   };
 
   useEffect(() => {
+
+    fetchCities();
     fetchAreas();
+
   }, []);
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e:any) => {
 
     e.preventDefault();
 
     if (!name.trim()) return;
+    if (!city) return;
 
     if (editingId) {
 
       const { error } = await supabase
         .from("areas")
-        .update({ name: name.trim() })
+        .update({
+          name: name.trim(),
+          city: city
+        })
         .eq("id", editingId);
 
       if (error) console.error(error);
@@ -52,25 +81,31 @@ export default function AreaMaster() {
 
       const { error } = await supabase
         .from("areas")
-        .insert([{ name: name.trim() }]);
+        .insert([{
+          name: name.trim(),
+          city: city
+        }]);
 
       if (error) console.error(error);
 
     }
 
     setName("");
+    setCity("");
+
     fetchAreas();
 
   };
 
-  const handleEdit = (area: any) => {
+  const handleEdit = (area:any) => {
 
     setName(area.name);
+    setCity(area.city);
     setEditingId(area.id);
 
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id:string) => {
 
     if (!confirm("Delete area?")) return;
 
@@ -98,11 +133,29 @@ export default function AreaMaster() {
         className="flex gap-2"
       >
 
+        <select
+          value={city}
+          onChange={(e)=>setCity(e.target.value)}
+          className="rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+
+          <option value="">
+            Select City
+          </option>
+
+          {cities.map((c)=>(
+            <option key={c.id} value={c.name}>
+              {c.name}
+            </option>
+          ))}
+
+        </select>
+
         <input
           type="text"
           placeholder="Area Name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e)=>setName(e.target.value)}
           className="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
@@ -122,6 +175,11 @@ export default function AreaMaster() {
           <thead className="bg-gray-100">
 
             <tr>
+
+              <th className="text-left p-3">
+                City
+              </th>
+
               <th className="text-left p-3">
                 Area
               </th>
@@ -129,15 +187,20 @@ export default function AreaMaster() {
               <th className="text-right p-3">
                 Action
               </th>
+
             </tr>
 
           </thead>
 
           <tbody>
 
-            {areas.map((area) => (
+            {areas.map((area)=>(
 
               <tr key={area.id} className="border-t">
+
+                <td className="p-3">
+                  {area.city}
+                </td>
 
                 <td className="p-3">
                   {area.name}
@@ -146,14 +209,14 @@ export default function AreaMaster() {
                 <td className="p-3 text-right space-x-2">
 
                   <button
-                    onClick={() => handleEdit(area)}
+                    onClick={()=>handleEdit(area)}
                     className="text-blue-600"
                   >
                     Edit
                   </button>
 
                   <button
-                    onClick={() => handleDelete(area.id)}
+                    onClick={()=>handleDelete(area.id)}
                     className="text-red-600"
                   >
                     Delete

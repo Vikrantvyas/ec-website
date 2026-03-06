@@ -6,6 +6,7 @@ import BranchMaster from "@/app/components/admin/masters/BranchMaster";
 import MethodMaster from "@/app/components/admin/masters/MethodMaster";
 import ChannelMaster from "@/app/components/admin/masters/ChannelMaster";
 import ForMaster from "@/app/components/admin/masters/ForMaster";
+import CityMaster from "@/app/components/admin/masters/CityMaster";
 import AreaMaster from "@/app/components/admin/masters/AreaMaster";
 import DepartmentMaster from "@/app/components/admin/masters/DepartmentMaster";
 import CourseMaster from "@/app/components/admin/masters/CourseMaster";
@@ -24,6 +25,7 @@ export default function MastersPage() {
     { label:"Method", value:"method" },
     { label:"Channel", value:"channel" },
     { label:"For", value:"for" },
+    { label:"City", value:"city" },
     { label:"Area", value:"area" },
     { label:"Department", value:"department" },
     { label:"Courses", value:"courses" },
@@ -109,6 +111,7 @@ export default function MastersPage() {
           {selectedMaster === "method" && <MethodMaster />}
           {selectedMaster === "channel" && <ChannelMaster />}
           {selectedMaster === "for" && <ForMaster />}
+          {selectedMaster === "city" && <CityMaster />}
           {selectedMaster === "area" && <AreaMaster />}
           {selectedMaster === "department" && <DepartmentMaster />}
           {selectedMaster === "courses" && <CourseMaster />}
