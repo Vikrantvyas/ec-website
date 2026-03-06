@@ -6,7 +6,6 @@ interface Props {
   formData: any;
   setFormData: any;
   handleChange: any;
-  courseOptions: string[];
   mapOptions: any;
 
   studentRef: React.RefObject<HTMLInputElement | null>;
@@ -30,7 +29,6 @@ export default function LeadMainBlocks({
   formData,
   setFormData,
   handleChange,
-  courseOptions,
   mapOptions,
   studentRef,
   mobileRef,
@@ -49,6 +47,7 @@ export default function LeadMainBlocks({
 
   return (
     <>
+
       {/* BASIC INFO */}
 
       <Block title="Basic Info">
@@ -314,6 +313,8 @@ export default function LeadMainBlocks({
         />
 
       </Block>
+
     </>
   );
+
 }
