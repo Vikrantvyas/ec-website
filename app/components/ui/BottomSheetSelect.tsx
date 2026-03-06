@@ -27,26 +27,32 @@ export default function BottomSheetSelect({
   const [openUpward, setOpenUpward] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const searchBuffer = useRef("");
-  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+
     const checkScreen = () => {
       setIsMobile(window.innerWidth < 768);
     };
+
     checkScreen();
     window.addEventListener("resize", checkScreen);
+
     return () => window.removeEventListener("resize", checkScreen);
+
   }, []);
 
   useEffect(() => {
+
     if (isMobile && open) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
     }
+
   }, [open, isMobile]);
 
   useEffect(() => {
@@ -215,8 +221,6 @@ export default function BottomSheetSelect({
 
       </button>
 
-      {/* MOBILE */}
-
       {isMobile && (
         <>
           {open && (
@@ -239,7 +243,7 @@ export default function BottomSheetSelect({
 
             <div className="max-h-[60vh] overflow-y-auto">
 
-              {options.map((opt, i) => (
+              {options.map((opt) => (
 
                 <div
                   key={opt.value}
@@ -262,8 +266,6 @@ export default function BottomSheetSelect({
         </>
       )}
 
-      {/* DESKTOP */}
-
       {!isMobile && open && (
 
         <div
@@ -279,7 +281,7 @@ export default function BottomSheetSelect({
 
             <div
               key={opt.value}
-              ref={(el) => (optionRefs.current[i] = el)}
+              ref={(el) => { optionRefs.current[i] = el }}
               onClick={() => {
                 onChange(opt.value);
                 setOpen(false);
