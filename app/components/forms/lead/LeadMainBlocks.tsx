@@ -281,19 +281,7 @@ export default function LeadMainBlocks({
           onChange={(val:string)=>setFormData({ ...formData, leadStage: val })}
         />
 
-        <SelectField
-          label="Status"
-          value={formData.status || "Fresh Lead"}
-          options={mapOptions([
-            "Fresh Lead",
-            "Follow Up",
-            "Converted",
-            "Closed"
-          ])}
-          onChange={(val:string)=>setFormData({ ...formData, status: val })}
-        />
-
-        <SelectField
+               <SelectField
           label="Action"
           value={formData.action}
           options={mapOptions(actions)}
