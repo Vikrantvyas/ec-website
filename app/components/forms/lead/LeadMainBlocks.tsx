@@ -1,6 +1,6 @@
 "use client";
 
-import { Block, Input, SelectField, TextArea } from "@/app/components/forms/lead/LeadFormFields";
+import { Block, Input, SelectField, TextArea } from "@/app/components/ui/FormFields";
 
 interface Props {
   formData: any;
@@ -49,11 +49,43 @@ export default function LeadMainBlocks({
   const departmentValue = Array.isArray(formData.department) ? formData.department : [];
   const courseValue = Array.isArray(formData.course) ? formData.course : [];
 
-  const preferredBatchOptions = [
+  const genderOptions = mapOptions(["Male","Female","Other"]);
+  const maritalOptions = mapOptions(["Single","Married"]);
+  const professionOptions = mapOptions(["Student","Job","Business","Housewife","Other"]);
+
+  const educationOptions = mapOptions([
+    "4th","5th","6th","7th","8th","9th",
+    "10th","11th","12th","Graduate","Post Graduate"
+  ]);
+
+  const schoolTimingOptions = mapOptions([
+    "Morning",
+    "Noon",
+    "Evening",
+    "Shift Job"
+  ]);
+
+  const contactTimeOptions = mapOptions([
+    "Any Time",
+    "8 to 10 AM",
+    "10 to 2",
+    "2 to 5",
+    "5 to 9"
+  ]);
+
+  const preferredTimeOptions = mapOptions([
+    "Any Time",
+    "Morning",
+    "Afternoon",
+    "Evening",
+    "Night"
+  ]);
+
+  const preferredBatchOptions = mapOptions([
     "Any Time",
     "8 AM","9 AM","10 AM","11 AM","12 PM",
     "1 PM","2 PM","3 PM","4 PM","5 PM","6 PM","7 PM","8 PM"
-  ];
+  ]);
 
   return (
     <>
@@ -68,14 +100,14 @@ export default function LeadMainBlocks({
           label="Method"
           value={formData.method}
           options={mapOptions(methods)}
-          onChange={(val: string)=>setFormData({ ...formData, method: val })}
+          onChange={(val:string)=>setFormData({ ...formData, method: val })}
         />
 
         <SelectField
           label="Channel"
           value={formData.channel}
           options={mapOptions(channels)}
-          onChange={(val: string)=>setFormData({ ...formData, channel: val })}
+          onChange={(val:string)=>setFormData({ ...formData, channel: val })}
         />
 
       </Block>
@@ -103,9 +135,7 @@ export default function LeadMainBlocks({
             }));
 
             if(val!=="Self"){
-              setTimeout(()=>{
-                studentRef.current?.focus();
-              },0);
+              setTimeout(()=>studentRef.current?.focus(),0);
             }
 
           }}
@@ -135,8 +165,6 @@ export default function LeadMainBlocks({
           onChange={handleChange}
         />
 
-        {/* CITY DROPDOWN */}
-
         <SelectField
           label="City"
           value={formData.city}
@@ -161,31 +189,28 @@ export default function LeadMainBlocks({
         <SelectField
           label="Gender"
           value={formData.gender}
-          options={mapOptions(["Male","Female","Other"])}
+          options={genderOptions}
           onChange={(val:string)=>setFormData({ ...formData, gender: val })}
         />
 
         <SelectField
           label="Marital Status"
           value={formData.maritalStatus}
-          options={mapOptions(["Single","Married"])}
+          options={maritalOptions}
           onChange={(val:string)=>setFormData({ ...formData, maritalStatus: val })}
         />
 
         <SelectField
           label="Profession"
           value={formData.profession}
-          options={mapOptions(["Student","Job","Business","Housewife","Other"])}
+          options={professionOptions}
           onChange={(val:string)=>setFormData({ ...formData, profession: val })}
         />
 
         <SelectField
           label="Education"
           value={formData.education}
-          options={mapOptions([
-            "4th","5th","6th","7th","8th","9th",
-            "10th","11th","12th","Graduate","Post Graduate"
-          ])}
+          options={educationOptions}
           onChange={(val:string)=>setFormData({ ...formData, education: val })}
         />
 
@@ -199,25 +224,14 @@ export default function LeadMainBlocks({
         <SelectField
           label="School / College / Job Timing"
           value={formData.schoolTiming}
-          options={mapOptions([
-            "Morning",
-            "Noon",
-            "Evening",
-            "Shift Job"
-          ])}
+          options={schoolTimingOptions}
           onChange={(val:string)=>setFormData({ ...formData, schoolTiming: val })}
         />
 
         <SelectField
           label="Contact Time"
           value={formData.contactTime}
-          options={mapOptions([
-            "Any Time",
-            "8 to 10 AM",
-            "10 to 2",
-            "2 to 5",
-            "5 to 9"
-          ])}
+          options={contactTimeOptions}
           onChange={(val:string)=>setFormData({ ...formData, contactTime: val })}
         />
 
@@ -245,20 +259,14 @@ export default function LeadMainBlocks({
         <SelectField
           label="Preferred Time"
           value={formData.preferredTime || "Any Time"}
-          options={mapOptions([
-            "Any Time",
-            "Morning",
-            "Afternoon",
-            "Evening",
-            "Night"
-          ])}
+          options={preferredTimeOptions}
           onChange={(val:string)=>setFormData({ ...formData, preferredTime: val })}
         />
 
         <SelectField
           label="Preferred Batch"
           value={formData.preferredBatch || "Any Time"}
-          options={mapOptions(preferredBatchOptions)}
+          options={preferredBatchOptions}
           onChange={(val:string)=>setFormData({ ...formData, preferredBatch: val })}
         />
 
@@ -281,7 +289,7 @@ export default function LeadMainBlocks({
           onChange={(val:string)=>setFormData({ ...formData, leadStage: val })}
         />
 
-               <SelectField
+        <SelectField
           label="Action"
           value={formData.action}
           options={mapOptions(actions)}
@@ -322,5 +330,4 @@ export default function LeadMainBlocks({
 
     </>
   );
-
 }
