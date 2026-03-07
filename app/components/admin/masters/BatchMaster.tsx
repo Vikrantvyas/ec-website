@@ -24,7 +24,6 @@ const [endDate,setEndDate] = useState("");
 const [status,setStatus] = useState("Active");
 
 const [students,setStudents] = useState<string[]>([]);
-
 const [batchList,setBatchList] = useState<any[]>([]);
 const [editId,setEditId] = useState<string | null>(null);
 
@@ -61,19 +60,54 @@ if(data) setLeads(data);
 
 const fetchBatches = async ()=>{
 
-const { data, error } = await supabase
+const { data:batches } = await supabase
 .from("batches")
-.select("*");
+.select("*")
+.order("start_time");
 
-if(error){
-console.log(error);
-return;
+const { data:teacherData } = await supabase
+.from("teachers")
+.select("id,name");
+
+const { data:batchCourseLinks } = await supabase
+.from("batch_courses")
+.select("batch_id,course_id");
+
+const { data:courseData } = await supabase
+.from("courses")
+.select("id,name");
+
+const teacherMap:any = {};
+teacherData?.forEach(t=>{
+teacherMap[t.id] = t.name;
+});
+
+const courseMap:any = {};
+courseData?.forEach(c=>{
+courseMap[c.id] = c.name;
+});
+
+const batchCourses:any = {};
+
+batchCourseLinks?.forEach(link=>{
+
+if(!batchCourses[link.batch_id]){
+batchCourses[link.batch_id] = [];
 }
 
-if(data){
-console.log("Batches:",data);
-setBatchList(data);
-}
+batchCourses[link.batch_id].push(
+courseMap[link.course_id]
+);
+
+});
+
+const finalData = batches?.map(b=>({
+...b,
+teacher_name: teacherMap[b.teacher_id] || "",
+course_names: batchCourses[b.id] || []
+}));
+
+setBatchList(finalData || []);
 
 };
 
@@ -111,7 +145,6 @@ setStudents([...students,leadId]);
 };
 
 const resetForm = ()=>{
-
 setDepartment("");
 setCourses([]);
 setTeacher("");
@@ -124,7 +157,6 @@ setEndDate("");
 setStudents([]);
 setStatus("Active");
 setEditId(null);
-
 };
 
 const handleSubmit = async (e:any)=>{
@@ -216,15 +248,13 @@ fetchBatches();
 
 };
 
-const editBatch = async (b:any)=>{
-
+const editBatch = (b:any)=>{
 setEditId(b.id);
 setDepartment(b.department);
 setTeacher(b.teacher_id);
 setStartTime(b.start_time);
 setEndTime(b.end_time);
 setStatus(b.status);
-
 };
 
 return(
@@ -241,10 +271,7 @@ className="grid md:grid-cols-4 gap-4"
 >
 
 <div>
-
-<label className="text-sm text-gray-600">
-Department
-</label>
+<label className="text-sm text-gray-600">Department</label>
 
 <select
 value={department}
@@ -252,9 +279,7 @@ onChange={(e)=>handleDepartmentChange(e.target.value)}
 className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
 >
 
-<option value="">
-Select Department
-</option>
+<option value="">Select Department</option>
 
 {departments.map((d)=>(
 <option key={d.id} value={d.name}>
@@ -263,7 +288,6 @@ Select Department
 ))}
 
 </select>
-
 </div>
 
 <div className="md:col-span-3">
@@ -307,9 +331,7 @@ onChange={(e)=>setTeacher(e.target.value)}
 className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
 >
 
-<option value="">
-Select Teacher
-</option>
+<option value="">Select Teacher</option>
 
 {teachers.map((t)=>(
 <option key={t.id} value={t.id}>
@@ -425,9 +447,11 @@ className="px-5 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700"
 
 <td className="p-3">{b.department}</td>
 
-<td className="p-3">{b.batch_courses?.length || 0}</td>
+<td className="p-3">
+{b.course_names?.join(", ") || "-"}
+</td>
 
-<td className="p-3">{b.teachers?.name}</td>
+<td className="p-3">{b.teacher_name}</td>
 
 <td className="p-3">{b.start_time} - {b.end_time}</td>
 
