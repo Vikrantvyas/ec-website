@@ -3,367 +3,465 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function BranchMaster() {
+export default function BatchMaster(){
+
+const [department,setDepartment] = useState("");
+const [courses,setCourses] = useState<string[]>([]);
+const [teacher,setTeacher] = useState("");
+
+const [departments,setDepartments] = useState<any[]>([]);
+const [coursesList,setCoursesList] = useState<any[]>([]);
+const [filteredCourses,setFilteredCourses] = useState<any[]>([]);
+const [teachers,setTeachers] = useState<any[]>([]);
+const [leads,setLeads] = useState<any[]>([]);
 
-  const [department,setDepartment] = useState("");
-  const [courses,setCourses] = useState<string[]>([]);
-  const [teacher,setTeacher] = useState("");
+const [startTime,setStartTime] = useState("");
+const [endTime,setEndTime] = useState("");
+const [classroom,setClassroom] = useState("");
+const [capacity,setCapacity] = useState("");
+const [startDate,setStartDate] = useState("");
+const [endDate,setEndDate] = useState("");
+const [status,setStatus] = useState("Active");
+
+const [students,setStudents] = useState<string[]>([]);
+
+const [batchList,setBatchList] = useState<any[]>([]);
+const [editId,setEditId] = useState<string | null>(null);
+
+useEffect(()=>{
+fetchDepartments();
+fetchCourses();
+fetchTeachers();
+fetchLeads();
+fetchBatches();
+},[]);
 
-  const [departments,setDepartments] = useState<any[]>([]);
-  const [coursesList,setCoursesList] = useState<any[]>([]);
-  const [filteredCourses,setFilteredCourses] = useState<any[]>([]);
-  const [teachers,setTeachers] = useState<any[]>([]);
+const fetchDepartments = async ()=>{
+const { data } = await supabase.from("departments").select("*").order("name");
+if(data) setDepartments(data);
+};
+
+const fetchCourses = async ()=>{
+const { data } = await supabase.from("courses").select("*").order("name");
+if(data) setCoursesList(data);
+};
+
+const fetchTeachers = async ()=>{
+const { data } = await supabase.from("teachers").select("*").order("name");
+if(data) setTeachers(data);
+};
+
+const fetchLeads = async ()=>{
+const { data } = await supabase
+.from("leads")
+.select("id,student_name")
+.order("student_name");
+if(data) setLeads(data);
+};
+
+const fetchBatches = async ()=>{
+
+const { data, error } = await supabase
+.from("batches")
+.select("*");
+
+if(error){
+console.log(error);
+return;
+}
+
+if(data){
+console.log("Batches:",data);
+setBatchList(data);
+}
+
+};
+
+const handleDepartmentChange = (deptName:string)=>{
+
+setDepartment(deptName);
+setCourses([]);
+
+const filtered = coursesList.filter(
+(c:any)=>c.department === deptName
+);
+
+setFilteredCourses(filtered);
+
+};
+
+const handleCourseSelect = (courseId:string)=>{
+
+if(courses.includes(courseId)){
+setCourses(courses.filter(c=>c!==courseId));
+}else{
+setCourses([...courses,courseId]);
+}
+
+};
+
+const handleStudentSelect = (leadId:string)=>{
+
+if(students.includes(leadId)){
+setStudents(students.filter(s=>s!==leadId));
+}else{
+setStudents([...students,leadId]);
+}
 
-  const [startTime,setStartTime] = useState("");
-  const [endTime,setEndTime] = useState("");
-  const [classroom,setClassroom] = useState("");
-  const [capacity,setCapacity] = useState("");
-  const [startDate,setStartDate] = useState("");
-  const [endDate,setEndDate] = useState("");
-  const [status,setStatus] = useState("Active");
+};
 
-  const [students,setStudents] = useState<string[]>([]);
+const resetForm = ()=>{
 
-  const dummyStudents = [
-    "Rahul Sharma",
-    "Aman Verma",
-    "Priya Singh",
-    "Neha Gupta",
-    "Rohit Jain"
-  ];
+setDepartment("");
+setCourses([]);
+setTeacher("");
+setStartTime("");
+setEndTime("");
+setClassroom("");
+setCapacity("");
+setStartDate("");
+setEndDate("");
+setStudents([]);
+setStatus("Active");
+setEditId(null);
 
-  const [batchList,setBatchList] = useState<any[]>([]);
+};
 
-  useEffect(()=>{
-    fetchDepartments();
-    fetchCourses();
-    fetchTeachers();
-  },[]);
+const handleSubmit = async (e:any)=>{
 
-  const fetchDepartments = async ()=>{
+e.preventDefault();
 
-    const { data } = await supabase
-      .from("departments")
-      .select("*")
-      .order("name",{ ascending:true });
+let batchId = editId;
 
-    if(data) setDepartments(data);
+if(!editId){
 
-  };
+const { data,error } = await supabase
+.from("batches")
+.insert([{
+department,
+teacher_id:teacher,
+start_time:startTime,
+end_time:endTime,
+classroom,
+capacity,
+start_date:startDate,
+end_date:endDate,
+status
+}])
+.select();
 
-  const fetchCourses = async ()=>{
+if(error){
+alert(error.message);
+return;
+}
 
-    const { data } = await supabase
-      .from("courses")
-      .select("*")
-      .order("name",{ ascending:true });
+batchId = data[0].id;
 
-    if(data) setCoursesList(data);
+}else{
 
-  };
+await supabase
+.from("batches")
+.update({
+department,
+teacher_id:teacher,
+start_time:startTime,
+end_time:endTime,
+classroom,
+capacity,
+start_date:startDate,
+end_date:endDate,
+status
+})
+.eq("id",editId);
 
-  const fetchTeachers = async ()=>{
+await supabase.from("batch_courses").delete().eq("batch_id",editId);
+await supabase.from("batch_students").delete().eq("batch_id",editId);
 
-    const { data } = await supabase
-      .from("teachers")
-      .select("*")
-      .order("name",{ ascending:true });
+}
 
-    if(data) setTeachers(data);
+if(courses.length){
 
-  };
+const courseRows = courses.map(courseId=>({
+batch_id:batchId,
+course_id:courseId
+}));
 
-  const handleDepartmentChange = (deptName:string)=>{
+await supabase.from("batch_courses").insert(courseRows);
 
-    setDepartment(deptName);
-    setCourses([]);
+}
 
-    const filtered = coursesList.filter(
-      (c:any)=>c.department === deptName
-    );
+if(students.length){
 
-    setFilteredCourses(filtered);
+const studentRows = students.map(leadId=>({
+batch_id:batchId,
+lead_id:leadId
+}));
 
-  };
+await supabase.from("batch_students").insert(studentRows);
 
-  const handleCourseSelect = (courseId:string)=>{
+}
 
-    if(courses.includes(courseId)){
-      setCourses(courses.filter(c=>c!==courseId));
-    }else{
-      setCourses([...courses,courseId]);
-    }
+resetForm();
+fetchBatches();
 
-  };
+};
 
-  const handleStudentSelect = (student:string)=>{
+const deleteBatch = async (id:string)=>{
 
-    if(students.includes(student)){
-      setStudents(students.filter(s=>s!==student));
-    }else{
-      setStudents([...students,student]);
-    }
+if(!confirm("Delete this batch?")) return;
 
-  };
+await supabase.from("batches").delete().eq("id",id);
 
-  const handleSubmit = (e:any)=>{
+fetchBatches();
 
-    e.preventDefault();
+};
 
-    const batchData = {
-      department,
-      courses,
-      teacher,
-      startTime,
-      endTime,
-      classroom,
-      capacity,
-      startDate,
-      endDate,
-      status,
-      students
-    };
+const editBatch = async (b:any)=>{
 
-    setBatchList([...batchList,batchData]);
+setEditId(b.id);
+setDepartment(b.department);
+setTeacher(b.teacher_id);
+setStartTime(b.start_time);
+setEndTime(b.end_time);
+setStatus(b.status);
 
-  };
+};
 
-  return (
+return(
 
-    <div className="space-y-6">
+<div className="space-y-6">
 
-      <p className="font-semibold text-blue-600">
-        Batch Master
-      </p>
+<p className="font-semibold text-blue-600">
+Batch Master
+</p>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid md:grid-cols-4 gap-4"
-      >
+<form
+onSubmit={handleSubmit}
+className="grid md:grid-cols-4 gap-4"
+>
 
-        {/* Department */}
+<div>
 
-        <div>
+<label className="text-sm text-gray-600">
+Department
+</label>
 
-          <label className="text-sm text-gray-600">
-            Department
-          </label>
+<select
+value={department}
+onChange={(e)=>handleDepartmentChange(e.target.value)}
+className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
+>
 
-          <select
-            value={department}
-            onChange={(e)=>handleDepartmentChange(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          >
+<option value="">
+Select Department
+</option>
 
-            <option value="">
-              Select Department
-            </option>
+{departments.map((d)=>(
+<option key={d.id} value={d.name}>
+{d.name}
+</option>
+))}
 
-            {departments.map((d)=>(
-              <option key={d.id} value={d.name}>
-                {d.name}
-              </option>
-            ))}
+</select>
 
-          </select>
+</div>
 
-        </div>
+<div className="md:col-span-3">
 
-        {/* Courses */}
+<label className="text-sm text-gray-600">
+Courses
+</label>
 
-        <div className="md:col-span-3">
+<div className="border rounded-lg bg-gray-50 p-3 max-h-32 overflow-y-auto">
 
-          <label className="text-sm text-gray-600">
-            Courses
-          </label>
+{filteredCourses.map((course)=>(
+<label
+key={course.id}
+className="flex items-center gap-2 text-sm"
+>
 
-          <div className="border rounded-lg bg-gray-50 p-3 max-h-32 overflow-y-auto">
+<input
+type="checkbox"
+checked={courses.includes(course.id)}
+onChange={()=>handleCourseSelect(course.id)}
+/>
 
-            {filteredCourses.length === 0 && (
-              <p className="text-gray-400 text-sm">
-                Select Department
-              </p>
-            )}
+{course.name}
 
-            {filteredCourses.map((course)=>(
-              <label
-                key={course.id}
-                className="flex items-center gap-2 text-sm"
-              >
+</label>
+))}
 
-                <input
-                  type="checkbox"
-                  checked={courses.includes(course.id)}
-                  onChange={()=>handleCourseSelect(course.id)}
-                />
+</div>
 
-                {course.name}
+</div>
 
-              </label>
-            ))}
+<div>
 
-          </div>
+<label className="text-sm text-gray-600">
+Faculty / Teacher
+</label>
 
-        </div>
+<select
+value={teacher}
+onChange={(e)=>setTeacher(e.target.value)}
+className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
+>
 
-        {/* Teacher */}
+<option value="">
+Select Teacher
+</option>
 
-        <div>
+{teachers.map((t)=>(
+<option key={t.id} value={t.id}>
+{t.name}
+</option>
+))}
 
-          <label className="text-sm text-gray-600">
-            Faculty / Teacher
-          </label>
+</select>
 
-          <select
-            value={teacher}
-            onChange={(e)=>setTeacher(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          >
+</div>
 
-            <option value="">
-              Select Teacher
-            </option>
+<div>
+<label className="text-sm text-gray-600">Start Time</label>
+<input type="time" value={startTime} onChange={(e)=>setStartTime(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"/>
+</div>
 
-            {teachers.map((t)=>(
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
+<div>
+<label className="text-sm text-gray-600">End Time</label>
+<input type="time" value={endTime} onChange={(e)=>setEndTime(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"/>
+</div>
 
-          </select>
+<div>
+<label className="text-sm text-gray-600">Classroom</label>
+<input type="text" value={classroom} onChange={(e)=>setClassroom(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"/>
+</div>
 
-        </div>
+<div>
+<label className="text-sm text-gray-600">Batch Capacity</label>
+<input type="number" value={capacity} onChange={(e)=>setCapacity(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"/>
+</div>
 
-        <div>
-          <label className="text-sm text-gray-600">Start Time</label>
-          <input type="time" value={startTime} onChange={(e)=>setStartTime(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"/>
-        </div>
+<div>
+<label className="text-sm text-gray-600">Start Date</label>
+<input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"/>
+</div>
 
-        <div>
-          <label className="text-sm text-gray-600">End Time</label>
-          <input type="time" value={endTime} onChange={(e)=>setEndTime(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"/>
-        </div>
+<div>
+<label className="text-sm text-gray-600">End Date</label>
+<input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"/>
+</div>
 
-        <div>
-          <label className="text-sm text-gray-600">Classroom</label>
-          <input type="text" placeholder="e.g. Lab 1" value={classroom} onChange={(e)=>setClassroom(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"/>
-        </div>
+<div>
+<label className="text-sm text-gray-600">Status</label>
+<select value={status} onChange={(e)=>setStatus(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2">
+<option>Active</option>
+<option>Inactive</option>
+</select>
+</div>
 
-        <div>
-          <label className="text-sm text-gray-600">Batch Capacity</label>
-          <input type="number" placeholder="e.g. 25" value={capacity} onChange={(e)=>setCapacity(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"/>
-        </div>
+<div className="md:col-span-3">
 
-        <div>
-          <label className="text-sm text-gray-600">Start Date</label>
-          <input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"/>
-        </div>
+<label className="text-sm text-gray-600">
+Current Students
+</label>
 
-        <div>
-          <label className="text-sm text-gray-600">End Date</label>
-          <input type="date" value={endDate} onChange={(e)=>setEndDate(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"/>
-        </div>
+<div className="border rounded-lg bg-gray-50 p-3 max-h-32 overflow-y-auto">
 
-        <div>
-          <label className="text-sm text-gray-600">Status</label>
-          <select value={status} onChange={(e)=>setStatus(e.target.value)} className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2">
-            <option>Active</option>
-            <option>Inactive</option>
-          </select>
-        </div>
+{leads.map((lead)=>(
+<label
+key={lead.id}
+className="flex items-center gap-2 text-sm"
+>
 
-        {/* Students */}
+<input
+type="checkbox"
+checked={students.includes(lead.id)}
+onChange={()=>handleStudentSelect(lead.id)}
+/>
 
-        <div className="md:col-span-3">
+{lead.student_name}
 
-          <label className="text-sm text-gray-600">
-            Current Students
-          </label>
+</label>
+))}
 
-          <div className="border rounded-lg bg-gray-50 p-3 max-h-32 overflow-y-auto">
+</div>
 
-            {dummyStudents.map((student)=>(
-              <label
-                key={student}
-                className="flex items-center gap-2 text-sm"
-              >
+</div>
 
-                <input
-                  type="checkbox"
-                  checked={students.includes(student)}
-                  onChange={()=>handleStudentSelect(student)}
-                />
+<div className="md:col-span-4 flex justify-end">
 
-                {student}
+<button
+type="submit"
+className="px-5 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700"
+>
+{editId ? "Update Batch" : "Save Batch"}
+</button>
 
-              </label>
-            ))}
+</div>
 
-          </div>
+</form>
 
-        </div>
+<div className="bg-white rounded-xl shadow-sm overflow-hidden">
 
-        <div className="md:col-span-4 flex justify-end">
+<table className="w-full text-sm">
 
-          <button
-            type="submit"
-            className="px-5 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700"
-          >
-            Save Batch
-          </button>
+<thead className="bg-gray-100">
 
-        </div>
+<tr>
+<th className="p-3 text-left">Department</th>
+<th className="p-3 text-left">Courses</th>
+<th className="p-3 text-left">Teacher</th>
+<th className="p-3 text-left">Time</th>
+<th className="p-3 text-left">Status</th>
+<th className="p-3 text-left">Action</th>
+</tr>
 
-      </form>
+</thead>
 
-      {/* Batch List */}
+<tbody>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+{batchList.map((b)=>(
+<tr key={b.id} className="border-t">
 
-        <table className="w-full text-sm">
+<td className="p-3">{b.department}</td>
 
-          <thead className="bg-gray-100">
+<td className="p-3">{b.batch_courses?.length || 0}</td>
 
-            <tr>
-              <th className="p-3 text-left">Department</th>
-              <th className="p-3 text-left">Courses</th>
-              <th className="p-3 text-left">Teacher</th>
-              <th className="p-3 text-left">Time</th>
-              <th className="p-3 text-left">Status</th>
-            </tr>
+<td className="p-3">{b.teachers?.name}</td>
 
-          </thead>
+<td className="p-3">{b.start_time} - {b.end_time}</td>
 
-          <tbody>
+<td className="p-3">{b.status}</td>
 
-            {batchList.map((b,i)=>(
-              <tr key={i} className="border-t">
+<td className="p-3 space-x-2">
 
-                <td className="p-3">{b.department}</td>
+<button
+onClick={()=>editBatch(b)}
+className="text-blue-600"
+>
+Edit
+</button>
 
-                <td className="p-3">
-                  {b.courses.length}
-                </td>
+<button
+onClick={()=>deleteBatch(b.id)}
+className="text-red-600"
+>
+Delete
+</button>
 
-                <td className="p-3">{b.teacher}</td>
+</td>
 
-                <td className="p-3">
-                  {b.startTime} - {b.endTime}
-                </td>
+</tr>
+))}
 
-                <td className="p-3">{b.status}</td>
+</tbody>
 
-              </tr>
-            ))}
+</table>
 
-          </tbody>
+</div>
 
-        </table>
+</div>
 
-      </div>
-
-    </div>
-
-  );
+);
 
 }
