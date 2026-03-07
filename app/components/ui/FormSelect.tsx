@@ -12,15 +12,13 @@ interface Props {
   value: any;
   options: Option[];
   onChange: (val: any) => void;
-  multiple?: boolean;
 }
 
 export default function FormSelect({
   label,
   value,
   options,
-  onChange,
-  multiple = false
+  onChange
 }: Props) {
 
   return (
@@ -34,7 +32,6 @@ export default function FormSelect({
       <BottomSheetSelect
         value={value}
         options={options}
-        multiple={multiple}
         onChange={onChange}
       />
 
