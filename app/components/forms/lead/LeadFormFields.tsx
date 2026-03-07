@@ -100,6 +100,7 @@ export function SelectField({
 
   return (
     <div className="flex flex-col">
+
       <label className="mb-1 text-gray-600 text-sm font-medium">
         {label}
       </label>
@@ -120,15 +121,13 @@ export function SelectField({
       {/* MULTI SELECT */}
 
       {multiple && (
-
         <FormMultiSelect
-          label={label}
           options={options}
           value={finalValue}
           onChange={onChange}
         />
-
       )}
+
     </div>
   );
 }
