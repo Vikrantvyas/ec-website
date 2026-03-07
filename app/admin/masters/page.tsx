@@ -14,13 +14,15 @@ import LeadChanceMaster from "@/app/components/admin/masters/LeadChanceMaster";
 import LeadStageMaster from "@/app/components/admin/masters/LeadStageMaster";
 import ActionMaster from "@/app/components/admin/masters/ActionMaster";
 import CounsellorMaster from "@/app/components/admin/masters/CounsellorMaster";
+import TeacherMaster from "@/app/components/admin/masters/TeacherMaster";
+import BatchMaster from "@/app/components/admin/masters/BatchMaster";
 
 export default function MastersPage() {
 
   const [selectedCategory,setSelectedCategory] = useState("leads");
   const [selectedMaster,setSelectedMaster] = useState("");
 
-  const masters = [
+  const leadMasters = [
     { label:"Branches", value:"branches" },
     { label:"Method", value:"method" },
     { label:"Channel", value:"channel" },
@@ -35,17 +37,33 @@ export default function MastersPage() {
     { label:"Counsellor", value:"counsellor" }
   ];
 
+  const staffMasters = [
+    { label:"Teachers", value:"teachers" }
+  ];
+
+  const batchMasters = [
+    { label:"Batches", value:"batches" }
+  ];
+
+  let masters:any[] = [];
+
+  if(selectedCategory === "staff"){
+    masters = staffMasters;
+  }
+  else if(selectedCategory === "batches"){
+    masters = batchMasters;
+  }
+  else{
+    masters = leadMasters;
+  }
+
   return (
 
     <div className="space-y-6 text-sm p-6">
 
-      {/* Dropdown Section */}
-
       <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
 
         <div className="grid md:grid-cols-2 gap-4">
-
-          {/* Category */}
 
           <div className="space-y-1">
 
@@ -61,15 +79,22 @@ export default function MastersPage() {
                 setSelectedMaster("");
               }}
             >
+
               <option value="leads">
                 Leads
+              </option>
+
+              <option value="staff">
+                Staff
+              </option>
+
+              <option value="batches">
+                Batches
               </option>
 
             </select>
 
           </div>
-
-          {/* Master */}
 
           <div className="space-y-1">
 
@@ -101,8 +126,6 @@ export default function MastersPage() {
 
       </div>
 
-      {/* Selected Master Component */}
-
       {selectedMaster && (
 
         <div className="bg-white rounded-xl shadow-sm p-6">
@@ -119,6 +142,8 @@ export default function MastersPage() {
           {selectedMaster === "lead_stage" && <LeadStageMaster />}
           {selectedMaster === "action" && <ActionMaster />}
           {selectedMaster === "counsellor" && <CounsellorMaster />}
+          {selectedMaster === "teachers" && <TeacherMaster />}
+          {selectedMaster === "batches" && <BatchMaster />}
 
         </div>
 
