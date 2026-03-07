@@ -1,210 +1,266 @@
 "use client";
 
 import { useState } from "react";
+import { Block, Input, SelectField, TextArea } from "@/app/components/forms/lead/LeadFormFields";
 
 export default function AdmissionForm() {
 
-  const [demoRequired, setDemoRequired] = useState(true);
+  const [formData, setFormData] = useState<any>({
+    studentName: "",
+    gender: "",
+    fatherName: "",
+    dob: "",
+    maritalStatus: "",
+    education: "",
+
+    localAddress: "",
+    permanentAddress: "",
+
+    understandEnglish: "",
+    speakEnglish: "",
+
+    computerSkills: "",
+    englishTyping: "",
+    hindiTyping: "",
+
+    course: "",
+    batchTiming: "",
+
+    working: "",
+    companyName: "",
+    jobTiming: "",
+
+    contactNo: "",
+    whatsappNo: "",
+    guardianNo: "",
+    email: "",
+
+    remark: ""
+  });
+
+  const handleChange = (e: any) => {
+
+    const { name, value } = e.target;
+
+    setFormData((prev:any)=>({
+      ...prev,
+      [name]: value
+    }));
+
+  };
+
+  const mapOptions = (arr:string[])=>{
+    return arr.map(i=>({label:i,value:i}));
+  };
 
   return (
 
-    <div className="space-y-6">
+    <>
 
-      {/* Lead Information */}
+      <Block title="Student Info">
 
-      <div className="bg-white shadow rounded-lg p-6">
+        <Input
+          label="Student Name"
+          name="studentName"
+          value={formData.studentName}
+          onChange={handleChange}
+        />
 
-        <h2 className="text-lg font-semibold mb-4">
-          Lead Information
-        </h2>
+        <SelectField
+          label="Gender"
+          value={formData.gender}
+          options={mapOptions(["Male","Female","Other"])}
+          onChange={(val:string)=>setFormData({...formData, gender: val})}
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Input
+          label="Father / Mother Name"
+          name="fatherName"
+          value={formData.fatherName}
+          onChange={handleChange}
+        />
 
-          <input
-            type="text"
-            placeholder="Student Name"
-            className="border rounded px-3 py-2 w-full"
-          />
+        <Input
+          label="Date of Birth"
+          type="date"
+          name="dob"
+          value={formData.dob}
+          onChange={handleChange}
+        />
 
-          <input
-            type="text"
-            placeholder="Mobile"
-            className="border rounded px-3 py-2 w-full"
-          />
+        <SelectField
+          label="Marital Status"
+          value={formData.maritalStatus}
+          options={mapOptions(["Single","Married"])}
+          onChange={(val:string)=>setFormData({...formData, maritalStatus: val})}
+        />
 
-          <input
-            type="text"
-            placeholder="Father Name"
-            className="border rounded px-3 py-2 w-full"
-          />
+        <SelectField
+          label="Education"
+          value={formData.education}
+          options={mapOptions([
+            "10th","12th","Graduate","Post Graduate","Other"
+          ])}
+          onChange={(val:string)=>setFormData({...formData, education: val})}
+        />
 
-          <input
-            type="text"
-            placeholder="Course"
-            className="border rounded px-3 py-2 w-full"
-          />
-
-          <input
-            type="text"
-            placeholder="Branch"
-            className="border rounded px-3 py-2 w-full"
-          />
-
-        </div>
-
-      </div>
-
-
-      {/* Demo Planning */}
-
-      <div className="bg-white shadow rounded-lg p-6">
-
-        <h2 className="text-lg font-semibold mb-4">
-          Demo Planning
-        </h2>
-
-        <div className="flex items-center gap-4 mb-4">
-
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              checked={demoRequired}
-              onChange={() => setDemoRequired(true)}
-            />
-            Demo Required
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              checked={!demoRequired}
-              onChange={() => setDemoRequired(false)}
-            />
-            Direct Admission
-          </label>
-
-        </div>
-
-        {demoRequired && (
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-            <input
-              type="date"
-              className="border rounded px-3 py-2"
-              placeholder="Demo Start"
-            />
-
-            <input
-              type="date"
-              className="border rounded px-3 py-2"
-              placeholder="Demo End"
-            />
-
-            <input
-              type="text"
-              placeholder="Demo Batch"
-              className="border rounded px-3 py-2"
-            />
-
-            <input
-              type="text"
-              placeholder="Trainer"
-              className="border rounded px-3 py-2"
-            />
-
-          </div>
-
-        )}
-
-      </div>
+      </Block>
 
 
-      {/* Admission Details */}
+      <Block title="Address">
 
-      <div className="bg-white shadow rounded-lg p-6">
+        <Input
+          label="Local Address with City"
+          name="localAddress"
+          value={formData.localAddress}
+          onChange={handleChange}
+        />
 
-        <h2 className="text-lg font-semibold mb-4">
-          Admission Details
-        </h2>
+        <Input
+          label="Permanent Address"
+          name="permanentAddress"
+          value={formData.permanentAddress}
+          onChange={handleChange}
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-          <input
-            type="date"
-            className="border rounded px-3 py-2"
-          />
-
-          <input
-            type="text"
-            placeholder="Batch"
-            className="border rounded px-3 py-2"
-          />
-
-          <input
-            type="text"
-            placeholder="Counsellor"
-            className="border rounded px-3 py-2"
-          />
-
-        </div>
-
-      </div>
+      </Block>
 
 
-      {/* Fee Details */}
+      <Block title="English Knowledge">
 
-      <div className="bg-white shadow rounded-lg p-6">
+        <SelectField
+          label="Do you understand English?"
+          value={formData.understandEnglish}
+          options={mapOptions(["Yes","No","Little"])}
+          onChange={(val:string)=>setFormData({...formData, understandEnglish: val})}
+        />
 
-        <h2 className="text-lg font-semibold mb-4">
-          Fee Details
-        </h2>
+        <SelectField
+          label="Do you speak English?"
+          value={formData.speakEnglish}
+          options={mapOptions(["Yes","No","Little"])}
+          onChange={(val:string)=>setFormData({...formData, speakEnglish: val})}
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-
-          <input
-            type="number"
-            placeholder="Total Fees"
-            className="border rounded px-3 py-2"
-          />
-
-          <input
-            type="number"
-            placeholder="Discount"
-            className="border rounded px-3 py-2"
-          />
-
-          <input
-            type="number"
-            placeholder="Paid Amount"
-            className="border rounded px-3 py-2"
-          />
-
-          <select className="border rounded px-3 py-2">
-
-            <option>Payment Mode</option>
-            <option>Cash</option>
-            <option>UPI</option>
-            <option>Card</option>
-
-          </select>
-
-        </div>
-
-      </div>
+      </Block>
 
 
-      {/* Save Button */}
+      <Block title="Computer Skills">
 
-      <div className="flex justify-end">
+        <Input
+          label="Computer Skills"
+          name="computerSkills"
+          value={formData.computerSkills}
+          onChange={handleChange}
+        />
 
-        <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-          Save Admission
-        </button>
+        <Input
+          label="English Typing Speed (WPM)"
+          name="englishTyping"
+          value={formData.englishTyping}
+          onChange={handleChange}
+        />
 
-      </div>
+        <Input
+          label="Hindi Typing Speed (WPM)"
+          name="hindiTyping"
+          value={formData.hindiTyping}
+          onChange={handleChange}
+        />
 
-    </div>
+      </Block>
+
+
+      <Block title="Course Details">
+
+        <Input
+          label="Course"
+          name="course"
+          value={formData.course}
+          onChange={handleChange}
+        />
+
+        <Input
+          label="Batch Timing"
+          name="batchTiming"
+          value={formData.batchTiming}
+          onChange={handleChange}
+        />
+
+      </Block>
+
+
+      <Block title="Job Information">
+
+        <SelectField
+          label="Do you work anywhere?"
+          value={formData.working}
+          options={mapOptions(["No","Yes"])}
+          onChange={(val:string)=>setFormData({...formData, working: val})}
+        />
+
+        <Input
+          label="Company / Department Name"
+          name="companyName"
+          value={formData.companyName}
+          onChange={handleChange}
+        />
+
+        <Input
+          label="Job Timings"
+          name="jobTiming"
+          value={formData.jobTiming}
+          onChange={handleChange}
+        />
+
+      </Block>
+
+
+      <Block title="Contact Details">
+
+        <Input
+          label="Contact No"
+          name="contactNo"
+          value={formData.contactNo}
+          onChange={handleChange}
+        />
+
+        <Input
+          label="Whatsapp No"
+          name="whatsappNo"
+          value={formData.whatsappNo}
+          onChange={handleChange}
+        />
+
+        <Input
+          label="Guardian Contact No"
+          name="guardianNo"
+          value={formData.guardianNo}
+          onChange={handleChange}
+        />
+
+        <Input
+          label="Email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+        />
+
+      </Block>
+
+
+      <Block title="Remark">
+
+        <TextArea
+          label="Remark"
+          name="remark"
+          value={formData.remark}
+          onChange={handleChange}
+        />
+
+      </Block>
+
+    </>
 
   );
 

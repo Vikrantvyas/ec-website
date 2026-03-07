@@ -2,6 +2,7 @@
 
 import React from "react";
 import BottomSheetSelect from "@/app/components/ui/BottomSheetSelect";
+import FormMultiSelect from "@/app/components/ui/FormMultiSelect";
 
 export function Block({ title, children }: any) {
   return (
@@ -119,26 +120,14 @@ export function SelectField({
       {/* MULTI SELECT */}
 
       {multiple && (
-        <select
-          multiple
+
+        <FormMultiSelect
+          label={label}
+          options={options}
           value={finalValue}
-          onChange={(e) => {
-            const selected = Array.from(
-              e.target.selectedOptions,
-              (option: any) => option.value
-            );
-            onChange(selected);
-          }}
-          className="w-full min-h-[150px] px-3 py-3 rounded-lg border border-gray-300 bg-white
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                     space-y-2"
-        >
-          {options.map((o: any) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+          onChange={onChange}
+        />
+
       )}
     </div>
   );
