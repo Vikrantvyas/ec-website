@@ -145,7 +145,7 @@ export default function LeadForm() {
       <BranchSelector
         branches={branches}
         value={formData.branch}
-        onChange={(b)=>setFormData({ ...formData, branch:b })}
+        onChange={(branch)=>setFormData({ ...formData, branch })}
       />
 
       {formData.branch && (
