@@ -6,6 +6,7 @@ import useLeadForm from "./useLeadForm";
 import LeadMainBlocks from "@/app/components/forms/lead/LeadMainBlocks";
 import GroupEntryModal from "@/app/components/forms/lead/GroupEntryModal";
 import { buildLeadPayload } from "@/lib/helpers/buildLeadPayload";
+import BranchSelector from "@/app/components/ui/BranchSelector";
 
 export default function LeadForm() {
 
@@ -141,33 +142,11 @@ export default function LeadForm() {
 
       {/* BRANCH */}
 
-      <div className="space-y-2">
-
-        <p className="font-semibold">Select Branch</p>
-
-        <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1">
-
-          {branches.map((b:string)=>(
-
-            <button
-              key={b}
-              type="button"
-              onClick={()=>setFormData({ ...formData, branch:b })}
-              className={`px-3 py-1 rounded-full border shrink-0
-              ${
-                formData.branch === b
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white border-gray-300"
-              }`}
-            >
-              {b}
-            </button>
-
-          ))}
-
-        </div>
-
-      </div>
+      <BranchSelector
+        branches={branches}
+        value={formData.branch}
+        onChange={(b)=>setFormData({ ...formData, branch:b })}
+      />
 
       {formData.branch && (
 
