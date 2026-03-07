@@ -30,6 +30,7 @@ export default function FormSelect({
       </label>
 
       <BottomSheetSelect
+        label={label}
         value={value}
         options={options}
         onChange={onChange}
