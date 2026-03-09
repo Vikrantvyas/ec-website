@@ -168,23 +168,29 @@ export default function AdmissionForm() {
 
       {!leadId && (
 
-        <Block title="Search Existing Lead">
+       <Block title="Search Existing Lead">
 
-          <Input
-            label="Search Name or Mobile"
-            value={searchValue}
-            onChange={(e:any)=>setSearchValue(e.target.value)}
-          />
+  <div className="flex gap-3 items-end">
 
-          <button
-            type="button"
-            className="h-[44px] px-4 bg-blue-600 text-white rounded-lg"
-            onClick={searchLead}
-          >
-            Search
-          </button>
+    <div className="flex-1">
+      <Input
+        label="Search Name or Mobile"
+        value={searchValue}
+        onChange={(e:any)=>setSearchValue(e.target.value)}
+      />
+    </div>
 
-        </Block>
+    <button
+      type="button"
+      className="h-[44px] px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      onClick={searchLead}
+    >
+      Search
+    </button>
+
+  </div>
+
+</Block>
 
       )}
 
@@ -289,18 +295,21 @@ export default function AdmissionForm() {
           <Block title="Profile">
 
             <div className="flex flex-col">
-              <label className="mb-1 text-gray-600 text-sm font-medium">
-                Photo
-              </label>
 
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhoto}
-                className="w-full h-[44px] px-3 rounded-lg border border-gray-300 bg-white
-                focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+<label className="mb-1 text-gray-600 text-sm font-medium">
+Photo
+</label>
+
+<input
+  type="file"
+  accept="image/*"
+  capture="environment"
+  onChange={handlePhoto}
+  className="w-full h-[44px] px-3 rounded-lg border border-gray-300 bg-white
+  focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
+
+</div>
 
             <SelectField
               label="Gender"
