@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import useLeadForm from "@/app/admin/lead/useLeadForm";
 import BranchSelector from "@/app/components/ui/BranchSelector";
+import SearchField from "@/app/components/ui/SearchField";
 import { Block, Input, SelectField, TextArea } from "@/app/components/ui/FormFields";
 
 export default function AdmissionForm() {
@@ -147,7 +148,7 @@ export default function AdmissionForm() {
 
   const searchLead = async ()=>{
 
-    if(!searchValue) return;
+    if(!searchValue) return false;
 
     const {data} = await supabase
       .from("leads")
@@ -158,7 +159,10 @@ export default function AdmissionForm() {
 
     if(data){
       loadLead(data.id);
+      return true;
     }
+
+    return false;
 
   };
 
@@ -168,27 +172,19 @@ export default function AdmissionForm() {
 
       {!leadId && (
 
-       <Block title="Search Existing Lead">
+        <Block title="Search Existing Lead">
 
-  <div className="flex gap-3 items-end">
+ <div className="col-span-2">
 
-    <div className="flex-1">
-      <Input
-        label="Search Name or Mobile"
-        value={searchValue}
-        onChange={(e:any)=>setSearchValue(e.target.value)}
-      />
-    </div>
+  <SearchField
+    label="Search Lead"
+    placeholder="Search student or mobile..."
+    value={searchValue}
+    onChange={(e:any)=>setSearchValue(e.target.value)}
+    onSearch={searchLead}
+  />
 
-    <button
-      type="button"
-      className="h-[44px] px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-      onClick={searchLead}
-    >
-      Search
-    </button>
-
-  </div>
+</div>
 
 </Block>
 
