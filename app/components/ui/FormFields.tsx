@@ -49,8 +49,9 @@ export const Input = React.forwardRef<HTMLInputElement, any>(
           disabled={disabled}
           onChange={onChange}
           className={`w-full h-[44px] px-3 rounded-lg border border-gray-300
-          ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"}
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
+text-sm text-gray-800
+${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"}
+focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
         />
       </div>
     );
@@ -80,7 +81,8 @@ export function TextArea({
         onChange={onChange}
         rows={rows}
         className="w-full min-h-[44px] px-3 py-2 rounded-lg border border-gray-300 bg-white
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+text-sm text-gray-800
+focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
       />
     </div>
   );
