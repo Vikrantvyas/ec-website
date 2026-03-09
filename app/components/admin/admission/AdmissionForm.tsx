@@ -303,7 +303,6 @@ Photo
 <input
   type="file"
   accept="image/*"
-  capture="environment"
   onChange={handlePhoto}
   className="w-full h-[44px] px-3 rounded-lg border border-gray-300 bg-white
   focus:outline-none focus:ring-2 focus:ring-blue-500"
