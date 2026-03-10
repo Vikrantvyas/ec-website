@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { SelectField } from "@/app/components/ui/FormFields";
+
 import BranchMaster from "@/app/components/admin/masters/BranchMaster";
 import MethodMaster from "@/app/components/admin/masters/MethodMaster";
 import ChannelMaster from "@/app/components/admin/masters/ChannelMaster";
@@ -59,74 +61,49 @@ export default function MastersPage() {
     masters = leadMasters;
   }
 
+  const mapOptions = (arr:any[]) =>
+    arr.map((v:any)=>({label:v.label,value:v.value}));
+
   return (
 
     <div className="space-y-6 text-sm p-6">
 
-      <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
+      {/* STICKY MASTER SELECTOR */}
 
-        <div className="grid md:grid-cols-2 gap-4">
+      <div className="sticky top-0 z-30 bg-gray-50 pb-4">
 
-          <div className="space-y-1">
+        <div className="bg-white rounded-xl shadow-sm p-5">
 
-            <label className="text-gray-600 text-sm">
-              Category
-            </label>
+          <div className="grid md:grid-cols-2 gap-4">
 
-            <select
-              className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            <SelectField
+              label="Category"
               value={selectedCategory}
-              onChange={(e)=>{
-                setSelectedCategory(e.target.value);
+              options={[
+                {label:"Leads",value:"leads"},
+                {label:"Staff",value:"staff"},
+                {label:"Batches",value:"batches"}
+              ]}
+              onChange={(val:string)=>{
+                setSelectedCategory(val);
                 setSelectedMaster("");
               }}
-            >
+            />
 
-              <option value="leads">
-                Leads
-              </option>
-
-              <option value="staff">
-                Staff
-              </option>
-
-              <option value="batches">
-                Batches
-              </option>
-
-            </select>
-
-          </div>
-
-          <div className="space-y-1">
-
-            <label className="text-gray-600 text-sm">
-              Master
-            </label>
-
-            <select
-              className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            <SelectField
+              label="Master"
               value={selectedMaster}
-              onChange={(e)=>setSelectedMaster(e.target.value)}
-            >
-
-              <option value="">
-                Select Master
-              </option>
-
-              {masters.map((m)=>(
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-
-            </select>
+              options={mapOptions(masters)}
+              onChange={(val:string)=>setSelectedMaster(val)}
+            />
 
           </div>
 
         </div>
 
       </div>
+
+      {/* MASTER CONTENT */}
 
       {selectedMaster && (
 
