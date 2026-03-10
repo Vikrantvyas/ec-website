@@ -23,6 +23,7 @@ interface Props {
   leadStages: string[];
   actions: string[];
   counsellors: string[];
+  educations: string[];
 }
 
 export default function LeadMainBlocks({
@@ -43,7 +44,8 @@ export default function LeadMainBlocks({
   leadChances = [],
   leadStages = [],
   actions = [],
-  counsellors = []
+  counsellors = [],
+  educations = []
 }: Props) {
 
   const departmentValue = Array.isArray(formData.department) ? formData.department : [];
@@ -53,10 +55,7 @@ export default function LeadMainBlocks({
   const maritalOptions = mapOptions(["Single","Married"]);
   const professionOptions = mapOptions(["Student","Job","Business","Housewife","Other"]);
 
-  const educationOptions = mapOptions([
-    "4th","5th","6th","7th","8th","9th",
-    "10th","11th","12th","Graduate","Post Graduate"
-  ]);
+  const educationOptions = mapOptions(educations);
 
   const schoolTimingOptions = mapOptions([
     "Morning",

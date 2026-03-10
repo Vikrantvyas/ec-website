@@ -33,6 +33,7 @@ export default function LeadForm() {
     leadStages,
     actions,
     counsellors,
+    educations,
 
     mapOptions,
     cities,
@@ -175,6 +176,7 @@ export default function LeadForm() {
             leadStages={leadStages}
             actions={actions}
             counsellors={counsellors}
+            educations={educations}
 
           />
 

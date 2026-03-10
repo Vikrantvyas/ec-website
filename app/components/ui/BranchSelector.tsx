@@ -14,11 +14,13 @@ export default function BranchSelector({
 
   return (
 
-    <div className="space-y-2">
+    <div className="space-y-2 w-full">
 
-      <p className="font-semibold text-sm">Select Branch</p>
+      <label className="text-sm text-gray-600">
+        Branch
+      </label>
 
-      <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-1">
+      <div className="flex gap-2 flex-wrap">
 
         {branches.map((b:string)=>(
 
@@ -26,7 +28,7 @@ export default function BranchSelector({
             key={b}
             type="button"
             onClick={()=>onChange(b)}
-            className={`px-3 py-1 rounded-full border text-sm shrink-0 transition
+            className={`h-[44px] px-4 rounded-lg border text-sm transition
             ${
               value === b
               ? "bg-blue-600 text-white border-blue-600"

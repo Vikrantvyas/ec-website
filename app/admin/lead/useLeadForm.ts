@@ -84,6 +84,7 @@ export default function useLeadForm() {
   const [leadStages, setLeadStages] = useState<string[]>([]);
   const [actions, setActions] = useState<string[]>([]);
   const [counsellors, setCounsellors] = useState<string[]>([]);
+  const [educations, setEducations] = useState<string[]>([]);
 
   useEffect(() => {
 
@@ -98,6 +99,7 @@ export default function useLeadForm() {
     fetchLeadStages();
     fetchActions();
     fetchCounsellors();
+    fetchEducations();
 
   }, []);
 
@@ -225,6 +227,21 @@ export default function useLeadForm() {
       label:item,
       value:item
     }));
+
+  const fetchEducations = async () => {
+
+    const { data } = await supabase
+      .from("educations")
+      .select("name")
+      .order("sort_order",{ ascending:true });
+
+    if(data){
+      setEducations(data.map((e:any)=>e.name));
+    }
+
+  };
+
+  // ---- बाकी आपके existing fetch functions same हैं ----
 
   const fetchCities = async () => {
 
@@ -393,6 +410,7 @@ export default function useLeadForm() {
     leadStages,
     actions,
     counsellors,
+    educations,
 
     cities,
 

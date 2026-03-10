@@ -24,7 +24,8 @@ export default function AdmissionForm() {
     courses,
     counsellors,
     cities,
-    mapOptions
+    mapOptions,
+    educations
 
   } = useLeadForm();
 
@@ -334,10 +335,7 @@ Photo
             <SelectField
               label="Education"
               value={formData.education}
-              options={mapOptions([
-                "4th","5th","6th","7th","8th","9th",
-                "10th","11th","12th","Graduate","Post Graduate"
-              ])}
+              options={mapOptions(educations)}
               onChange={(val:string)=>setFormData({...formData, education: val})}
             />
 
@@ -359,7 +357,7 @@ Photo
 
           </Block>
 
-
+     
           {/* COURSE SELECTION */}
 
           <Block title="Course Selection">
