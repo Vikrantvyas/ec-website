@@ -2,30 +2,94 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import BranchSelector from "@/app/components/ui/BranchSelector";
+import { Input, SelectField } from "@/app/components/ui/FormFields";
 
 export default function TeacherMaster() {
+
+  const [branch,setBranch] = useState("");
+  const [branches,setBranches] = useState<any[]>([]);
+  const [educations,setEducations] = useState<string[]>([]);
 
   const [name,setName] = useState("");
   const [mobile,setMobile] = useState("");
   const [email,setEmail] = useState("");
   const [dob,setDob] = useState("");
-  const [gender,setGender] = useState("");
-  const [maritalStatus,setMaritalStatus] = useState("");
+
+  const [gender,setGender] = useState("Male");
+  const [maritalStatus,setMaritalStatus] = useState("Single");
   const [education,setEducation] = useState("");
   const [joiningDate,setJoiningDate] = useState("");
+
   const [localAddress,setLocalAddress] = useState("");
   const [permanentAddress,setPermanentAddress] = useState("");
+
   const [status,setStatus] = useState("Active");
+
   const [photo,setPhoto] = useState<File | null>(null);
 
   const [items,setItems] = useState<any[]>([]);
   const [editingId,setEditingId] = useState<string | null>(null);
 
-  const fetchItems = async () => {
+  const mapOptions = (arr:string[]) =>
+    arr.map(v=>({label:v,value:v}));
+
+  const handleMobile = (val:string)=>{
+
+    val = val.replace("+91","").replace(/\D/g,"");
+    if(val.length > 10) val = val.slice(0,10);
+
+    setMobile(val);
+
+  };
+
+  const fetchBranches = async () => {
+
+    const { data,error } = await supabase
+      .from("branches")
+      .select("id,name")
+      .order("name",{ ascending:true });
+
+    if(error){
+      console.error(error);
+      return;
+    }
+
+    if(data){
+      setBranches(data);
+    }
+
+  };
+
+  const fetchEducations = async () => {
+
+    const { data,error } = await supabase
+      .from("educations")
+      .select("name")
+      .order("sort_order",{ ascending:true });
+
+    if(error){
+      console.error(error);
+      return;
+    }
+
+    if(data){
+      setEducations(data.map((e:any)=>e.name));
+    }
+
+  };
+
+  const fetchItems = async (branchId:string) => {
+
+    if(!branchId) return;
 
     const { data,error } = await supabase
       .from("teachers")
-      .select("*")
+      .select(`
+        *,
+        branches(name)
+      `)
+      .eq("branch_id",branchId)
       .order("name",{ ascending:true });
 
     if(error){
@@ -40,27 +104,66 @@ export default function TeacherMaster() {
   };
 
   useEffect(()=>{
-    fetchItems();
+    fetchBranches();
+    fetchEducations();
   },[]);
+
+  useEffect(()=>{
+    fetchItems(branch);
+  },[branch]);
 
   const handleSubmit = async (e:any) => {
 
     e.preventDefault();
 
-    if(!name.trim()) return;
+    if(!name.trim()){
+      alert("Name required");
+      return;
+    }
+
+    if(!/^\d{10}$/.test(mobile)){
+      alert("Enter valid 10 digit mobile");
+      return;
+    }
+
+    let photo_url = null;
+
+    if(photo){
+
+      const fileName = `${Date.now()}_${photo.name}`;
+
+      const { error:uploadError } = await supabase
+        .storage
+        .from("teacher-photos")
+        .upload(fileName,photo);
+
+      if(!uploadError){
+
+        const { data } = supabase
+          .storage
+          .from("teacher-photos")
+          .getPublicUrl(fileName);
+
+        photo_url = data.publicUrl;
+
+      }
+
+    }
 
     const teacherData = {
+      branch_id:branch || null,
       name:name.trim(),
-      mobile:mobile.trim(),
-      email:email.trim(),
-      dob,
+      mobile,
+      email:email || null,
+      dob:dob || null,
       gender,
       marital_status:maritalStatus,
       education,
-      joining_date:joiningDate,
-      local_address:localAddress,
-      permanent_address:permanentAddress,
-      status
+      joining_date:joiningDate || null,
+      local_address:localAddress || null,
+      permanent_address:permanentAddress || null,
+      status,
+      photo_url
     };
 
     if(editingId){
@@ -88,8 +191,8 @@ export default function TeacherMaster() {
     setMobile("");
     setEmail("");
     setDob("");
-    setGender("");
-    setMaritalStatus("");
+    setGender("Male");
+    setMaritalStatus("Single");
     setEducation("");
     setJoiningDate("");
     setLocalAddress("");
@@ -97,18 +200,19 @@ export default function TeacherMaster() {
     setStatus("Active");
     setPhoto(null);
 
-    fetchItems();
+    fetchItems(branch);
 
   };
 
   const handleEdit = (item:any) => {
 
+    setBranch(item.branch_id || "");
     setName(item.name || "");
     setMobile(item.mobile || "");
     setEmail(item.email || "");
     setDob(item.dob || "");
-    setGender(item.gender || "");
-    setMaritalStatus(item.marital_status || "");
+    setGender(item.gender || "Male");
+    setMaritalStatus(item.marital_status || "Single");
     setEducation(item.education || "");
     setJoiningDate(item.joining_date || "");
     setLocalAddress(item.local_address || "");
@@ -130,7 +234,7 @@ export default function TeacherMaster() {
 
     if(error) console.error(error);
 
-    fetchItems();
+    fetchItems(branch);
 
   };
 
@@ -142,158 +246,91 @@ export default function TeacherMaster() {
         Teacher Master
       </p>
 
+      <BranchSelector
+        branches={branches.map(b=>b.name)}
+        value={branches.find(b=>b.id===branch)?.name || ""}
+        onChange={(name)=>{
+          const selected = branches.find(b=>b.name===name);
+          if(selected) setBranch(selected.id);
+        }}
+      />
+
       <form
         onSubmit={handleSubmit}
         className="grid md:grid-cols-4 gap-4"
       >
 
-        {/* Row 1 */}
+        <Input label="Name *" value={name} onChange={(e:any)=>setName(e.target.value)} />
 
-        <div>
-          <label className="text-sm text-gray-600">Name</label>
-          <input
-            type="text"
-            placeholder="e.g. Rahul Sharma"
-            value={name}
-            onChange={(e)=>setName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          />
-        </div>
+        <Input
+          label="Mobile *"
+          value={mobile}
+          onChange={(e:any)=>handleMobile(e.target.value)}
+        />
 
-        <div>
-          <label className="text-sm text-gray-600">Mobile</label>
-          <input
-            type="text"
-            placeholder="e.g. 9876543210"
-            value={mobile}
-            onChange={(e)=>setMobile(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          />
-        </div>
+        <Input label="Email" type="email" value={email} onChange={(e:any)=>setEmail(e.target.value)} />
 
-        <div>
-          <label className="text-sm text-gray-600">Email</label>
-          <input
-            type="email"
-            placeholder="e.g. rahul@gmail.com"
-            value={email}
-            onChange={(e)=>setEmail(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          />
-        </div>
+        <Input label="Date of Birth" type="date" value={dob} onChange={(e:any)=>setDob(e.target.value)} />
 
-        <div>
-          <label className="text-sm text-gray-600">Date of Birth</label>
-          <input
-            type="date"
-            value={dob}
-            onChange={(e)=>setDob(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          />
-        </div>
+        <SelectField
+          label="Gender"
+          value={gender}
+          onChange={(val:string)=>setGender(val)}
+          options={mapOptions(["Male","Female"])}
+        />
 
-        {/* Row 2 */}
+        <SelectField
+          label="Marital Status"
+          value={maritalStatus}
+          onChange={(val:string)=>setMaritalStatus(val)}
+          options={mapOptions(["Single","Married"])}
+        />
 
-        <div>
-          <label className="text-sm text-gray-600">Gender</label>
-          <select
-            value={gender}
-            onChange={(e)=>setGender(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          >
-            <option value="">Select</option>
-            <option>Male</option>
-            <option>Female</option>
-          </select>
-        </div>
+        <SelectField
+          label="Education"
+          value={education}
+          onChange={(val:string)=>setEducation(val)}
+          options={mapOptions(educations)}
+        />
 
-        <div>
-          <label className="text-sm text-gray-600">Marital Status</label>
-          <select
-            value={maritalStatus}
-            onChange={(e)=>setMaritalStatus(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          >
-            <option value="">Select</option>
-            <option>Single</option>
-            <option>Married</option>
-          </select>
-        </div>
+        <Input label="Joining Date" type="date" value={joiningDate} onChange={(e:any)=>setJoiningDate(e.target.value)} />
 
-        <div>
-          <label className="text-sm text-gray-600">Education</label>
-          <input
-            type="text"
-            placeholder="e.g. M.Sc., B.Ed."
-            value={education}
-            onChange={(e)=>setEducation(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          />
-        </div>
+        <Input label="Local Address" value={localAddress} onChange={(e:any)=>setLocalAddress(e.target.value)} />
 
-        <div>
-          <label className="text-sm text-gray-600">Joining Date</label>
-          <input
-            type="date"
-            value={joiningDate}
-            onChange={(e)=>setJoiningDate(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          />
-        </div>
+        <Input label="Permanent Address" value={permanentAddress} onChange={(e:any)=>setPermanentAddress(e.target.value)} />
 
-        {/* Row 3 */}
+        <SelectField
+          label="Status"
+          value={status}
+          onChange={(val:string)=>setStatus(val)}
+          options={mapOptions(["Active","Inactive","On Leave"])}
+        />
 
-        <div>
-          <label className="text-sm text-gray-600">Upload Photo</label>
-          <input
-            type="file"
-            onChange={(e)=>setPhoto(e.target.files?.[0] || null)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          />
-        </div>
+        <div className="flex flex-col">
 
-        <div>
-          <label className="text-sm text-gray-600">Local Address</label>
-          <input
-            type="text"
-            placeholder="Flat/House No, Street..."
-            value={localAddress}
-            onChange={(e)=>setLocalAddress(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          />
-        </div>
+<label className="mb-1 text-gray-600 text-sm font-medium">
+Photo
+</label>
 
-        <div>
-          <label className="text-sm text-gray-600">Permanent Address</label>
-          <input
-            type="text"
-            placeholder="House No, Street..."
-            value={permanentAddress}
-            onChange={(e)=>setPermanentAddress(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          />
-        </div>
+<input
+  type="file"
+  accept="image/*;capture=camera"
+  onChange={(e:any)=>setPhoto(e.target.files?.[0] || null)}
+  className="w-full h-[44px] px-3 rounded-lg border border-gray-300 bg-white
+  focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
 
-        <div>
-          <label className="text-sm text-gray-600">Status</label>
-          <select
-            value={status}
-            onChange={(e)=>setStatus(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2"
-          >
-            <option>Active</option>
-            <option>Inactive</option>
-            <option>On Leave</option>
-          </select>
-        </div>
+</div>
 
         <div className="md:col-span-4 flex justify-end">
+
           <button
             type="submit"
             className="px-5 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700"
           >
             {editingId ? "Update" : "Add"}
           </button>
+
         </div>
 
       </form>
@@ -303,12 +340,15 @@ export default function TeacherMaster() {
         <table className="w-full text-sm">
 
           <thead className="bg-gray-100">
+
             <tr>
+              <th className="text-left p-3">Branch</th>
               <th className="text-left p-3">Name</th>
               <th className="text-left p-3">Mobile</th>
               <th className="text-left p-3">Status</th>
               <th className="text-right p-3">Action</th>
             </tr>
+
           </thead>
 
           <tbody>
@@ -317,6 +357,7 @@ export default function TeacherMaster() {
 
               <tr key={item.id} className="border-t">
 
+                <td className="p-3">{item.branches?.name}</td>
                 <td className="p-3">{item.name}</td>
                 <td className="p-3">{item.mobile}</td>
                 <td className="p-3">{item.status}</td>

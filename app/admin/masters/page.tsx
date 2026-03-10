@@ -16,6 +16,7 @@ import ActionMaster from "@/app/components/admin/masters/ActionMaster";
 import CounsellorMaster from "@/app/components/admin/masters/CounsellorMaster";
 import TeacherMaster from "@/app/components/admin/masters/TeacherMaster";
 import BatchMaster from "@/app/components/admin/masters/BatchMaster";
+import EducationMaster from "@/app/components/admin/masters/EducationMaster";
 
 export default function MastersPage() {
 
@@ -29,6 +30,7 @@ export default function MastersPage() {
     { label:"For", value:"for" },
     { label:"City", value:"city" },
     { label:"Area", value:"area" },
+    { label:"Education", value:"education" },
     { label:"Department", value:"department" },
     { label:"Courses", value:"courses" },
     { label:"Lead Chances", value:"lead_chances" },
@@ -136,6 +138,7 @@ export default function MastersPage() {
           {selectedMaster === "for" && <ForMaster />}
           {selectedMaster === "city" && <CityMaster />}
           {selectedMaster === "area" && <AreaMaster />}
+          {selectedMaster === "education" && <EducationMaster />}
           {selectedMaster === "department" && <DepartmentMaster />}
           {selectedMaster === "courses" && <CourseMaster />}
           {selectedMaster === "lead_chances" && <LeadChanceMaster />}

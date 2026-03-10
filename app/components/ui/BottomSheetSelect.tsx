@@ -243,10 +243,10 @@ export default function BottomSheetSelect({
 
             <div className="max-h-[60vh] overflow-y-auto">
 
-              {options.map((opt) => (
+              {options.map((opt, i) => (
 
                 <div
-                  key={opt.value}
+                  key={opt.value || i}
                   onClick={() => {
                     onChange(opt.value);
                     setOpen(false);
@@ -280,7 +280,7 @@ export default function BottomSheetSelect({
           {options.map((opt, i) => (
 
             <div
-              key={opt.value}
+              key={opt.value || i}
               ref={(el) => { optionRefs.current[i] = el }}
               onClick={() => {
                 onChange(opt.value);
