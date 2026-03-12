@@ -12,6 +12,7 @@ import {
   PhoneCall,
   ShieldCheck,
   List,
+  Layers,
 } from "lucide-react";
 
 export const adminMenu = [
@@ -23,6 +24,9 @@ export const adminMenu = [
   { name: "Admission", href: "/admin/admission", icon: GraduationCap },
   { name: "Enquiry", href: "/admin/enquiry", icon: UserPlus },
   { name: "Calling", href: "/admin/calling", icon: PhoneCall },
+
+  { name: "Batches", href: "/admin/batches", icon: Layers },
+
   { name: "Students", href: "/admin/students", icon: Users },
   { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
   { name: "Fees", href: "/admin/fees", icon: CreditCard },
