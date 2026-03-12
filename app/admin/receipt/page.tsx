@@ -12,13 +12,7 @@ export default function ReceiptPage(){
 
 const router = useRouter();
 
-/* DEFAULT DATES */
-
 const today = new Date().toISOString().split("T")[0];
-
-const nextMonth = new Date();
-nextMonth.setMonth(nextMonth.getMonth()+1);
-const nextMonthDate = nextMonth.toISOString().split("T")[0];
 
 /* STATES */
 
@@ -32,32 +26,26 @@ const [selectedStudent,setSelectedStudent] = useState("");
 const [batches,setBatches] = useState<any[]>([]);
 const [batch,setBatch] = useState("");
 
+const [studentInfo,setStudentInfo] = useState<any>(null);
+
 const [date,setDate] = useState(today);
 const [amount,setAmount] = useState("");
 const [receiptNo,setReceiptNo] = useState("");
 const [account,setAccount] = useState("");
 const [mode,setMode] = useState("Cash");
 
-const [departments,setDepartments] = useState<string[]>([]);
-const [department,setDepartment] = useState<string[]>([]);
-
-const [courses,setCourses] = useState<any[]>([]);
-const [coursesList,setCoursesList] = useState<string[]>([]);
-const [course,setCourse] = useState<string[]>([]);
-
 const [totalFee,setTotalFee] = useState("");
 const [discount,setDiscount] = useState("");
 const [due,setDue] = useState("");
-const [dueDate,setDueDate] = useState(nextMonthDate);
+const [days,setDays] = useState("");
+const [dueDate,setDueDate] = useState("");
 
 const [receipts,setReceipts] = useState<any[]>([]);
 
-/* LOAD INITIAL DATA */
+/* LOAD INITIAL */
 
 useEffect(()=>{
 fetchBranches();
-fetchDepartments();
-fetchCourses();
 },[]);
 
 /* BRANCH CHANGE */
@@ -66,11 +54,45 @@ useEffect(()=>{
 if(branchName){
 fetchStudents();
 fetchBatches();
-loadReceipts();
 }
 },[branchName]);
 
-/* FETCH FUNCTIONS */
+/* AUTO DUE */
+
+useEffect(()=>{
+
+const fee = Number(totalFee)||0;
+const disc = Number(discount)||0;
+const amt = Number(amount)||0;
+
+const d = fee - disc - amt;
+
+setDue(d>0 ? String(d) : "0");
+
+},[totalFee,discount,amount]);
+
+/* DAYS → DATE */
+
+useEffect(()=>{
+
+if(!due || Number(due)===0){
+setDays("");
+setDueDate("");
+return;
+}
+
+if(days){
+
+const base = new Date(date);
+base.setDate(base.getDate()+Number(days));
+
+setDueDate(base.toISOString().split("T")[0]);
+
+}
+
+},[days,due,date]);
+
+/* FETCH */
 
 const fetchBranches = async ()=>{
 
@@ -79,7 +101,7 @@ const { data } = await supabase
 .select("id,name")
 .order("name");
 
-setBranches(data || []);
+setBranches(data||[]);
 
 };
 
@@ -87,11 +109,11 @@ const fetchStudents = async ()=>{
 
 const { data } = await supabase
 .from("leads")
-.select("id,student_name,department,course,branch")
+.select("*")
 .eq("branch",branchName)
 .order("student_name");
 
-setStudents(data || []);
+setStudents(data||[]);
 
 };
 
@@ -100,70 +122,23 @@ const fetchBatches = async ()=>{
 const { data } = await supabase
 .from("batches")
 .select("batch_name,branch_id")
-.eq("branch_id",branch)
-.order("batch_name");
+.eq("branch_id",branch);
 
-setBatches(data || []);
+setBatches(data||[]);
 
 };
 
-const fetchDepartments = async ()=>{
+const loadReceipts = async (student:string)=>{
 
 const { data } = await supabase
-.from("departments")
-.select("name")
-.order("name");
-
-setDepartments(data?.map((d:any)=>d.name) || []);
-
-};
-
-const fetchCourses = async ()=>{
-
-const { data } = await supabase
-.from("courses")
-.select("*")
-.order("name");
-
-setCourses(data || []);
-
-};
-
-const loadReceipts = async ()=>{
-
-console.log("BranchName =",branchName);
-
-if(!branchName) return;
-
-const { data, error } = await supabase
 .from("receipts")
 .select("*")
-.eq("branch",branchName)
+.eq("student_name",student)
 .order("created_at",{ascending:false});
 
-console.log("Receipts =",data);
-
-if(error){
-console.log("Receipt Load Error",error);
-return;
-}
-
-setReceipts(data || []);
+setReceipts(data||[]);
 
 };
-
-/* FILTER COURSES */
-
-useEffect(()=>{
-
-const filtered =
-courses
-.filter((c:any)=>department.includes(c.department))
-.map((c:any)=>c.name);
-
-setCoursesList(filtered);
-
-},[department,courses]);
 
 /* STUDENT CHANGE */
 
@@ -171,17 +146,13 @@ const handleStudentChange = (name:string)=>{
 
 setSelectedStudent(name);
 
-const student = students.find((s:any)=>s.student_name===name);
+const s = students.find((x:any)=>x.student_name===name);
 
-if(student){
+if(s){
 
-if(student.department){
-setDepartment([student.department]);
-}
+setStudentInfo(s);
 
-if(student.course){
-setCourse([student.course]);
-}
+loadReceipts(name);
 
 }
 
@@ -204,7 +175,7 @@ const paymentModes = [
 {label:"Bank Transfer",value:"Bank Transfer"}
 ];
 
-/* SAVE RECEIPT */
+/* SAVE */
 
 const handleSubmit = async (e:any)=>{
 
@@ -216,40 +187,26 @@ branch:branchName,
 student_name:selectedStudent,
 batch,
 
-department:department.join(", "),
-course:course.join(", "),
+department:studentInfo?.department,
+course:studentInfo?.course,
 
 date,
 receipt_no:receiptNo,
-
 account,
 mode,
-
 amount,
 total_fee:totalFee,
 discount,
-
 due,
 due_date:dueDate
 
 };
 
-const { error } = await supabase
+await supabase
 .from("receipts")
 .insert([payload]);
 
-if(error){
-console.log("Insert Error",error);
-return;
-}
-
-console.log("Receipt Saved");
-
-/* RELOAD LIST */
-
-await loadReceipts();
-
-/* RESET FORM */
+await loadReceipts(selectedStudent);
 
 setAmount("");
 setReceiptNo("");
@@ -257,6 +214,8 @@ setAccount("");
 setTotalFee("");
 setDiscount("");
 setDue("");
+setDays("");
+setDueDate("");
 
 };
 
@@ -268,29 +227,26 @@ return(
 
 <div className="space-y-6 p-6">
 
-<p className="font-semibold text-blue-600">
-Receipt Entry
-</p>
+{/* BRANCH */}
 
 <BranchSelector
 branches={branches.map((b:any)=>b.name)}
 value={branchName}
 onChange={(name)=>{
-
 setBranchName(name);
-
 const selected = branches.find((b:any)=>b.name===name);
 if(selected) setBranch(selected.id);
-
 }}
 />
+
+{/* STUDENT */}
 
 <div className="flex gap-3">
 
 <div className="flex-1">
 
 <BottomSheetSelect
-label="Name of Student"
+label="Student Name"
 value={selectedStudent}
 options={students.map((s:any)=>({
 label:s.student_name,
@@ -304,80 +260,41 @@ onChange={(val:string)=>handleStudentChange(val)}
 <button
 type="button"
 onClick={()=>router.push("/admin/admission")}
-className="mt-6 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+className="mt-6 px-4 py-2 bg-green-600 text-white rounded-md"
 >
-Add New
+Add
 </button>
 
 </div>
 
-<form
-onSubmit={handleSubmit}
-className="grid md:grid-cols-4 gap-4"
->
+{/* STUDENT INFO + PAYMENTS */}
 
-<Input label="Date" type="date" value={date} onChange={(e:any)=>setDate(e.target.value)} />
+{studentInfo && (
 
-<Input label="Amount" type="number" value={amount} onChange={(e:any)=>setAmount(e.target.value)} />
+<div className="border rounded-lg p-4 space-y-4 bg-gray-50">
 
-<Input label="Receipt No." value={receiptNo} onChange={(e:any)=>setReceiptNo(e.target.value)} />
+<div className="text-sm">
 
-<SelectField label="Account" value={account} options={accountOptions} onChange={(val:string)=>setAccount(val)} />
+<b>{studentInfo.student_name}</b> | {studentInfo.department} | {studentInfo.course} | {batch}
 
-<SelectField label="Mode of Payment" value={mode} options={paymentModes} onChange={(val:string)=>setMode(val)} />
-
-<SelectField
-label="Batch"
-value={batch}
-options={batches.map((b:any)=>({label:b.batch_name,value:b.batch_name}))}
-onChange={(val:string)=>setBatch(val)}
-/>
-
-<SelectField
-label="Department"
-value={department}
-multiple
-options={departments.map((d:any)=>({label:d,value:d}))}
-onChange={(val:any)=>setDepartment(val)}
-/>
-
-<SelectField
-label="Course"
-value={course}
-multiple
-options={coursesList.map((c:any)=>({label:c,value:c}))}
-onChange={(val:any)=>setCourse(val)}
-/>
-
-<Input label="Total Fee" type="number" value={totalFee} onChange={(e:any)=>setTotalFee(e.target.value)} />
-
-<Input label="Discount" type="number" value={discount} onChange={(e:any)=>setDiscount(e.target.value)} />
-
-<Input label="Due" type="number" value={due} onChange={(e:any)=>setDue(e.target.value)} />
-
-<Input label="Due Date" type="date" value={dueDate} onChange={(e:any)=>setDueDate(e.target.value)} />
-
-<div className="md:col-span-4 flex justify-end">
-<button type="submit" className="px-5 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700">
-Save Receipt
-</button>
 </div>
 
-</form>
-
-<div className="bg-white rounded-xl shadow-sm overflow-hidden">
+<div className="text-sm font-semibold">
+Previous Payments
+</div>
 
 <table className="w-full text-sm">
 
 <thead className="bg-gray-100">
 
 <tr>
-<th className="p-3 text-left">Date</th>
-<th className="p-3 text-left">Receipt</th>
-<th className="p-3 text-left">Student</th>
-<th className="p-3 text-left">Amount</th>
-<th className="p-3 text-left">Mode</th>
-<th className="p-3 text-left">Due</th>
+<th className="p-2 text-left">Date</th>
+<th className="p-2 text-left">Amount</th>
+<th className="p-2 text-left">R. No.</th>
+<th className="p-2 text-left">Mode</th>
+<th className="p-2 text-left">Total Fee</th>
+<th className="p-2 text-left">Due</th>
+<th className="p-2 text-left">Due Date</th>
 </tr>
 
 </thead>
@@ -386,12 +303,13 @@ Save Receipt
 
 {receipts.map((r:any)=>(
 <tr key={r.id} className="border-t">
-<td className="p-3">{r.date}</td>
-<td className="p-3">{r.receipt_no}</td>
-<td className="p-3">{r.student_name}</td>
-<td className="p-3">{r.amount}</td>
-<td className="p-3">{r.mode}</td>
-<td className="p-3">{r.due}</td>
+<td className="p-2">{r.date}</td>
+<td className="p-2">{r.amount}</td>
+<td className="p-2">{r.receipt_no}</td>
+<td className="p-2">{r.mode}</td>
+<td className="p-2">{r.total_fee}</td>
+<td className="p-2">{r.due}</td>
+<td className="p-2">{r.due_date}</td>
 </tr>
 ))}
 
@@ -400,6 +318,48 @@ Save Receipt
 </table>
 
 </div>
+
+)}
+
+{/* NEW RECEIPT */}
+
+<form
+onSubmit={handleSubmit}
+className="grid md:grid-cols-5 gap-4"
+>
+
+<Input label="Date" type="date" value={date} onChange={(e:any)=>setDate(e.target.value)} />
+
+<Input label="Amount" type="number" value={amount} onChange={(e:any)=>setAmount(e.target.value)} />
+
+<Input label="R. N." value={receiptNo} onChange={(e:any)=>setReceiptNo(e.target.value)} />
+
+<SelectField label="Account" value={account} options={accountOptions} onChange={(v:string)=>setAccount(v)} />
+
+<SelectField label="Mode" value={mode} options={paymentModes} onChange={(v:string)=>setMode(v)} />
+
+<Input label="Total Fee" type="number" value={totalFee} onChange={(e:any)=>setTotalFee(e.target.value)} />
+
+<Input label="Discount" type="number" value={discount} onChange={(e:any)=>setDiscount(e.target.value)} />
+
+<Input label="Due" value={due} readOnly />
+
+<Input label="Days" type="number" value={days} onChange={(e:any)=>setDays(e.target.value)} />
+
+<Input label="Due Date" type="date" value={dueDate} readOnly />
+
+<div className="md:col-span-5 flex justify-end">
+
+<button
+type="submit"
+className="px-6 py-2 bg-blue-600 text-white rounded-md"
+>
+Save Receipt
+</button>
+
+</div>
+
+</form>
 
 </div>
 
