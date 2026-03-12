@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import { Input, SelectField } from "@/app/components/ui/FormFields";
 import BottomSheetSelect from "@/app/components/ui/BottomSheetSelect";
+import BranchSelector from "@/app/components/ui/BranchSelector";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
@@ -21,8 +22,15 @@ const nextMonthDate = nextMonth.toISOString().split("T")[0];
 
 /* STATES */
 
+const [branch,setBranch] = useState("");
+const [branches,setBranches] = useState<any[]>([]);
+const [branchName,setBranchName] = useState("");
+
 const [students,setStudents] = useState<any[]>([]);
 const [selectedStudent,setSelectedStudent] = useState("");
+
+const [batches,setBatches] = useState<any[]>([]);
+const [batch,setBatch] = useState("");
 
 const [date,setDate] = useState(today);
 const [amount,setAmount] = useState("");
@@ -37,8 +45,6 @@ const [courses,setCourses] = useState<any[]>([]);
 const [coursesList,setCoursesList] = useState<string[]>([]);
 const [course,setCourse] = useState<string[]>([]);
 
-const [batch,setBatch] = useState("");
-
 const [totalFee,setTotalFee] = useState("");
 const [discount,setDiscount] = useState("");
 const [due,setDue] = useState("");
@@ -47,22 +53,55 @@ const [dueDate,setDueDate] = useState(nextMonthDate);
 const [history,setHistory] = useState<any[]>([]);
 const [receipts,setReceipts] = useState<any[]>([]);
 
-/* LOAD DATA */
+/* LOAD INITIAL DATA */
 
 useEffect(()=>{
-fetchStudents();
+fetchBranches();
 fetchDepartments();
 fetchCourses();
 },[]);
+
+/* LOAD BRANCH DEPENDENT DATA */
+
+useEffect(()=>{
+if(branchName){
+fetchStudents();
+fetchBatches();
+}
+},[branchName]);
+
+const fetchBranches = async ()=>{
+
+const { data } = await supabase
+.from("branches")
+.select("id,name")
+.order("name");
+
+setBranches(data || []);
+
+};
 
 const fetchStudents = async ()=>{
 
 const { data } = await supabase
 .from("leads")
-.select("id,student_name")
+.select("id,student_name,department,course,branch")
+.eq("branch",branchName)
 .order("student_name");
 
 setStudents(data || []);
+
+};
+
+const fetchBatches = async ()=>{
+
+const { data } = await supabase
+.from("batches")
+.select("batch_name,branch_id")
+.eq("branch_id",branch)
+.order("batch_name");
+
+setBatches(data || []);
 
 };
 
@@ -103,14 +142,23 @@ setCoursesList(filtered);
 
 /* STUDENT CHANGE */
 
-const handleStudentChange = (id:string)=>{
+const handleStudentChange = (name:string)=>{
 
-setSelectedStudent(id);
+setSelectedStudent(name);
 
-const studentReceipts =
-receipts.filter((r:any)=>r.studentId === id);
+const student = students.find((s:any)=>s.student_name===name);
 
-setHistory(studentReceipts);
+if(student){
+
+if(student.department){
+setDepartment([student.department]);
+}
+
+if(student.course){
+setCourse([student.course]);
+}
+
+}
 
 };
 
@@ -139,10 +187,7 @@ e.preventDefault();
 
 const newReceipt = {
 
-studentId:selectedStudent,
-studentName:
-students.find((s:any)=>s.id===selectedStudent)?.student_name,
-
+studentName:selectedStudent,
 date,
 amount,
 receiptNo,
@@ -162,11 +207,6 @@ const updated = [newReceipt,...receipts];
 
 setReceipts(updated);
 
-const studentReceipts =
-updated.filter((r:any)=>r.studentId === selectedStudent);
-
-setHistory(studentReceipts);
-
 };
 
 /* UI */
@@ -181,7 +221,22 @@ return(
 Receipt Entry
 </p>
 
-{/* STUDENT SEARCH */}
+{/* BRANCH */}
+
+<BranchSelector
+branches={branches.map((b:any)=>b.name)}
+value={branchName}
+onChange={(name)=>{
+
+setBranchName(name);
+
+const selected = branches.find((b:any)=>b.name===name);
+if(selected) setBranch(selected.id);
+
+}}
+/>
+
+{/* STUDENT */}
 
 <div className="flex gap-3">
 
@@ -192,8 +247,9 @@ label="Name of Student"
 value={selectedStudent}
 options={students.map((s:any)=>({
 label:s.student_name,
-value:s.id
+value:s.student_name
 }))}
+search
 onChange={(val:string)=>handleStudentChange(val)}
 placeholder="Type student name..."
 />
@@ -210,51 +266,26 @@ Add New
 
 </div>
 
-{/* FORM */}
-
 <form
 onSubmit={handleSubmit}
 className="grid md:grid-cols-4 gap-4"
 >
 
-<Input
-label="Date"
-type="date"
-value={date}
-onChange={(e:any)=>setDate(e.target.value)}
-/>
+<Input label="Date" type="date" value={date} onChange={(e:any)=>setDate(e.target.value)} />
 
-<Input
-label="Amount"
-type="number"
-value={amount}
-onChange={(e:any)=>setAmount(e.target.value)}
-/>
+<Input label="Amount" type="number" value={amount} onChange={(e:any)=>setAmount(e.target.value)} />
 
-<Input
-label="Receipt No."
-value={receiptNo}
-onChange={(e:any)=>setReceiptNo(e.target.value)}
-/>
+<Input label="Receipt No." value={receiptNo} onChange={(e:any)=>setReceiptNo(e.target.value)} />
+
+<SelectField label="Account" value={account} options={accountOptions} onChange={(val:string)=>setAccount(val)} />
+
+<SelectField label="Mode of Payment" value={mode} options={paymentModes} onChange={(val:string)=>setMode(val)} />
 
 <SelectField
-label="Account"
-value={account}
-options={accountOptions}
-onChange={(val:string)=>setAccount(val)}
-/>
-
-<SelectField
-label="Mode of Payment"
-value={mode}
-options={paymentModes}
-onChange={(val:string)=>setMode(val)}
-/>
-
-<Input
 label="Batch"
 value={batch}
-onChange={(e:any)=>setBatch(e.target.value)}
+options={batches.map((b:any)=>({label:b.batch_name,value:b.batch_name}))}
+onChange={(val:string)=>setBatch(val)}
 />
 
 <SelectField
@@ -273,96 +304,21 @@ options={coursesList.map((c:any)=>({label:c,value:c}))}
 onChange={(val:any)=>setCourse(val)}
 />
 
-<Input
-label="Total Fee"
-type="number"
-value={totalFee}
-onChange={(e:any)=>setTotalFee(e.target.value)}
-/>
+<Input label="Total Fee" type="number" value={totalFee} onChange={(e:any)=>setTotalFee(e.target.value)} />
 
-<Input
-label="Discount"
-type="number"
-value={discount}
-onChange={(e:any)=>setDiscount(e.target.value)}
-/>
+<Input label="Discount" type="number" value={discount} onChange={(e:any)=>setDiscount(e.target.value)} />
 
-<Input
-label="Due"
-type="number"
-value={due}
-onChange={(e:any)=>setDue(e.target.value)}
-/>
+<Input label="Due" type="number" value={due} onChange={(e:any)=>setDue(e.target.value)} />
 
-<Input
-label="Due Date"
-type="date"
-value={dueDate}
-onChange={(e:any)=>setDueDate(e.target.value)}
-/>
+<Input label="Due Date" type="date" value={dueDate} onChange={(e:any)=>setDueDate(e.target.value)} />
 
 <div className="md:col-span-4 flex justify-end">
-
-<button
-type="submit"
-className="px-5 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700"
->
+<button type="submit" className="px-5 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700">
 Save Receipt
 </button>
-
 </div>
 
 </form>
-
-{/* HISTORY */}
-
-{selectedStudent && (
-
-<div className="bg-white rounded-xl shadow-sm overflow-hidden">
-
-<p className="p-4 font-semibold">
-Previous Receipts
-</p>
-
-<table className="w-full text-sm">
-
-<thead className="bg-gray-100">
-
-<tr>
-<th className="p-3 text-left">Date</th>
-<th className="p-3 text-left">Receipt</th>
-<th className="p-3 text-left">Account</th>
-<th className="p-3 text-left">Mode</th>
-<th className="p-3 text-left">Amount</th>
-<th className="p-3 text-left">Due</th>
-</tr>
-
-</thead>
-
-<tbody>
-
-{history.map((r:any,i:number)=>(
-
-<tr key={i} className="border-t">
-
-<td className="p-3">{r.date}</td>
-<td className="p-3">{r.receiptNo}</td>
-<td className="p-3">{r.account}</td>
-<td className="p-3">{r.mode}</td>
-<td className="p-3">{r.amount}</td>
-<td className="p-3">{r.due}</td>
-
-</tr>
-
-))}
-
-</tbody>
-
-</table>
-
-</div>
-
-)}
 
 </div>
 
