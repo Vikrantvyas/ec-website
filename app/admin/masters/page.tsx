@@ -19,6 +19,7 @@ import CounsellorMaster from "@/app/components/admin/masters/CounsellorMaster";
 import TeacherMaster from "@/app/components/admin/masters/TeacherMaster";
 import BatchMaster from "@/app/components/admin/masters/BatchMaster";
 import EducationMaster from "@/app/components/admin/masters/EducationMaster";
+import FeeMaster from "@/app/components/admin/masters/FeeMaster";
 
 export default function MastersPage() {
 
@@ -49,6 +50,10 @@ export default function MastersPage() {
     { label:"Batches", value:"batches" }
   ];
 
+  const feeMasters = [
+    { label:"Fee Schemes", value:"fee_schemes" }
+  ];
+
   let masters:any[] = [];
 
   if(selectedCategory === "staff"){
@@ -56,6 +61,9 @@ export default function MastersPage() {
   }
   else if(selectedCategory === "batches"){
     masters = batchMasters;
+  }
+  else if(selectedCategory === "fees"){
+    masters = feeMasters;
   }
   else{
     masters = leadMasters;
@@ -82,7 +90,8 @@ export default function MastersPage() {
               options={[
                 {label:"Leads",value:"leads"},
                 {label:"Staff",value:"staff"},
-                {label:"Batches",value:"batches"}
+                {label:"Batches",value:"batches"},
+                {label:"Fees",value:"fees"}
               ]}
               onChange={(val:string)=>{
                 setSelectedCategory(val);
@@ -124,6 +133,7 @@ export default function MastersPage() {
           {selectedMaster === "counsellor" && <CounsellorMaster />}
           {selectedMaster === "teachers" && <TeacherMaster />}
           {selectedMaster === "batches" && <BatchMaster />}
+          {selectedMaster === "fee_schemes" && <FeeMaster />}
 
         </div>
 
