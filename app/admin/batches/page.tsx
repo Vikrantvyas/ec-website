@@ -9,7 +9,7 @@ export default function BatchesPage() {
 
   const [batches, setBatches] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
-  const [branchId, setBranchId] = useState<number | null>(null);
+  const [branchId, setBranchId] = useState<string | null>(null);
 
   useEffect(() => {
     loadBranches();
@@ -94,6 +94,8 @@ export default function BatchesPage() {
             <BatchCard
               key={batch.id}
               name={batch.batch_name}
+              department={batch.department}
+              courses={[batch.course]}
               students={0}
             />
 

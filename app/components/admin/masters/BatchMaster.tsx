@@ -166,6 +166,8 @@ status
 
 };
 
+let batchId = editId;
+
 if(editId){
 
 await supabase
@@ -175,9 +177,57 @@ await supabase
 
 }else{
 
+const { data } = await supabase
+.from("batches")
+.insert([payload])
+.select()
+.single();
+
+batchId = data?.id;
+
+}
+
+/* SAVE COURSES */
+
+if(batchId){
+
+await supabase
+.from("batch_courses")
+.delete()
+.eq("batch_id",batchId);
+
+if(courses.length){
+
+const rows = courses.map((c)=>({
+
+batch_id:batchId,
+course_id:c
+
+}));
+
+await supabase
+.from("batch_courses")
+.insert(rows);
+
+}
+
+/* UPDATE COURSE COLUMN */
+
+const { data: courseNames } = await supabase
+.from("courses")
+.select("name")
+.in("id",courses);
+
+const courseText = courseNames
+?.map((c:any)=>c.name)
+.join(", ");
+
 await supabase
 .from("batches")
-.insert([payload]);
+.update({
+course:courseText
+})
+.eq("id",batchId);
 
 }
 
