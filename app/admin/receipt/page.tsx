@@ -249,9 +249,8 @@ options={students.map((s:any)=>({
 label:s.student_name,
 value:s.student_name
 }))}
-search
 onChange={(val:string)=>handleStudentChange(val)}
-placeholder="Type student name..."
+placeholder="Select student"
 />
 
 </div>
