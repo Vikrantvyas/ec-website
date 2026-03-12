@@ -50,7 +50,6 @@ const [discount,setDiscount] = useState("");
 const [due,setDue] = useState("");
 const [dueDate,setDueDate] = useState(nextMonthDate);
 
-const [history,setHistory] = useState<any[]>([]);
 const [receipts,setReceipts] = useState<any[]>([]);
 
 /* LOAD INITIAL DATA */
@@ -61,14 +60,17 @@ fetchDepartments();
 fetchCourses();
 },[]);
 
-/* LOAD BRANCH DEPENDENT DATA */
+/* BRANCH CHANGE */
 
 useEffect(()=>{
 if(branchName){
 fetchStudents();
 fetchBatches();
+loadReceipts();
 }
 },[branchName]);
+
+/* FETCH FUNCTIONS */
 
 const fetchBranches = async ()=>{
 
@@ -127,6 +129,29 @@ setCourses(data || []);
 
 };
 
+const loadReceipts = async ()=>{
+
+console.log("BranchName =",branchName);
+
+if(!branchName) return;
+
+const { data, error } = await supabase
+.from("receipts")
+.select("*")
+.eq("branch",branchName)
+.order("created_at",{ascending:false});
+
+console.log("Receipts =",data);
+
+if(error){
+console.log("Receipt Load Error",error);
+return;
+}
+
+setReceipts(data || []);
+
+};
+
 /* FILTER COURSES */
 
 useEffect(()=>{
@@ -179,33 +204,59 @@ const paymentModes = [
 {label:"Bank Transfer",value:"Bank Transfer"}
 ];
 
-/* SUBMIT */
+/* SAVE RECEIPT */
 
-const handleSubmit = (e:any)=>{
+const handleSubmit = async (e:any)=>{
 
 e.preventDefault();
 
-const newReceipt = {
+const payload = {
 
-studentName:selectedStudent,
-date,
-amount,
-receiptNo,
-account,
-mode,
+branch:branchName,
+student_name:selectedStudent,
 batch,
+
 department:department.join(", "),
 course:course.join(", "),
-totalFee,
+
+date,
+receipt_no:receiptNo,
+
+account,
+mode,
+
+amount,
+total_fee:totalFee,
 discount,
+
 due,
-dueDate
+due_date:dueDate
 
 };
 
-const updated = [newReceipt,...receipts];
+const { error } = await supabase
+.from("receipts")
+.insert([payload]);
 
-setReceipts(updated);
+if(error){
+console.log("Insert Error",error);
+return;
+}
+
+console.log("Receipt Saved");
+
+/* RELOAD LIST */
+
+await loadReceipts();
+
+/* RESET FORM */
+
+setAmount("");
+setReceiptNo("");
+setAccount("");
+setTotalFee("");
+setDiscount("");
+setDue("");
 
 };
 
@@ -221,8 +272,6 @@ return(
 Receipt Entry
 </p>
 
-{/* BRANCH */}
-
 <BranchSelector
 branches={branches.map((b:any)=>b.name)}
 value={branchName}
@@ -235,8 +284,6 @@ if(selected) setBranch(selected.id);
 
 }}
 />
-
-{/* STUDENT */}
 
 <div className="flex gap-3">
 
@@ -317,6 +364,42 @@ Save Receipt
 </div>
 
 </form>
+
+<div className="bg-white rounded-xl shadow-sm overflow-hidden">
+
+<table className="w-full text-sm">
+
+<thead className="bg-gray-100">
+
+<tr>
+<th className="p-3 text-left">Date</th>
+<th className="p-3 text-left">Receipt</th>
+<th className="p-3 text-left">Student</th>
+<th className="p-3 text-left">Amount</th>
+<th className="p-3 text-left">Mode</th>
+<th className="p-3 text-left">Due</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{receipts.map((r:any)=>(
+<tr key={r.id} className="border-t">
+<td className="p-3">{r.date}</td>
+<td className="p-3">{r.receipt_no}</td>
+<td className="p-3">{r.student_name}</td>
+<td className="p-3">{r.amount}</td>
+<td className="p-3">{r.mode}</td>
+<td className="p-3">{r.due}</td>
+</tr>
+))}
+
+</tbody>
+
+</table>
+
+</div>
 
 </div>
 
