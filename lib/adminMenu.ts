@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   List,
   Layers,
+  ReceiptText,
 } from "lucide-react";
 
 export const adminMenu = [
@@ -30,6 +31,9 @@ export const adminMenu = [
   { name: "Students", href: "/admin/students", icon: Users },
   { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
   { name: "Fees", href: "/admin/fees", icon: CreditCard },
+
+  { name: "Receipt", href: "/admin/receipt", icon: ReceiptText },
+
   { name: "Reports", href: "/admin/reports", icon: FileBarChart },
   { name: "Masters", href: "/admin/masters", icon: Database },
   { name: "Roles", href: "/admin/roles", icon: ShieldCheck },
