@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import BatchCard from "@/app/components/admin/batches/BatchCard";
 import BranchSelector from "@/app/components/ui/BranchSelector";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function BatchesPage() {
+
+  const router = useRouter();
 
   const [batches, setBatches] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
@@ -57,9 +60,20 @@ export default function BatchesPage() {
 
     <div className="p-6">
 
-      <h1 className="text-2xl font-semibold">
-        Batches
-      </h1>
+      <div className="flex items-center justify-between">
+
+        <h1 className="text-2xl font-semibold">
+          Batches
+        </h1>
+
+        <button
+          onClick={() => router.push("/admin/masters?tab=batches")}
+          className="bg-[#0a1f44] text-white px-4 py-2 rounded-md hover:bg-[#163d7a] transition"
+        >
+          Create Batch
+        </button>
+
+      </div>
 
       <div className="mt-4">
 
