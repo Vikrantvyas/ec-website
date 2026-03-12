@@ -250,7 +250,6 @@ label:s.student_name,
 value:s.student_name
 }))}
 onChange={(val:string)=>handleStudentChange(val)}
-placeholder="Select student"
 />
 
 </div>
