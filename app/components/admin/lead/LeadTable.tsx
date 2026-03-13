@@ -167,16 +167,21 @@ Columns
 
 <div className="p-2 space-y-1">
 
-{Object.keys(columns).map((c)=>(
+{Object.keys(columns).map((c)=>{
+
+const key = c as keyof typeof columns;
+
+return(
+
 <label key={c} className="flex gap-2">
 
 <input
 type="checkbox"
-checked={columns[c]}
+checked={columns[key]}
 onChange={()=>
 setColumns({
 ...columns,
-[c]:!columns[c]
+[key]:!columns[key]
 })
 }
 />
@@ -184,7 +189,12 @@ setColumns({
 {c}
 
 </label>
-))}
+
+);
+
+})}
+
+
 
 </div>
 
