@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function LeadTable({ leads }: { leads: any[] }) {
+export default function LeadTable({
+leads,
+setLeadCount
+}:{leads:any[],setLeadCount?:(n:number)=>void}){
 
 const [search,setSearch] = useState("");
+const [showColumns,setShowColumns] = useState(false);
 
 const [sortField,setSortField] = useState("created_at");
 const [sortOrder,setSortOrder] = useState("desc");
@@ -18,11 +22,8 @@ date:true,
 name:true,
 mobile:true,
 department:true,
-course:true,
-call:true
+course:true
 });
-
-/* WIDTH */
 
 const [widths,setWidths] = useState<Record<string,number>>({
 branch:160,
@@ -32,8 +33,6 @@ mobile:160,
 department:180,
 course:180
 });
-
-/* FILTERS */
 
 const [filters,setFilters] = useState({
 department:"",
@@ -85,6 +84,12 @@ if(v1 > v2) return sortOrder === "asc" ? 1 : -1;
 return 0;
 
 });
+
+/* UPDATE COUNT */
+
+useEffect(()=>{
+setLeadCount?.(filtered.length);
+},[search,filters,sortField,sortOrder,leads]);
 
 /* PAGINATION */
 
@@ -147,25 +152,40 @@ return(
 
 <div className="space-y-4 w-full">
 
-{/* SEARCH + COLUMN SELECTOR */}
+{/* HEADER ROW */}
 
-<div className="flex gap-4 items-center">
+<div className="flex justify-between items-center">
+
+<h1 className="text-lg font-semibold">
+Leads ({filtered.length})
+</h1>
+
+<div className="flex gap-3 items-center relative">
+
+<div className="relative">
+
+<span className="absolute left-2 top-2 text-gray-400 text-sm">🔍</span>
 
 <input
 type="text"
-placeholder="Search student or mobile..."
+placeholder="Search..."
 value={search}
 onChange={(e)=>setSearch(e.target.value)}
-className="w-full md:w-80 border rounded-md px-3 py-2 text-sm"
+className="pl-7 pr-3 py-2 border rounded text-sm"
 />
 
-<details className="text-xs border rounded px-2 py-1 bg-gray-50">
+</div>
 
-<summary className="cursor-pointer">
+<button
+onClick={()=>setShowColumns(!showColumns)}
+className="px-3 py-2 border rounded text-sm bg-gray-50"
+>
 Columns
-</summary>
+</button>
 
-<div className="p-2 space-y-1">
+{showColumns && (
+
+<div className="absolute right-0 top-10 bg-white border shadow-md rounded p-3 z-20 text-sm">
 
 {Object.keys(columns).map((c)=>{
 
@@ -173,7 +193,7 @@ const key = c as keyof typeof columns;
 
 return(
 
-<label key={c} className="flex gap-2">
+<label key={c} className="flex gap-2 py-1">
 
 <input
 type="checkbox"
@@ -194,13 +214,15 @@ setColumns({
 
 })}
 
+</div>
 
+)}
 
 </div>
 
-</details>
-
 </div>
+
+{/* TABLE */}
 
 <div className="overflow-auto max-h-[70vh] w-full">
 
@@ -208,13 +230,10 @@ setColumns({
 
 <thead className="sticky top-0 z-10">
 
-<tr className="bg-gradient-to-b from-gray-100 to-gray-200">
+<tr className="bg-gradient-to-b from-gray-100 to-gray-200 border">
 
 {columns.branch && (
-<th
-style={{width:widths.branch}}
-className="px-3 py-2 border"
->
+<th style={{width:widths.branch}} className="px-3 py-2 border">
 
 Branch
 
@@ -223,13 +242,10 @@ className="ml-2 text-xs"
 value={filters.branch}
 onChange={(e)=>setFilters({...filters,branch:e.target.value})}
 >
-
 <option value="">All</option>
-
 {[...new Set(uniqueLeads.map(l=>l.branch))].map((d:any)=>(
 <option key={d}>{d}</option>
 ))}
-
 </select>
 
 </th>
@@ -270,10 +286,7 @@ className="float-right w-1 cursor-col-resize"
 )}
 
 {columns.mobile && (
-<th
-style={{width:widths.mobile}}
-className="px-3 py-2 border"
->
+<th style={{width:widths.mobile}} className="px-3 py-2 border">
 Mobile
 </th>
 )}
@@ -292,13 +305,10 @@ className="ml-2 text-xs"
 value={filters.department}
 onChange={(e)=>setFilters({...filters,department:e.target.value})}
 >
-
 <option value="">All</option>
-
 {[...new Set(uniqueLeads.map(l=>l.department))].map((d:any)=>(
 <option key={d}>{d}</option>
 ))}
-
 </select>
 
 </th>
@@ -318,21 +328,12 @@ className="ml-2 text-xs"
 value={filters.course}
 onChange={(e)=>setFilters({...filters,course:e.target.value})}
 >
-
 <option value="">All</option>
-
 {[...new Set(uniqueLeads.map(l=>l.course))].map((d:any)=>(
 <option key={d}>{d}</option>
 ))}
-
 </select>
 
-</th>
-)}
-
-{columns.call && (
-<th className="px-3 py-2 border text-center">
-Call
 </th>
 )}
 
@@ -344,16 +345,9 @@ Call
 
 {paginated.map((lead)=>(
 
-<tr
-key={lead.id}
-className="hover:bg-blue-50"
->
+<tr key={lead.id} className="hover:bg-blue-50">
 
-{columns.branch && (
-<td className="px-3 py-2 border">
-{lead.branch}
-</td>
-)}
+{columns.branch && <td className="px-3 py-2 border">{lead.branch}</td>}
 
 {columns.date && (
 <td className="px-3 py-2 border">
@@ -361,49 +355,19 @@ className="hover:bg-blue-50"
 </td>
 )}
 
-{columns.name && (
-<td className="px-3 py-2 border">
-{lead.student_name}
-</td>
-)}
+{columns.name && <td className="px-3 py-2 border">{lead.student_name}</td>}
 
 {columns.mobile && (
 <td className="px-3 py-2 border">
-
-<a
-href={`tel:${lead.mobile_number}`}
-className="text-blue-600 hover:underline"
->
+<a href={`tel:${lead.mobile_number}`} className="text-blue-600 hover:underline">
 {lead.mobile_number}
 </a>
-
 </td>
 )}
 
-{columns.department && (
-<td className="px-3 py-2 border">
-{lead.department}
-</td>
-)}
+{columns.department && <td className="px-3 py-2 border">{lead.department}</td>}
 
-{columns.course && (
-<td className="px-3 py-2 border">
-{lead.course}
-</td>
-)}
-
-{columns.call && (
-<td className="px-3 py-2 border text-center">
-
-<a
-href={`tel:${lead.mobile_number}`}
-className="px-3 py-1 bg-green-600 text-white rounded text-xs"
->
-Call
-</a>
-
-</td>
-)}
+{columns.course && <td className="px-3 py-2 border">{lead.course}</td>}
 
 </tr>
 

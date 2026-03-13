@@ -4,34 +4,18 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import LeadTable from "@/app/components/admin/lead/LeadTable";
-import BranchSelector from "@/app/components/ui/BranchSelector";
 
 export default function LeadListPage() {
 
 const [leads,setLeads] = useState<any[]>([]);
-const [allLeads,setAllLeads] = useState<any[]>([]);
-const [branches,setBranches] = useState<string[]>([]);
-const [selectedBranch,setSelectedBranch] = useState("");
 const [loading,setLoading] = useState(true);
+const [leadCount,setLeadCount] = useState(0);
 
 /* LOAD DATA */
 
 useEffect(()=>{
 
 const loadData = async ()=>{
-
-/* load branches */
-
-const { data:branchData } = await supabase
-.from("branches")
-.select("name")
-.order("name");
-
-if(branchData){
-setBranches(branchData.map((b:any)=>b.name));
-}
-
-/* load leads */
 
 let all:any[] = [];
 let from = 0;
@@ -64,8 +48,8 @@ to += 1000;
 
 }
 
-setAllLeads(all);
 setLeads(all);
+setLeadCount(all.length);
 
 setLoading(false);
 
@@ -74,26 +58,6 @@ setLoading(false);
 loadData();
 
 },[]);
-
-/* BRANCH FILTER */
-
-useEffect(()=>{
-
-if(!selectedBranch){
-
-setLeads(allLeads);
-
-}else{
-
-const filtered = allLeads.filter(
-(l:any)=>l.branch === selectedBranch
-);
-
-setLeads(filtered);
-
-}
-
-},[selectedBranch,allLeads]);
 
 /* LOADING */
 
@@ -107,27 +71,12 @@ return(
 
 <PermissionGuard page="Lead List">
 
-<div className="w-full px-6 py-6 bg-white space-y-4">
+<div className="w-full px-6 py-0 bg-white">
 
-{/* BRANCH */}
-
-<BranchSelector
-branches={branches}
-value={selectedBranch}
-onChange={setSelectedBranch}
+<LeadTable
+leads={leads}
+setLeadCount={setLeadCount}
 />
-
-{/* HEADING */}
-
-<h1 className="text-lg font-semibold">
-
-Leads ({leads.length})
-
-</h1>
-
-{/* TABLE */}
-
-<LeadTable leads={leads} />
 
 </div>
 
