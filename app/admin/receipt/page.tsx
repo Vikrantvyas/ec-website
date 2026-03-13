@@ -20,6 +20,7 @@ const [branchName,setBranchName] = useState("");
 
 const [students,setStudents] = useState<any[]>([]);
 const [selectedStudent,setSelectedStudent] = useState("");
+const [searchText,setSearchText] = useState("");
 
 const [batches,setBatches] = useState<any[]>([]);
 const [batch,setBatch] = useState("");
@@ -137,8 +138,6 @@ to += 1000;
 
 }
 
-console.log("Total students loaded:", allStudents.length);
-
 setStudents(allStudents);
 
 };
@@ -160,7 +159,7 @@ const { data } = await supabase
 .from("receipts")
 .select("*")
 .eq("student_name",student)
-.order("created_at",{ascending:false});
+.order("created_at",{ascending:true});
 
 setReceipts(data||[]);
 
@@ -171,14 +170,13 @@ setReceipts(data||[]);
 const handleStudentChange = (name:string)=>{
 
 setSelectedStudent(name);
+setSearchText("");
 
 const s = students.find((x:any)=>x.student_name===name);
 
 if(s){
-
 setStudentInfo(s);
 loadReceipts(name);
-
 }
 
 };
@@ -274,11 +272,14 @@ if(selected) setBranch(selected.id);
 
 <Input
 label="Student Name"
-value={selectedStudent}
-onChange={(e:any)=>setSelectedStudent(e.target.value)}
+value={searchText || selectedStudent}
+onChange={(e:any)=>{
+setSearchText(e.target.value);
+setSelectedStudent("");
+}}
 />
 
-{selectedStudent && (
+{searchText && (
 
 <div className="absolute z-20 w-full bg-white border rounded-md max-h-60 overflow-y-auto">
 
@@ -286,7 +287,7 @@ onChange={(e:any)=>setSelectedStudent(e.target.value)}
 .filter((s:any)=>
 s.student_name
 .toLowerCase()
-.includes(selectedStudent.toLowerCase())
+.includes(searchText.toLowerCase())
 )
 
 .map((s:any)=>(
@@ -323,14 +324,10 @@ Add
 
 <div className="border rounded-lg p-4 space-y-4 bg-gray-50">
 
-<div className="text-sm">
-
-<b>{studentInfo.student_name}</b> | {studentInfo.department} | {studentInfo.course} | {batch}
-
-</div>
-
 <div className="text-sm font-semibold">
-Previous Payments
+
+{studentInfo.student_name} - {studentInfo.department} - {studentInfo.course} - {batch}
+
 </div>
 
 <table className="w-full text-sm">
