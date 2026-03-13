@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import { Input, SelectField } from "@/app/components/ui/FormFields";
-import BottomSheetSelect from "@/app/components/ui/BottomSheetSelect";
 import BranchSelector from "@/app/components/ui/BranchSelector";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
@@ -11,7 +10,6 @@ import { useRouter } from "next/navigation";
 export default function ReceiptPage(){
 
 const router = useRouter();
-
 const today = new Date().toISOString().split("T")[0];
 
 /* STATES */
@@ -107,13 +105,41 @@ setBranches(data||[]);
 
 const fetchStudents = async ()=>{
 
-const { data } = await supabase
-.from("leads")
-.select("*")
-.eq("branch",branchName)
-.order("student_name");
+let allStudents:any[] = [];
+let from = 0;
+let to = 999;
+let finished = false;
 
-setStudents(data||[]);
+while(!finished){
+
+const { data, error } = await supabase
+.from("leads")
+.select("id,student_name,department,course")
+.eq("branch",branchName)
+.order("student_name")
+.range(from,to);
+
+if(error){
+console.log(error);
+return;
+}
+
+if(data){
+allStudents = [...allStudents, ...data];
+}
+
+if(!data || data.length < 1000){
+finished = true;
+}
+
+from += 1000;
+to += 1000;
+
+}
+
+console.log("Total students loaded:", allStudents.length);
+
+setStudents(allStudents);
 
 };
 
@@ -151,7 +177,6 @@ const s = students.find((x:any)=>x.student_name===name);
 if(s){
 
 setStudentInfo(s);
-
 loadReceipts(name);
 
 }
@@ -245,15 +270,40 @@ if(selected) setBranch(selected.id);
 
 <div className="flex-1">
 
-<BottomSheetSelect
+<div className="relative">
+
+<Input
 label="Student Name"
 value={selectedStudent}
-options={students.map((s:any)=>({
-label:s.student_name,
-value:s.student_name
-}))}
-onChange={(val:string)=>handleStudentChange(val)}
+onChange={(e:any)=>setSelectedStudent(e.target.value)}
 />
+
+{selectedStudent && (
+
+<div className="absolute z-20 w-full bg-white border rounded-md max-h-60 overflow-y-auto">
+
+{students
+.filter((s:any)=>
+s.student_name
+.toLowerCase()
+.includes(selectedStudent.toLowerCase())
+)
+
+.map((s:any)=>(
+<div
+key={s.id}
+className="px-3 py-2 hover:bg-blue-50 cursor-pointer"
+onClick={()=>handleStudentChange(s.student_name)}
+>
+{s.student_name}
+</div>
+))}
+
+</div>
+
+)}
+
+</div>
 
 </div>
 
