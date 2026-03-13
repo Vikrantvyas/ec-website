@@ -24,7 +24,7 @@ call:true
 
 /* WIDTH */
 
-const [widths,setWidths] = useState({
+const [widths,setWidths] = useState<Record<string,number>>({
 branch:160,
 date:120,
 name:220,
@@ -115,7 +115,7 @@ return sortOrder === "asc" ? " ▲" : " ▼";
 
 /* RESIZE */
 
-const startResize = (e:any,col:string)=>{
+const startResize = (e:any,col:keyof typeof widths)=>{
 
 const startX = e.clientX;
 const startWidth = widths[col];
