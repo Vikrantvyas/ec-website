@@ -12,6 +12,16 @@ export default function BranchSelector({
   onChange
 }: Props) {
 
+  const handleClick = (branch:string) => {
+
+    if(value === branch){
+      onChange("");   // unselect branch
+    }else{
+      onChange(branch);
+    }
+
+  };
+
   return (
 
     <div className="space-y-2 w-full">
@@ -20,15 +30,20 @@ export default function BranchSelector({
         Branch
       </label>
 
-      <div className="flex gap-2 flex-wrap">
+      <div
+        className="
+        flex gap-2 overflow-x-auto pb-1
+        scrollbar-hide
+        "
+      >
 
         {branches.map((b:string)=>(
 
           <button
             key={b}
             type="button"
-            onClick={()=>onChange(b)}
-            className={`h-[44px] px-4 rounded-lg border text-sm transition
+            onClick={()=>handleClick(b)}
+            className={`whitespace-nowrap h-[36px] px-3 rounded-md border text-sm transition
             ${
               value === b
               ? "bg-blue-600 text-white border-blue-600"

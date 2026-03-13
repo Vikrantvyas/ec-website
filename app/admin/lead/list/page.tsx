@@ -4,80 +4,135 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import LeadTable from "@/app/components/admin/lead/LeadTable";
+import BranchSelector from "@/app/components/ui/BranchSelector";
 
 export default function LeadListPage() {
 
-  const [leads, setLeads] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+const [leads,setLeads] = useState<any[]>([]);
+const [allLeads,setAllLeads] = useState<any[]>([]);
+const [branches,setBranches] = useState<string[]>([]);
+const [selectedBranch,setSelectedBranch] = useState("");
+const [loading,setLoading] = useState(true);
 
-  useEffect(() => {
+/* LOAD DATA */
 
-    const fetchLeads = async () => {
+useEffect(()=>{
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+const loadData = async ()=>{
 
-      const { data: userData } = await supabase
-        .from("users")
-        .select("role_id")
-        .eq("email", user.email)
-        .single();
+/* load branches */
 
-      if (!userData) return;
+const { data:branchData } = await supabase
+.from("branches")
+.select("name")
+.order("name");
 
-      const { data: roleData } = await supabase
-        .from("roles")
-        .select("name, branch_access")
-        .eq("id", userData.role_id)
-        .single();
+if(branchData){
+setBranches(branchData.map((b:any)=>b.name));
+}
 
-      let query = supabase
-        .from("leads")
-        .select("*")
-        .order("created_at", { ascending: false });
+/* load leads */
 
-      if (roleData?.name !== "Admin") {
-        const branches = roleData?.branch_access || [];
+let all:any[] = [];
+let from = 0;
+let to = 999;
+let finished = false;
 
-        if (branches.length > 0) {
-          query = query.in("branch", branches);
-        } else {
-          query = query.limit(0);
-        }
-      }
+while(!finished){
 
-      const { data } = await query;
+const { data,error } = await supabase
+.from("leads")
+.select("*")
+.order("created_at",{ascending:false})
+.range(from,to);
 
-      if (data) {
-        setLeads(data);
-      }
+if(error){
+console.log(error);
+break;
+}
 
-      setLoading(false);
+if(data){
+all = [...all,...data];
+}
 
-    };
+if(!data || data.length < 1000){
+finished = true;
+}
 
-    fetchLeads();
+from += 1000;
+to += 1000;
 
-  }, []);
+}
 
-  if (loading) {
-    return <div className="p-6">Loading Leads...</div>;
-  }
+setAllLeads(all);
+setLeads(all);
 
-  return (
+setLoading(false);
 
-    <PermissionGuard page="Lead List">
+};
 
-      <div className="w-full px-6 py-6 bg-white">
+loadData();
 
-        <h1 className="text-lg font-semibold mb-4">Leads</h1>
+},[]);
 
-        <LeadTable leads={leads} />
+/* BRANCH FILTER */
 
-      </div>
+useEffect(()=>{
 
-    </PermissionGuard>
+if(!selectedBranch){
 
-  );
+setLeads(allLeads);
+
+}else{
+
+const filtered = allLeads.filter(
+(l:any)=>l.branch === selectedBranch
+);
+
+setLeads(filtered);
+
+}
+
+},[selectedBranch,allLeads]);
+
+/* LOADING */
+
+if(loading){
+return <div className="p-6">Loading Leads...</div>;
+}
+
+/* UI */
+
+return(
+
+<PermissionGuard page="Lead List">
+
+<div className="w-full px-6 py-6 bg-white space-y-4">
+
+{/* BRANCH */}
+
+<BranchSelector
+branches={branches}
+value={selectedBranch}
+onChange={setSelectedBranch}
+/>
+
+{/* HEADING */}
+
+<h1 className="text-lg font-semibold">
+
+Leads ({leads.length})
+
+</h1>
+
+{/* TABLE */}
+
+<LeadTable leads={leads} />
+
+</div>
+
+</PermissionGuard>
+
+);
 
 }
