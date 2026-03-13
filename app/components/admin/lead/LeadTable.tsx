@@ -4,90 +4,435 @@ import { useState } from "react";
 
 export default function LeadTable({ leads }: { leads: any[] }) {
 
-  const [search, setSearch] = useState("");
+const [search,setSearch] = useState("");
 
-  const filteredLeads = leads.filter((lead) =>
-    lead.student_name?.toLowerCase().includes(search.toLowerCase()) ||
-    lead.mobile_number?.includes(search)
-  );
+const [sortField,setSortField] = useState("created_at");
+const [sortOrder,setSortOrder] = useState("desc");
 
-  return (
+const [page,setPage] = useState(1);
+const pageSize = 50;
 
-    <div className="space-y-4">
+const [columns,setColumns] = useState({
+branch:true,
+date:true,
+name:true,
+mobile:true,
+department:true,
+course:true,
+call:true
+});
 
-      {/* Search */}
-      <div>
-        <input
-          type="text"
-          placeholder="Search student or mobile..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full md:w-80 border rounded-md px-3 py-2 text-sm"
-        />
-      </div>
+/* WIDTH */
 
-      <div className="overflow-x-auto">
+const [widths,setWidths] = useState({
+branch:160,
+date:120,
+name:220,
+mobile:160,
+department:180,
+course:180
+});
 
-        <table className="w-full border text-sm">
+/* FILTERS */
 
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-2 border">Student</th>
-              <th className="p-2 border">Mobile</th>
-              <th className="p-2 border">Course</th>
-              <th className="p-2 border">Branch</th>
-              <th className="p-2 border">Date</th>
-              <th className="p-2 border">Call</th>
-            </tr>
-          </thead>
+const [filters,setFilters] = useState({
+department:"",
+course:"",
+branch:""
+});
 
-          <tbody>
+/* REMOVE DUPLICATES */
 
-            {filteredLeads.map((lead) => (
+const uniqueLeads = Array.from(
+new Map(leads.map((l)=>[l.id,l])).values()
+);
 
-              <tr key={lead.id} className="hover:bg-gray-50">
+/* SEARCH */
 
-                <td className="p-2 border">{lead.student_name}</td>
+let filtered = uniqueLeads.filter((lead)=>
+lead.student_name?.toLowerCase().includes(search.toLowerCase()) ||
+lead.mobile_number?.includes(search)
+);
 
-                <td className="p-2 border">
-                  <a
-                    href={`tel:${lead.mobile_number}`}
-                    className="text-blue-600 hover:underline"
-                  >
-                    {lead.mobile_number}
-                  </a>
-                </td>
+/* FILTERS */
 
-                <td className="p-2 border">{lead.course}</td>
-                <td className="p-2 border">{lead.branch}</td>
+if(filters.department){
+filtered = filtered.filter(l=>l.department === filters.department);
+}
 
-                <td className="p-2 border">
-                  {new Date(lead.created_at).toLocaleDateString()}
-                </td>
+if(filters.course){
+filtered = filtered.filter(l=>l.course === filters.course);
+}
 
-                <td className="p-2 border text-center">
+if(filters.branch){
+filtered = filtered.filter(l=>l.branch === filters.branch);
+}
 
-                  <a
-                    href={`tel:${lead.mobile_number}`}
-                    className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
-                  >
-                    Call
-                  </a>
+/* SORT */
 
-                </td>
+filtered = filtered.sort((a,b)=>{
 
-              </tr>
+let v1 = a[sortField];
+let v2 = b[sortField];
 
-            ))}
+if(sortField === "created_at"){
+v1 = new Date(v1).getTime();
+v2 = new Date(v2).getTime();
+}
 
-          </tbody>
+if(v1 < v2) return sortOrder === "asc" ? -1 : 1;
+if(v1 > v2) return sortOrder === "asc" ? 1 : -1;
+return 0;
 
-        </table>
+});
 
-      </div>
+/* PAGINATION */
 
-    </div>
+const totalPages = Math.ceil(filtered.length / pageSize);
 
-  );
+const paginated = filtered.slice(
+(page-1)*pageSize,
+page*pageSize
+);
+
+/* SORT */
+
+const toggleSort = (field:string)=>{
+
+if(sortField === field){
+setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+}else{
+setSortField(field);
+setSortOrder("asc");
+}
+
+};
+
+const arrow = (field:string)=>{
+if(sortField !== field) return "";
+return sortOrder === "asc" ? " ▲" : " ▼";
+};
+
+/* RESIZE */
+
+const startResize = (e:any,col:string)=>{
+
+const startX = e.clientX;
+const startWidth = widths[col];
+
+const onMove = (ev:any)=>{
+
+const diff = ev.clientX - startX;
+
+setWidths({
+...widths,
+[col]:startWidth + diff
+});
+
+};
+
+const onUp = ()=>{
+
+window.removeEventListener("mousemove",onMove);
+window.removeEventListener("mouseup",onUp);
+
+};
+
+window.addEventListener("mousemove",onMove);
+window.addEventListener("mouseup",onUp);
+
+};
+
+return(
+
+<div className="space-y-4 w-full">
+
+{/* SEARCH + COLUMN SELECTOR */}
+
+<div className="flex gap-4 items-center">
+
+<input
+type="text"
+placeholder="Search student or mobile..."
+value={search}
+onChange={(e)=>setSearch(e.target.value)}
+className="w-full md:w-80 border rounded-md px-3 py-2 text-sm"
+/>
+
+<details className="text-xs border rounded px-2 py-1 bg-gray-50">
+
+<summary className="cursor-pointer">
+Columns
+</summary>
+
+<div className="p-2 space-y-1">
+
+{Object.keys(columns).map((c)=>(
+<label key={c} className="flex gap-2">
+
+<input
+type="checkbox"
+checked={columns[c]}
+onChange={()=>
+setColumns({
+...columns,
+[c]:!columns[c]
+})
+}
+/>
+
+{c}
+
+</label>
+))}
+
+</div>
+
+</details>
+
+</div>
+
+<div className="overflow-auto max-h-[70vh] w-full">
+
+<table className="w-full text-sm border border-gray-300">
+
+<thead className="sticky top-0 z-10">
+
+<tr className="bg-gradient-to-b from-gray-100 to-gray-200">
+
+{columns.branch && (
+<th
+style={{width:widths.branch}}
+className="px-3 py-2 border"
+>
+
+Branch
+
+<select
+className="ml-2 text-xs"
+value={filters.branch}
+onChange={(e)=>setFilters({...filters,branch:e.target.value})}
+>
+
+<option value="">All</option>
+
+{[...new Set(uniqueLeads.map(l=>l.branch))].map((d:any)=>(
+<option key={d}>{d}</option>
+))}
+
+</select>
+
+</th>
+)}
+
+{columns.date && (
+<th
+style={{width:widths.date}}
+onClick={()=>toggleSort("created_at")}
+className="px-3 py-2 border cursor-pointer"
+>
+
+Date{arrow("created_at")}
+
+<div
+onMouseDown={(e)=>startResize(e,"date")}
+className="float-right w-1 cursor-col-resize"
+/>
+
+</th>
+)}
+
+{columns.name && (
+<th
+style={{width:widths.name}}
+onClick={()=>toggleSort("student_name")}
+className="px-3 py-2 border cursor-pointer"
+>
+
+Name{arrow("student_name")}
+
+<div
+onMouseDown={(e)=>startResize(e,"name")}
+className="float-right w-1 cursor-col-resize"
+/>
+
+</th>
+)}
+
+{columns.mobile && (
+<th
+style={{width:widths.mobile}}
+className="px-3 py-2 border"
+>
+Mobile
+</th>
+)}
+
+{columns.department && (
+<th
+style={{width:widths.department}}
+onClick={()=>toggleSort("department")}
+className="px-3 py-2 border cursor-pointer"
+>
+
+Department{arrow("department")}
+
+<select
+className="ml-2 text-xs"
+value={filters.department}
+onChange={(e)=>setFilters({...filters,department:e.target.value})}
+>
+
+<option value="">All</option>
+
+{[...new Set(uniqueLeads.map(l=>l.department))].map((d:any)=>(
+<option key={d}>{d}</option>
+))}
+
+</select>
+
+</th>
+)}
+
+{columns.course && (
+<th
+style={{width:widths.course}}
+onClick={()=>toggleSort("course")}
+className="px-3 py-2 border cursor-pointer"
+>
+
+Course{arrow("course")}
+
+<select
+className="ml-2 text-xs"
+value={filters.course}
+onChange={(e)=>setFilters({...filters,course:e.target.value})}
+>
+
+<option value="">All</option>
+
+{[...new Set(uniqueLeads.map(l=>l.course))].map((d:any)=>(
+<option key={d}>{d}</option>
+))}
+
+</select>
+
+</th>
+)}
+
+{columns.call && (
+<th className="px-3 py-2 border text-center">
+Call
+</th>
+)}
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{paginated.map((lead)=>(
+
+<tr
+key={lead.id}
+className="hover:bg-blue-50"
+>
+
+{columns.branch && (
+<td className="px-3 py-2 border">
+{lead.branch}
+</td>
+)}
+
+{columns.date && (
+<td className="px-3 py-2 border">
+{new Date(lead.created_at).toLocaleDateString()}
+</td>
+)}
+
+{columns.name && (
+<td className="px-3 py-2 border">
+{lead.student_name}
+</td>
+)}
+
+{columns.mobile && (
+<td className="px-3 py-2 border">
+
+<a
+href={`tel:${lead.mobile_number}`}
+className="text-blue-600 hover:underline"
+>
+{lead.mobile_number}
+</a>
+
+</td>
+)}
+
+{columns.department && (
+<td className="px-3 py-2 border">
+{lead.department}
+</td>
+)}
+
+{columns.course && (
+<td className="px-3 py-2 border">
+{lead.course}
+</td>
+)}
+
+{columns.call && (
+<td className="px-3 py-2 border text-center">
+
+<a
+href={`tel:${lead.mobile_number}`}
+className="px-3 py-1 bg-green-600 text-white rounded text-xs"
+>
+Call
+</a>
+
+</td>
+)}
+
+</tr>
+
+))}
+
+</tbody>
+
+</table>
+
+</div>
+
+{/* PAGINATION */}
+
+<div className="flex gap-3 items-center">
+
+<button
+disabled={page===1}
+onClick={()=>setPage(page-1)}
+className="px-3 py-1 border rounded"
+>
+Prev
+</button>
+
+<span>
+Page {page} / {totalPages}
+</span>
+
+<button
+disabled={page===totalPages}
+onClick={()=>setPage(page+1)}
+className="px-3 py-1 border rounded"
+>
+Next
+</button>
+
+</div>
+
+</div>
+
+);
 
 }
