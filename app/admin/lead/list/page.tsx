@@ -8,6 +8,7 @@ import LeadTable from "@/app/components/admin/lead/LeadTable";
 export default function LeadListPage() {
 
 const [leads,setLeads] = useState<any[]>([]);
+const [receipts,setReceipts] = useState<any[]>([]);
 const [loading,setLoading] = useState(true);
 const [leadCount,setLeadCount] = useState(0);
 
@@ -17,7 +18,9 @@ useEffect(()=>{
 
 const loadData = async ()=>{
 
-let all:any[] = [];
+/* LOAD LEADS */
+
+let allLeads:any[] = [];
 let from = 0;
 let to = 999;
 let finished = false;
@@ -36,7 +39,7 @@ break;
 }
 
 if(data){
-all = [...all,...data];
+allLeads = [...allLeads,...data];
 }
 
 if(!data || data.length < 1000){
@@ -48,8 +51,41 @@ to += 1000;
 
 }
 
-setLeads(all);
-setLeadCount(all.length);
+/* LOAD RECEIPTS */
+
+let allReceipts:any[] = [];
+let rfrom = 0;
+let rto = 999;
+let rfinished = false;
+
+while(!rfinished){
+
+const { data,error } = await supabase
+.from("receipts")
+.select("student_name,amount")
+.range(rfrom,rto);
+
+if(error){
+console.log(error);
+break;
+}
+
+if(data){
+allReceipts = [...allReceipts,...data];
+}
+
+if(!data || data.length < 1000){
+rfinished = true;
+}
+
+rfrom += 1000;
+rto += 1000;
+
+}
+
+setLeads(allLeads);
+setReceipts(allReceipts);
+setLeadCount(allLeads.length);
 
 setLoading(false);
 
@@ -75,6 +111,7 @@ return(
 
 <LeadTable
 leads={leads}
+receipts={receipts}
 setLeadCount={setLeadCount}
 />
 
