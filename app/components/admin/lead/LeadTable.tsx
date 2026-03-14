@@ -4,8 +4,13 @@ import { useState, useEffect } from "react";
 
 export default function LeadTable({
 leads,
+receipts,
 setLeadCount
-}:{leads:any[],setLeadCount?:(n:number)=>void}){
+}:{
+leads:any[],
+receipts:any[],
+setLeadCount?:(n:number)=>void
+}){
 
 const [search,setSearch] = useState("");
 const [showColumns,setShowColumns] = useState(false);
@@ -22,7 +27,8 @@ date:true,
 name:true,
 mobile:true,
 department:true,
-course:true
+course:true,
+receipt:true
 });
 
 const [widths,setWidths] = useState<Record<string,number>>({
@@ -31,13 +37,36 @@ date:120,
 name:220,
 mobile:160,
 department:180,
-course:180
+course:180,
+receipt:140
 });
 
 const [filters,setFilters] = useState({
 department:"",
 course:"",
 branch:""
+});
+
+/* RESET PAGE WHEN SEARCH OR FILTER */
+
+useEffect(()=>{
+setPage(1);
+},[search,filters]);
+
+/* RECEIPT MAP (FIXED NAME MATCHING) */
+
+const receiptMap:any = {};
+
+receipts?.forEach((r:any)=>{
+
+const name = r.student_name?.trim().toLowerCase();
+
+if(!receiptMap[name]){
+receiptMap[name] = 0;
+}
+
+receiptMap[name] += Number(r.amount || 0);
+
 });
 
 /* REMOVE DUPLICATES */
@@ -48,10 +77,17 @@ new Map(leads.map((l)=>[l.id,l])).values()
 
 /* SEARCH */
 
-let filtered = uniqueLeads.filter((lead)=>
-lead.student_name?.toLowerCase().includes(search.toLowerCase()) ||
-lead.mobile_number?.includes(search)
+let filtered = uniqueLeads.filter((lead)=>{
+
+const name = lead.student_name?.toLowerCase() || "";
+const mobile = lead.mobile_number || "";
+
+return(
+name.includes(search.toLowerCase()) ||
+mobile.includes(search)
 );
+
+});
 
 /* FILTERS */
 
@@ -150,11 +186,11 @@ window.addEventListener("mouseup",onUp);
 
 return(
 
-<div className="space-y-4 w-full">
+<div className="space-y-2 w-full">
 
-{/* HEADER ROW */}
+{/* HEADER */}
 
-<div className="flex justify-between items-center">
+<div className="flex justify-between items-center border-b pb-2">
 
 <h1 className="text-lg font-semibold">
 Leads ({filtered.length})
@@ -164,28 +200,30 @@ Leads ({filtered.length})
 
 <div className="relative">
 
-<span className="absolute left-2 top-2 text-gray-400 text-sm">🔍</span>
+<span className="absolute left-2 top-2 text-gray-400 text-sm">
+🔍
+</span>
 
 <input
 type="text"
 placeholder="Search..."
 value={search}
 onChange={(e)=>setSearch(e.target.value)}
-className="pl-7 pr-3 py-2 border rounded text-sm"
+className="pl-7 pr-3 py-1.5 border rounded text-sm"
 />
 
 </div>
 
 <button
 onClick={()=>setShowColumns(!showColumns)}
-className="px-3 py-2 border rounded text-sm bg-gray-50"
+className="px-3 py-1.5 border rounded text-sm bg-gray-50"
 >
 Columns
 </button>
 
 {showColumns && (
 
-<div className="absolute right-0 top-10 bg-white border shadow-md rounded p-3 z-20 text-sm">
+<div className="absolute right-0 top-9 bg-white border shadow-md rounded p-3 z-20 text-sm">
 
 {Object.keys(columns).map((c)=>{
 
@@ -198,12 +236,10 @@ return(
 <input
 type="checkbox"
 checked={columns[key]}
-onChange={()=>
-setColumns({
+onChange={()=>setColumns({
 ...columns,
 [key]:!columns[key]
-})
-}
+})}
 />
 
 {c}
@@ -224,117 +260,148 @@ setColumns({
 
 {/* TABLE */}
 
-<div className="overflow-auto max-h-[70vh] w-full">
+<div className="overflow-auto max-h-[72vh] w-full shadow-sm border">
 
-<table className="w-full text-sm border border-gray-300">
+<table className="w-full text-sm">
 
-<thead className="sticky top-0 z-10">
+<thead className="sticky top-0 bg-gray-100">
 
-<tr className="bg-gradient-to-b from-gray-100 to-gray-200 border">
+<tr>
 
 {columns.branch && (
-<th style={{width:widths.branch}} className="px-3 py-2 border">
 
-Branch
+<th style={{width:widths.branch}} className="px-3 py-2 border text-left">
+
+<div className="flex flex-col">
+
+<span>Branch</span>
 
 <select
-className="ml-2 text-xs"
+className="text-xs border rounded"
 value={filters.branch}
 onChange={(e)=>setFilters({...filters,branch:e.target.value})}
 >
+
 <option value="">All</option>
+
 {[...new Set(uniqueLeads.map(l=>l.branch))].map((d:any)=>(
 <option key={d}>{d}</option>
 ))}
+
 </select>
 
+</div>
+
 </th>
+
 )}
 
 {columns.date && (
+
 <th
 style={{width:widths.date}}
 onClick={()=>toggleSort("created_at")}
-className="px-3 py-2 border cursor-pointer"
+className="px-3 py-2 border cursor-pointer text-left"
 >
 
 Date{arrow("created_at")}
 
-<div
-onMouseDown={(e)=>startResize(e,"date")}
-className="float-right w-1 cursor-col-resize"
-/>
-
 </th>
+
 )}
 
 {columns.name && (
+
 <th
 style={{width:widths.name}}
 onClick={()=>toggleSort("student_name")}
-className="px-3 py-2 border cursor-pointer"
+className="px-3 py-2 border cursor-pointer text-left"
 >
 
 Name{arrow("student_name")}
 
-<div
-onMouseDown={(e)=>startResize(e,"name")}
-className="float-right w-1 cursor-col-resize"
-/>
-
 </th>
+
 )}
 
 {columns.mobile && (
-<th style={{width:widths.mobile}} className="px-3 py-2 border">
+
+<th style={{width:widths.mobile}} className="px-3 py-2 border text-left">
+
 Mobile
+
 </th>
+
 )}
 
 {columns.department && (
-<th
-style={{width:widths.department}}
-onClick={()=>toggleSort("department")}
-className="px-3 py-2 border cursor-pointer"
->
 
+<th style={{width:widths.department}} className="px-3 py-2 border text-left">
+
+<div className="flex flex-col">
+
+<span onClick={()=>toggleSort("department")} className="cursor-pointer">
 Department{arrow("department")}
+</span>
 
 <select
-className="ml-2 text-xs"
+className="text-xs border rounded"
 value={filters.department}
 onChange={(e)=>setFilters({...filters,department:e.target.value})}
 >
+
 <option value="">All</option>
+
 {[...new Set(uniqueLeads.map(l=>l.department))].map((d:any)=>(
 <option key={d}>{d}</option>
 ))}
+
 </select>
 
+</div>
+
 </th>
+
 )}
 
 {columns.course && (
-<th
-style={{width:widths.course}}
-onClick={()=>toggleSort("course")}
-className="px-3 py-2 border cursor-pointer"
->
 
+<th style={{width:widths.course}} className="px-3 py-2 border text-left">
+
+<div className="flex flex-col">
+
+<span onClick={()=>toggleSort("course")} className="cursor-pointer">
 Course{arrow("course")}
+</span>
 
 <select
-className="ml-2 text-xs"
+className="text-xs border rounded"
 value={filters.course}
 onChange={(e)=>setFilters({...filters,course:e.target.value})}
 >
+
 <option value="">All</option>
+
 {[...new Set(uniqueLeads.map(l=>l.course))].map((d:any)=>(
 <option key={d}>{d}</option>
 ))}
+
 </select>
 
+</div>
+
 </th>
+
+)}
+
+{columns.receipt && (
+
+<th style={{width:widths.receipt}} className="px-3 py-2 border text-left">
+
+Receipt
+
+</th>
+
 )}
 
 </tr>
@@ -343,7 +410,13 @@ onChange={(e)=>setFilters({...filters,course:e.target.value})}
 
 <tbody>
 
-{paginated.map((lead)=>(
+{paginated.map((lead)=>{
+
+const name = lead.student_name?.trim().toLowerCase();
+
+const amount = receiptMap[name] || 0;
+
+return(
 
 <tr key={lead.id} className="hover:bg-blue-50">
 
@@ -355,7 +428,11 @@ onChange={(e)=>setFilters({...filters,course:e.target.value})}
 </td>
 )}
 
-{columns.name && <td className="px-3 py-2 border">{lead.student_name}</td>}
+{columns.name && (
+<td className="px-3 py-2 border">
+{lead.student_name}
+</td>
+)}
 
 {columns.mobile && (
 <td className="px-3 py-2 border">
@@ -365,13 +442,29 @@ onChange={(e)=>setFilters({...filters,course:e.target.value})}
 </td>
 )}
 
-{columns.department && <td className="px-3 py-2 border">{lead.department}</td>}
+{columns.department && (
+<td className="px-3 py-2 border">
+{lead.department}
+</td>
+)}
 
-{columns.course && <td className="px-3 py-2 border">{lead.course}</td>}
+{columns.course && (
+<td className="px-3 py-2 border">
+{lead.course}
+</td>
+)}
+
+{columns.receipt && (
+<td className="px-3 py-2 border font-medium text-green-700">
+{Number(amount).toFixed(2)}
+</td>
+)}
 
 </tr>
 
-))}
+);
+
+})}
 
 </tbody>
 
@@ -381,27 +474,23 @@ onChange={(e)=>setFilters({...filters,course:e.target.value})}
 
 {/* PAGINATION */}
 
-<div className="flex gap-3 items-center">
+<div className="text-sm text-gray-600 flex gap-3">
 
-<button
-disabled={page===1}
-onClick={()=>setPage(page-1)}
-className="px-3 py-1 border rounded"
->
+{page > 1 && (
+<a className="cursor-pointer text-blue-600" onClick={()=>setPage(page-1)}>
 Prev
-</button>
+</a>
+)}
 
 <span>
 Page {page} / {totalPages}
 </span>
 
-<button
-disabled={page===totalPages}
-onClick={()=>setPage(page+1)}
-className="px-3 py-1 border rounded"
->
+{page < totalPages && (
+<a className="cursor-pointer text-blue-600" onClick={()=>setPage(page+1)}>
 Next
-</button>
+</a>
+)}
 
 </div>
 
