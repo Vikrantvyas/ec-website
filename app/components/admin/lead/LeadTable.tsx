@@ -28,17 +28,8 @@ name:true,
 mobile:true,
 department:true,
 course:true,
-receipt:true
-});
-
-const [widths,setWidths] = useState<Record<string,number>>({
-branch:160,
-date:120,
-name:220,
-mobile:160,
-department:180,
-course:180,
-receipt:140
+receipt:true,
+actions:true
 });
 
 const [filters,setFilters] = useState({
@@ -47,13 +38,13 @@ course:"",
 branch:""
 });
 
-/* RESET PAGE WHEN SEARCH OR FILTER */
+/* RESET PAGE */
 
 useEffect(()=>{
 setPage(1);
 },[search,filters]);
 
-/* RECEIPT MAP (FIXED NAME MATCHING) */
+/* RECEIPT MAP */
 
 const receiptMap:any = {};
 
@@ -69,7 +60,7 @@ receiptMap[name] += Number(r.amount || 0);
 
 });
 
-/* REMOVE DUPLICATES */
+/* UNIQUE LEADS */
 
 const uniqueLeads = Array.from(
 new Map(leads.map((l)=>[l.id,l])).values()
@@ -154,76 +145,50 @@ if(sortField !== field) return "";
 return sortOrder === "asc" ? " ▲" : " ▼";
 };
 
-/* RESIZE */
+/* ACTIONS */
 
-const startResize = (e:any,col:keyof typeof widths)=>{
-
-const startX = e.clientX;
-const startWidth = widths[col];
-
-const onMove = (ev:any)=>{
-
-const diff = ev.clientX - startX;
-
-setWidths({
-...widths,
-[col]:startWidth + diff
-});
-
+const handleEdit = (lead:any)=>{
+alert("Edit Lead: "+lead.student_name);
 };
 
-const onUp = ()=>{
-
-window.removeEventListener("mousemove",onMove);
-window.removeEventListener("mouseup",onUp);
-
-};
-
-window.addEventListener("mousemove",onMove);
-window.addEventListener("mouseup",onUp);
-
+const handleDelete = (lead:any)=>{
+if(confirm("Delete lead?")){
+alert("Lead deleted: "+lead.student_name);
+}
 };
 
 return(
 
-<div className="space-y-2 w-full">
+<div className="w-full space-y-3">
 
 {/* HEADER */}
 
-<div className="flex justify-between items-center border-b pb-2">
+<div className="flex justify-between items-center">
 
-<h1 className="text-lg font-semibold">
-Leads ({filtered.length})
+<h1 className="text-lg font-semibold text-gray-800">
+Leads <span className="text-gray-400">({filtered.length})</span>
 </h1>
 
 <div className="flex gap-3 items-center relative">
 
-<div className="relative">
-
-<span className="absolute left-2 top-2 text-gray-400 text-sm">
-🔍
-</span>
-
 <input
 type="text"
-placeholder="Search..."
+placeholder="Search name or mobile..."
 value={search}
 onChange={(e)=>setSearch(e.target.value)}
-className="pl-7 pr-3 py-1.5 border rounded text-sm"
+className="px-3 py-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
 />
-
-</div>
 
 <button
 onClick={()=>setShowColumns(!showColumns)}
-className="px-3 py-1.5 border rounded text-sm bg-gray-50"
+className="px-3 py-1.5 border rounded-md text-sm bg-gray-50 hover:bg-gray-100"
 >
 Columns
 </button>
 
 {showColumns && (
 
-<div className="absolute right-0 top-9 bg-white border shadow-md rounded p-3 z-20 text-sm">
+<div className="absolute right-0 top-9 bg-white border shadow-lg rounded-md p-3 z-20 text-sm">
 
 {Object.keys(columns).map((c)=>{
 
@@ -260,19 +225,19 @@ onChange={()=>setColumns({
 
 {/* TABLE */}
 
-<div className="overflow-auto max-h-[72vh] w-full shadow-sm border">
+<div className="overflow-auto max-h-[72vh]">
 
 <table className="w-full text-sm">
 
-<thead className="sticky top-0 bg-gray-100">
+<thead className="sticky top-0 bg-white shadow-sm text-gray-500">
 
 <tr>
 
 {columns.branch && (
 
-<th style={{width:widths.branch}} className="px-3 py-2 border text-left">
+<th className="px-4 py-3 text-left text-xs font-semibold">
 
-<div className="flex flex-col">
+<div className="flex flex-col gap-1">
 
 <span>Branch</span>
 
@@ -281,13 +246,10 @@ className="text-xs border rounded"
 value={filters.branch}
 onChange={(e)=>setFilters({...filters,branch:e.target.value})}
 >
-
 <option value="">All</option>
-
 {[...new Set(uniqueLeads.map(l=>l.branch))].map((d:any)=>(
 <option key={d}>{d}</option>
 ))}
-
 </select>
 
 </div>
@@ -299,13 +261,10 @@ onChange={(e)=>setFilters({...filters,branch:e.target.value})}
 {columns.date && (
 
 <th
-style={{width:widths.date}}
 onClick={()=>toggleSort("created_at")}
-className="px-3 py-2 border cursor-pointer text-left"
+className="px-4 py-3 text-left text-xs font-semibold cursor-pointer"
 >
-
-Date{arrow("created_at")}
-
+Enq_Date{arrow("created_at")}
 </th>
 
 )}
@@ -313,32 +272,25 @@ Date{arrow("created_at")}
 {columns.name && (
 
 <th
-style={{width:widths.name}}
 onClick={()=>toggleSort("student_name")}
-className="px-3 py-2 border cursor-pointer text-left"
+className="px-4 py-3 text-left text-xs font-semibold cursor-pointer"
 >
-
 Name{arrow("student_name")}
-
 </th>
 
 )}
 
 {columns.mobile && (
-
-<th style={{width:widths.mobile}} className="px-3 py-2 border text-left">
-
+<th className="px-4 py-3 text-left text-xs font-semibold">
 Mobile
-
 </th>
-
 )}
 
 {columns.department && (
 
-<th style={{width:widths.department}} className="px-3 py-2 border text-left">
+<th className="px-4 py-3 text-left text-xs font-semibold">
 
-<div className="flex flex-col">
+<div className="flex flex-col gap-1">
 
 <span onClick={()=>toggleSort("department")} className="cursor-pointer">
 Department{arrow("department")}
@@ -349,13 +301,10 @@ className="text-xs border rounded"
 value={filters.department}
 onChange={(e)=>setFilters({...filters,department:e.target.value})}
 >
-
 <option value="">All</option>
-
 {[...new Set(uniqueLeads.map(l=>l.department))].map((d:any)=>(
 <option key={d}>{d}</option>
 ))}
-
 </select>
 
 </div>
@@ -366,9 +315,9 @@ onChange={(e)=>setFilters({...filters,department:e.target.value})}
 
 {columns.course && (
 
-<th style={{width:widths.course}} className="px-3 py-2 border text-left">
+<th className="px-4 py-3 text-left text-xs font-semibold">
 
-<div className="flex flex-col">
+<div className="flex flex-col gap-1">
 
 <span onClick={()=>toggleSort("course")} className="cursor-pointer">
 Course{arrow("course")}
@@ -379,13 +328,10 @@ className="text-xs border rounded"
 value={filters.course}
 onChange={(e)=>setFilters({...filters,course:e.target.value})}
 >
-
 <option value="">All</option>
-
 {[...new Set(uniqueLeads.map(l=>l.course))].map((d:any)=>(
 <option key={d}>{d}</option>
 ))}
-
 </select>
 
 </div>
@@ -395,13 +341,15 @@ onChange={(e)=>setFilters({...filters,course:e.target.value})}
 )}
 
 {columns.receipt && (
-
-<th style={{width:widths.receipt}} className="px-3 py-2 border text-left">
-
+<th className="px-4 py-3 text-left text-xs font-semibold">
 Receipt
-
 </th>
+)}
 
+{columns.actions && (
+<th className="px-4 py-3 text-left text-xs font-semibold">
+Actions
+</th>
 )}
 
 </tr>
@@ -413,29 +361,38 @@ Receipt
 {paginated.map((lead)=>{
 
 const name = lead.student_name?.trim().toLowerCase();
-
 const amount = receiptMap[name] || 0;
 
 return(
 
-<tr key={lead.id} className="hover:bg-blue-50">
+<tr
+key={lead.id}
+className="
+group
+hover:bg-gray-50
+odd:bg-white
+even:bg-gray-50/40
+transition
+cursor-pointer
+"
+>
 
-{columns.branch && <td className="px-3 py-2 border">{lead.branch}</td>}
+{columns.branch && <td className="px-4 py-3.5">{lead.branch}</td>}
 
 {columns.date && (
-<td className="px-3 py-2 border">
-{new Date(lead.created_at).toLocaleDateString()}
+<td className="px-4 py-3.5">
+{lead.enquiry_date}
 </td>
 )}
 
 {columns.name && (
-<td className="px-3 py-2 border">
+<td className="px-4 py-3.5 font-semibold text-gray-800">
 {lead.student_name}
 </td>
 )}
 
 {columns.mobile && (
-<td className="px-3 py-2 border">
+<td className="px-4 py-3.5">
 <a href={`tel:${lead.mobile_number}`} className="text-blue-600 hover:underline">
 {lead.mobile_number}
 </a>
@@ -443,20 +400,44 @@ return(
 )}
 
 {columns.department && (
-<td className="px-3 py-2 border">
+<td className="px-4 py-3.5">
 {lead.department}
 </td>
 )}
 
 {columns.course && (
-<td className="px-3 py-2 border">
+<td className="px-4 py-3.5">
 {lead.course}
 </td>
 )}
 
 {columns.receipt && (
-<td className="px-3 py-2 border font-medium text-green-700">
+<td className="px-4 py-3.5 text-green-600 font-semibold">
 {Number(amount).toFixed(2)}
+</td>
+)}
+
+{columns.actions && (
+<td className="px-4 py-3.5">
+
+<div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
+
+<button
+onClick={()=>handleEdit(lead)}
+className="text-blue-600 hover:text-blue-800"
+>
+✏️
+</button>
+
+<button
+onClick={()=>handleDelete(lead)}
+className="text-red-600 hover:text-red-800"
+>
+🗑
+</button>
+
+</div>
+
 </td>
 )}
 
@@ -474,7 +455,7 @@ return(
 
 {/* PAGINATION */}
 
-<div className="text-sm text-gray-600 flex gap-3">
+<div className="flex gap-3 text-sm text-gray-600">
 
 {page > 1 && (
 <a className="cursor-pointer text-blue-600" onClick={()=>setPage(page-1)}>
