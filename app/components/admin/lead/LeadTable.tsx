@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function LeadTable({
 leads,
@@ -32,17 +33,11 @@ receipt:true,
 actions:true
 });
 
-const [filters,setFilters] = useState({
-department:"",
-course:"",
-branch:""
-});
-
 /* RESET PAGE */
 
 useEffect(()=>{
 setPage(1);
-},[search,filters]);
+},[search]);
 
 /* RECEIPT MAP */
 
@@ -80,20 +75,6 @@ mobile.includes(search)
 
 });
 
-/* FILTERS */
-
-if(filters.department){
-filtered = filtered.filter(l=>l.department === filters.department);
-}
-
-if(filters.course){
-filtered = filtered.filter(l=>l.course === filters.course);
-}
-
-if(filters.branch){
-filtered = filtered.filter(l=>l.branch === filters.branch);
-}
-
 /* SORT */
 
 filtered = filtered.sort((a,b)=>{
@@ -116,7 +97,7 @@ return 0;
 
 useEffect(()=>{
 setLeadCount?.(filtered.length);
-},[search,filters,sortField,sortOrder,leads]);
+},[search,sortField,sortOrder,leads]);
 
 /* PAGINATION */
 
@@ -145,16 +126,27 @@ if(sortField !== field) return "";
 return sortOrder === "asc" ? " ▲" : " ▼";
 };
 
-/* ACTIONS */
+/* DELETE */
+
+const handleDelete = async (lead:any)=>{
+
+if(!confirm("Delete lead?")) return;
+
+const { error } = await supabase
+.from("leads")
+.delete()
+.eq("id",lead.id);
+
+if(!error){
+location.reload();
+}
+
+};
+
+/* EDIT */
 
 const handleEdit = (lead:any)=>{
 alert("Edit Lead: "+lead.student_name);
-};
-
-const handleDelete = (lead:any)=>{
-if(confirm("Delete lead?")){
-alert("Lead deleted: "+lead.student_name);
-}
 };
 
 return(
@@ -234,50 +226,27 @@ onChange={()=>setColumns({
 <tr>
 
 {columns.branch && (
-
-<th className="px-4 py-3 text-left text-xs font-semibold">
-
-<div className="flex flex-col gap-1">
-
-<span>Branch</span>
-
-<select
-className="text-xs border rounded"
-value={filters.branch}
-onChange={(e)=>setFilters({...filters,branch:e.target.value})}
->
-<option value="">All</option>
-{[...new Set(uniqueLeads.map(l=>l.branch))].map((d:any)=>(
-<option key={d}>{d}</option>
-))}
-</select>
-
-</div>
-
+<th className="px-4 py-3 text-left text-xs font-semibold cursor-pointer">
+Branch
 </th>
-
 )}
 
 {columns.date && (
-
 <th
 onClick={()=>toggleSort("created_at")}
 className="px-4 py-3 text-left text-xs font-semibold cursor-pointer"
 >
 Enq_Date{arrow("created_at")}
 </th>
-
 )}
 
 {columns.name && (
-
 <th
 onClick={()=>toggleSort("student_name")}
 className="px-4 py-3 text-left text-xs font-semibold cursor-pointer"
 >
 Name{arrow("student_name")}
 </th>
-
 )}
 
 {columns.mobile && (
@@ -287,57 +256,15 @@ Mobile
 )}
 
 {columns.department && (
-
-<th className="px-4 py-3 text-left text-xs font-semibold">
-
-<div className="flex flex-col gap-1">
-
-<span onClick={()=>toggleSort("department")} className="cursor-pointer">
-Department{arrow("department")}
-</span>
-
-<select
-className="text-xs border rounded"
-value={filters.department}
-onChange={(e)=>setFilters({...filters,department:e.target.value})}
->
-<option value="">All</option>
-{[...new Set(uniqueLeads.map(l=>l.department))].map((d:any)=>(
-<option key={d}>{d}</option>
-))}
-</select>
-
-</div>
-
+<th className="px-4 py-3 text-left text-xs font-semibold cursor-pointer">
+Department
 </th>
-
 )}
 
 {columns.course && (
-
-<th className="px-4 py-3 text-left text-xs font-semibold">
-
-<div className="flex flex-col gap-1">
-
-<span onClick={()=>toggleSort("course")} className="cursor-pointer">
-Course{arrow("course")}
-</span>
-
-<select
-className="text-xs border rounded"
-value={filters.course}
-onChange={(e)=>setFilters({...filters,course:e.target.value})}
->
-<option value="">All</option>
-{[...new Set(uniqueLeads.map(l=>l.course))].map((d:any)=>(
-<option key={d}>{d}</option>
-))}
-</select>
-
-</div>
-
+<th className="px-4 py-3 text-left text-xs font-semibold cursor-pointer">
+Course
 </th>
-
 )}
 
 {columns.receipt && (
@@ -369,9 +296,9 @@ return(
 key={lead.id}
 className="
 group
-hover:bg-gray-50
+hover:bg-blue-100
 odd:bg-white
-even:bg-gray-50/40
+even:bg-gray-100
 transition
 cursor-pointer
 "
