@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BatchCard from "@/app/components/admin/batches/BatchCard";
 import BranchSelector from "@/app/components/ui/BranchSelector";
+import AddStudentsModal from "@/app/components/admin/batches/AddStudentsModal";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function BatchesPage() {
@@ -13,6 +14,11 @@ export default function BatchesPage() {
   const [batches, setBatches] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [branchId, setBranchId] = useState<string | null>(null);
+
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+
+  const [studentCounts, setStudentCounts] = useState<any>({});
 
   useEffect(() => {
     loadBranches();
@@ -51,8 +57,38 @@ export default function BatchesPage() {
       .order("created_at", { ascending: false });
 
     if (data) {
+
       setBatches(data);
+      loadStudentCounts(data);
+
     }
+
+  }
+
+  async function loadStudentCounts(batchList:any[]) {
+
+    const ids = batchList.map((b)=>b.id);
+
+    const { data } = await supabase
+      .from("batch_students")
+      .select("batch_id");
+
+    if (!data) return;
+
+    const counts:any = {};
+
+    ids.forEach((id)=>{
+      counts[id] = data.filter((d)=>d.batch_id===id).length;
+    });
+
+    setStudentCounts(counts);
+
+  }
+
+  function openAddStudents(batchId: string) {
+
+    setSelectedBatchId(batchId);
+    setOpenModal(true);
 
   }
 
@@ -78,11 +114,11 @@ export default function BatchesPage() {
       <div className="mt-4">
 
         <BranchSelector
-          branches={branches.map((b)=>b.name)}
-          value={branches.find((b)=>b.id===branchId)?.name || ""}
-          onChange={(name)=>{
+          branches={branches.map((b) => b.name)}
+          value={branches.find((b) => b.id === branchId)?.name || ""}
+          onChange={(name) => {
 
-            const branch = branches.find((b)=>b.name===name);
+            const branch = branches.find((b) => b.name === name);
 
             if (branch) {
               setBranchId(branch.id);
@@ -107,10 +143,12 @@ export default function BatchesPage() {
 
             <BatchCard
               key={batch.id}
+              id={batch.id}
               name={batch.batch_name}
               department={batch.department}
               courses={[batch.course]}
-              students={0}
+              students={studentCounts[batch.id] || 0}
+              onAddStudents={openAddStudents}
             />
 
           ))}
@@ -118,6 +156,12 @@ export default function BatchesPage() {
         </div>
 
       )}
+
+      <AddStudentsModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        batchId={selectedBatchId}
+      />
 
     </div>
 
