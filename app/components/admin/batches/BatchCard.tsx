@@ -1,12 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 type BatchCardProps = {
   id: string;
   name: string;
   department?: string;
   courses?: string[] | null;
   students?: number;
-  onAddStudents?: (id: string) => void;
 };
 
 export default function BatchCard({
@@ -14,9 +15,10 @@ export default function BatchCard({
   name,
   department,
   courses,
-  students = 0,
-  onAddStudents
+  students = 0
 }: BatchCardProps) {
+
+  const router = useRouter();
 
   const courseList =
     Array.isArray(courses) && courses.length > 0
@@ -32,6 +34,10 @@ export default function BatchCard({
   ];
 
   const showCircles = Math.min(students, 4);
+
+  function openAddStudents() {
+    router.push(`/admin/batches/add-students?batch=${id}`);
+  }
 
   return (
 
@@ -79,7 +85,7 @@ export default function BatchCard({
       <div className="flex gap-2 mt-4">
 
         <button
-          onClick={() => onAddStudents?.(id)}
+          onClick={openAddStudents}
           className="text-xs bg-gray-100 px-3 py-1 rounded hover:bg-gray-200"
         >
           Add Students
