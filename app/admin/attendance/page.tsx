@@ -24,7 +24,7 @@ type Student = {
   course?: string;
   due?: number;
   batchName?: string;
-  last15: string[];
+  last10: string[];
 };
 
 export default function AttendancePage(){
@@ -129,12 +129,12 @@ export default function AttendancePage(){
         .select("status")
         .eq("lead_id",lead.id)
         .order("attendance_date",{ascending:false})
-        .limit(15);
+        .limit(10);
 
-      const last15 = (attendance || []).map(a=>a.status);
+      const last10 = (attendance || []).map(a=>a.status);
 
-      while(last15.length < 15){
-        last15.push("N");
+      while(last10.length < 10){
+        last10.push("N");
       }
 
       students.push({
@@ -144,7 +144,7 @@ export default function AttendancePage(){
         course:lead.course,
         due:receipt?.due || 0,
         batchName:receipt?.batch || "",
-        last15
+        last10
       });
 
     }
@@ -194,8 +194,6 @@ export default function AttendancePage(){
   ).length;
 
   const absentCount = totalStudents - presentCount;
-
-  const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
   return(
 
@@ -259,15 +257,9 @@ export default function AttendancePage(){
 
   <>
 
-  {/* HEADER */}
-
   <div className="sticky top-0 bg-white z-10 pb-2">
 
   <div className="flex justify-between font-semibold">
-
-  <div>
-  {selectedBatchName}
-  </div>
 
   <div>
   {new Date().toLocaleDateString()}
@@ -295,19 +287,7 @@ export default function AttendancePage(){
   </div>
   )}
 
-  <div className="flex gap-2 text-xs mt-2">
-
-  {days.map((d,i)=>(
-  <div key={i} className="w-4 text-center text-gray-500">
-  {d[0]}
   </div>
-  ))}
-
-  </div>
-
-  </div>
-
-  {/* STUDENT LIST */}
 
   <div className="flex-1 overflow-y-auto divide-y pr-2">
 
@@ -340,7 +320,7 @@ export default function AttendancePage(){
 
   <div className="flex gap-1">
 
-  {student.last15.map((d,i)=>(
+  {student.last10.map((d,i)=>(
   <div
   key={i}
   className={`w-4 h-4 text-xs flex items-center justify-center rounded
@@ -398,8 +378,6 @@ export default function AttendancePage(){
   })}
 
   </div>
-
-  {/* SUBMIT BUTTON */}
 
   <div className="pt-3 border-t bg-white sticky bottom-0">
 
