@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 type Props = {
-  open: boolean;
-  onClose: () => void;
   batchId: string | null;
 };
 
-export default function AddStudentsModal({ open, onClose, batchId }: Props) {
+export default function AddStudentsModal({ batchId }: Props) {
+
+  const router = useRouter();
 
   const [students, setStudents] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -18,13 +19,13 @@ export default function AddStudentsModal({ open, onClose, batchId }: Props) {
   const [existingIds, setExistingIds] = useState<string[]>([]);
 
   useEffect(() => {
-    if (open && batchId) {
+    if (batchId) {
       loadStudents();
       loadExistingStudents();
       setSelected([]);
       setSearch("");
     }
-  }, [open]);
+  }, [batchId]);
 
   async function loadStudents() {
 
@@ -128,8 +129,7 @@ export default function AddStudentsModal({ open, onClose, batchId }: Props) {
       .from("batch_students")
       .insert(rows);
 
-    onClose();
-    location.reload();
+    router.push("/admin/batches");
 
   }
 
@@ -139,27 +139,17 @@ export default function AddStudentsModal({ open, onClose, batchId }: Props) {
       s.student_name.toLowerCase().includes(search.toLowerCase())
     );
 
-  if (!open) return null;
-
   return (
 
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="p-6">
 
-      <div className="bg-white w-[700px] h-[80vh] rounded-lg shadow-lg flex flex-col">
+      <div className="max-w-5xl mx-auto bg-white rounded-lg shadow">
 
         <div className="p-6 border-b">
 
-          <div className="flex justify-between items-center">
-
-            <h2 className="text-lg font-semibold">
-              Add Students to Batch
-            </h2>
-
-            <button onClick={onClose}>
-              ✕
-            </button>
-
-          </div>
+          <h2 className="text-lg font-semibold">
+            Add Students to Batch
+          </h2>
 
           <input
             type="text"
@@ -225,7 +215,7 @@ export default function AddStudentsModal({ open, onClose, batchId }: Props) {
 
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-2">
+        <div className="p-6 space-y-2 max-h-[60vh] overflow-y-auto">
 
           {filteredStudents.map((s)=>{
 
@@ -259,7 +249,7 @@ export default function AddStudentsModal({ open, onClose, batchId }: Props) {
         <div className="p-6 border-t flex justify-end gap-3">
 
           <button
-            onClick={onClose}
+            onClick={()=>router.push("/admin/batches")}
             className="px-4 py-2 text-sm bg-gray-100 rounded hover:bg-gray-200"
           >
             Cancel
