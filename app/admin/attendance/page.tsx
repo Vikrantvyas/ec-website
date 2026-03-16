@@ -24,10 +24,10 @@ type Student = {
   course?: string;
   due?: number;
   batchName?: string;
-  last15: ("P" | "A")[];
+  last15: string[];
 };
 
-export default function AttendancePage() {
+export default function AttendancePage(){
 
   const [branches,setBranches] = useState<Branch[]>([]);
   const [selectedBranch,setSelectedBranch] = useState("");
@@ -36,7 +36,10 @@ export default function AttendancePage() {
   const [selectedBatch,setSelectedBatch] = useState<string | null>(null);
 
   const [studentsData,setStudentsData] = useState<Student[]>([]);
-  const [attendanceState,setAttendanceState] = useState<Record<string,boolean>>({});
+  const [attendanceState,setAttendanceState] = useState<Record<string,string>>({});
+
+  const [showConfirm,setShowConfirm] = useState(false);
+  const [saved,setSaved] = useState(false);
 
   useEffect(()=>{
     loadBranches();
@@ -46,6 +49,8 @@ export default function AttendancePage() {
   useEffect(()=>{
     if(selectedBatch){
       loadStudents(selectedBatch);
+      loadTodayAttendance(selectedBatch);
+      setSaved(false);
     }
   },[selectedBatch]);
 
@@ -67,6 +72,25 @@ export default function AttendancePage() {
       .order("start_time");
 
     setBatches(data || []);
+  }
+
+  async function loadTodayAttendance(batchId:string){
+
+    const today = new Date().toISOString().split("T")[0];
+
+    const {data} = await supabase
+      .from("attendance")
+      .select("lead_id,status")
+      .eq("batch_id",batchId)
+      .eq("attendance_date",today);
+
+    const map:Record<string,string> = {};
+
+    (data || []).forEach(r=>{
+      map[r.lead_id] = r.status;
+    });
+
+    setAttendanceState(map);
   }
 
   async function loadStudents(batchId:string){
@@ -107,10 +131,10 @@ export default function AttendancePage() {
         .order("attendance_date",{ascending:false})
         .limit(15);
 
-      const last15 = (attendance || []).map(a => a.status ? "P" : "A");
+      const last15 = (attendance || []).map(a=>a.status);
 
       while(last15.length < 15){
-        last15.push("P");
+        last15.push("N");
       }
 
       students.push({
@@ -120,204 +144,367 @@ export default function AttendancePage() {
         course:lead.course,
         due:receipt?.due || 0,
         batchName:receipt?.batch || "",
-        last15:last15
+        last15
       });
 
     }
 
     setStudentsData(students);
+  }
 
+  async function submitAttendance(){
+
+    if(!selectedBatch) return;
+
+    const today = new Date().toISOString().split("T")[0];
+
+    const rows = studentsData.map(s=>({
+      batch_id:selectedBatch,
+      lead_id:s.id,
+      attendance_date:today,
+      status:attendanceState[s.id] || "P"
+    }));
+
+    await supabase
+      .from("attendance")
+      .upsert(rows,{ onConflict:"batch_id,lead_id,attendance_date" });
+
+    setShowConfirm(false);
+    setSaved(true);
   }
 
   const filteredBatches = useMemo(()=>{
 
     if(!selectedBranch) return batches;
 
-    const branch = branches.find(
-      b => b.name === selectedBranch
-    );
+    const branch = branches.find(b=>b.name===selectedBranch);
 
     if(!branch) return batches;
 
-    return batches.filter(
-      b => b.branch_id === branch.id
-    );
+    return batches.filter(b=>b.branch_id===branch.id);
 
   },[selectedBranch,batches,branches]);
 
-  const presentCount = useMemo(()=>{
+  const selectedBatchName = batches.find(b=>b.id===selectedBatch)?.batch_name;
 
-    return studentsData.filter(
-      s => attendanceState[s.id] !== false
-    ).length;
+  const totalStudents = studentsData.length;
 
-  },[studentsData,attendanceState]);
+  const presentCount = studentsData.filter(
+    s => (attendanceState[s.id] || "P") === "P"
+  ).length;
 
-  return (
+  const absentCount = totalStudents - presentCount;
 
-    <PermissionGuard page="Attendance">
+  const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
-      <div className="min-h-screen p-4 space-y-4">
+  return(
 
-        <BranchSelector
-          branches={branches.map(b=>b.name)}
-          value={selectedBranch}
-          onChange={(branch)=>{
-            setSelectedBranch(branch);
-            setSelectedBatch(null);
-          }}
-        />
+  <PermissionGuard page="Attendance">
 
-        {/* Responsive Layout */}
+  <div className="min-h-screen p-4 space-y-4">
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <BranchSelector
+  branches={branches.map(b=>b.name)}
+  value={selectedBranch}
+  onChange={(branch)=>{
+  setSelectedBranch(branch);
+  setSelectedBatch(null);
+  }}
+  />
 
-          {/* BATCH LIST */}
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-          <div className="md:border-r md:pr-4">
+  <div className="md:border-r md:pr-4">
 
-            <h2 className="font-semibold mb-3">
-              Batches
-            </h2>
+  <h2 className="font-semibold mb-3">Batches</h2>
 
-            <div className="space-y-2">
+  <div className="space-y-2">
 
-              {filteredBatches.map(batch=>(
+  {filteredBatches.map(batch=>(
 
-                <div
-                  key={batch.id}
-                  onClick={()=>setSelectedBatch(batch.id)}
-                  className={`cursor-pointer p-2 rounded
-                  ${
-                    selectedBatch === batch.id
-                    ? "bg-blue-50"
-                    : "hover:bg-gray-50"
-                  }`}
-                >
+  <div
+  key={batch.id}
+  onClick={()=>setSelectedBatch(batch.id)}
+  className={`cursor-pointer p-2 rounded
+  ${
+  selectedBatch===batch.id
+  ?"bg-blue-50"
+  :"hover:bg-gray-50"
+  }`}
+  >
 
-                  <div className="font-medium">
-                    {batch.batch_name}
-                  </div>
+  <div className="font-medium">{batch.batch_name}</div>
 
-                  <div className="text-xs text-gray-500">
-                    {batch.start_time}
-                  </div>
+  <div className="text-xs text-gray-500">
+  {batch.start_time}
+  </div>
 
-                </div>
+  </div>
 
-              ))}
+  ))}
 
-            </div>
+  </div>
 
-          </div>
+  </div>
 
-          {/* STUDENT LIST */}
+  <div className="md:col-span-2 flex flex-col h-[calc(100vh-180px)]">
 
-          <div className="md:col-span-2">
+  {!selectedBatch && (
+  <div className="text-gray-400 text-center py-20">
+  Select a batch
+  </div>
+  )}
 
-            {!selectedBatch && (
+  {selectedBatch && (
 
-              <div className="text-gray-400 text-center py-20">
-                Select a batch
-              </div>
+  <>
 
-            )}
+  {/* HEADER */}
 
-            {selectedBatch && (
+  <div className="sticky top-0 bg-white z-10 pb-2">
 
-              <>
+  <div className="flex justify-between font-semibold">
 
-                <div className="flex justify-between mb-4 font-semibold">
-                  Present: {presentCount} / {studentsData.length}
-                </div>
+  <div>
+  {selectedBatchName}
+  </div>
 
-                <div className="divide-y">
+  <div>
+  {new Date().toLocaleDateString()}
+  </div>
 
-                  {studentsData.map((student,index)=>{
+  </div>
 
-                    const isPresent = attendanceState[student.id] !== false;
+  <div className="text-sm mt-1">
 
-                    return(
+  Total : {totalStudents}
 
-                      <div key={student.id} className="py-3 flex justify-between">
+  <span className="text-green-600 ml-3">
+  Present : {presentCount}
+  </span>
 
-                        <div className="space-y-1">
+  <span className="text-red-600 ml-3">
+  Absent : {absentCount}
+  </span>
 
-                          <div className={`font-semibold
-                          ${
-                            student.due ? "text-red-600" : ""
-                          }`}>
-                            {index+1}. {student.name}
-                          </div>
+  </div>
 
-                          <div className="text-xs text-gray-600">
-                            {student.joiningDate} • {student.course} • ₹
-                            {student.due ? `${student.due} Due` : "Fees Clear"}
-                          </div>
+  {saved && (
+  <div className="text-green-600 text-sm mt-1">
+  ✔ Attendance Saved
+  </div>
+  )}
 
-                          <div className="text-xs text-gray-500">
-                            {student.batchName}
-                          </div>
+  <div className="flex gap-2 text-xs mt-2">
 
-                          <div className="flex gap-1">
+  {days.map((d,i)=>(
+  <div key={i} className="w-4 text-center text-gray-500">
+  {d[0]}
+  </div>
+  ))}
 
-                            {student.last15.map((d,i)=>(
-                              <div
-                                key={i}
-                                className={`w-2 h-2 rounded-full
-                                ${
-                                  d === "P"
-                                  ? "bg-green-500"
-                                  : "bg-red-500"
-                                }`}
-                              />
-                            ))}
+  </div>
 
-                          </div>
+  </div>
 
-                        </div>
+  {/* STUDENT LIST */}
 
-                        <button
-                          onClick={()=>
-                            setAttendanceState(prev=>({
-                              ...prev,
-                              [student.id]:!isPresent
-                            }))
-                          }
-                          className={`w-14 h-7 rounded-full flex items-center px-1
-                          ${
-                            isPresent ? "bg-green-500" : "bg-red-500"
-                          }`}
-                        >
+  <div className="flex-1 overflow-y-auto divide-y pr-2">
 
-                          <div
-                            className={`w-5 h-5 bg-white rounded-full transform transition
-                            ${
-                              isPresent ? "translate-x-7" : ""
-                            }`}
-                          />
+  {studentsData.map((student,index)=>{
 
-                        </button>
+  const status = attendanceState[student.id] || "P";
+  const isPresent = status==="P";
 
-                      </div>
+  return(
 
-                    )
+  <div key={student.id} className="py-3 flex justify-between">
 
-                  })}
+  <div className="space-y-1">
 
-                </div>
+  <div className={`font-semibold
+  ${
+  student.due ? "text-red-600":""
+  }`}>
+  {index+1}. {student.name}
+  </div>
 
-              </>
+  <div className="text-xs text-gray-600">
+  {student.joiningDate} • {student.course} • ₹
+  {student.due ? `${student.due} Due` : "Fees Clear"}
+  </div>
 
-            )}
+  <div className="text-xs text-gray-500">
+  {student.batchName}
+  </div>
 
-          </div>
+  <div className="flex gap-1">
 
-        </div>
+  {student.last15.map((d,i)=>(
+  <div
+  key={i}
+  className={`w-4 h-4 text-xs flex items-center justify-center rounded
+  ${
+  d==="P"
+  ?"bg-green-500 text-white"
+  :d==="A"
+  ?"bg-red-500 text-white"
+  :d==="L"
+  ?"bg-yellow-400"
+  :"bg-gray-200"
+  }`}
+  >
+  {d}
+  </div>
+  ))}
 
-      </div>
+  </div>
 
-    </PermissionGuard>
+  </div>
+
+  <button
+  onClick={()=>{
+
+  const newStatus = isPresent ? "A":"P";
+
+  setAttendanceState(prev=>({
+  ...prev,
+  [student.id]:newStatus
+  }));
+
+  }}
+  className={`w-14 h-7 rounded-full flex items-center px-1
+  ${
+  isPresent
+  ?"bg-green-500"
+  :"bg-red-500"
+  }`}
+  >
+
+  <div
+  className={`w-5 h-5 bg-white rounded-full transform transition
+  ${
+  isPresent
+  ?"translate-x-7":""
+  }`}
+  />
+
+  </button>
+
+  </div>
+
+  )
+
+  })}
+
+  </div>
+
+  {/* SUBMIT BUTTON */}
+
+  <div className="pt-3 border-t bg-white sticky bottom-0">
+
+  <button
+  onClick={()=>setShowConfirm(true)}
+  className="bg-blue-600 text-white px-6 py-2 rounded"
+  >
+  Submit Attendance
+  </button>
+
+  </div>
+
+  </>
+
+  )}
+
+  </div>
+
+  </div>
+
+  {showConfirm && (
+
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+
+  <div className="bg-white p-6 rounded w-[420px] max-h-[70vh] overflow-auto">
+
+  <h3 className="font-semibold mb-4">
+  Confirm Attendance
+  </h3>
+
+  <div className="mb-4 text-sm">
+
+  Total Students : {totalStudents}
+
+  <br/>
+
+  <span className="text-green-600">
+  Present : {presentCount}
+  </span>
+
+  <br/>
+
+  <span className="text-red-600">
+  Absent : {absentCount}
+  </span>
+
+  </div>
+
+  <div className="space-y-2 text-sm">
+
+  {studentsData.map(s=>{
+
+  const status = attendanceState[s.id] || "P";
+
+  return(
+
+  <div key={s.id} className="flex justify-between">
+
+  <span>{s.name}</span>
+
+  <span
+  className={
+  status==="P"
+  ?"text-green-600 font-bold"
+  :"text-red-600 font-bold"
+  }
+  >
+  {status}
+  </span>
+
+  </div>
+
+  )
+
+  })}
+
+  </div>
+
+  <div className="flex justify-end gap-3 mt-6">
+
+  <button
+  onClick={()=>setShowConfirm(false)}
+  className="px-4 py-2 border rounded"
+  >
+  Cancel
+  </button>
+
+  <button
+  onClick={submitAttendance}
+  className="bg-green-600 text-white px-4 py-2 rounded"
+  >
+  Yes Submit
+  </button>
+
+  </div>
+
+  </div>
+
+  </div>
+
+  )}
+
+  </div>
+
+  </PermissionGuard>
 
   );
 
