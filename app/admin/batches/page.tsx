@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BatchCard from "@/app/components/admin/batches/BatchCard";
 import BranchSelector from "@/app/components/ui/BranchSelector";
-import AddStudentsModal from "@/app/components/admin/batches/AddStudentsModal";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function BatchesPage() {
@@ -14,9 +13,6 @@ export default function BatchesPage() {
   const [batches, setBatches] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
   const [branchId, setBranchId] = useState<string | null>(null);
-
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
 
   const [studentCounts, setStudentCounts] = useState<any>({});
 
@@ -85,13 +81,6 @@ export default function BatchesPage() {
 
   }
 
-  function openAddStudents(batchId: string) {
-
-    setSelectedBatchId(batchId);
-    setOpenModal(true);
-
-  }
-
   return (
 
     <div className="p-6">
@@ -148,7 +137,6 @@ export default function BatchesPage() {
               department={batch.department}
               courses={[batch.course]}
               students={studentCounts[batch.id] || 0}
-              onAddStudents={openAddStudents}
             />
 
           ))}
@@ -156,12 +144,6 @@ export default function BatchesPage() {
         </div>
 
       )}
-
-      <AddStudentsModal
-        open={openModal}
-        onClose={() => setOpenModal(false)}
-        batchId={selectedBatchId}
-      />
 
     </div>
 
