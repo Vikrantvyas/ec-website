@@ -38,9 +38,7 @@ export default function AddStudentsModal({ batchId }: Props) {
       .eq("id", batchId)
       .single();
 
-    if (data) {
-      setBatchName(data.batch_name);
-    }
+    if (data) setBatchName(data.batch_name);
 
   }
 
@@ -99,9 +97,7 @@ export default function AddStudentsModal({ batchId }: Props) {
       .select("id, student_name")
       .in("id", ids);
 
-    if (leadData) {
-      setExisting(leadData);
-    }
+    if (leadData) setExisting(leadData);
 
   }
 
@@ -160,129 +156,125 @@ export default function AddStudentsModal({ batchId }: Props) {
 
   return (
 
-    <div className="w-full px-4 md:px-8 py-6">
+    <div className="w-full px-4 md:px-6 py-4 flex flex-col h-[90vh]">
 
-      <div className="w-full bg-white rounded-lg shadow flex flex-col h-[85vh]">
+      <div className="mb-3">
 
-        <div className="p-6 border-b">
+        <h2 className="text-lg font-semibold">
+          {batchName} ({batchCount})
+        </h2>
 
-          <h2 className="text-lg font-semibold">
-            Add Students to Batch — {batchName} ({batchCount})
-          </h2>
+        <input
+          type="text"
+          value={search}
+          onChange={(e)=>setSearch(e.target.value)}
+          placeholder="Search Student"
+          className="w-full border px-3 py-2 rounded mt-3"
+        />
 
-          <input
-            type="text"
-            value={search}
-            onChange={(e)=>setSearch(e.target.value)}
-            placeholder="Search Student"
-            className="w-full border px-3 py-2 rounded mt-4"
-          />
+      </div>
 
-          {existing.length > 0 && (
+      {existing.length > 0 && (
 
-            <div className="flex flex-wrap gap-2 mt-3">
+        <div className="flex flex-wrap gap-2 mb-3">
 
-              {existing.map((s)=>(
-                
-                <div
-                  key={s.id}
-                  className="flex items-center gap-2 bg-gray-200 text-xs px-2 py-1 rounded"
-                >
+          {existing.map((s)=>(
+            
+            <div
+              key={s.id}
+              className="flex items-center gap-2 bg-gray-200 text-xs px-2 py-1 rounded"
+            >
 
-                  {s.student_name}
+              {s.student_name}
 
-                  <button
-                    onClick={()=>removeExisting(s.id)}
-                  >
-                    ✕
-                  </button>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          )}
-
-          {selected.length > 0 && (
-
-            <div className="flex flex-wrap gap-2 mt-3">
-
-              {selected.map((s)=>(
-                
-                <div
-                  key={s.id}
-                  className="flex items-center gap-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
-                >
-
-                  {s.student_name}
-
-                  <button
-                    onClick={()=>removeStudent(s.id)}
-                  >
-                    ✕
-                  </button>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          )}
-
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 space-y-2">
-
-          {filteredStudents.map((s)=>{
-
-            const checked = selected.find((x)=>x.id===s.id);
-
-            return (
-
-              <div
-                key={s.id}
-                onClick={()=>toggleStudent(s)}
-                className={`flex items-center gap-3 border p-3 rounded cursor-pointer hover:bg-gray-50 ${checked?"bg-blue-50 border-blue-400":""}`}
+              <button
+                onClick={()=>removeExisting(s.id)}
               >
+                ✕
+              </button>
 
-                <input
-                  type="checkbox"
-                  checked={!!checked}
-                  onChange={()=>toggleStudent(s)}
-                />
+            </div>
 
-                <span className="text-sm">
-                  {s.student_name}
-                </span>
-
-              </div>
-
-            );
-
-          })}
+          ))}
 
         </div>
 
-        <div className="p-6 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
+      )}
 
-          <button
-            onClick={()=>router.push("/admin/batches")}
-            className="px-4 py-2 text-sm bg-gray-100 rounded hover:bg-gray-200"
-          >
-            Cancel
-          </button>
+      {selected.length > 0 && (
 
-          <button
-            onClick={addStudents}
-            className="px-4 py-2 text-sm bg-[#0a1f44] text-white rounded hover:bg-[#163d7a]"
-          >
-            Add Students
-          </button>
+        <div className="flex flex-wrap gap-2 mb-3">
+
+          {selected.map((s)=>(
+            
+            <div
+              key={s.id}
+              className="flex items-center gap-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+            >
+
+              {s.student_name}
+
+              <button
+                onClick={()=>removeStudent(s.id)}
+              >
+                ✕
+              </button>
+
+            </div>
+
+          ))}
 
         </div>
+
+      )}
+
+      <div className="flex-1 overflow-y-auto space-y-2">
+
+        {filteredStudents.map((s)=>{
+
+          const checked = selected.find((x)=>x.id===s.id);
+
+          return (
+
+            <div
+              key={s.id}
+              onClick={()=>toggleStudent(s)}
+              className={`flex items-center gap-3 border p-3 rounded cursor-pointer hover:bg-gray-50 ${checked?"bg-blue-50 border-blue-400":""}`}
+            >
+
+              <input
+                type="checkbox"
+                checked={!!checked}
+                onChange={()=>toggleStudent(s)}
+              />
+
+              <span className="text-sm">
+                {s.student_name}
+              </span>
+
+            </div>
+
+          );
+
+        })}
+
+      </div>
+
+      <div className="flex justify-end gap-3 mt-3 pt-3 border-t">
+
+        <button
+          onClick={()=>router.push("/admin/batches")}
+          className="px-4 py-2 text-sm bg-gray-100 rounded hover:bg-gray-200"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={addStudents}
+          className="px-4 py-2 text-sm bg-[#0a1f44] text-white rounded hover:bg-[#163d7a]"
+        >
+          Add Students
+        </button>
 
       </div>
 
