@@ -17,15 +17,32 @@ export default function AddStudentsModal({ batchId }: Props) {
   const [selected, setSelected] = useState<any[]>([]);
   const [existing, setExisting] = useState<any[]>([]);
   const [existingIds, setExistingIds] = useState<string[]>([]);
+  const [batchName, setBatchName] = useState("");
+  const [batchCount, setBatchCount] = useState(0);
 
   useEffect(() => {
     if (batchId) {
+      loadBatchInfo();
       loadStudents();
       loadExistingStudents();
       setSelected([]);
       setSearch("");
     }
   }, [batchId]);
+
+  async function loadBatchInfo() {
+
+    const { data } = await supabase
+      .from("batches")
+      .select("batch_name")
+      .eq("id", batchId)
+      .single();
+
+    if (data) {
+      setBatchName(data.batch_name);
+    }
+
+  }
 
   async function loadStudents() {
 
@@ -69,6 +86,7 @@ export default function AddStudentsModal({ batchId }: Props) {
 
     const ids = data.map((d:any)=>d.lead_id);
 
+    setBatchCount(ids.length);
     setExistingIds(ids);
 
     if (ids.length === 0) {
@@ -113,6 +131,7 @@ export default function AddStudentsModal({ batchId }: Props) {
 
     setExisting(existing.filter((s)=>s.id!==id));
     setExistingIds(existingIds.filter((x)=>x!==id));
+    setBatchCount(batchCount-1);
 
   }
 
@@ -141,14 +160,14 @@ export default function AddStudentsModal({ batchId }: Props) {
 
   return (
 
-    <div className="p-6">
+    <div className="w-full px-4 md:px-8 py-6">
 
-      <div className="max-w-5xl mx-auto bg-white rounded-lg shadow">
+      <div className="w-full bg-white rounded-lg shadow flex flex-col h-[85vh]">
 
         <div className="p-6 border-b">
 
           <h2 className="text-lg font-semibold">
-            Add Students to Batch
+            Add Students to Batch — {batchName} ({batchCount})
           </h2>
 
           <input
@@ -215,7 +234,7 @@ export default function AddStudentsModal({ batchId }: Props) {
 
         </div>
 
-        <div className="p-6 space-y-2 max-h-[60vh] overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-6 space-y-2">
 
           {filteredStudents.map((s)=>{
 
@@ -225,7 +244,8 @@ export default function AddStudentsModal({ batchId }: Props) {
 
               <div
                 key={s.id}
-                className="flex items-center gap-3 border p-2 rounded"
+                onClick={()=>toggleStudent(s)}
+                className={`flex items-center gap-3 border p-3 rounded cursor-pointer hover:bg-gray-50 ${checked?"bg-blue-50 border-blue-400":""}`}
               >
 
                 <input
@@ -246,7 +266,7 @@ export default function AddStudentsModal({ batchId }: Props) {
 
         </div>
 
-        <div className="p-6 border-t flex justify-end gap-3">
+        <div className="p-6 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
 
           <button
             onClick={()=>router.push("/admin/batches")}
