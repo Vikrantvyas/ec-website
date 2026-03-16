@@ -168,11 +168,17 @@ export default function AttendancePage() {
           }}
         />
 
-        <div className="grid grid-cols-12 gap-6">
+        {/* Responsive Layout */}
 
-          <div className="col-span-3 border-r">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-            <h2 className="font-semibold mb-3">Batches</h2>
+          {/* BATCH LIST */}
+
+          <div className="md:border-r md:pr-4">
+
+            <h2 className="font-semibold mb-3">
+              Batches
+            </h2>
 
             <div className="space-y-2">
 
@@ -181,7 +187,7 @@ export default function AttendancePage() {
                 <div
                   key={batch.id}
                   onClick={()=>setSelectedBatch(batch.id)}
-                  className={`cursor-pointer p-2
+                  className={`cursor-pointer p-2 rounded
                   ${
                     selectedBatch === batch.id
                     ? "bg-blue-50"
@@ -205,12 +211,16 @@ export default function AttendancePage() {
 
           </div>
 
-          <div className="col-span-9">
+          {/* STUDENT LIST */}
+
+          <div className="md:col-span-2">
 
             {!selectedBatch && (
+
               <div className="text-gray-400 text-center py-20">
                 Select a batch
               </div>
+
             )}
 
             {selectedBatch && (
