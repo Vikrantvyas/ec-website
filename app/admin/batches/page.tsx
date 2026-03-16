@@ -48,9 +48,14 @@ export default function BatchesPage() {
 
     const { data } = await supabase
       .from("batches")
-      .select("*")
+      .select(`
+        *,
+        teachers (
+          name
+        )
+      `)
       .eq("branch_id", branchId)
-      .order("created_at", { ascending: false });
+      .order("start_time", { ascending: true });
 
     if (data) {
 
@@ -80,6 +85,9 @@ export default function BatchesPage() {
     setStudentCounts(counts);
 
   }
+
+  const englishBatches = batches.filter(b => b.department === "English");
+  const computerBatches = batches.filter(b => b.department === "Computer");
 
   return (
 
@@ -126,20 +134,63 @@ export default function BatchesPage() {
 
       ) : (
 
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="mt-6 space-y-8">
 
-          {batches.map((batch) => (
+          {englishBatches.length > 0 && (
+            <div>
 
-            <BatchCard
-              key={batch.id}
-              id={batch.id}
-              name={batch.batch_name}
-              department={batch.department}
-              courses={[batch.course]}
-              students={studentCounts[batch.id] || 0}
-            />
+              <h2 className="text-lg font-semibold mb-3 text-blue-700">
+                English Batches
+              </h2>
 
-          ))}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+
+                {englishBatches.map((batch) => (
+
+                  <BatchCard
+                    key={batch.id}
+                    id={batch.id}
+                    name={batch.batch_name}
+                    department={batch.department}
+                    teacher={batch.teachers?.name}
+                    courses={[batch.course]}
+                    students={studentCounts[batch.id] || 0}
+                  />
+
+                ))}
+
+              </div>
+
+            </div>
+          )}
+
+          {computerBatches.length > 0 && (
+            <div>
+
+              <h2 className="text-lg font-semibold mb-3 text-green-700">
+                Computer Batches
+              </h2>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+
+                {computerBatches.map((batch) => (
+
+                  <BatchCard
+                    key={batch.id}
+                    id={batch.id}
+                    name={batch.batch_name}
+                    department={batch.department}
+                    teacher={batch.teachers?.name}
+                    courses={[batch.course]}
+                    students={studentCounts[batch.id] || 0}
+                  />
+
+                ))}
+
+              </div>
+
+            </div>
+          )}
 
         </div>
 

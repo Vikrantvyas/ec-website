@@ -6,6 +6,7 @@ type BatchCardProps = {
   id: string;
   name: string;
   department?: string;
+  teacher?: string;
   courses?: string[] | null;
   students?: number;
 };
@@ -13,7 +14,7 @@ type BatchCardProps = {
 export default function BatchCard({
   id,
   name,
-  department,
+  teacher,
   courses,
   students = 0
 }: BatchCardProps) {
@@ -39,27 +40,31 @@ export default function BatchCard({
     router.push(`/admin/batches/add-students?batch=${id}`);
   }
 
+  function openAttendance() {
+    router.push(`/admin/attendance?batch=${id}`);
+  }
+
   return (
 
-    <div className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition">
+    <div className="bg-white border rounded-md p-2.5 shadow-sm hover:shadow-md transition max-w-[160px]">
 
-      <h3 className="text-sm font-semibold">
+      <h3 className="text-xs font-semibold leading-tight">
         {name}
       </h3>
 
-      <div className="text-sm text-gray-500 mt-2 space-y-1">
-
-        <div>
-          {department || "No Department"}
-        </div>
+      <div className="text-xs text-gray-500 mt-1 space-y-0.5">
 
         <div>
           {courseList}
         </div>
 
+        <div>
+          {teacher || ""}
+        </div>
+
       </div>
 
-      <div className="flex items-center mt-4">
+      <div className="flex items-center mt-2">
 
         <div className="flex items-center">
 
@@ -67,7 +72,7 @@ export default function BatchCard({
 
             <div
               key={i}
-              className={`w-7 h-7 rounded-full text-white text-xs flex items-center justify-center ${colors[i]} ${i !== 0 ? "-ml-2" : ""}`}
+              className={`w-4 h-4 rounded-full text-white text-[9px] flex items-center justify-center ${colors[i]} ${i !== 0 ? "-ml-1.5" : ""}`}
             >
               {i === showCircles - 1 && students > 4 ? `+${students}` : ""}
             </div>
@@ -76,22 +81,25 @@ export default function BatchCard({
 
         </div>
 
-        <span className="text-sm text-gray-600 ml-2">
-          {students} student
+        <span className="text-xs text-gray-600 ml-2">
+          {students}
         </span>
 
       </div>
 
-      <div className="flex gap-2 mt-4">
+      <div className="flex gap-3 mt-2 text-[11px]">
 
         <button
           onClick={openAddStudents}
-          className="text-xs bg-gray-100 px-3 py-1 rounded hover:bg-gray-200"
+          className="text-gray-600 hover:text-black"
         >
-          Add Students
+          Add Student
         </button>
 
-        <button className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200">
+        <button
+          onClick={openAttendance}
+          className="text-blue-600 hover:text-blue-800"
+        >
           Attendance
         </button>
 

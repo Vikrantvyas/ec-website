@@ -34,6 +34,25 @@ const [editId,setEditId] = useState<string | null>(null);
 const mapOptions = (arr:any[]) =>
 arr.map((v:any)=>({label:v,value:v}));
 
+/* TIME FORMAT */
+
+const formatTime = (t:string)=>{
+
+if(!t) return "";
+
+const [h,m] = t.split(":");
+
+let hour = parseInt(h);
+
+const ampm = hour >= 12 ? "PM" : "AM";
+
+hour = hour % 12;
+hour = hour ? hour : 12;
+
+return `${hour.toString().padStart(2,"0")}:${m} ${ampm}`;
+
+};
+
 useEffect(()=>{
 fetchBranches();
 fetchDepartments();
@@ -115,19 +134,16 @@ const filteredTeachers = teachers.filter(
 
 useEffect(()=>{
 
-if(startTime && department.length && teacher){
-
-const teacherName =
-teachers.find((t:any)=>t.id === teacher)?.name || "";
+if(startTime && department.length > 0){
 
 const generated =
-`${startTime}_${department[0]}_${teacherName}`;
+`${startTime}_${department[0]}`;
 
 setBatchName(generated);
 
 }
 
-},[startTime,department,teacher]);
+},[startTime, department.join(",")]);
 
 const resetForm = ()=>{
 
@@ -187,8 +203,6 @@ batchId = data?.id;
 
 }
 
-/* SAVE COURSES */
-
 if(batchId){
 
 await supabase
@@ -210,8 +224,6 @@ await supabase
 .insert(rows);
 
 }
-
-/* UPDATE COURSE COLUMN */
 
 const { data: courseNames } = await supabase
 .from("courses")
@@ -241,6 +253,11 @@ const deleteBatch = async (id:string)=>{
 if(!confirm("Delete batch?")) return;
 
 await supabase
+.from("batch_courses")
+.delete()
+.eq("batch_id",id);
+
+await supabase
 .from("batches")
 .delete()
 .eq("id",id);
@@ -249,14 +266,33 @@ fetchBatches();
 
 };
 
-const editBatch = (b:any)=>{
+const editBatch = async (b:any)=>{
 
 setEditId(b.id);
+
 setBatchName(b.batch_name);
-setTeacher(b.teacher_id);
-setStartTime(b.start_time);
-setEndTime(b.end_time);
-setStatus(b.status);
+
+setDepartment(b.department ? b.department.split(", ") : []);
+
+setTeacher(b.teacher_id || "");
+
+setStartTime(b.start_time ? b.start_time.slice(0,5) : "");
+setEndTime(b.end_time ? b.end_time.slice(0,5) : "");
+
+setClassroom(b.classroom || "");
+setCapacity(b.capacity || "");
+setStartDate(b.start_date || "");
+setEndDate(b.end_date || "");
+setStatus(b.status || "Active");
+
+const { data } = await supabase
+.from("batch_courses")
+.select("course_id")
+.eq("batch_id",b.id);
+
+if(data){
+setCourses(data.map((c:any)=>c.course_id));
+}
 
 };
 
@@ -316,7 +352,7 @@ options={filteredTeachers.map(t=>({
 label:t.name,
 value:t.id
 }))}
-onChange={(val:string)=>setTeacher(val)}
+onChange={(val:any)=>setTeacher(val)}
 />
 
 <Input
@@ -408,7 +444,11 @@ className="px-5 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700"
 <td className="p-3">{b.batch_name}</td>
 <td className="p-3">{b.department}</td>
 <td className="p-3">{b.teachers?.name}</td>
-<td className="p-3">{b.start_time} - {b.end_time}</td>
+
+<td className="p-3">
+{formatTime(b.start_time)} - {formatTime(b.end_time)}
+</td>
+
 <td className="p-3">{b.status}</td>
 
 <td className="p-3 space-x-2">
@@ -442,5 +482,4 @@ Delete
 </div>
 
 );
-
 }
