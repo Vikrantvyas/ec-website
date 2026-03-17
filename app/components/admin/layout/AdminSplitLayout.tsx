@@ -8,15 +8,15 @@ export default function AdminSplitLayout({
   right: React.ReactNode;
 }) {
   return (
-    <div className="h-screen flex overflow-hidden">
+    <div className="h-screen flex flex-col md:flex-row overflow-hidden">
 
       {/* LEFT */}
-      <div className="w-[300px] flex flex-col h-full overflow-hidden">
+      <div className="w-full md:w-[300px] h-[40%] md:h-full flex flex-col overflow-hidden">
         {left}
       </div>
 
       {/* RIGHT */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 h-[60%] md:h-full flex flex-col overflow-hidden">
         {right}
       </div>
 
