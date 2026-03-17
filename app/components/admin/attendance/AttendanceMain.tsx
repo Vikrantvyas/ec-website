@@ -1,0 +1,139 @@
+"use client";
+
+type Student = {
+  id: string;
+  name: string;
+  joiningDate?: string;
+  course?: string;
+  due?: number;
+  batchName?: string;
+  last10: string[];
+};
+
+export default function AttendanceMain({
+  studentsData,
+  attendanceState,
+  setAttendanceState,
+  selectedBatchName,
+  totalStudents,
+  presentCount,
+  absentCount,
+  saved,
+  setShowConfirm,
+}: any) {
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+
+      {/* HEADER WITH SHADOW + BUTTON */}
+      <div className="px-4 py-3 bg-white sticky top-0 z-20 shadow-sm flex justify-between items-start">
+
+        <div>
+          <div className="font-semibold text-base">
+            {selectedBatchName}
+          </div>
+
+          <div className="text-sm mt-1">
+            Total: {totalStudents}
+            <span className="text-green-600 ml-3">
+              P: {presentCount}
+            </span>
+            <span className="text-red-600 ml-3">
+              A: {absentCount}
+            </span>
+          </div>
+
+          {saved && (
+            <div className="text-green-600 text-xs mt-1">
+              ✔ Attendance Saved
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={() => setShowConfirm(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded text-sm shadow-sm hover:bg-blue-700 transition"
+        >
+          Submit
+        </button>
+
+      </div>
+
+      {/* STUDENT LIST (ONLY SCROLL AREA) */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 bg-gray-50">
+
+        {studentsData.map((student: Student, index: number) => {
+
+          const status = attendanceState[student.id] || "P";
+          const isPresent = status === "P";
+
+          return (
+            <div
+              key={student.id}
+              className="py-3 px-3 flex justify-between items-center bg-white rounded-xl mb-3 shadow-sm hover:shadow transition"
+            >
+
+              <div>
+
+                <div className={`font-semibold ${
+                  student.due ? "text-red-600" : ""
+                }`}>
+                  {index + 1}. {student.name}
+                </div>
+
+                <div className="text-xs text-gray-600 mt-1">
+                  {student.joiningDate} • {student.course} • ₹
+                  {student.due ? `${student.due} Due` : "Clear"}
+                </div>
+
+                <div className="flex gap-1 mt-2">
+                  {student.last10.map((d, i) => (
+                    <div
+                      key={i}
+                      className={`w-4 h-4 text-[10px] flex items-center justify-center rounded
+                      ${
+                        d === "P"
+                          ? "bg-green-500 text-white"
+                          : d === "A"
+                          ? "bg-red-500 text-white"
+                          : d === "L"
+                          ? "bg-yellow-400"
+                          : "bg-gray-200"
+                      }`}
+                    >
+                      {d}
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+
+              {/* TOGGLE */}
+              <button
+                onClick={() => {
+                  const newStatus = isPresent ? "A" : "P";
+                  setAttendanceState((prev: any) => ({
+                    ...prev,
+                    [student.id]: newStatus,
+                  }));
+                }}
+                className={`w-14 h-7 rounded-full flex items-center px-1 transition ${
+                  isPresent ? "bg-green-500" : "bg-red-500"
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 bg-white rounded-full transform transition ${
+                    isPresent ? "translate-x-7" : ""
+                  }`}
+                />
+              </button>
+
+            </div>
+          );
+        })}
+
+      </div>
+
+    </div>
+  );
+}
