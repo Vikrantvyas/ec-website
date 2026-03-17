@@ -34,6 +34,8 @@ type Student = {
 
 export default function AttendancePage() {
 
+  const [isMobile, setIsMobile] = useState(false);
+
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState("");
 
@@ -45,6 +47,14 @@ export default function AttendancePage() {
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // ✅ MOBILE DETECT
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     loadBranches();
@@ -68,7 +78,6 @@ export default function AttendancePage() {
     setBranches(data || []);
   }
 
-  // ✅ UPDATED FUNCTION
   async function loadBatches() {
 
     const { data: batchData } = await supabase
@@ -234,28 +243,26 @@ export default function AttendancePage() {
 
       <div className="h-screen overflow-hidden">
 
-        <AdminSplitLayout
+        {/* 📱 MOBILE VIEW */}
+        {isMobile ? (
 
-          left={
-            <AttendanceSidebar
-              branches={branches}
-              selectedBranch={selectedBranch}
-              setSelectedBranch={(b) => {
-                setSelectedBranch(b);
-                setSelectedBatch(null);
-              }}
-              batches={filteredBatches}
-              selectedBatch={selectedBatch}
-              setSelectedBatch={setSelectedBatch}
-            />
-          }
+          selectedBatch ? (
 
-          right={
-            !selectedBatch ? (
-              <div className="flex items-center justify-center h-full text-gray-400">
-                Select a batch
+            <div className="h-full flex flex-col">
+
+              {/* BACK HEADER */}
+              <div className="p-3 bg-white shadow flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedBatch(null)}
+                  className="text-blue-600 text-sm"
+                >
+                  ← Back
+                </button>
+                <div className="font-semibold text-sm">
+                  {selectedBatchName}
+                </div>
               </div>
-            ) : (
+
               <AttendanceMain
                 studentsData={studentsData}
                 attendanceState={attendanceState}
@@ -267,97 +274,107 @@ export default function AttendancePage() {
                 saved={saved}
                 setShowConfirm={setShowConfirm}
               />
-            )
-          }
 
-        />
+            </div>
+
+          ) : (
+
+            <AttendanceSidebar
+              branches={branches}
+              selectedBranch={selectedBranch}
+              setSelectedBranch={(b) => {
+                setSelectedBranch(b);
+                setSelectedBatch(null);
+              }}
+              batches={filteredBatches}
+              selectedBatch={selectedBatch}
+              setSelectedBatch={setSelectedBatch}
+            />
+
+          )
+
+        ) : (
+
+          /* 💻 DESKTOP */
+          <AdminSplitLayout
+            left={
+              <AttendanceSidebar
+                branches={branches}
+                selectedBranch={selectedBranch}
+                setSelectedBranch={(b) => {
+                  setSelectedBranch(b);
+                  setSelectedBatch(null);
+                }}
+                batches={filteredBatches}
+                selectedBatch={selectedBatch}
+                setSelectedBatch={setSelectedBatch}
+              />
+            }
+            right={
+              !selectedBatch ? (
+                <div className="flex items-center justify-center h-full text-gray-400">
+                  Select a batch
+                </div>
+              ) : (
+                <AttendanceMain
+                  studentsData={studentsData}
+                  attendanceState={attendanceState}
+                  setAttendanceState={setAttendanceState}
+                  selectedBatchName={selectedBatchName}
+                  totalStudents={totalStudents}
+                  presentCount={presentCount}
+                  absentCount={absentCount}
+                  saved={saved}
+                  setShowConfirm={setShowConfirm}
+                />
+              )
+            }
+          />
+
+        )}
 
       </div>
 
+      {/* MODAL SAME */}
       {showConfirm && (
-
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-
           <div className="bg-white p-6 rounded w-[420px] max-h-[70vh] overflow-auto">
-
-            <h3 className="font-semibold mb-4">
-              Confirm Attendance
-            </h3>
-
+            <h3 className="font-semibold mb-4">Confirm Attendance</h3>
             <div className="mb-4 text-sm">
-
               Total Students : {totalStudents}
-
               <br />
-
-              <span className="text-green-600">
-                Present : {presentCount}
-              </span>
-
+              <span className="text-green-600">Present : {presentCount}</span>
               <br />
-
-              <span className="text-red-600">
-                Absent : {absentCount}
-              </span>
-
+              <span className="text-red-600">Absent : {absentCount}</span>
             </div>
 
             <div className="space-y-2 text-sm">
-
               {studentsData.map(s => {
-
                 const status = attendanceState[s.id] || "P";
-
                 return (
-
                   <div key={s.id} className="flex justify-between">
-
                     <span>{s.name}</span>
-
-                    <span
-                      className={
-                        status === "P"
-                          ? "text-green-600 font-bold"
-                          : "text-red-600 font-bold"
-                      }
-                    >
+                    <span className={status === "P" ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
                       {status}
                     </span>
-
                   </div>
-
                 );
-
               })}
-
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
-
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="px-4 py-2 border rounded"
-              >
+              <button onClick={() => setShowConfirm(false)} className="px-4 py-2 border rounded">
                 Cancel
               </button>
-
-              <button
-                onClick={submitAttendance}
-                className="bg-green-600 text-white px-4 py-2 rounded"
-              >
+              <button onClick={submitAttendance} className="bg-green-600 text-white px-4 py-2 rounded">
                 Yes Submit
               </button>
-
             </div>
 
           </div>
-
         </div>
-
       )}
 
     </PermissionGuard>
-
   );
-
 }
