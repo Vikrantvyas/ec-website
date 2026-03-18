@@ -5,19 +5,29 @@ import { createContext, useContext, useState } from "react";
 type PermissionContextType = {
   permissions: string[];
   branchId: string | null;
-  role: string | null;              // ✅ ADD
+  role: string | null;
+  userId: string | null;              // ✅ ADD
+  teacherId: string | null;           // ✅ ADD
+
   setPermissions: (permissions: string[]) => void;
   setBranchId: (branchId: string | null) => void;
-  setRole: (role: string | null) => void;  // ✅ ADD
+  setRole: (role: string | null) => void;
+  setUserId: (id: string | null) => void;       // ✅ ADD
+  setTeacherId: (id: string | null) => void;    // ✅ ADD
 };
 
 const PermissionContext = createContext<PermissionContextType>({
   permissions: [],
   branchId: null,
-  role: null,              // ✅ ADD
+  role: null,
+  userId: null,          // ✅ ADD
+  teacherId: null,       // ✅ ADD
+
   setPermissions: () => {},
   setBranchId: () => {},
-  setRole: () => {},      // ✅ ADD
+  setRole: () => {},
+  setUserId: () => {},       // ✅ ADD
+  setTeacherId: () => {},    // ✅ ADD
 });
 
 export function PermissionProvider({
@@ -28,7 +38,9 @@ export function PermissionProvider({
 
   const [permissions, setPermissions] = useState<string[]>([]);
   const [branchId, setBranchId] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null); // ✅ ADD
+  const [role, setRole] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);     // ✅ ADD
+  const [teacherId, setTeacherId] = useState<string | null>(null); // ✅ ADD
 
   return (
     <PermissionContext.Provider
@@ -38,7 +50,11 @@ export function PermissionProvider({
         branchId,
         setBranchId,
         role,
-        setRole, // ✅ ADD
+        setRole,
+        userId,
+        setUserId,
+        teacherId,
+        setTeacherId,
       }}
     >
       {children}
