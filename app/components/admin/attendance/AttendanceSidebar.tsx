@@ -22,15 +22,15 @@ export default function AttendanceSidebar({
   batches,
   selectedBatch,
   setSelectedBatch,
-  isTeacher, // ✅ from parent
+  isTeacher,
 }: {
   branches: Branch[];
   selectedBranch: string;
   setSelectedBranch: (b: string) => void;
   batches: Batch[];
   selectedBatch: string | null;
-  setSelectedBatch: (id: string) => void;
-  isTeacher: boolean; // ✅ NEW
+  setSelectedBatch: (id: string | null) => void; // ✅ FIX
+  isTeacher: boolean;
 }) {
 
   const [search, setSearch] = useState("");
@@ -52,14 +52,14 @@ export default function AttendanceSidebar({
         />
       </div>
 
-      {/* ✅ BRANCHES (ONLY ADMIN) */}
+      {/* BRANCHES (ONLY ADMIN) */}
       {!isTeacher && (
         <div className="px-2 pb-2 overflow-x-auto flex gap-2">
           {branches.map((b) => (
             <button
               key={b.id}
               onClick={() => {
-                setSelectedBranch(b.id); // ✅ FIXED (ID, not name)
+                setSelectedBranch(b.id);
                 setSelectedBatch(null);
               }}
               className={`px-3 py-1 rounded text-xs md:text-sm whitespace-nowrap shadow-sm transition
