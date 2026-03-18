@@ -5,21 +5,19 @@ import { createContext, useContext, useState } from "react";
 type PermissionContextType = {
   permissions: string[];
   branchId: string | null;
-  userId: string | null; // ✅ NEW
-
+  role: string | null;              // ✅ ADD
   setPermissions: (permissions: string[]) => void;
   setBranchId: (branchId: string | null) => void;
-  setUserId: (userId: string | null) => void; // ✅ NEW
+  setRole: (role: string | null) => void;  // ✅ ADD
 };
 
 const PermissionContext = createContext<PermissionContextType>({
   permissions: [],
   branchId: null,
-  userId: null,
-
+  role: null,              // ✅ ADD
   setPermissions: () => {},
   setBranchId: () => {},
-  setUserId: () => {},
+  setRole: () => {},      // ✅ ADD
 });
 
 export function PermissionProvider({
@@ -27,9 +25,10 @@ export function PermissionProvider({
 }: {
   children: React.ReactNode;
 }) {
+
   const [permissions, setPermissions] = useState<string[]>([]);
   const [branchId, setBranchId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null); // ✅ NEW
+  const [role, setRole] = useState<string | null>(null); // ✅ ADD
 
   return (
     <PermissionContext.Provider
@@ -38,8 +37,8 @@ export function PermissionProvider({
         setPermissions,
         branchId,
         setBranchId,
-        userId,
-        setUserId, // ✅ NEW
+        role,
+        setRole, // ✅ ADD
       }}
     >
       {children}
