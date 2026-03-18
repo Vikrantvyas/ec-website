@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import { supabase } from "@/lib/supabaseClient";
+import { usePermissions } from "@/lib/permissionsContext"; // ✅ ADD
 
 import AdminSplitLayout from "@/app/components/admin/layout/AdminSplitLayout";
 import AttendanceSidebar from "@/app/components/admin/attendance/AttendanceSidebar";
@@ -33,6 +34,8 @@ type Student = {
 };
 
 export default function AttendancePage() {
+
+  const { role } = usePermissions(); // ✅ ADD
 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -67,7 +70,6 @@ export default function AttendancePage() {
     }
   }, [selectedBatch]);
 
-  // ✅ MOBILE SAFE INIT
   async function initPage() {
 
     let user = null;
@@ -94,17 +96,14 @@ export default function AttendancePage() {
     setBranches(data || []);
   }
 
-  // ✅ FINAL FIXED LOGIC
   async function loadBatches(user: any) {
 
-    // user branch
     const { data: userData } = await supabase
       .from("users")
       .select("branch_id")
       .eq("id", user.id)
       .single();
 
-    // teacher match
     const { data: teacher } = await supabase
       .from("teachers")
       .select("id")
@@ -116,15 +115,13 @@ export default function AttendancePage() {
       .select("id,batch_name,branch_id,start_time,teacher_id")
       .order("start_time");
 
-    // 👉 teacher filter
     if (teacher?.id) {
       query = query.eq("teacher_id", teacher.id);
     }
 
-    // 👉 branch restriction (IMPORTANT)
     if (userData?.branch_id) {
       query = query.eq("branch_id", userData.branch_id);
-      setSelectedBranch(userData.branch_id); // ✅ sync with selector
+      setSelectedBranch(userData.branch_id);
     }
 
     const { data: batchData } = await query;
@@ -280,7 +277,6 @@ export default function AttendancePage() {
     setSaved(true);
   }
 
-  // ✅ FIXED (ID BASED FILTER)
   const filteredBatches = useMemo(() => {
 
     if (!selectedBranch) return batches;
@@ -336,6 +332,7 @@ export default function AttendancePage() {
               batches={filteredBatches}
               selectedBatch={selectedBatch}
               setSelectedBatch={setSelectedBatch}
+              isTeacher={role === "teacher"} // ✅ FIX
             />
           )
         ) : (
@@ -351,6 +348,7 @@ export default function AttendancePage() {
                 batches={filteredBatches}
                 selectedBatch={selectedBatch}
                 setSelectedBatch={setSelectedBatch}
+                isTeacher={role === "teacher"} // ✅ FIX
               />
             }
             right={
