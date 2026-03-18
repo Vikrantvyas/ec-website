@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { usePermissions } from "@/lib/permissionsContext"; // ✅ NEW
 
 export default function AdminLoginPage() {
 
   const router = useRouter();
+
+  const { setUserId, setBranchId } = usePermissions(); // ✅ NEW
 
   const [email,setEmail] = useState("");
   const [password,setPassword] = useState("");
@@ -21,6 +24,22 @@ export default function AdminLoginPage() {
       const { data } = await supabase.auth.getSession();
 
       if(data.session){
+
+        const user = data.session.user;
+
+        setUserId(user.id); // ✅
+
+        // 👉 users table se branch fetch
+        const { data: userData } = await supabase
+          .from("users")
+          .select("branch_id")
+          .eq("id", user.id)
+          .single();
+
+        if(userData){
+          setBranchId(userData.branch_id); // ✅
+        }
+
         router.push("/admin");
       }
 
@@ -28,14 +47,14 @@ export default function AdminLoginPage() {
 
     checkSession();
 
-  },[router]);
+  },[router,setUserId,setBranchId]);
 
   const handleLogin = async ()=>{
 
     setError("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
@@ -47,6 +66,20 @@ export default function AdminLoginPage() {
       setError(error.message);
 
     }else{
+
+      const user = data.user;
+
+      setUserId(user.id); // ✅
+
+      const { data: userData } = await supabase
+        .from("users")
+        .select("branch_id")
+        .eq("id", user.id)
+        .single();
+
+      if(userData){
+        setBranchId(userData.branch_id); // ✅
+      }
 
       router.push("/admin");
 
