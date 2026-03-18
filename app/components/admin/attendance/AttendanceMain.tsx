@@ -89,12 +89,8 @@ export default function AttendanceMain({
                 </div>
 
                 <div className="text-[10px] md:text-xs text-gray-600 mt-1">
-                  {student.joiningDate} • {student.course}
-                </div>
-
-                <div className="text-[10px] md:text-xs text-gray-600">
-                  ₹ {student.due ? `${student.due} Due` : "Clear"}
-                </div>
+  {student.joiningDate} • {student.course} • ₹ {student.due ? `${student.due} Due` : "Clear"}
+</div>
 
                 {/* LAST 10 */}
                 <div className="flex gap-1 mt-1 md:mt-2">

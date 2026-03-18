@@ -135,7 +135,7 @@ export default function AttendancePage() {
     setAttendanceState(map);
   }
 
-  // ✅🔥 FAST VERSION (MAIN FIX)
+  // ✅🔥 FINAL PERFECT WITH DISCOUNT
   async function loadStudents(batchId: string) {
 
     const { data: batchStudents } = await supabase
@@ -157,8 +157,9 @@ export default function AttendancePage() {
 
     const { data: receipts } = await supabase
       .from("receipts")
-      .select("student_name,due,batch")
-      .in("student_name", leads?.map(l => l.student_name) || []);
+      .select("student_name,amount,total_fee,discount,created_at,batch")
+      .in("student_name", leads?.map(l => l.student_name) || [])
+      .order("created_at", { ascending: false });
 
     const { data: attendance } = await supabase
       .from("attendance")
@@ -166,11 +167,31 @@ export default function AttendancePage() {
       .in("lead_id", leadIds)
       .order("attendance_date", { ascending: false });
 
+    const totalPaidMap: Record<string, number> = {};
+    const latestReceiptMap: Record<string, any> = {};
+
+    receipts?.forEach(r => {
+
+      totalPaidMap[r.student_name] =
+        (totalPaidMap[r.student_name] || 0) + (r.amount || 0);
+
+      if (!latestReceiptMap[r.student_name]) {
+        latestReceiptMap[r.student_name] = r;
+      }
+
+    });
+
     const students: Student[] = [];
 
     for (const lead of leads || []) {
 
-      const receipt = receipts?.find(r => r.student_name === lead.student_name);
+      const latest = latestReceiptMap[lead.student_name];
+
+      const totalFee = latest?.total_fee || 0;
+      const discount = latest?.discount || 0;
+      const paid = totalPaidMap[lead.student_name] || 0;
+
+      const finalFee = totalFee - discount;
 
       const studentAttendance = attendance
         ?.filter(a => a.lead_id === lead.id)
@@ -187,8 +208,8 @@ export default function AttendancePage() {
         name: lead.student_name,
         joiningDate: lead.enquiry_date,
         course: lead.course,
-        due: receipt?.due || 0,
-        batchName: receipt?.batch || "",
+        due: Math.max(finalFee - paid, 0),
+        batchName: latest?.batch || "",
         last10
       });
     }
