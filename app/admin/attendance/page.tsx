@@ -56,8 +56,7 @@ export default function AttendancePage() {
   }, []);
 
   useEffect(() => {
-    loadBranches();
-    loadBatches();
+    initPage();
   }, []);
 
   useEffect(() => {
@@ -68,6 +67,24 @@ export default function AttendancePage() {
     }
   }, [selectedBatch]);
 
+  // ✅ MOBILE SAFE INIT
+  async function initPage() {
+
+    let user = null;
+
+    for (let i = 0; i < 10; i++) {
+      const { data } = await supabase.auth.getSession();
+      user = data.session?.user;
+      if (user) break;
+      await new Promise(res => setTimeout(res, 200));
+    }
+
+    if (!user) return;
+
+    await loadBranches();
+    await loadBatches(user);
+  }
+
   async function loadBranches() {
     const { data } = await supabase
       .from("branches")
@@ -77,12 +94,40 @@ export default function AttendancePage() {
     setBranches(data || []);
   }
 
-  async function loadBatches() {
+  // ✅ FINAL FIXED LOGIC
+  async function loadBatches(user: any) {
 
-    const { data: batchData } = await supabase
+    // user branch
+    const { data: userData } = await supabase
+      .from("users")
+      .select("branch_id")
+      .eq("id", user.id)
+      .single();
+
+    // teacher match
+    const { data: teacher } = await supabase
+      .from("teachers")
+      .select("id")
+      .eq("email", user.email)
+      .maybeSingle();
+
+    let query = supabase
       .from("batches")
       .select("id,batch_name,branch_id,start_time,teacher_id")
       .order("start_time");
+
+    // 👉 teacher filter
+    if (teacher?.id) {
+      query = query.eq("teacher_id", teacher.id);
+    }
+
+    // 👉 branch restriction (IMPORTANT)
+    if (userData?.branch_id) {
+      query = query.eq("branch_id", userData.branch_id);
+      setSelectedBranch(userData.branch_id); // ✅ sync with selector
+    }
+
+    const { data: batchData } = await query;
 
     if (!batchData) return;
 
@@ -135,7 +180,6 @@ export default function AttendancePage() {
     setAttendanceState(map);
   }
 
-  // ✅🔥 FINAL PERFECT WITH DISCOUNT
   async function loadStudents(batchId: string) {
 
     const { data: batchStudents } = await supabase
@@ -171,14 +215,12 @@ export default function AttendancePage() {
     const latestReceiptMap: Record<string, any> = {};
 
     receipts?.forEach(r => {
-
       totalPaidMap[r.student_name] =
         (totalPaidMap[r.student_name] || 0) + (r.amount || 0);
 
       if (!latestReceiptMap[r.student_name]) {
         latestReceiptMap[r.student_name] = r;
       }
-
     });
 
     const students: Student[] = [];
@@ -238,12 +280,14 @@ export default function AttendancePage() {
     setSaved(true);
   }
 
+  // ✅ FIXED (ID BASED FILTER)
   const filteredBatches = useMemo(() => {
+
     if (!selectedBranch) return batches;
-    const branch = branches.find(b => b.name === selectedBranch);
-    if (!branch) return batches;
-    return batches.filter(b => b.branch_id === branch.id);
-  }, [selectedBranch, batches, branches]);
+
+    return batches.filter(b => b.branch_id === selectedBranch);
+
+  }, [selectedBranch, batches]);
 
   const selectedBatchName = batches.find(b => b.id === selectedBatch)?.batch_name;
 

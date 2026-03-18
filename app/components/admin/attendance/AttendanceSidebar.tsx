@@ -10,26 +10,16 @@ type Batch = {
   student_count?: number;
 };
 
-type Branch = {
-  id: string;
-  name: string;
-};
-
 export default function AttendanceSidebar({
-  branches,
-  selectedBranch,
-  setSelectedBranch,
   batches,
   selectedBatch,
   setSelectedBatch,
 }: {
-  branches: Branch[];
-  selectedBranch: string;
-  setSelectedBranch: (b: string) => void;
   batches: Batch[];
   selectedBatch: string | null;
   setSelectedBatch: (id: string) => void;
 }) {
+
   const [search, setSearch] = useState("");
 
   const filtered = batches.filter((b) =>
@@ -49,26 +39,7 @@ export default function AttendanceSidebar({
         />
       </div>
 
-      {/* BRANCHES */}
-      <div className="px-2 pb-2 overflow-x-auto flex gap-2">
-        {branches.map((b) => (
-          <button
-            key={b.id}
-            onClick={() => {
-              setSelectedBranch(b.name);
-              setSelectedBatch("");
-            }}
-            className={`px-3 py-1 rounded text-xs md:text-sm whitespace-nowrap shadow-sm transition
-              ${
-                selectedBranch === b.name
-                  ? "bg-blue-600 text-white"
-                  : "bg-white"
-              }`}
-          >
-            {b.name}
-          </button>
-        ))}
-      </div>
+      {/* 🚫 BRANCH SELECTOR REMOVED */}
 
       {/* BATCH LIST */}
       <div className="flex-1 overflow-y-auto px-2 pb-2">
