@@ -56,7 +56,8 @@ export default function AttendancePage() {
   }, []);
 
   useEffect(() => {
-    initPage();
+    loadBranches();
+    loadBatches();
   }, []);
 
   useEffect(() => {
@@ -67,24 +68,6 @@ export default function AttendancePage() {
     }
   }, [selectedBatch]);
 
-  // ✅ MOBILE SAFE INIT
-  async function initPage() {
-
-    let user = null;
-
-    for (let i = 0; i < 10; i++) {
-      const { data } = await supabase.auth.getSession();
-      user = data.session?.user;
-      if (user) break;
-      await new Promise(res => setTimeout(res, 200));
-    }
-
-    if (!user) return;
-
-    await loadBranches();
-    await loadBatches(user);
-  }
-
   async function loadBranches() {
     const { data } = await supabase
       .from("branches")
@@ -94,8 +77,13 @@ export default function AttendancePage() {
     setBranches(data || []);
   }
 
-  // ✅ FINAL FIXED LOGIC
-  async function loadBatches(user: any) {
+  // ✅🔥 UPDATED (Teacher + Branch Filter)
+  async function loadBatches() {
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+
+    if (!user) return;
 
     // user branch
     const { data: userData } = await supabase
@@ -109,22 +97,21 @@ export default function AttendancePage() {
       .from("teachers")
       .select("id")
       .eq("email", user.email)
-      .maybeSingle();
+      .single();
 
     let query = supabase
       .from("batches")
       .select("id,batch_name,branch_id,start_time,teacher_id")
       .order("start_time");
 
-    // 👉 teacher filter
+    // 👉 Teacher login → only own batches
     if (teacher?.id) {
       query = query.eq("teacher_id", teacher.id);
     }
 
-    // 👉 branch restriction (IMPORTANT)
+    // 👉 Branch restriction
     if (userData?.branch_id) {
       query = query.eq("branch_id", userData.branch_id);
-      setSelectedBranch(userData.branch_id); // ✅ sync with selector
     }
 
     const { data: batchData } = await query;
@@ -215,12 +202,14 @@ export default function AttendancePage() {
     const latestReceiptMap: Record<string, any> = {};
 
     receipts?.forEach(r => {
+
       totalPaidMap[r.student_name] =
         (totalPaidMap[r.student_name] || 0) + (r.amount || 0);
 
       if (!latestReceiptMap[r.student_name]) {
         latestReceiptMap[r.student_name] = r;
       }
+
     });
 
     const students: Student[] = [];
@@ -280,14 +269,12 @@ export default function AttendancePage() {
     setSaved(true);
   }
 
-  // ✅ FIXED (ID BASED FILTER)
   const filteredBatches = useMemo(() => {
-
     if (!selectedBranch) return batches;
-
-    return batches.filter(b => b.branch_id === selectedBranch);
-
-  }, [selectedBranch, batches]);
+    const branch = branches.find(b => b.name === selectedBranch);
+    if (!branch) return batches;
+    return batches.filter(b => b.branch_id === branch.id);
+  }, [selectedBranch, batches, branches]);
 
   const selectedBatchName = batches.find(b => b.id === selectedBatch)?.batch_name;
 
