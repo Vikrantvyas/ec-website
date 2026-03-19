@@ -31,6 +31,7 @@ type Student = {
   due?: number;
   batchName?: string;
   last10: string[];
+  paid?: number; // ✅ FINAL
 };
 
 export default function AttendancePage() {
@@ -80,11 +81,7 @@ export default function AttendancePage() {
       .eq("attendance_date", today)
       .limit(1);
 
-    if (data && data.length > 0) {
-      setSaved(true);
-    } else {
-      setSaved(false);
-    }
+    setSaved(!!(data && data.length > 0));
   }
 
   async function initPage() {
@@ -141,7 +138,6 @@ export default function AttendancePage() {
     }
 
     const { data: batchData } = await query;
-
     if (!batchData) return;
 
     const teacherIds = batchData.map(b => b.teacher_id).filter(Boolean);
@@ -265,7 +261,8 @@ export default function AttendancePage() {
         course: lead.course,
         due: Math.max(finalFee - paid, 0),
         batchName: latest?.batch || "",
-        last10
+        last10,
+        paid // ✅ FINAL
       });
     }
 
@@ -341,7 +338,7 @@ export default function AttendancePage() {
                 setShowConfirm={setShowConfirm}
                 showConfirm={showConfirm}
                 submitAttendance={submitAttendance}
-                selectedBatchId={selectedBatch}   // ✅ FIXED
+                selectedBatchId={selectedBatch}
               />
             </div>
           ) : (
@@ -392,7 +389,7 @@ export default function AttendancePage() {
                   setShowConfirm={setShowConfirm}
                   showConfirm={showConfirm}
                   submitAttendance={submitAttendance}
-                  selectedBatchId={selectedBatch}   // ✅ FIXED
+                  selectedBatchId={selectedBatch}
                 />
               )
             }
