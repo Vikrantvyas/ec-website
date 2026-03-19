@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AttendanceHistory from "./AttendanceHistory";
+import AddStudentsModal from "@/app/components/admin/common/AddStudentsModal";
 
 type Student = {
   id: string;
@@ -25,10 +26,11 @@ export default function AttendanceMain({
   setShowConfirm,
   showConfirm,
   submitAttendance,
-  selectedBatch,
+  selectedBatchId,
 }: any) {
 
   const [showHistory, setShowHistory] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -47,12 +49,25 @@ export default function AttendanceMain({
             <span className="text-red-600 ml-2">A: {absentCount}</span>
           </div>
 
-          <div
-            onClick={() => setShowHistory(true)}
-            className="text-blue-600 text-xs mt-1 cursor-pointer underline"
-          >
-            Attendance History
-          </div>
+         <div className="text-blue-600 text-xs mt-1 flex items-center gap-2">
+
+  <span
+    onClick={() => setShowHistory(true)}
+    className="cursor-pointer underline"
+  >
+    Attendance History
+  </span>
+
+  <span className="text-gray-400">|</span>
+
+  <span
+    onClick={() => setShowAddModal(true)}
+    className="cursor-pointer underline"
+  >
+    + Add Students
+  </span>
+
+</div>
 
           {saved && (
             <div className="text-green-600 text-[11px] md:text-xs mt-1">
@@ -204,9 +219,18 @@ export default function AttendanceMain({
       {/* HISTORY POPUP */}
       {showHistory && (
         <AttendanceHistory
-          batchId={selectedBatch}
+          batchId={selectedBatchId}
           students={studentsData}
           onClose={() => setShowHistory(false)}
+        />
+      )}
+
+      {/* ADD STUDENTS MODAL */}
+      {showAddModal && (
+        <AddStudentsModal
+          batchId={selectedBatchId}
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => window.location.reload()}
         />
       )}
 
