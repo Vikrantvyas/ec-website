@@ -341,7 +341,7 @@ export default function AttendancePage() {
                 setShowConfirm={setShowConfirm}
                 showConfirm={showConfirm}
                 submitAttendance={submitAttendance}
-                selectedBatch={selectedBatch}   // ✅ ADDED
+                selectedBatchId={selectedBatch}   // ✅ FIXED
               />
             </div>
           ) : (
@@ -392,7 +392,7 @@ export default function AttendancePage() {
                   setShowConfirm={setShowConfirm}
                   showConfirm={showConfirm}
                   submitAttendance={submitAttendance}
-                  selectedBatch={selectedBatch}   // ✅ ADDED
+                  selectedBatchId={selectedBatch}   // ✅ FIXED
                 />
               )
             }
