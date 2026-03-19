@@ -12,6 +12,8 @@ type Student = {
   due?: number;
   batchName?: string;
   last10: string[];
+  isDemo?: boolean;
+  paid?: number; // ✅ ADD
 };
 
 export default function AttendanceMain({
@@ -49,25 +51,17 @@ export default function AttendanceMain({
             <span className="text-red-600 ml-2">A: {absentCount}</span>
           </div>
 
-         <div className="text-blue-600 text-xs mt-1 flex items-center gap-2">
+          <div className="text-blue-600 text-xs mt-1 flex items-center gap-2">
+            <span onClick={() => setShowHistory(true)} className="cursor-pointer underline">
+              Attendance History
+            </span>
 
-  <span
-    onClick={() => setShowHistory(true)}
-    className="cursor-pointer underline"
-  >
-    Attendance History
-  </span>
+            <span className="text-gray-400">|</span>
 
-  <span className="text-gray-400">|</span>
-
-  <span
-    onClick={() => setShowAddModal(true)}
-    className="cursor-pointer underline"
-  >
-    + Add Students
-  </span>
-
-</div>
+            <span onClick={() => setShowAddModal(true)} className="cursor-pointer underline">
+              + Add Students
+            </span>
+          </div>
 
           {saved && (
             <div className="text-green-600 text-[11px] md:text-xs mt-1">
@@ -104,6 +98,10 @@ export default function AttendanceMain({
           const status = attendanceState[student.id] || "P";
           const isPresent = status === "P";
 
+          // ✅ FINAL CORRECT LOGIC
+          const isUnpaid = (student.paid || 0) === 0;
+          const isDue = (student.paid || 0) > 0 && (student.due || 0) > 0;
+
           return (
             <div
               key={student.id}
@@ -112,14 +110,29 @@ export default function AttendanceMain({
 
               <div className="flex-1 pr-2">
 
-                <div className={`font-semibold text-sm ${
-                  student.due ? "text-red-600" : ""
-                }`}>
+                {/* NAME */}
+                <div
+                  className={`font-semibold text-sm px-2 py-[2px] rounded inline-block ${
+                    isUnpaid
+                      ? "bg-lime-100"
+                      : isDue
+                      ? "text-red-600"
+                      : student.isDemo
+                      ? "bg-lime-200 text-black"
+                      : ""
+                  }`}
+                >
                   {index + 1}. {student.name}
                 </div>
 
+                {/* STATUS TEXT */}
                 <div className="text-[10px] md:text-xs text-gray-600 mt-1">
-                  {student.joiningDate} • {student.course} • ₹ {student.due ? `${student.due} Due` : "Clear"}
+                  {student.joiningDate} • {student.course} • ₹{" "}
+                  {isUnpaid
+                    ? "Unpaid"
+                    : isDue
+                    ? `${student.due} Due`
+                    : "Clear"}
                 </div>
 
                 <div className="flex gap-1 mt-1 md:mt-2">
@@ -216,7 +229,7 @@ export default function AttendanceMain({
         </div>
       )}
 
-      {/* HISTORY POPUP */}
+      {/* HISTORY */}
       {showHistory && (
         <AttendanceHistory
           batchId={selectedBatchId}
@@ -225,7 +238,7 @@ export default function AttendanceMain({
         />
       )}
 
-      {/* ADD STUDENTS MODAL */}
+      {/* ADD STUDENTS */}
       {showAddModal && (
         <AddStudentsModal
           batchId={selectedBatchId}
