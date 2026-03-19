@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 type Props = {
   batchId: string | null;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: () => Promise<void> | void;
 };
 
 export default function AddStudentsModal({
@@ -23,7 +23,9 @@ export default function AddStudentsModal({
   const [batchName, setBatchName] = useState("");
   const [batchCount, setBatchCount] = useState(0);
 
-  // ✅ QUICK FORM
+  const [removeIds, setRemoveIds] = useState<string[]>([]);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const [showQuickForm, setShowQuickForm] = useState(false);
   const [newStudent, setNewStudent] = useState({
     name: "",
@@ -38,6 +40,7 @@ export default function AddStudentsModal({
       loadStudents();
       loadExistingStudents();
       setSelected([]);
+      setRemoveIds([]);
       setSearch("");
     }
   }, [batchId]);
@@ -123,35 +126,47 @@ export default function AddStudentsModal({
     setSelected(selected.filter((s)=>s.id!==id));
   }
 
-  async function removeExisting(id:string) {
+  function toggleRemove(id:string) {
 
-    await supabase
-      .from("batch_students")
-      .delete()
-      .eq("batch_id", batchId)
-      .eq("lead_id", id);
-
-    setExisting(existing.filter((s)=>s.id!==id));
-    setExistingIds(existingIds.filter((x)=>x!==id));
-    setBatchCount(batchCount-1);
+    if (removeIds.includes(id)) {
+      setRemoveIds(removeIds.filter(x=>x!==id));
+    } else {
+      setRemoveIds([...removeIds, id]);
+    }
   }
 
-  async function addStudents() {
+  // ✅ FINAL FIXED APPLY
+  async function applyChanges() {
 
-    if (!batchId || selected.length === 0) return;
+    if (removeIds.length > 0) {
+      await supabase
+        .from("batch_students")
+        .delete()
+        .in("lead_id", removeIds)
+        .eq("batch_id", batchId);
+    }
 
-    const rows = selected.map((s)=>({
-      batch_id: batchId,
-      lead_id: s.id
-    }));
+    if (selected.length > 0) {
+      const rows = selected.map((s)=>({
+        batch_id: batchId,
+        lead_id: s.id
+      }));
+      await supabase.from("batch_students").insert(rows);
+    }
 
-    await supabase.from("batch_students").insert(rows);
+    // ✅ FIX → refresh FIRST
+    if (onSuccess) await onSuccess();
 
-    if (onSuccess) onSuccess();
+    // ✅ update modal UI
+    await loadExistingStudents();
+    setSelected([]);
+    setRemoveIds([]);
+    setShowConfirm(false);
+
+    // ✅ close LAST
     onClose();
   }
 
-  // ✅ QUICK CREATE (FINAL FIXED)
   async function createQuickLead() {
 
     if (!newStudent.name || !newStudent.mobile) {
@@ -159,14 +174,12 @@ export default function AddStudentsModal({
       return;
     }
 
-    // batch info
     const { data: batchData } = await supabase
       .from("batches")
       .select("branch_id, batch_name, start_time")
       .eq("id", batchId)
       .single();
 
-    // insert lead
     const { data: lead, error } = await supabase
       .from("leads")
       .insert([{
@@ -174,12 +187,9 @@ export default function AddStudentsModal({
         mobile_number: newStudent.mobile,
         age: newStudent.age ? Number(newStudent.age) : null,
         gender: newStudent.gender,
-
-        // auto fill
         branch: batchData?.branch_id,
         preferred_batch: batchData?.batch_name,
         preferred_timing: batchData?.start_time,
-
         enquiry_date: new Date().toISOString().split("T")[0]
       }])
       .select()
@@ -190,7 +200,6 @@ export default function AddStudentsModal({
       return;
     }
 
-    // add to batch
     await supabase.from("batch_students").insert([{
       batch_id: batchId,
       lead_id: lead.id
@@ -206,7 +215,8 @@ export default function AddStudentsModal({
       gender: "",
     });
 
-    if (onSuccess) onSuccess();
+    if (onSuccess) await onSuccess();
+    await loadExistingStudents();
   }
 
   const filteredStudents = students
@@ -295,10 +305,14 @@ export default function AddStudentsModal({
             {existing.map((s)=>(
               <div
                 key={s.id}
-                className="flex items-center gap-2 bg-gray-200 text-xs px-2 py-1 rounded"
+                onClick={()=>toggleRemove(s.id)}
+                className={`flex items-center gap-2 text-xs px-2 py-1 rounded cursor-pointer ${
+                  removeIds.includes(s.id)
+                    ? "bg-red-200 line-through opacity-60"
+                    : "bg-gray-200"
+                }`}
               >
-                {s.student_name}
-                <button onClick={()=>removeExisting(s.id)}>✕</button>
+                {s.student_name} ✕
               </div>
             ))}
           </div>
@@ -309,7 +323,7 @@ export default function AddStudentsModal({
             {selected.map((s)=>(
               <div
                 key={s.id}
-                className="flex items-center gap-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                className="flex items-center gap-2 bg-green-100 text-green-700 text-xs px-2 py-1 rounded"
               >
                 {s.student_name}
                 <button onClick={()=>removeStudent(s.id)}>✕</button>
@@ -319,52 +333,71 @@ export default function AddStudentsModal({
         )}
 
         <div className="flex-1 overflow-y-auto space-y-2">
-
           {filteredStudents.map((s)=>{
-
             const checked = selected.find((x)=>x.id===s.id);
-
             return (
               <div
                 key={s.id}
                 onClick={()=>toggleStudent(s)}
                 className={`flex items-center gap-3 border p-3 rounded cursor-pointer hover:bg-gray-50 ${checked?"bg-blue-50 border-blue-400":""}`}
               >
-                <input
-                  type="checkbox"
-                  checked={!!checked}
-                  onChange={()=>toggleStudent(s)}
-                />
-
-                <span className="text-sm">
-                  {s.student_name}
-                </span>
+                <input type="checkbox" checked={!!checked} readOnly />
+                <span className="text-sm">{s.student_name}</span>
               </div>
             );
           })}
-
         </div>
 
         <div className="flex justify-end gap-3 mt-3 pt-3 border-t">
-
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm bg-gray-100 rounded hover:bg-gray-200"
-          >
+          <button onClick={onClose} className="px-4 py-2 text-sm bg-gray-100 rounded">
             Cancel
           </button>
-
           <button
-            onClick={addStudents}
-            className="px-4 py-2 text-sm bg-[#0a1f44] text-white rounded hover:bg-[#163d7a]"
+            onClick={()=>setShowConfirm(true)}
+            className="px-4 py-2 text-sm bg-[#0a1f44] text-white rounded"
           >
-            Add Students
+            OK
           </button>
-
         </div>
 
-      </div>
+        {showConfirm && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white p-4 rounded w-[90%] max-w-md">
 
+              <h3 className="font-semibold mb-2">Confirm Changes</h3>
+
+              {selected.length > 0 && (
+                <div className="mb-2">
+                  <div className="text-green-600 text-sm">Add:</div>
+                  {selected.map(s=>(
+                    <div key={s.id} className="text-xs">{s.student_name}</div>
+                  ))}
+                </div>
+              )}
+
+              {removeIds.length > 0 && (
+                <div>
+                  <div className="text-red-600 text-sm">Remove:</div>
+                  {existing.filter(e=>removeIds.includes(e.id)).map(s=>(
+                    <div key={s.id} className="text-xs">{s.student_name}</div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 mt-3">
+                <button onClick={()=>setShowConfirm(false)} className="px-3 py-1 bg-gray-200 rounded">
+                  Cancel
+                </button>
+                <button onClick={applyChanges} className="px-3 py-1 bg-blue-600 text-white rounded">
+                  Confirm
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }
