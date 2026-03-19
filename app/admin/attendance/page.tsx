@@ -66,7 +66,7 @@ export default function AttendancePage() {
     if (selectedBatch) {
       loadStudents(selectedBatch);
       loadTodayAttendance(selectedBatch);
-      checkTodayAttendance(selectedBatch); // ✅ LOCK CHECK
+      checkTodayAttendance(selectedBatch);
     }
   }, [selectedBatch]);
 
@@ -341,6 +341,7 @@ export default function AttendancePage() {
                 setShowConfirm={setShowConfirm}
                 showConfirm={showConfirm}
                 submitAttendance={submitAttendance}
+                selectedBatch={selectedBatch}   // ✅ ADDED
               />
             </div>
           ) : (
@@ -391,6 +392,7 @@ export default function AttendancePage() {
                   setShowConfirm={setShowConfirm}
                   showConfirm={showConfirm}
                   submitAttendance={submitAttendance}
+                  selectedBatch={selectedBatch}   // ✅ ADDED
                 />
               )
             }

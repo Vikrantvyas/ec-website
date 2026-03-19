@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import AttendanceHistory from "./AttendanceHistory";
+
 type Student = {
   id: string;
   name: string;
@@ -22,7 +25,10 @@ export default function AttendanceMain({
   setShowConfirm,
   showConfirm,
   submitAttendance,
+  selectedBatch,
 }: any) {
+
+  const [showHistory, setShowHistory] = useState(false);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -37,12 +43,15 @@ export default function AttendanceMain({
 
           <div className="text-xs md:text-sm mt-1">
             Total: {totalStudents}
-            <span className="text-green-600 ml-2">
-              P: {presentCount}
-            </span>
-            <span className="text-red-600 ml-2">
-              A: {absentCount}
-            </span>
+            <span className="text-green-600 ml-2">P: {presentCount}</span>
+            <span className="text-red-600 ml-2">A: {absentCount}</span>
+          </div>
+
+          <div
+            onClick={() => setShowHistory(true)}
+            className="text-blue-600 text-xs mt-1 cursor-pointer underline"
+          >
+            Attendance History
           </div>
 
           {saved && (
@@ -150,7 +159,7 @@ export default function AttendanceMain({
 
       </div>
 
-      {/* POPUP */}
+      {/* CONFIRM POPUP */}
       {showConfirm && !saved && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-4 w-[90%] max-w-md max-h-[80vh] overflow-y-auto">
@@ -190,6 +199,15 @@ export default function AttendanceMain({
 
           </div>
         </div>
+      )}
+
+      {/* HISTORY POPUP */}
+      {showHistory && (
+        <AttendanceHistory
+          batchId={selectedBatch}
+          students={studentsData}
+          onClose={() => setShowHistory(false)}
+        />
       )}
 
     </div>
