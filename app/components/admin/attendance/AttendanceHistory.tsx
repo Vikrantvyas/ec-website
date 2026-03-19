@@ -102,8 +102,10 @@ export default function AttendanceHistory({
               {students.map((s: any, i: number) => (
                 <tr key={s.id} className="border-b last:border-0">
 
-                  {/* NAME */}
-                  <td className="sticky left-0 bg-white z-10 px-2 py-2 max-w-[130px] truncate font-medium">
+                  {/* ✅ NAME WITH DUE COLOR */}
+                  <td className={`sticky left-0 bg-white z-10 px-2 py-2 max-w-[130px] truncate font-medium ${
+                    s.due ? "text-red-600" : "text-gray-800"
+                  }`}>
                     {i + 1}. {s.name}
                   </td>
 
