@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import { supabase } from "@/lib/supabaseClient";
-import { usePermissions } from "@/lib/permissionsContext"; // ✅ ADD
+import { usePermissions } from "@/lib/permissionsContext";
 
 import AdminSplitLayout from "@/app/components/admin/layout/AdminSplitLayout";
 import AttendanceSidebar from "@/app/components/admin/attendance/AttendanceSidebar";
@@ -35,7 +35,7 @@ type Student = {
 
 export default function AttendancePage() {
 
-  const { role } = usePermissions(); // ✅ ADD
+  const { role } = usePermissions();
 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -66,12 +66,28 @@ export default function AttendancePage() {
     if (selectedBatch) {
       loadStudents(selectedBatch);
       loadTodayAttendance(selectedBatch);
-      setSaved(false);
+      checkTodayAttendance(selectedBatch); // ✅ LOCK CHECK
     }
   }, [selectedBatch]);
 
-  async function initPage() {
+  async function checkTodayAttendance(batchId: string) {
+    const today = new Date().toISOString().split("T")[0];
 
+    const { data } = await supabase
+      .from("attendance")
+      .select("id")
+      .eq("batch_id", batchId)
+      .eq("attendance_date", today)
+      .limit(1);
+
+    if (data && data.length > 0) {
+      setSaved(true);
+    } else {
+      setSaved(false);
+    }
+  }
+
+  async function initPage() {
     let user = null;
 
     for (let i = 0; i < 10; i++) {
@@ -269,20 +285,24 @@ export default function AttendancePage() {
       status: attendanceState[s.id] || "P"
     }));
 
-    await supabase
+    const { error } = await supabase
       .from("attendance")
-      .upsert(rows, { onConflict: "batch_id,lead_id,attendance_date" });
+      .upsert(rows, {
+        onConflict: "batch_id,lead_id,attendance_date"
+      });
+
+    if (error) {
+      alert("Error: " + error.message);
+      return;
+    }
 
     setShowConfirm(false);
     setSaved(true);
   }
 
   const filteredBatches = useMemo(() => {
-
     if (!selectedBranch) return batches;
-
     return batches.filter(b => b.branch_id === selectedBranch);
-
   }, [selectedBranch, batches]);
 
   const selectedBatchName = batches.find(b => b.id === selectedBatch)?.batch_name;
@@ -319,6 +339,8 @@ export default function AttendancePage() {
                 absentCount={absentCount}
                 saved={saved}
                 setShowConfirm={setShowConfirm}
+                showConfirm={showConfirm}
+                submitAttendance={submitAttendance}
               />
             </div>
           ) : (
@@ -332,7 +354,7 @@ export default function AttendancePage() {
               batches={filteredBatches}
               selectedBatch={selectedBatch}
               setSelectedBatch={setSelectedBatch}
-              isTeacher={role === "teacher"} // ✅ FIX
+              isTeacher={role === "teacher"}
             />
           )
         ) : (
@@ -348,7 +370,7 @@ export default function AttendancePage() {
                 batches={filteredBatches}
                 selectedBatch={selectedBatch}
                 setSelectedBatch={setSelectedBatch}
-                isTeacher={role === "teacher"} // ✅ FIX
+                isTeacher={role === "teacher"}
               />
             }
             right={
@@ -367,6 +389,8 @@ export default function AttendancePage() {
                   absentCount={absentCount}
                   saved={saved}
                   setShowConfirm={setShowConfirm}
+                  showConfirm={showConfirm}
+                  submitAttendance={submitAttendance}
                 />
               )
             }

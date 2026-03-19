@@ -20,6 +20,8 @@ export default function AttendanceMain({
   absentCount,
   saved,
   setShowConfirm,
+  showConfirm,
+  submitAttendance,
 }: any) {
 
   return (
@@ -45,14 +47,19 @@ export default function AttendanceMain({
 
           {saved && (
             <div className="text-green-600 text-[11px] md:text-xs mt-1">
-              ✔ Attendance Saved
+              ✔ Attendance Locked for Today
             </div>
           )}
         </div>
 
         <button
+          disabled={saved}
           onClick={() => setShowConfirm(true)}
-          className="bg-blue-600 text-white px-3 md:px-4 py-1.5 md:py-2 rounded text-xs md:text-sm shadow-sm hover:bg-blue-700 transition"
+          className={`px-3 md:px-4 py-1.5 md:py-2 rounded text-xs md:text-sm shadow-sm transition ${
+            saved
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
         >
           Submit
         </button>
@@ -79,7 +86,6 @@ export default function AttendanceMain({
               className="py-2 md:py-3 px-2 md:px-3 flex justify-between items-center bg-white rounded-lg md:rounded-xl mb-2 md:mb-3 shadow-sm"
             >
 
-              {/* LEFT INFO */}
               <div className="flex-1 pr-2">
 
                 <div className={`font-semibold text-sm ${
@@ -89,10 +95,9 @@ export default function AttendanceMain({
                 </div>
 
                 <div className="text-[10px] md:text-xs text-gray-600 mt-1">
-  {student.joiningDate} • {student.course} • ₹ {student.due ? `${student.due} Due` : "Clear"}
-</div>
+                  {student.joiningDate} • {student.course} • ₹ {student.due ? `${student.due} Due` : "Clear"}
+                </div>
 
-                {/* LAST 10 */}
                 <div className="flex gap-1 mt-1 md:mt-2">
                   {student.last10.map((d, i) => (
                     <div
@@ -115,8 +120,8 @@ export default function AttendanceMain({
 
               </div>
 
-              {/* TOGGLE */}
               <button
+                disabled={saved}
                 onClick={() => {
                   const newStatus = isPresent ? "A" : "P";
                   setAttendanceState((prev: any) => ({
@@ -125,7 +130,11 @@ export default function AttendanceMain({
                   }));
                 }}
                 className={`w-12 md:w-14 h-6 md:h-7 rounded-full flex items-center px-1 ${
-                  isPresent ? "bg-green-500" : "bg-red-500"
+                  saved
+                    ? "bg-gray-300"
+                    : isPresent
+                    ? "bg-green-500"
+                    : "bg-red-500"
                 }`}
               >
                 <div
@@ -140,6 +149,48 @@ export default function AttendanceMain({
         })}
 
       </div>
+
+      {/* POPUP */}
+      {showConfirm && !saved && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-4 w-[90%] max-w-md max-h-[80vh] overflow-y-auto">
+
+            <h3 className="font-semibold mb-3 text-sm">Confirm Attendance</h3>
+
+            {studentsData.map((s: Student) => {
+              const st = attendanceState[s.id] || "P";
+              return (
+                <div key={s.id} className="flex justify-between text-xs mb-1">
+                  <span>{s.name}</span>
+                  <span className={
+                    st === "P" ? "text-green-600" :
+                    st === "A" ? "text-red-600" :
+                    "text-yellow-500"
+                  }>
+                    {st}
+                  </span>
+                </div>
+              );
+            })}
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-3 py-1 text-xs bg-gray-200 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitAttendance}
+                className="px-3 py-1 text-xs bg-blue-600 text-white rounded"
+              >
+                OK
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
