@@ -59,7 +59,7 @@ export default function AttendanceMain({
             <span className="text-gray-400">|</span>
 
             <span onClick={() => setShowAddModal(true)} className="cursor-pointer underline">
-              + Add Students
+              + Add / Remove
             </span>
           </div>
 

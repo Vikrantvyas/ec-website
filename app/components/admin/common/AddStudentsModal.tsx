@@ -135,7 +135,6 @@ export default function AddStudentsModal({
     }
   }
 
-  // ✅ FINAL FIXED APPLY
   async function applyChanges() {
 
     if (removeIds.length > 0) {
@@ -154,19 +153,17 @@ export default function AddStudentsModal({
       await supabase.from("batch_students").insert(rows);
     }
 
-    // ✅ FIX → refresh FIRST
     if (onSuccess) await onSuccess();
 
-    // ✅ update modal UI
     await loadExistingStudents();
     setSelected([]);
     setRemoveIds([]);
     setShowConfirm(false);
 
-    // ✅ close LAST
     onClose();
   }
 
+  // ✅ FIXED QUICK CREATE
   async function createQuickLead() {
 
     if (!newStudent.name || !newStudent.mobile) {
@@ -200,13 +197,13 @@ export default function AddStudentsModal({
       return;
     }
 
-    await supabase.from("batch_students").insert([{
-      batch_id: batchId,
-      lead_id: lead.id
-    }]);
+    // ✅ IMPORTANT: selected में add करो (summary में दिखेगा)
+    setSelected((prev)=>[
+      ...prev,
+      { id: lead.id, student_name: lead.student_name }
+    ]);
 
-    alert("Student Added");
-
+    // reset form
     setShowQuickForm(false);
     setNewStudent({
       name: "",
@@ -214,9 +211,6 @@ export default function AddStudentsModal({
       age: "",
       gender: "",
     });
-
-    if (onSuccess) await onSuccess();
-    await loadExistingStudents();
   }
 
   const filteredStudents = students
@@ -226,7 +220,6 @@ export default function AddStudentsModal({
     );
 
   return (
-
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
       <div className="bg-white w-full h-full md:w-[600px] md:h-[90vh] rounded-none md:rounded-lg flex flex-col p-4">
@@ -294,7 +287,7 @@ export default function AddStudentsModal({
               onClick={createQuickLead}
               className="w-full bg-green-600 text-white py-1.5 rounded text-sm"
             >
-              Save & Add
+              Add to List
             </button>
 
           </div>

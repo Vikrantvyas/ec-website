@@ -31,7 +31,7 @@ type Student = {
   due?: number;
   batchName?: string;
   last10: string[];
-  paid?: number; // ✅ FINAL
+  paid?: number;
 };
 
 export default function AttendancePage() {
@@ -43,14 +43,27 @@ export default function AttendancePage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState("");
 
-  const [batches, setBatches] = useState<Batch[]>([]);
   const [selectedBatch, setSelectedBatch] = useState<string | null>(null);
+  const [batches, setBatches] = useState<Batch[]>([]);
 
   const [studentsData, setStudentsData] = useState<Student[]>([]);
   const [attendanceState, setAttendanceState] = useState<Record<string, string>>({});
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // ✅ restore batch
+  useEffect(() => {
+    const savedBatch = localStorage.getItem("selectedBatch");
+    if (savedBatch) setSelectedBatch(savedBatch);
+  }, []);
+
+  // ✅ save batch
+  useEffect(() => {
+    if (selectedBatch) {
+      localStorage.setItem("selectedBatch", selectedBatch);
+    }
+  }, [selectedBatch]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -170,6 +183,18 @@ export default function AttendancePage() {
     setBatches(formatted);
   }
 
+  // ✅ NEW: reload all
+  async function reloadAllData() {
+    const { data } = await supabase.auth.getSession();
+    const user = data.session?.user;
+    if (!user) return;
+
+    await loadBatches(user); // sidebar count refresh
+    if (selectedBatch) {
+      await loadStudents(selectedBatch);
+    }
+  }
+
   async function loadTodayAttendance(batchId: string) {
 
     const today = new Date().toISOString().split("T")[0];
@@ -262,7 +287,7 @@ export default function AttendancePage() {
         due: Math.max(finalFee - paid, 0),
         batchName: latest?.batch || "",
         last10,
-        paid // ✅ FINAL
+        paid
       });
     }
 
@@ -339,6 +364,7 @@ export default function AttendancePage() {
                 showConfirm={showConfirm}
                 submitAttendance={submitAttendance}
                 selectedBatchId={selectedBatch}
+                reloadStudents={reloadAllData} // ✅ added
               />
             </div>
           ) : (
@@ -390,6 +416,7 @@ export default function AttendancePage() {
                   showConfirm={showConfirm}
                   submitAttendance={submitAttendance}
                   selectedBatchId={selectedBatch}
+                  reloadStudents={reloadAllData} // ✅ added
                 />
               )
             }
