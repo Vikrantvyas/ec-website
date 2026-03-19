@@ -23,6 +23,15 @@ export default function AddStudentsModal({
   const [batchName, setBatchName] = useState("");
   const [batchCount, setBatchCount] = useState(0);
 
+  // ✅ QUICK FORM
+  const [showQuickForm, setShowQuickForm] = useState(false);
+  const [newStudent, setNewStudent] = useState({
+    name: "",
+    mobile: "",
+    age: "",
+    gender: "",
+  });
+
   useEffect(() => {
     if (batchId) {
       loadBatchInfo();
@@ -136,12 +145,68 @@ export default function AddStudentsModal({
       lead_id: s.id
     }));
 
-    await supabase
-      .from("batch_students")
-      .insert(rows);
+    await supabase.from("batch_students").insert(rows);
 
     if (onSuccess) onSuccess();
     onClose();
+  }
+
+  // ✅ QUICK CREATE (FINAL FIXED)
+  async function createQuickLead() {
+
+    if (!newStudent.name || !newStudent.mobile) {
+      alert("Name & Mobile required");
+      return;
+    }
+
+    // batch info
+    const { data: batchData } = await supabase
+      .from("batches")
+      .select("branch_id, batch_name, start_time")
+      .eq("id", batchId)
+      .single();
+
+    // insert lead
+    const { data: lead, error } = await supabase
+      .from("leads")
+      .insert([{
+        student_name: newStudent.name,
+        mobile_number: newStudent.mobile,
+        age: newStudent.age ? Number(newStudent.age) : null,
+        gender: newStudent.gender,
+
+        // auto fill
+        branch: batchData?.branch_id,
+        preferred_batch: batchData?.batch_name,
+        preferred_timing: batchData?.start_time,
+
+        enquiry_date: new Date().toISOString().split("T")[0]
+      }])
+      .select()
+      .single();
+
+    if (error || !lead) {
+      alert("Error creating lead");
+      return;
+    }
+
+    // add to batch
+    await supabase.from("batch_students").insert([{
+      batch_id: batchId,
+      lead_id: lead.id
+    }]);
+
+    alert("Student Added");
+
+    setShowQuickForm(false);
+    setNewStudent({
+      name: "",
+      mobile: "",
+      age: "",
+      gender: "",
+    });
+
+    if (onSuccess) onSuccess();
   }
 
   const filteredStudents = students
@@ -170,7 +235,60 @@ export default function AddStudentsModal({
             className="w-full border px-3 py-2 rounded mt-3"
           />
 
+          <div
+            onClick={() => setShowQuickForm(!showQuickForm)}
+            className="text-blue-600 text-sm mt-2 cursor-pointer underline"
+          >
+            + Create New Student
+          </div>
+
         </div>
+
+        {showQuickForm && (
+          <div className="border p-3 rounded mb-3 bg-gray-50 space-y-2">
+
+            <input
+              placeholder="Name"
+              value={newStudent.name}
+              onChange={(e)=>setNewStudent({...newStudent, name:e.target.value})}
+              className="w-full border px-2 py-1 rounded text-sm"
+            />
+
+            <input
+              placeholder="Mobile"
+              value={newStudent.mobile}
+              onChange={(e)=>setNewStudent({...newStudent, mobile:e.target.value})}
+              className="w-full border px-2 py-1 rounded text-sm"
+            />
+
+            <div className="flex gap-2">
+              <input
+                placeholder="Age"
+                value={newStudent.age}
+                onChange={(e)=>setNewStudent({...newStudent, age:e.target.value})}
+                className="w-1/2 border px-2 py-1 rounded text-sm"
+              />
+
+              <select
+                value={newStudent.gender}
+                onChange={(e)=>setNewStudent({...newStudent, gender:e.target.value})}
+                className="w-1/2 border px-2 py-1 rounded text-sm"
+              >
+                <option value="">Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+
+            <button
+              onClick={createQuickLead}
+              className="w-full bg-green-600 text-white py-1.5 rounded text-sm"
+            >
+              Save & Add
+            </button>
+
+          </div>
+        )}
 
         {existing.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
