@@ -34,8 +34,8 @@ export default function AttendanceMain({
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [hoverMove, setHoverMove] = useState(false);
-  const [hoverAdd, setHoverAdd] = useState(false);
+  const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -43,8 +43,7 @@ export default function AttendanceMain({
     function handleClick(e: any) {
       if (!menuRef.current?.contains(e.target)) {
         setOpenMenuId(null);
-        setHoverMove(false);
-        setHoverAdd(false);
+        setOpenSubMenu(null);
       }
     }
     document.addEventListener("mousedown", handleClick);
@@ -61,10 +60,7 @@ export default function AttendanceMain({
   function formatDate(date?: string) {
     if (!date) return "";
     const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = String(d.getFullYear()).slice(-2);
-    return `${day}-${month}-${year}`;
+    return `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getFullYear()).slice(-2)}`;
   }
 
   return (
@@ -85,16 +81,13 @@ export default function AttendanceMain({
             <span onClick={() => setShowHistory(true)} className="underline cursor-pointer">
               Attendance History
             </span>
-
             <span>|</span>
-
             <span onClick={() => setShowAddModal(true)} className="underline cursor-pointer">
               + Add / Remove
             </span>
           </div>
         </div>
 
-        {/* ✅ SMALL BUTTON */}
         <button
           disabled={saved}
           onClick={() => setShowConfirm(true)}
@@ -117,30 +110,45 @@ export default function AttendanceMain({
           const isUnpaid = (student.paid || 0) === 0;
           const isDue = (student.paid || 0) > 0 && (student.due || 0) > 0;
 
+          const isExpanded = expandedId === student.id;
+
           return (
             <div key={student.id} className="bg-white p-3 mb-2 rounded shadow">
 
               <div className="flex justify-between">
 
-                {/* LEFT SIDE */}
+                {/* LEFT */}
                 <div className="flex gap-3">
 
-                  <div className="w-12 h-16 bg-gray-300 flex items-center justify-center text-base font-semibold">
-                    {student.name?.charAt(0)}
+                  {/* IMAGE + ARROW */}
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-16 bg-gray-300 flex items-center justify-center font-semibold">
+                      {student.name?.charAt(0)}
+                    </div>
+
+                    {/* 👇 arrow BELOW image */}
+                    <button
+                      onClick={() => setExpandedId(isExpanded ? null : student.id)}
+                      className="text-xs text-blue-600 mt-1"
+                    >
+                      {isExpanded ? "▲" : "▼"}
+                    </button>
                   </div>
 
-                  {/* ✅ GAP INCREASED */}
-                  <div className="flex flex-col gap-1.5">
+                  {/* TEXT */}
+                  <div className="flex flex-col gap-1">
 
                     <div className={`font-semibold text-sm ${
-                      isUnpaid ? "bg-lime-100 inline px-2 rounded" :
+                      isUnpaid ? "bg-lime-100 px-2 rounded inline" :
                       isDue ? "text-red-600" : ""
                     }`}>
                       {index + 1}. {student.name}
                     </div>
 
-                    <div className="text-sm text-gray-700">
-                      {student.course}
+                    <div className={`text-sm ${
+                      !student.course ? "text-red-500" : "text-gray-700"
+                    }`}>
+                      {student.course || "Course N.A."}
                     </div>
 
                     <div className="text-xs text-gray-600">
@@ -150,11 +158,7 @@ export default function AttendanceMain({
 
                     <div className="flex gap-1">
                       {student.last10.map((d, i) => (
-                        <div key={i} className={`w-4 h-4 text-[10px] flex items-center justify-center rounded ${
-                          d === "P" ? "bg-green-500 text-white" :
-                          d === "A" ? "bg-red-500 text-white" :
-                          d === "L" ? "bg-yellow-400" : "bg-gray-200"
-                        }`}>
+                        <div key={i} className="w-4 h-4 text-[10px] flex items-center justify-center rounded bg-gray-200">
                           {d}
                         </div>
                       ))}
@@ -164,8 +168,8 @@ export default function AttendanceMain({
 
                 </div>
 
-                {/* RIGHT SIDE */}
-                <div className="flex flex-col items-end justify-between">
+                {/* RIGHT */}
+                <div className="flex flex-col items-end justify-between pr-2">
 
                   {/* MENU */}
                   <div className="relative" ref={menuRef}>
@@ -173,8 +177,9 @@ export default function AttendanceMain({
                       onClick={(e) => {
                         e.stopPropagation();
                         setOpenMenuId(openMenuId === student.id ? null : student.id);
+                        setOpenSubMenu(null);
                       }}
-                      className="text-lg px-2"
+                      className="text-lg px-1"
                     >
                       ⋮
                     </button>
@@ -182,57 +187,54 @@ export default function AttendanceMain({
                     {openMenuId === student.id && (
                       <div className="absolute right-0 top-6 bg-white shadow-xl rounded-md w-48 text-sm py-1 z-50">
 
-                        <div className="px-3 py-2 hover:bg-gray-100">📄 Admission</div>
-                        <div className="px-3 py-2 hover:bg-gray-100">💰 Receipt</div>
-                        <div className="px-3 py-2 hover:bg-gray-100">📊 Progress</div>
+                        <div className="px-3 py-2">📄 Admission</div>
+                        <div className="px-3 py-2">💰 Receipt</div>
+                        <div className="px-3 py-2">📊 Progress</div>
+                        <div className="px-3 py-2">📝 Notes</div>
+                        <div className="px-3 py-2">🎓 Certificate</div>
 
                         <div className="border-t my-1"></div>
 
+                        {/* CLICK BASED */}
                         <div
-                          onMouseEnter={() => setHoverAdd(true)}
-                          onMouseLeave={() => setHoverAdd(false)}
-                          className="relative"
+                          onClick={() => setOpenSubMenu(openSubMenu === "add" ? null : "add")}
+                          className="px-3 py-2 flex justify-between cursor-pointer"
                         >
-                          <div className="px-3 py-2 hover:bg-gray-100 flex justify-between">
-                            ➕ Add Batches ◀
-                          </div>
-
-                          {hoverAdd && (
-                            <div className="absolute right-full top-0 bg-white shadow-lg rounded w-40 z-50">
-                              {dummyBatches.map((b) => (
-                                <div key={b.id} className="px-3 py-2 hover:bg-gray-100">
-                                  {b.batch_name}
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                          ➕ Add Batches ▶
                         </div>
 
-                        <div
-                          onMouseEnter={() => setHoverMove(true)}
-                          onMouseLeave={() => setHoverMove(false)}
-                          className="relative"
-                        >
-                          <div className="px-3 py-2 hover:bg-gray-100 flex justify-between">
-                            🔄 Move to Batch ◀
+                        {openSubMenu === "add" && (
+                          <div className="ml-2">
+                            {dummyBatches.map((b) => (
+                              <div key={b.id} className="px-3 py-1 text-xs">
+                                {b.batch_name}
+                              </div>
+                            ))}
                           </div>
+                        )}
 
-                          {hoverMove && (
-                            <div className="absolute right-full top-0 bg-white shadow-lg rounded w-40 z-50">
-                              {dummyBatches.map((b) => (
-                                <div key={b.id} className="px-3 py-2 hover:bg-gray-100">
-                                  {b.batch_name}
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                        <div
+                          onClick={() => setOpenSubMenu(openSubMenu === "move" ? null : "move")}
+                          className="px-3 py-2 flex justify-between cursor-pointer"
+                        >
+                          🔄 Move to Batch ▶
                         </div>
+
+                        {openSubMenu === "move" && (
+                          <div className="ml-2">
+                            {dummyBatches.map((b) => (
+                              <div key={b.id} className="px-3 py-1 text-xs">
+                                {b.batch_name}
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
                       </div>
                     )}
                   </div>
 
-                  {/* TOGGLE */}
+                  {/* 🔥 TOGGLE UP */}
                   <button
                     onClick={() => {
                       const newStatus = isPresent ? "A" : "P";
@@ -241,18 +243,24 @@ export default function AttendanceMain({
                         [student.id]: newStatus,
                       }));
                     }}
-                    className={`w-12 h-6 rounded-full flex items-center px-1 ${
+                    className={`w-11 h-5 rounded-full flex items-center px-1 ${
                       isPresent ? "bg-green-500" : "bg-red-500"
                     }`}
                   >
-                    <div className={`w-4 h-4 bg-white rounded-full ${
-                      isPresent ? "translate-x-6" : ""
+                    <div className={`w-3.5 h-3.5 bg-white rounded-full ${
+                      isPresent ? "translate-x-5" : ""
                     }`} />
                   </button>
 
                 </div>
 
               </div>
+
+              {isExpanded && (
+                <div className="mt-2 text-xs text-gray-600 border-t pt-2">
+                  Dummy Info: Fees ₹5000 • Attendance 80%
+                </div>
+              )}
 
             </div>
           );
