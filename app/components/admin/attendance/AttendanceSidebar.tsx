@@ -9,6 +9,7 @@ type Batch = {
   start_time: string;
   teacher_name?: string;
   student_count?: number;
+  unpaid_count?: number; // ✅ safe
 };
 
 type Branch = {
@@ -88,7 +89,6 @@ export default function AttendanceSidebar({
     b.batch_name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ✅ OVERALL COUNT
   let totalPresentAll = 0;
   let totalStudentsAll = 0;
 
@@ -134,7 +134,7 @@ export default function AttendanceSidebar({
         </div>
       )}
 
-      {/* ✅ TOTAL INFO (MOVED HERE) */}
+      {/* TOTAL INFO */}
       <div className="px-3 py-1 text-xs md:text-sm text-gray-600 border-b">
         Total Batches: {filtered.length} &nbsp; | &nbsp;
         <span className="text-green-700 font-medium">
@@ -167,8 +167,8 @@ export default function AttendanceSidebar({
                 }`}
             >
 
-              {/* NAME + BADGE */}
-              <div className="flex items-center gap-2">
+              {/* NAME + ATTENDANCE BADGE (UNCHANGED ✅) */}
+              <div className="flex items-center gap-2 flex-wrap">
 
                 <div className="font-semibold text-[15px] md:text-[17px]">
                   {batch.batch_name}
@@ -182,10 +182,20 @@ export default function AttendanceSidebar({
 
               </div>
 
-              {/* SECOND ROW */}
-              <div className="text-[13px] md:text-[14px] text-gray-600 mt-1">
-                {batch.teacher_name || "Teacher"} •{" "}
-                {batch.student_count || 0} St.
+              {/* SECOND ROW (UNPAID BADGE MOVED HERE ✅) */}
+              <div className="text-[13px] md:text-[14px] text-gray-600 mt-1 flex items-center gap-2 flex-wrap">
+                
+                <span>
+                  {batch.teacher_name || "Teacher"} •{" "}
+                  {batch.student_count || 0} St.
+                </span>
+
+                {batch.unpaid_count && batch.unpaid_count > 0 && (
+                  <div className="text-[11px] px-2 py-[2px] rounded bg-red-100 text-red-700 font-semibold animate-pulse">
+                    🎉 {batch.unpaid_count} New
+                  </div>
+                )}
+
               </div>
 
             </div>
