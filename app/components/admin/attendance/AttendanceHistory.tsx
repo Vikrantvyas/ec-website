@@ -131,29 +131,32 @@ else newVal = "P";
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-3 text-[12px]">
 
-            <button
-              onClick={() => setEditMode(!editMode)}
-              className="text-[12px] px-2 py-1 bg-blue-600 text-white rounded"
-            >
-              {editMode ? "Cancel Edit" : "Edit"}
-            </button>
+  <span
+    onClick={() => setEditMode(!editMode)}
+    className="text-blue-600 underline cursor-pointer"
+  >
+    {editMode ? "Cancel Edit" : "Edit"}
+  </span>
 
-            {/* ✅ SAVE BUTTON */}
-            {editMode && (
-              <button
-                onClick={saveAttendance}
-                className="text-[12px] px-2 py-1 bg-green-600 text-white rounded"
-              >
-                Save
-              </button>
-            )}
+  {editMode && (
+    <span
+      onClick={saveAttendance}
+      className="text-green-600 underline cursor-pointer"
+    >
+      Save
+    </span>
+  )}
 
-            <button onClick={onClose} className="text-[12px] text-red-600">
-              Close
-            </button>
-          </div>
+  <span
+    onClick={onClose}
+    className="text-red-600 underline cursor-pointer"
+  >
+    Close
+  </span>
+
+</div>
         </div>
 
         {/* TABLE */}
