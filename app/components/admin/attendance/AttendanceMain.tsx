@@ -36,7 +36,6 @@ export default function AttendanceMain({
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [hoverMove, setHoverMove] = useState(false);
   const [hoverAdd, setHoverAdd] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -95,6 +94,7 @@ export default function AttendanceMain({
           </div>
         </div>
 
+        {/* ✅ SMALL BUTTON */}
         <button
           disabled={saved}
           onClick={() => setShowConfirm(true)}
@@ -117,24 +117,21 @@ export default function AttendanceMain({
           const isUnpaid = (student.paid || 0) === 0;
           const isDue = (student.paid || 0) > 0 && (student.due || 0) > 0;
 
-          const isExpanded = expandedId === student.id;
-
           return (
             <div key={student.id} className="bg-white p-3 mb-2 rounded shadow">
 
               <div className="flex justify-between">
 
-                {/* LEFT */}
+                {/* LEFT SIDE */}
                 <div className="flex gap-3">
 
                   <div className="w-12 h-16 bg-gray-300 flex items-center justify-center text-base font-semibold">
                     {student.name?.charAt(0)}
                   </div>
 
-                  {/* ✅ EQUAL SPACING */}
-                  <div className="flex flex-col gap-2">
+                  {/* ✅ GAP INCREASED */}
+                  <div className="flex flex-col gap-1.5">
 
-                    {/* ROW 1 */}
                     <div className={`font-semibold text-sm ${
                       isUnpaid ? "bg-lime-100 inline px-2 rounded" :
                       isDue ? "text-red-600" : ""
@@ -142,20 +139,15 @@ export default function AttendanceMain({
                       {index + 1}. {student.name}
                     </div>
 
-                    {/* ROW 2 */}
-                    <div className={`text-sm ${
-                      !student.course ? "text-red-500" : "text-gray-700"
-                    }`}>
-                      {student.course || "Course N.A."}
+                    <div className="text-sm text-gray-700">
+                      {student.course}
                     </div>
 
-                    {/* ROW 3 */}
                     <div className="text-xs text-gray-600">
                       {formatDate(student.joiningDate)} • ₹{" "}
                       {isUnpaid ? "Unpaid" : isDue ? `${student.due} Due` : "Clear"}
                     </div>
 
-                    {/* ROW 4 */}
                     <div className="flex gap-1">
                       {student.last10.map((d, i) => (
                         <div key={i} className={`w-4 h-4 text-[10px] flex items-center justify-center rounded ${
@@ -172,7 +164,7 @@ export default function AttendanceMain({
 
                 </div>
 
-                {/* RIGHT */}
+                {/* RIGHT SIDE */}
                 <div className="flex flex-col items-end justify-between">
 
                   {/* MENU */}
@@ -193,8 +185,6 @@ export default function AttendanceMain({
                         <div className="px-3 py-2 hover:bg-gray-100">📄 Admission</div>
                         <div className="px-3 py-2 hover:bg-gray-100">💰 Receipt</div>
                         <div className="px-3 py-2 hover:bg-gray-100">📊 Progress</div>
-                        <div className="px-3 py-2 hover:bg-gray-100">📝 Notes</div>
-                        <div className="px-3 py-2 hover:bg-gray-100">🎓 Certificate</div>
 
                         <div className="border-t my-1"></div>
 
@@ -242,14 +232,6 @@ export default function AttendanceMain({
                     )}
                   </div>
 
-                  {/* EXPAND BUTTON */}
-                  <button
-                    onClick={() => setExpandedId(isExpanded ? null : student.id)}
-                    className="text-xs text-blue-600"
-                  >
-                    {isExpanded ? "▲" : "▼"}
-                  </button>
-
                   {/* TOGGLE */}
                   <button
                     onClick={() => {
@@ -271,13 +253,6 @@ export default function AttendanceMain({
                 </div>
 
               </div>
-
-              {/* EXPANDED DATA */}
-              {isExpanded && (
-                <div className="mt-2 text-xs text-gray-600 border-t pt-2">
-                  Dummy Info: Fees Paid ₹5000 • Attendance 80% • Last Test A+
-                </div>
-              )}
 
             </div>
           );
