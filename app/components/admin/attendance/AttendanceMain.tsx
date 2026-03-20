@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import AttendanceHistory from "./AttendanceHistory";
 import AddStudentsModal from "@/app/components/admin/common/AddStudentsModal";
 
@@ -13,7 +13,7 @@ type Student = {
   batchName?: string;
   last10: string[];
   isDemo?: boolean;
-  paid?: number; // ✅ ADD
+  paid?: number;
 };
 
 export default function AttendanceMain({
@@ -29,54 +29,71 @@ export default function AttendanceMain({
   showConfirm,
   submitAttendance,
   selectedBatchId,
+  reloadStudents
 }: any) {
 
   const [showHistory, setShowHistory] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [hoverMove, setHoverMove] = useState(false);
+  const [hoverAdd, setHoverAdd] = useState(false);
+
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handleClick(e: any) {
+      if (!menuRef.current?.contains(e.target)) {
+        setOpenMenuId(null);
+        setHoverMove(false);
+        setHoverAdd(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const dummyBatches = [
+    { id: "1", batch_name: "Morning Batch" },
+    { id: "2", batch_name: "Evening Batch" },
+    { id: "3", batch_name: "Spoken English" },
+    { id: "4", batch_name: "Computer Basic" },
+  ];
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
 
       {/* HEADER */}
-      <div className="px-3 md:px-4 py-3 bg-white sticky top-0 z-20 shadow-sm flex justify-between items-start gap-2">
+      <div className="px-3 py-3 bg-white shadow-sm flex justify-between">
 
         <div>
-          <div className="font-semibold text-sm md:text-base">
-            {selectedBatchName}
-          </div>
+          <div className="font-semibold text-sm">{selectedBatchName}</div>
 
-          <div className="text-xs md:text-sm mt-1">
+          <div className="text-sm mt-1">
             Total: {totalStudents}
             <span className="text-green-600 ml-2">P: {presentCount}</span>
             <span className="text-red-600 ml-2">A: {absentCount}</span>
           </div>
 
-          <div className="text-blue-600 text-xs mt-1 flex items-center gap-2">
-            <span onClick={() => setShowHistory(true)} className="cursor-pointer underline">
+          <div className="text-blue-600 text-xs mt-1 flex gap-2">
+            <span onClick={() => setShowHistory(true)} className="underline cursor-pointer">
               Attendance History
             </span>
 
-            <span className="text-gray-400">|</span>
+            <span>|</span>
 
-            <span onClick={() => setShowAddModal(true)} className="cursor-pointer underline">
+            <span onClick={() => setShowAddModal(true)} className="underline cursor-pointer">
               + Add / Remove
             </span>
           </div>
 
-          {saved && (
-            <div className="text-green-600 text-[11px] md:text-xs mt-1">
-              ✔ Attendance Locked for Today
-            </div>
-          )}
         </div>
 
         <button
           disabled={saved}
           onClick={() => setShowConfirm(true)}
-          className={`px-3 md:px-4 py-1.5 md:py-2 rounded text-xs md:text-sm shadow-sm transition ${
-            saved
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 text-white hover:bg-blue-700"
+          className={`px-3 py-2 text-sm rounded ${
+            saved ? "bg-gray-400" : "bg-blue-600 text-white"
           }`}
         >
           Submit
@@ -84,150 +101,168 @@ export default function AttendanceMain({
 
       </div>
 
-      {/* STUDENT LIST */}
-      <div className="flex-1 overflow-y-auto px-2 md:px-4 py-2 md:py-3 bg-gray-50">
-
-        {studentsData.length === 0 && (
-          <div className="text-center text-gray-400 py-10 text-sm">
-            No students found
-          </div>
-        )}
+      {/* STUDENTS */}
+      <div className="flex-1 overflow-y-auto p-2 bg-gray-50">
 
         {studentsData.map((student: Student, index: number) => {
 
           const status = attendanceState[student.id] || "P";
           const isPresent = status === "P";
 
-          // ✅ FINAL CORRECT LOGIC
           const isUnpaid = (student.paid || 0) === 0;
           const isDue = (student.paid || 0) > 0 && (student.due || 0) > 0;
 
           return (
-            <div
-              key={student.id}
-              className="py-2 md:py-3 px-2 md:px-3 flex justify-between items-center bg-white rounded-lg md:rounded-xl mb-2 md:mb-3 shadow-sm"
-            >
+            <div key={student.id} className="bg-white p-3 mb-2 rounded shadow relative">
 
-              <div className="flex-1 pr-2">
+              <div className="flex justify-between">
 
-                {/* NAME */}
-                <div
-                  className={`font-semibold text-sm px-2 py-[2px] rounded inline-block ${
-                    isUnpaid
-                      ? "bg-lime-100"
-                      : isDue
-                      ? "text-red-600"
-                      : student.isDemo
-                      ? "bg-lime-200 text-black"
-                      : ""
-                  }`}
-                >
-                  {index + 1}. {student.name}
+                {/* LEFT */}
+                <div className="flex gap-3">
+
+                  {/* ✅ BIGGER PHOTO */}
+                  <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-base font-semibold">
+                    {student.name?.charAt(0)}
+                  </div>
+
+                  <div>
+                    <div className={`font-semibold text-sm inline-block px-2 rounded ${
+                      isUnpaid ? "bg-lime-100" :
+                      isDue ? "text-red-600" : ""
+                    }`}>
+                      {index + 1}. {student.name}
+                      <span className="text-gray-500 font-normal ml-1">
+                        {student.joiningDate && (
+  (() => {
+    const d = new Date(student.joiningDate);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = String(d.getFullYear()).slice(-2);
+    return `(${day}-${month}-${year})`;
+  })()
+)}
+                      </span>
+                    </div>
+
+                    <div className="text-sm text-gray-700 mt-1">
+                      {student.course} • ₹{" "}
+                      {isUnpaid ? "Unpaid" : isDue ? `${student.due} Due` : "Clear"}
+                    </div>
+                  </div>
+
                 </div>
 
-                {/* STATUS TEXT */}
-                <div className="text-[10px] md:text-xs text-gray-600 mt-1">
-                  {student.joiningDate} • {student.course} • ₹{" "}
-                  {isUnpaid
-                    ? "Unpaid"
-                    : isDue
-                    ? `${student.due} Due`
-                    : "Clear"}
-                </div>
+                {/* MENU */}
+                <div className="relative" ref={menuRef}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuId(openMenuId === student.id ? null : student.id);
+                    }}
+                    className="text-lg px-2"
+                  >
+                    ⋮
+                  </button>
 
-                <div className="flex gap-1 mt-1 md:mt-2">
-                  {student.last10.map((d, i) => (
+                  {openMenuId === student.id && (
                     <div
-                      key={i}
-                      className={`w-3.5 md:w-4 h-3.5 md:h-4 text-[9px] md:text-[10px] flex items-center justify-center rounded
-                      ${
-                        d === "P"
-                          ? "bg-green-500 text-white"
-                          : d === "A"
-                          ? "bg-red-500 text-white"
-                          : d === "L"
-                          ? "bg-yellow-400"
-                          : "bg-gray-200"
-                      }`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute right-0 top-6 bg-white shadow-xl rounded-md w-48 text-sm py-1 z-50"
                     >
+
+                      <div className="px-3 py-2 hover:bg-gray-100 flex gap-2">📄 Admission</div>
+                      <div className="px-3 py-2 hover:bg-gray-100 flex gap-2">💰 Receipt</div>
+                      <div className="px-3 py-2 hover:bg-gray-100 flex gap-2">📊 Progress</div>
+
+                      <div className="border-t my-1"></div>
+
+                      {/* ADD BATCH SUBMENU */}
+                      <div
+                        onMouseEnter={() => setHoverAdd(true)}
+                        onMouseLeave={() => setHoverAdd(false)}
+                        className="relative"
+                      >
+                        <div className="px-3 py-2 hover:bg-gray-100 flex justify-between">
+                          ➕ Add Batches ◀
+                        </div>
+
+                        {hoverAdd && (
+                          <div className="absolute right-full top-0 bg-white shadow-lg rounded w-40">
+                            {dummyBatches.map((b) => (
+                              <div key={b.id} className="px-3 py-2 hover:bg-gray-100">
+                                {b.batch_name}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* MOVE SUBMENU */}
+                      <div
+                        onMouseEnter={() => setHoverMove(true)}
+                        onMouseLeave={() => setHoverMove(false)}
+                        className="relative"
+                      >
+                        <div className="px-3 py-2 hover:bg-gray-100 flex justify-between">
+                          🔄 Move to Batch ◀
+                        </div>
+
+                        {hoverMove && (
+                          <div className="absolute right-full top-0 bg-white shadow-lg rounded w-40">
+                            {dummyBatches.map((b) => (
+                              <div key={b.id} className="px-3 py-2 hover:bg-gray-100">
+                                {b.batch_name}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+              {/* LAST 10 + TOGGLE */}
+              <div className="flex justify-between items-center mt-2">
+
+                <div className="flex gap-1">
+                  {student.last10.map((d, i) => (
+                    <div key={i} className={`w-4 h-4 text-[10px] flex items-center justify-center rounded ${
+                      d === "P" ? "bg-green-500 text-white" :
+                      d === "A" ? "bg-red-500 text-white" :
+                      d === "L" ? "bg-yellow-400" : "bg-gray-200"
+                    }`}>
                       {d}
                     </div>
                   ))}
                 </div>
 
-              </div>
-
-              <button
-                disabled={saved}
-                onClick={() => {
-                  const newStatus = isPresent ? "A" : "P";
-                  setAttendanceState((prev: any) => ({
-                    ...prev,
-                    [student.id]: newStatus,
-                  }));
-                }}
-                className={`w-12 md:w-14 h-6 md:h-7 rounded-full flex items-center px-1 ${
-                  saved
-                    ? "bg-gray-300"
-                    : isPresent
-                    ? "bg-green-500"
-                    : "bg-red-500"
-                }`}
-              >
-                <div
-                  className={`w-4 md:w-5 h-4 md:h-5 bg-white rounded-full transform transition ${
-                    isPresent ? "translate-x-6 md:translate-x-7" : ""
+                <button
+                  onClick={() => {
+                    const newStatus = isPresent ? "A" : "P";
+                    setAttendanceState((prev: any) => ({
+                      ...prev,
+                      [student.id]: newStatus,
+                    }));
+                  }}
+                  className={`w-12 h-6 rounded-full flex items-center px-1 ${
+                    isPresent ? "bg-green-500" : "bg-red-500"
                   }`}
-                />
-              </button>
+                >
+                  <div className={`w-4 h-4 bg-white rounded-full ${
+                    isPresent ? "translate-x-6" : ""
+                  }`} />
+                </button>
+
+              </div>
 
             </div>
           );
         })}
 
       </div>
-
-      {/* CONFIRM POPUP */}
-      {showConfirm && !saved && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-4 w-[90%] max-w-md max-h-[80vh] overflow-y-auto">
-
-            <h3 className="font-semibold mb-3 text-sm">Confirm Attendance</h3>
-
-            {studentsData.map((s: Student) => {
-              const st = attendanceState[s.id] || "P";
-              return (
-                <div key={s.id} className="flex justify-between text-xs mb-1">
-                  <span>{s.name}</span>
-                  <span className={
-                    st === "P" ? "text-green-600" :
-                    st === "A" ? "text-red-600" :
-                    "text-yellow-500"
-                  }>
-                    {st}
-                  </span>
-                </div>
-              );
-            })}
-
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="px-3 py-1 text-xs bg-gray-200 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={submitAttendance}
-                className="px-3 py-1 text-xs bg-blue-600 text-white rounded"
-              >
-                OK
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
 
       {/* HISTORY */}
       {showHistory && (
@@ -238,12 +273,12 @@ export default function AttendanceMain({
         />
       )}
 
-      {/* ADD STUDENTS */}
+      {/* ADD */}
       {showAddModal && (
         <AddStudentsModal
           batchId={selectedBatchId}
           onClose={() => setShowAddModal(false)}
-          onSuccess={() => window.location.reload()}
+          onSuccess={reloadStudents}
         />
       )}
 
