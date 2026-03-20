@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 type Batch = {
   id: string;
@@ -34,6 +35,42 @@ export default function AttendanceSidebar({
 }) {
 
   const [search, setSearch] = useState("");
+  const [attendanceMap, setAttendanceMap] = useState<any>({});
+
+  const today = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    loadAttendance();
+  }, [batches]);
+
+  async function loadAttendance() {
+
+    if (!batches.length) return;
+
+    const batchIds = batches.map((b) => b.id);
+
+    const { data } = await supabase
+      .from("attendance")
+      .select("batch_id,status")
+      .in("batch_id", batchIds)
+      .eq("attendance_date", today);
+
+    const map: any = {};
+
+    (data || []).forEach((r: any) => {
+      if (!map[r.batch_id]) {
+        map[r.batch_id] = { present: 0, total: 0 };
+      }
+
+      map[r.batch_id].total += 1;
+
+      if (r.status === "P") {
+        map[r.batch_id].present += 1;
+      }
+    });
+
+    setAttendanceMap(map);
+  }
 
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -51,13 +88,15 @@ export default function AttendanceSidebar({
     b.batch_name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const circleColors = [
-    "bg-blue-500",
-    "bg-green-500",
-    "bg-yellow-400",
-    "bg-red-500",
-    "bg-purple-500",
-  ];
+  // ✅ OVERALL COUNT
+  let totalPresentAll = 0;
+  let totalStudentsAll = 0;
+
+  filtered.forEach((b) => {
+    const att = attendanceMap[b.id];
+    totalPresentAll += att?.present || 0;
+    totalStudentsAll += b.student_count || 0;
+  });
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -70,11 +109,6 @@ export default function AttendanceSidebar({
           onChange={(e) => setSearch(e.target.value)}
           className="w-full rounded px-3 py-2 text-sm bg-gray-100 outline-none"
         />
-      </div>
-
-      {/* TOTAL COUNT */}
-      <div className="px-3 text-xs text-gray-500 pb-1">
-        Total Batches: {filtered.length}
       </div>
 
       {/* BRANCHES */}
@@ -100,12 +134,24 @@ export default function AttendanceSidebar({
         </div>
       )}
 
+      {/* ✅ TOTAL INFO (MOVED HERE) */}
+      <div className="px-3 py-1 text-xs md:text-sm text-gray-600 border-b">
+        Total Batches: {filtered.length} &nbsp; | &nbsp;
+        <span className="text-green-700 font-medium">
+          {totalPresentAll} / {totalStudentsAll}
+        </span>
+      </div>
+
       {/* BATCH LIST */}
       <div className="flex-1 overflow-y-auto px-2 pb-2">
 
         {filtered.map((batch) => {
 
           const isActiveTime = isCurrentBatch(batch.start_time);
+
+          const att = attendanceMap[batch.id];
+          const present = att?.present || 0;
+          const total = batch.student_count || 0;
 
           return (
             <div
@@ -128,30 +174,18 @@ export default function AttendanceSidebar({
                   {batch.batch_name}
                 </div>
 
-                {/* ✅ BADGE */}
-                <div className="text-[10px] px-1.5 py-[1px] rounded bg-green-100 text-green-700">
-                  A ✔
-                </div>
+                {att && (
+                  <div className="text-[12px] px-2 py-[2px] rounded bg-green-100 text-green-700 font-medium">
+                    {present} / {total}
+                  </div>
+                )}
 
               </div>
 
               {/* SECOND ROW */}
-              <div className="text-[13px] md:text-[14px] text-gray-600 mt-1 flex items-center justify-between">
-
-                <span>
-                  {batch.teacher_name || "Teacher"} •{" "}
-                  {batch.student_count || 0} St.
-                </span>
-
-                <div className="flex -space-x-2">
-                  {[...Array(Math.min(batch.student_count || 0, 5))].map((_, i) => (
-                    <div
-                      key={i}
-                      className={`w-5 h-5 rounded-full border-2 border-white ${circleColors[i % circleColors.length]}`}
-                    />
-                  ))}
-                </div>
-
+              <div className="text-[13px] md:text-[14px] text-gray-600 mt-1">
+                {batch.teacher_name || "Teacher"} •{" "}
+                {batch.student_count || 0} St.
               </div>
 
             </div>
