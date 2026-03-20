@@ -16,6 +16,8 @@ export default function AttendanceHistory({
   const [dates, setDates] = useState<string[]>([]);
   const [dataMap, setDataMap] = useState<any>({});
 
+  const [editMode, setEditMode] = useState(false);
+
   useEffect(() => {
     generateDates(selectedDate);
   }, [selectedDate]);
@@ -56,6 +58,61 @@ export default function AttendanceHistory({
     setDataMap(map);
   }
 
+  function toggleStatus(studentId: string, date: string) {
+    const current = dataMap?.[studentId]?.[date] || "-";
+
+  let newVal = "P";
+
+if (current === "P") newVal = "A";
+else if (current === "A") newVal = "-";
+else newVal = "P";
+
+    setDataMap((prev: any) => ({
+      ...prev,
+      [studentId]: {
+        ...prev[studentId],
+        [date]: newVal,
+      },
+    }));
+  }
+
+  // ✅ SAVE FUNCTION
+  async function saveAttendance() {
+
+  const records: any[] = [];
+
+  Object.keys(dataMap).forEach((studentId) => {
+    Object.keys(dataMap[studentId]).forEach((date) => {
+
+      const status = dataMap[studentId][date];
+
+      if (status === "P" || status === "A" || status === "L") {
+        records.push({
+          batch_id: batchId,
+          lead_id: studentId,
+          attendance_date: date,
+          status,
+        });
+      }
+
+    });
+  });
+
+  const { error } = await supabase
+    .from("attendance")
+    .upsert(records, {
+      onConflict: "batch_id,lead_id,attendance_date",
+    });
+
+  if (error) {
+    alert("Error saving ❌");
+    console.log(error);
+    return;
+  }
+
+  alert("Attendance Updated ✅");
+  setEditMode(false);
+}
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
@@ -74,9 +131,29 @@ export default function AttendanceHistory({
             />
           </div>
 
-          <button onClick={onClose} className="text-[12px] text-red-600">
-            Close
-          </button>
+          <div className="flex gap-2">
+
+            <button
+              onClick={() => setEditMode(!editMode)}
+              className="text-[12px] px-2 py-1 bg-blue-600 text-white rounded"
+            >
+              {editMode ? "Cancel Edit" : "Edit"}
+            </button>
+
+            {/* ✅ SAVE BUTTON */}
+            {editMode && (
+              <button
+                onClick={saveAttendance}
+                className="text-[12px] px-2 py-1 bg-green-600 text-white rounded"
+              >
+                Save
+              </button>
+            )}
+
+            <button onClick={onClose} className="text-[12px] text-red-600">
+              Close
+            </button>
+          </div>
         </div>
 
         {/* TABLE */}
@@ -102,20 +179,19 @@ export default function AttendanceHistory({
               {students.map((s: any, i: number) => (
                 <tr key={s.id} className="border-b last:border-0">
 
-                  {/* ✅ NAME WITH DUE COLOR */}
                   <td className={`sticky left-0 bg-white z-10 px-2 py-2 max-w-[130px] truncate font-medium ${
                     s.due ? "text-red-600" : "text-gray-800"
                   }`}>
                     {i + 1}. {s.name}
                   </td>
 
-                  {/* DATA */}
                   {dates.map((d) => {
                     const val = dataMap?.[s.id]?.[d] || "-";
 
                     return (
                       <td
                         key={d}
+                        onClick={() => editMode && toggleStatus(s.id, d)}
                         className={`w-[32px] px-1 py-2 text-center font-semibold ${
                           val === "P"
                             ? "text-green-600"
@@ -124,7 +200,7 @@ export default function AttendanceHistory({
                             : val === "L"
                             ? "text-yellow-500"
                             : "text-gray-300"
-                        }`}
+                        } ${editMode ? "cursor-pointer" : ""}`}
                       >
                         {val}
                       </td>
