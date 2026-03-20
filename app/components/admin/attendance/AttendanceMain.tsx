@@ -67,7 +67,7 @@ export default function AttendanceMain({
     <div className="flex flex-col h-full overflow-hidden">
 
       {/* HEADER */}
-      <div className="px-3 py-3 bg-white shadow-sm flex justify-between">
+     <div className="px-3 py-2 bg-white shadow-sm flex justify-between items-end">
         <div>
           <div className="font-semibold text-sm">{selectedBatchName}</div>
 
