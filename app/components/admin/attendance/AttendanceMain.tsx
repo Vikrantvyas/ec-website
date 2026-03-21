@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import AttendanceHistory from "./AttendanceHistory";
-import ThreeDotMenu from "@/app/components/admin/common/ThreeDotMenu";
+import AddStudentsModal from "@/app/components/admin/common/AddStudentsModal";
+import StudentActions from "@/app/components/admin/common/StudentActions";
 
 type Student = {
   id: string;
@@ -33,22 +34,7 @@ export default function AttendanceMain({
   const [showHistory, setShowHistory] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    function handleClick(e: any) {
-      if (!menuRef.current?.contains(e.target)) {
-        setOpenMenuId(null);
-        setOpenSubMenu(null);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
 
   function formatDate(date?: string) {
     if (!date) return "";
@@ -171,9 +157,6 @@ export default function AttendanceMain({
                 {/* RIGHT */}
                 <div className="flex flex-col items-end justify-between pr-2">
 
-                  {/* ✅ FINAL */}
-                  <ThreeDotMenu studentId={student.id} />
-
                   <button
                     disabled={saved}
                     onClick={() => {
@@ -200,10 +183,9 @@ export default function AttendanceMain({
 
               </div>
 
+              {/* ✅ NEW ACTIONS */}
               {isExpanded && (
-                <div className="mt-2 text-xs text-gray-600 border-t pt-2">
-                  Dummy Info: Fees ₹5000 • Attendance 80%
-                </div>
+                <StudentActions studentId={student.id} />
               )}
 
             </div>
@@ -212,6 +194,7 @@ export default function AttendanceMain({
 
       </div>
 
+      {/* CONFIRM */}
       {showConfirm && !saved && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-4 w-[90%] max-w-md max-h-[80vh] overflow-y-auto">
