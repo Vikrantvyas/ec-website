@@ -45,7 +45,7 @@ export default function BranchSelector({
             onClick={()=>handleClick(b)}
             className={`whitespace-nowrap h-[36px] px-3 rounded-md border text-sm transition
             ${
-              value === b
+              (value || "").trim() === b.trim()   // ✅ FIXED
               ? "bg-blue-600 text-white border-blue-600"
               : "bg-white border-gray-300 hover:bg-gray-50"
             }`}

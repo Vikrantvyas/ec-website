@@ -5,11 +5,15 @@ import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import { Input, SelectField } from "@/app/components/ui/FormFields";
 import BranchSelector from "@/app/components/ui/BranchSelector";
 import { supabase } from "@/lib/supabaseClient";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function ReceiptPage(){
 
 const router = useRouter();
+const searchParams = useSearchParams();
+const studentIdParam = searchParams.get("student");
+const branchParam = searchParams.get("branch");
+
 const today = new Date().toISOString().split("T")[0];
 
 /* STATES */
@@ -43,9 +47,24 @@ const [receipts,setReceipts] = useState<any[]>([]);
 
 /* LOAD INITIAL */
 
+useEffect(()=>{ fetchBranches(); },[]);
+
+/* ✅ BRANCH AUTO SELECT (FINAL FIX) */
+
 useEffect(()=>{
-fetchBranches();
-},[]);
+
+if(!branchParam || !branches.length) return;
+
+const b = branches.find(
+  (x:any)=> (x.name || "").trim().toLowerCase() === (branchParam || "").trim().toLowerCase()
+);
+
+if(b && branchName !== b.name){
+setBranchName(b.name.trim());
+setBranch(b.id);
+}
+
+},[branchParam,branches]);
 
 /* BRANCH CHANGE */
 
@@ -55,6 +74,22 @@ fetchStudents();
 fetchBatches();
 }
 },[branchName]);
+
+/* ✅ STUDENT AUTO SELECT */
+
+useEffect(()=>{
+
+if(studentIdParam && students.length){
+
+const s = students.find((x:any)=>x.id === studentIdParam);
+
+if(s){
+handleStudentChange(s.student_name);
+}
+
+}
+
+},[studentIdParam,students]);
 
 /* AUTO DUE */
 
@@ -94,14 +129,11 @@ setDueDate(base.toISOString().split("T")[0]);
 /* FETCH */
 
 const fetchBranches = async ()=>{
-
 const { data } = await supabase
 .from("branches")
 .select("id,name")
 .order("name");
-
 setBranches(data||[]);
-
 };
 
 const fetchStudents = async ()=>{
@@ -143,26 +175,20 @@ setStudents(allStudents);
 };
 
 const fetchBatches = async ()=>{
-
 const { data } = await supabase
 .from("batches")
 .select("batch_name,branch_id")
 .eq("branch_id",branch);
-
 setBatches(data||[]);
-
 };
 
 const loadReceipts = async (student:string)=>{
-
 const { data } = await supabase
 .from("receipts")
 .select("*")
 .eq("student_name",student)
 .order("created_at",{ascending:true});
-
 setReceipts(data||[]);
-
 };
 
 /* STUDENT CHANGE */
@@ -225,9 +251,7 @@ due_date:dueDate
 
 };
 
-await supabase
-.from("receipts")
-.insert([payload]);
+await supabase.from("receipts").insert([payload]);
 
 await loadReceipts(selectedStudent);
 
@@ -249,6 +273,11 @@ return(
 <PermissionGuard page="Receipt">
 
 <div className="space-y-6 p-6">
+
+{/* BACK */}
+<button onClick={()=>router.back()} className="text-sm text-blue-600">
+⬅ Back
+</button>
 
 {/* BRANCH */}
 
@@ -289,7 +318,6 @@ s.student_name
 .toLowerCase()
 .includes(searchText.toLowerCase())
 )
-
 .map((s:any)=>(
 <div
 key={s.id}
@@ -325,15 +353,12 @@ Add
 <div className="border rounded-lg p-4 space-y-4 bg-gray-50">
 
 <div className="text-sm font-semibold">
-
 {studentInfo.student_name} - {studentInfo.department} - {studentInfo.course} - {batch}
-
 </div>
 
 <table className="w-full text-sm">
 
 <thead className="bg-gray-100">
-
 <tr>
 <th className="p-2 text-left">Date</th>
 <th className="p-2 text-left">Amount</th>
@@ -343,7 +368,6 @@ Add
 <th className="p-2 text-left">Due</th>
 <th className="p-2 text-left">Due Date</th>
 </tr>
-
 </thead>
 
 <tbody>
@@ -368,42 +392,25 @@ Add
 
 )}
 
-{/* NEW RECEIPT */}
+{/* FORM */}
 
-<form
-onSubmit={handleSubmit}
-className="grid md:grid-cols-5 gap-4"
->
+<form onSubmit={handleSubmit} className="grid md:grid-cols-5 gap-4">
 
 <Input label="Date" type="date" value={date} onChange={(e:any)=>setDate(e.target.value)} />
-
 <Input label="Amount" type="number" value={amount} onChange={(e:any)=>setAmount(e.target.value)} />
-
 <Input label="R. N." value={receiptNo} onChange={(e:any)=>setReceiptNo(e.target.value)} />
-
 <SelectField label="Account" value={account} options={accountOptions} onChange={(v:string)=>setAccount(v)} />
-
 <SelectField label="Mode" value={mode} options={paymentModes} onChange={(v:string)=>setMode(v)} />
-
 <Input label="Total Fee" type="number" value={totalFee} onChange={(e:any)=>setTotalFee(e.target.value)} />
-
 <Input label="Discount" type="number" value={discount} onChange={(e:any)=>setDiscount(e.target.value)} />
-
 <Input label="Due" value={due} readOnly />
-
 <Input label="Days" type="number" value={days} onChange={(e:any)=>setDays(e.target.value)} />
-
 <Input label="Due Date" type="date" value={dueDate} readOnly />
 
 <div className="md:col-span-5 flex justify-end">
-
-<button
-type="submit"
-className="px-6 py-2 bg-blue-600 text-white rounded-md"
->
+<button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-md">
 Save Receipt
 </button>
-
 </div>
 
 </form>

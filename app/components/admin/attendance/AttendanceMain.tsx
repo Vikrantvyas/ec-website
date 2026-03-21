@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import AttendanceHistory from "./AttendanceHistory";
 import AddStudentsModal from "@/app/components/admin/common/AddStudentsModal";
 import StudentActions from "@/app/components/admin/common/StudentActions";
@@ -28,12 +28,13 @@ export default function AttendanceMain({
   showConfirm,
   submitAttendance,
   selectedBatchId,
-  reloadStudents
+  reloadStudents,
+  branches,
+  selectedBranch
 }: any) {
 
   const [showHistory, setShowHistory] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   function formatDate(date?: string) {
@@ -183,9 +184,12 @@ export default function AttendanceMain({
 
               </div>
 
-              {/* ✅ NEW ACTIONS */}
+              {/* ✅ EXPAND ACTIONS */}
               {isExpanded && (
-                <StudentActions studentId={student.id} />
+                <StudentActions 
+                  studentId={student.id} 
+                  branchId={selectedBranch}  // ✅ FINAL FIX
+                />
               )}
 
             </div>
