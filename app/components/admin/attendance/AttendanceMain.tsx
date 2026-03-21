@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import AttendanceHistory from "./AttendanceHistory";
 import AddStudentsModal from "@/app/components/admin/common/AddStudentsModal";
 import StudentActions from "@/app/components/admin/common/StudentActions";
@@ -32,6 +33,8 @@ export default function AttendanceMain({
   branches,
   selectedBranch
 }: any) {
+
+  const router = useRouter();
 
   const [showHistory, setShowHistory] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -121,10 +124,14 @@ export default function AttendanceMain({
 
                   <div className="flex flex-col gap-1">
 
-                    <div className={`font-semibold text-sm ${
-                      isUnpaid ? "bg-lime-100 px-2 rounded inline" :
-                      isDue ? "text-red-600" : ""
-                    }`}>
+                    {/* 🔥 NAME CLICKABLE */}
+                    <div
+                      onClick={() => router.push(`/admin/lead/${student.id}`)}
+                      className={`font-semibold text-sm cursor-pointer hover:underline ${
+                        isUnpaid ? "bg-lime-100 px-2 rounded inline" :
+                        isDue ? "text-red-600" : ""
+                      }`}
+                    >
                       {index + 1}. {student.name}
                     </div>
 
@@ -184,11 +191,11 @@ export default function AttendanceMain({
 
               </div>
 
-              {/* ✅ EXPAND ACTIONS */}
+              {/* EXPAND */}
               {isExpanded && (
                 <StudentActions 
                   studentId={student.id} 
-                  branchId={selectedBranch}  // ✅ FINAL FIX
+                  branchId={selectedBranch}
                 />
               )}
 
