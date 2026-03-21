@@ -97,11 +97,12 @@ export default function LeadCard({
       <div className="flex justify-between items-start">
         <div className="flex-1">
 
+          {/* 🔹 NAME CLICK → DETAIL PAGE */}
           <span
             className="font-semibold text-blue-600 underline cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/admin/profile/${lead.id}`);
+              router.push(`/admin/lead/${lead.id}`);
             }}
           >
             {lead.name}
