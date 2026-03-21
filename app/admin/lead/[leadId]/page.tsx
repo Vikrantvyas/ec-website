@@ -49,26 +49,59 @@ export default function LeadDetailPage() {
       .eq("student_name", leadData?.student_name)
       .order("date", { ascending: false });
 
-    // 🔥 FIXED ATTENDANCE (JOIN WITH BATCHES)
-    const { data: attendanceData } = await supabase
-      .from("attendance")
-      .select(`
-        attendance_date,
-        status,
-        batch_id,
-        batches (
-          batch_name
-        )
-      `)
+    // ✅ FINAL ATTENDANCE LOGIC (SYSTEM MATCHED)
+
+    const { data: batchLinks } = await supabase
+      .from("batch_students")
+      .select("batch_id")
       .eq("lead_id", leadId);
 
-    // 🔹 format data for component
-    const formattedAttendance =
-      attendanceData?.map((a: any) => ({
-        date: a.attendance_date,
-        status: a.status,
-        batch_name: a.batches?.batch_name || "Batch",
-      })) || [];
+    const batchIds = batchLinks?.map((b: any) => b.batch_id) || [];
+
+    let formattedAttendance: any[] = [];
+
+    if (batchIds.length > 0) {
+
+      const { data: batches } = await supabase
+        .from("batches")
+        .select("id,batch_name")
+        .in("id", batchIds);
+
+      const { data: attendanceData } = await supabase
+        .from("attendance")
+        .select("batch_id,status,attendance_date")
+        .eq("lead_id", leadId)
+        .order("attendance_date", { ascending: false });
+
+      batches?.forEach((batch: any) => {
+
+        const studentAttendance =
+          attendanceData
+            ?.filter((a: any) => a.batch_id === batch.id)
+            .slice(0, 10) || [];
+
+        const last10 = studentAttendance.map((a: any) => ({
+          date: a.attendance_date,
+          status: a.status,
+        }));
+
+        while (last10.length < 10) {
+          last10.push({
+            date: "",
+            status: "N",
+          });
+        }
+
+        last10.forEach((item: any) => {
+          formattedAttendance.push({
+            batch_name: batch.batch_name,
+            date: item.date,
+            status: item.status,
+          });
+        });
+
+      });
+    }
 
     setLead(leadData);
     setLastFU(fuData);
