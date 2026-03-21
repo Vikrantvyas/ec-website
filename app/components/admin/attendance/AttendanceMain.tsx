@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import AttendanceHistory from "./AttendanceHistory";
-import AddStudentsModal from "@/app/components/admin/common/AddStudentsModal";
+import ThreeDotMenu from "@/app/components/admin/common/ThreeDotMenu";
 
 type Student = {
   id: string;
@@ -50,13 +50,6 @@ export default function AttendanceMain({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const dummyBatches = [
-    { id: "1", batch_name: "Morning Batch" },
-    { id: "2", batch_name: "Evening Batch" },
-    { id: "3", batch_name: "Spoken English" },
-    { id: "4", batch_name: "Computer Basic" },
-  ];
-
   function formatDate(date?: string) {
     if (!date) return "";
     const d = new Date(date);
@@ -67,7 +60,7 @@ export default function AttendanceMain({
     <div className="flex flex-col h-full overflow-hidden">
 
       {/* HEADER */}
-     <div className="px-3 py-2 bg-white shadow-sm flex justify-between items-end">
+      <div className="px-3 py-2 bg-white shadow-sm flex justify-between items-end">
         <div>
           <div className="font-semibold text-sm">{selectedBatchName}</div>
 
@@ -87,7 +80,6 @@ export default function AttendanceMain({
             </span>
           </div>
 
-          {/* ✅ RESTORED */}
           {saved && (
             <div className="text-green-600 text-xs mt-1">
               ✔ Attendance Locked for Today
@@ -127,7 +119,6 @@ export default function AttendanceMain({
                 {/* LEFT */}
                 <div className="flex gap-3">
 
-                  {/* IMAGE + ARROW */}
                   <div className="flex flex-col items-center">
                     <div className="w-12 h-16 bg-gray-300 flex items-center justify-center font-semibold">
                       {student.name?.charAt(0)}
@@ -141,7 +132,6 @@ export default function AttendanceMain({
                     </button>
                   </div>
 
-                  {/* TEXT */}
                   <div className="flex flex-col gap-1">
 
                     <div className={`font-semibold text-sm ${
@@ -162,7 +152,6 @@ export default function AttendanceMain({
                       {isUnpaid ? "Unpaid" : isDue ? `${student.due} Due` : "Clear"}
                     </div>
 
-                    {/* ✅ COLORS RESTORED */}
                     <div className="flex gap-1">
                       {student.last10.map((d, i) => (
                         <div key={i} className={`w-4 h-4 text-[10px] flex items-center justify-center rounded
@@ -182,69 +171,9 @@ export default function AttendanceMain({
                 {/* RIGHT */}
                 <div className="flex flex-col items-end justify-between pr-2">
 
-                  {/* MENU */}
-                  <div className="relative" ref={menuRef}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenMenuId(openMenuId === student.id ? null : student.id);
-                        setOpenSubMenu(null);
-                      }}
-                      className="text-lg px-1"
-                    >
-                      ⋮
-                    </button>
+                  {/* ✅ FINAL */}
+                  <ThreeDotMenu studentId={student.id} />
 
-                    {openMenuId === student.id && (
-                      <div className="absolute right-0 top-6 bg-white shadow-xl rounded-md w-48 text-sm py-1 z-50">
-
-                        <div className="px-3 py-2">📄 Admission</div>
-                        <div className="px-3 py-2">💰 Receipt</div>
-                        <div className="px-3 py-2">📊 Progress</div>
-                        <div className="px-3 py-2">📝 Notes</div>
-                        <div className="px-3 py-2">🎓 Certificate</div>
-
-                        <div className="border-t my-1"></div>
-
-                        <div
-                          onClick={() => setOpenSubMenu(openSubMenu === "add" ? null : "add")}
-                          className="px-3 py-2 flex justify-between cursor-pointer"
-                        >
-                          ➕ Add Batches ▶
-                        </div>
-
-                        {openSubMenu === "add" && (
-                          <div className="ml-2">
-                            {dummyBatches.map((b) => (
-                              <div key={b.id} className="px-3 py-1 text-xs">
-                                {b.batch_name}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        <div
-                          onClick={() => setOpenSubMenu(openSubMenu === "move" ? null : "move")}
-                          className="px-3 py-2 flex justify-between cursor-pointer"
-                        >
-                          🔄 Move to Batch ▶
-                        </div>
-
-                        {openSubMenu === "move" && (
-                          <div className="ml-2">
-                            {dummyBatches.map((b) => (
-                              <div key={b.id} className="px-3 py-1 text-xs">
-                                {b.batch_name}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                      </div>
-                    )}
-                  </div>
-
-                  {/* ✅ TOGGLE DISABLE RESTORED */}
                   <button
                     disabled={saved}
                     onClick={() => {
@@ -283,7 +212,6 @@ export default function AttendanceMain({
 
       </div>
 
-      {/* ✅ CONFIRM POPUP RESTORED */}
       {showConfirm && !saved && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-4 w-[90%] max-w-md max-h-[80vh] overflow-y-auto">
