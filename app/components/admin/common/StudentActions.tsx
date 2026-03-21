@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 
 type Props = {
   studentId: string;
+  branchId: string; // ✅ CHANGE
 };
 
-export default function StudentQuickActions({ studentId }: Props) {
+export default function StudentActions({ studentId, branchId }: Props) {
 
   const router = useRouter();
 
@@ -20,8 +21,9 @@ export default function StudentQuickActions({ studentId }: Props) {
         Admission
       </button>
 
+      {/* ✅ FINAL FIX */}
       <button
-        onClick={() => router.push(`/admin/students/${studentId}/receipt`)}
+        onClick={() => router.push(`/admin/receipt?student=${studentId}&branchId=${branchId}`)}
         className="px-2 py-1 text-xs bg-gray-100 rounded"
       >
         Receipt

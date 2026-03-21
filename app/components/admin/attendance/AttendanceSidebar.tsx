@@ -9,7 +9,7 @@ type Batch = {
   start_time: string;
   teacher_name?: string;
   student_count?: number;
-  unpaid_count?: number; // ✅ safe
+  unpaid_count?: number;
 };
 
 type Branch = {
@@ -37,16 +37,21 @@ export default function AttendanceSidebar({
 
   const [search, setSearch] = useState("");
   const [attendanceMap, setAttendanceMap] = useState<any>({});
+  const [loading, setLoading] = useState(true); // ✅ NEW
 
   const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
-    loadAttendance();
+    if (batches.length) {
+      loadAttendance();
+    } else {
+      setLoading(true);
+    }
   }, [batches]);
 
   async function loadAttendance() {
 
-    if (!batches.length) return;
+    setLoading(true);
 
     const batchIds = batches.map((b) => b.id);
 
@@ -54,7 +59,8 @@ export default function AttendanceSidebar({
       .from("attendance")
       .select("batch_id,status")
       .in("batch_id", batchIds)
-      .eq("attendance_date", today);
+      .eq("attendance_date", today)
+      .limit(500);
 
     const map: any = {};
 
@@ -71,6 +77,7 @@ export default function AttendanceSidebar({
     });
 
     setAttendanceMap(map);
+    setLoading(false); // ✅ DONE
   }
 
   const now = new Date();
@@ -135,74 +142,83 @@ export default function AttendanceSidebar({
       )}
 
       {/* TOTAL INFO */}
-      <div className="px-3 py-1 text-xs md:text-sm text-gray-600 border-b">
-        Total Batches: {filtered.length} &nbsp; | &nbsp;
-        <span className="text-green-700 font-medium">
-          {totalPresentAll} / {totalStudentsAll}
-        </span>
-      </div>
+      {!loading && (
+        <div className="px-3 py-1 text-xs md:text-sm text-gray-600 border-b">
+          Total Batches: {filtered.length} &nbsp; | &nbsp;
+          <span className="text-green-700 font-medium">
+            {totalPresentAll} / {totalStudentsAll}
+          </span>
+        </div>
+      )}
+
+      {/* LOADING STATE */}
+      {loading && (
+        <div className="p-3 text-sm text-gray-500">
+          Loading batches...
+        </div>
+      )}
 
       {/* BATCH LIST */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2">
+      {!loading && (
+        <div className="flex-1 overflow-y-auto px-2 pb-2">
 
-        {filtered.map((batch) => {
+          {filtered.map((batch) => {
 
-          const isActiveTime = isCurrentBatch(batch.start_time);
+            const isActiveTime = isCurrentBatch(batch.start_time);
 
-          const att = attendanceMap[batch.id];
-          const present = att?.present || 0;
-          const total = batch.student_count || 0;
+            const att = attendanceMap[batch.id];
+            const present = att?.present || 0;
+            const total = batch.student_count || 0;
 
-          return (
-            <div
-              key={batch.id}
-              onClick={() => setSelectedBatch(batch.id)}
-              className={`p-2 md:p-3 mb-2 rounded-lg cursor-pointer shadow-sm
-                ${
-                  selectedBatch === batch.id
-                    ? "bg-blue-50"
-                    : isActiveTime
-                    ? "bg-green-100 border border-green-500"
-                    : "bg-white"
-                }`}
-            >
+            return (
+              <div
+                key={batch.id}
+                onClick={() => setSelectedBatch(batch.id)}
+                className={`p-2 md:p-3 mb-2 rounded-lg cursor-pointer shadow-sm
+                  ${
+                    selectedBatch === batch.id
+                      ? "bg-blue-50"
+                      : isActiveTime
+                      ? "bg-green-100 border border-green-500"
+                      : "bg-white"
+                  }`}
+              >
 
-              {/* NAME + ATTENDANCE BADGE (UNCHANGED ✅) */}
-              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
 
-                <div className="font-semibold text-[15px] md:text-[17px]">
-                  {batch.batch_name}
+                  <div className="font-semibold text-[15px] md:text-[17px]">
+                    {batch.batch_name}
+                  </div>
+
+                  {att && (
+                    <div className="text-[12px] px-2 py-[2px] rounded bg-green-100 text-green-700 font-medium">
+                      {present} / {total}
+                    </div>
+                  )}
+
                 </div>
 
-                {att && (
-                  <div className="text-[12px] px-2 py-[2px] rounded bg-green-100 text-green-700 font-medium">
-                    {present} / {total}
-                  </div>
-                )}
+                <div className="text-[13px] md:text-[14px] text-gray-600 mt-1 flex items-center gap-2 flex-wrap">
+                  
+                  <span>
+                    {batch.teacher_name || "Teacher"} •{" "}
+                    {batch.student_count || 0} St.
+                  </span>
+
+                  {batch.unpaid_count && batch.unpaid_count > 0 && (
+                    <div className="text-[11px] px-2 py-[2px] rounded bg-red-100 text-red-700 font-semibold animate-pulse">
+                      🎉 {batch.unpaid_count} New
+                    </div>
+                  )}
+
+                </div>
 
               </div>
+            );
+          })}
 
-              {/* SECOND ROW (UNPAID BADGE MOVED HERE ✅) */}
-              <div className="text-[13px] md:text-[14px] text-gray-600 mt-1 flex items-center gap-2 flex-wrap">
-                
-                <span>
-                  {batch.teacher_name || "Teacher"} •{" "}
-                  {batch.student_count || 0} St.
-                </span>
-
-                {batch.unpaid_count && batch.unpaid_count > 0 && (
-                  <div className="text-[11px] px-2 py-[2px] rounded bg-red-100 text-red-700 font-semibold animate-pulse">
-                    🎉 {batch.unpaid_count} New
-                  </div>
-                )}
-
-              </div>
-
-            </div>
-          );
-        })}
-
-      </div>
+        </div>
+      )}
 
     </div>
   );
