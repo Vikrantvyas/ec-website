@@ -6,43 +6,38 @@ import { supabase } from "@/lib/supabaseClient";
 
 const tabs = ["Overview", "Attendance", "Fees", "Progress", "Tests"];
 
-type Lead = {
-  id: string;
-  student_name: string;
-  mobile_number: string;
-  course: string;
-  branch: string;
-  lead_stage: string;
-};
-
 export default function LeadDetailPage() {
   const params = useParams();
   const leadId = params.leadId as string;
 
   const [activeTab, setActiveTab] = useState("Overview");
-  const [lead, setLead] = useState<Lead | null>(null);
+  const [lead, setLead] = useState<any>(null);
+  const [lastFU, setLastFU] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (leadId) loadLead();
+    if (leadId) loadData();
   }, [leadId]);
 
-  async function loadLead() {
+  async function loadData() {
     setLoading(true);
 
-    const { data, error } = await supabase
+    const { data: leadData } = await supabase
       .from("leads")
-      .select("id, student_name, mobile_number, course, branch, lead_stage")
+      .select("*")
       .eq("id", leadId)
       .single();
 
-    if (error) {
-      console.log(error);
-    }
+    const { data: fuData } = await supabase
+      .from("lead_followups")
+      .select("*")
+      .eq("lead_id", leadId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (data) {
-      setLead(data);
-    }
+    setLead(leadData);
+    setLastFU(fuData);
 
     setLoading(false);
   }
@@ -110,38 +105,66 @@ export default function LeadDetailPage() {
       </div>
 
       {/* CONTENT */}
-      <div className="p-4">
+      <div className="p-3 space-y-3 text-sm">
 
         {activeTab === "Overview" && (
-          <div className="bg-white p-4 rounded shadow text-sm space-y-2">
-            <p><b>Name:</b> {lead.student_name}</p>
-            <p><b>Mobile:</b> {lead.mobile_number}</p>
-            <p><b>Course:</b> {lead.course}</p>
-            <p><b>Branch:</b> {lead.branch}</p>
-            <p><b>Status:</b> {lead.lead_stage}</p>
-          </div>
+          <>
+            {/* BASIC */}
+            <div className="bg-white p-3 rounded shadow space-y-1">
+              <p><b>Mobile:</b> {lead.mobile_number}</p>
+              {lead.alternate_number && <p><b>Alt No:</b> {lead.alternate_number}</p>}
+              <p><b>Gender:</b> {lead.gender} | <b>Age:</b> {lead.age}</p>
+              <p><b>Area:</b> {lead.area} | <b>City:</b> {lead.city}</p>
+            </div>
+
+            {/* COURSE */}
+            <div className="bg-white p-3 rounded shadow space-y-1">
+              <p><b>Course:</b> {lead.course}</p>
+              <p><b>Department:</b> {lead.department}</p>
+              <p><b>Preferred Timing:</b> {lead.preferred_timing}</p>
+              <p><b>Preferred Batch:</b> {lead.preferred_batch}</p>
+            </div>
+
+            {/* ENQUIRY */}
+            <div className="bg-white p-3 rounded shadow space-y-1">
+              <p><b>Date:</b> {lead.enquiry_date}</p>
+              <p><b>Time:</b> {lead.enquiry_time}</p>
+              <p><b>Method:</b> {lead.method}</p>
+              <p><b>Channel:</b> {lead.channel}</p>
+              <p><b>Enquired By:</b> {lead.enquired_by}</p>
+              <p><b>For:</b> {lead.for_whom}</p>
+            </div>
+
+            {/* STATUS */}
+            <div className="bg-white p-3 rounded shadow space-y-1">
+              <p><b>Stage:</b> {lead.lead_stage}</p>
+              <p><b>Chances:</b> {lead.lead_chances}</p>
+              <p><b>Counsellor:</b> {lead.counsellor}</p>
+              <p><b>Next Follow:</b> {lead.next_follow_date} {lead.next_follow_time}</p>
+            </div>
+
+            {/* LAST FOLLOW-UP */}
+            {lastFU && (
+              <div className="bg-white p-3 rounded shadow space-y-1">
+                <p><b>Last Call:</b> {new Date(lastFU.created_at).toLocaleDateString()}</p>
+                <p><b>Result:</b> {lastFU.result}</p>
+                {lastFU.mood && <p><b>Mood:</b> {lastFU.mood}</p>}
+                {lastFU.remark && <p><b>Remark:</b> {lastFU.remark}</p>}
+              </div>
+            )}
+
+            {/* ACTIONS */}
+            <div className="bg-white p-3 rounded shadow flex justify-around text-blue-600">
+              <a href={`tel:${lead.mobile_number}`}>Call</a>
+              <a href={`https://wa.me/91${lead.mobile_number}`} target="_blank">
+                WhatsApp
+              </a>
+            </div>
+          </>
         )}
 
-        {activeTab === "Attendance" && (
-          <div className="bg-white p-4 rounded shadow text-sm">
-            Coming Soon
-          </div>
-        )}
-
-        {activeTab === "Fees" && (
-          <div className="bg-white p-4 rounded shadow text-sm">
-            Coming Soon
-          </div>
-        )}
-
-        {activeTab === "Progress" && (
-          <div className="bg-white p-4 rounded shadow text-sm">
-            Coming Soon
-          </div>
-        )}
-
-        {activeTab === "Tests" && (
-          <div className="bg-white p-4 rounded shadow text-sm">
+        {activeTab !== "Overview" && (
+          <div className="bg-white p-4 rounded shadow text-center text-gray-400">
             Coming Soon
           </div>
         )}
