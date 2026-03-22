@@ -36,49 +36,15 @@ export default function AttendanceSidebar({
 }) {
 
   const [search, setSearch] = useState("");
-  const [attendanceMap, setAttendanceMap] = useState<any>({});
-  const [loading, setLoading] = useState(true); // ✅ NEW
-
-  const today = new Date().toISOString().split("T")[0];
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (batches.length) {
-      loadAttendance();
+      setLoading(false);
     } else {
       setLoading(true);
     }
   }, [batches]);
-
-  async function loadAttendance() {
-
-    setLoading(true);
-
-    const batchIds = batches.map((b) => b.id);
-
-    const { data } = await supabase
-      .from("attendance")
-      .select("batch_id,status")
-      .in("batch_id", batchIds)
-      .eq("attendance_date", today)
-      .limit(500);
-
-    const map: any = {};
-
-    (data || []).forEach((r: any) => {
-      if (!map[r.batch_id]) {
-        map[r.batch_id] = { present: 0, total: 0 };
-      }
-
-      map[r.batch_id].total += 1;
-
-      if (r.status === "P") {
-        map[r.batch_id].present += 1;
-      }
-    });
-
-    setAttendanceMap(map);
-    setLoading(false); // ✅ DONE
-  }
 
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -95,15 +61,6 @@ export default function AttendanceSidebar({
   const filtered = batches.filter((b) =>
     b.batch_name.toLowerCase().includes(search.toLowerCase())
   );
-
-  let totalPresentAll = 0;
-  let totalStudentsAll = 0;
-
-  filtered.forEach((b) => {
-    const att = attendanceMap[b.id];
-    totalPresentAll += att?.present || 0;
-    totalStudentsAll += b.student_count || 0;
-  });
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -144,14 +101,11 @@ export default function AttendanceSidebar({
       {/* TOTAL INFO */}
       {!loading && (
         <div className="px-3 py-1 text-xs md:text-sm text-gray-600 border-b">
-          Total Batches: {filtered.length} &nbsp; | &nbsp;
-          <span className="text-green-700 font-medium">
-            {totalPresentAll} / {totalStudentsAll}
-          </span>
+          Total Batches: {filtered.length}
         </div>
       )}
 
-      {/* LOADING STATE */}
+      {/* LOADING */}
       {loading && (
         <div className="p-3 text-sm text-gray-500">
           Loading batches...
@@ -165,10 +119,6 @@ export default function AttendanceSidebar({
           {filtered.map((batch) => {
 
             const isActiveTime = isCurrentBatch(batch.start_time);
-
-            const att = attendanceMap[batch.id];
-            const present = att?.present || 0;
-            const total = batch.student_count || 0;
 
             return (
               <div
@@ -190,27 +140,10 @@ export default function AttendanceSidebar({
                     {batch.batch_name}
                   </div>
 
-                  {att && (
-                    <div className="text-[12px] px-2 py-[2px] rounded bg-green-100 text-green-700 font-medium">
-                      {present} / {total}
-                    </div>
-                  )}
-
                 </div>
 
-                <div className="text-[13px] md:text-[14px] text-gray-600 mt-1 flex items-center gap-2 flex-wrap">
-                  
-                  <span>
-                    {batch.teacher_name || "Teacher"} •{" "}
-                    {batch.student_count || 0} St.
-                  </span>
-
-                  {batch.unpaid_count && batch.unpaid_count > 0 && (
-                    <div className="text-[11px] px-2 py-[2px] rounded bg-red-100 text-red-700 font-semibold animate-pulse">
-                      🎉 {batch.unpaid_count} New
-                    </div>
-                  )}
-
+                <div className="text-[13px] md:text-[14px] text-gray-600 mt-1">
+                  {batch.teacher_name || "Teacher"}
                 </div>
 
               </div>
