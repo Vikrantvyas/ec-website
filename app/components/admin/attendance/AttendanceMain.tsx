@@ -127,7 +127,7 @@ export default function AttendanceMain({
                     {/* 🔥 NAME CLICKABLE */}
                     <div
                       onClick={() => router.push(`/admin/lead/${student.id}`)}
-                      className={`font-semibold text-sm cursor-pointer hover:underline ${
+                      className={`font-semibold text-sm cursor-pointer text-blue-600 underline ${
                         isUnpaid ? "bg-lime-100 px-2 rounded inline" :
                         isDue ? "text-red-600" : ""
                       }`}
