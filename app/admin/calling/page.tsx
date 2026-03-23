@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect } from "react";
 import PermissionGuard from "@/app/components/admin/PermissionGuard";
-import FiltersBar from "@/app/components/admin/calling/FiltersBar";
 import LeadCard from "@/app/components/admin/calling/LeadCard";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -28,21 +27,24 @@ type Lead = {
   attendanceLast10: AttendanceSignal[];
 };
 
+type Branch = {
+  id: string;
+  name: string;
+};
+
 export default function CallingPage() {
 
   const [leads, setLeads] = useState<Lead[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const [search, setSearch] = useState("");
-  const [filter1, setFilter1] = useState("All");
-  const [filter2, setFilter2] = useState("All");
-  const [filter3, setFilter3] = useState("All");
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>("All");
 
   useEffect(() => {
-    loadLeads();
+    initPage();
   }, []);
 
-  async function loadLeads() {
+  async function initPage() {
 
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData.session) return;
@@ -63,17 +65,38 @@ export default function CallingPage() {
       .eq("id", userData.role_id)
       .single();
 
+    await loadBranches(roleData?.branch_access || []);
+    await loadLeads(roleData?.branch_access || []);
+  }
+
+  async function loadBranches(access: string[]) {
+
+    let query = supabase
+      .from("branches")
+      .select("id,name")
+      .order("name");
+
+    if (access.length) {
+      query = query.in("name", access);
+    }
+
+    const { data } = await query;
+
+    setBranches(data || []);
+  }
+
+  async function loadLeads(access: string[]) {
+
     let query = supabase
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (roleData?.branch_access?.length) {
-      query = query.in("branch", roleData.branch_access);
+    if (access.length) {
+      query = query.in("branch", access);
     }
 
     const { data } = await query;
-
     if (!data) return;
 
     const leadIds = data.map((l: any) => l.id);
@@ -96,42 +119,60 @@ export default function CallingPage() {
       });
     });
 
-    const formatted: Lead[] = data.map((l: any) => ({
-      id: l.id,
-      name: l.student_name || "",
-      gender: l.gender || "Male",
-      mobile: l.mobile || "",
-      course: l.course || "",
-      branch: l.branch || "",
-      status: l.status || "Cold",
-      enquiryDate: l.created_at,
-      followUps: followupMap[l.id] || [],
-      attendanceLast10: Array(10).fill("N"),
-    }));
+    const today = new Date();
+    const last10Dates: string[] = [];
+
+    for (let i = 0; i < 10; i++) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+
+      last10Dates.push(`${yyyy}-${mm}-${dd}`);
+    }
+
+    const { data: attendanceData } = await supabase
+      .from("attendance")
+      .select("lead_id, attendance_date, status")
+      .in("lead_id", leadIds)
+      .in("attendance_date", last10Dates);
+
+    const attendanceMap: any = {};
+
+    attendanceData?.forEach((a: any) => {
+      if (!attendanceMap[a.lead_id]) attendanceMap[a.lead_id] = {};
+      attendanceMap[a.lead_id][a.attendance_date] = a.status;
+    });
+
+    const formatted: Lead[] = data.map((l: any) => {
+
+      const last10 = last10Dates.map((date) => {
+        return attendanceMap[l.id]?.[date] || "N";
+      });
+
+      return {
+        id: l.id,
+        name: l.student_name || "",
+        gender: l.gender || "Male",
+        mobile: l.mobile || "",
+        course: l.course || "",
+        branch: l.branch || "",
+        status: l.status || "Cold",
+        enquiryDate: l.created_at,
+        followUps: followupMap[l.id] || [],
+        attendanceLast10: last10,
+      };
+    });
 
     setLeads(formatted);
-
   }
 
   const filteredLeads = useMemo(() => {
-
-    let data = [...leads];
-
-    data.sort(
-      (a, b) =>
-        new Date(b.enquiryDate).getTime() -
-        new Date(a.enquiryDate).getTime()
-    );
-
-    if (search) {
-      data = data.filter((l) =>
-        l.name.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    return data;
-
-  }, [leads, search]);
+    if (selectedBranch === "All") return leads;
+    return leads.filter((l) => l.branch === selectedBranch);
+  }, [leads, selectedBranch]);
 
   const addFollowUp = async (
     leadId: string,
@@ -160,10 +201,8 @@ export default function CallingPage() {
       return;
     }
 
-    loadLeads();
-
+    loadLeads(branches.map(b => b.name));
     setExpandedId(null);
-
   };
 
   return (
@@ -172,16 +211,30 @@ export default function CallingPage() {
 
       <div className="min-h-screen bg-gray-50">
 
-        <FiltersBar
-          filter1={filter1}
-          setFilter1={setFilter1}
-          filter2={filter2}
-          setFilter2={setFilter2}
-          filter3={filter3}
-          setFilter3={setFilter3}
-          search={search}
-          setSearch={setSearch}
-        />
+        <div className="flex gap-2 overflow-x-auto p-3 bg-white sticky top-0 z-10">
+
+          <button
+            onClick={() => setSelectedBranch("All")}
+            className={`px-4 py-1 rounded-full text-sm whitespace-nowrap ${
+              selectedBranch === "All" ? "bg-blue-600 text-white" : "bg-gray-200"
+            }`}
+          >
+            All
+          </button>
+
+          {branches.map((b) => (
+            <button
+              key={b.id}
+              onClick={() => setSelectedBranch(b.name)}
+              className={`px-4 py-1 rounded-full text-sm whitespace-nowrap ${
+                selectedBranch === b.name ? "bg-blue-600 text-white" : "bg-gray-200"
+              }`}
+            >
+              {b.name}
+            </button>
+          ))}
+
+        </div>
 
         <div className="p-3 space-y-3 pb-24">
           {filteredLeads.map((lead) => (
