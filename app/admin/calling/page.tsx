@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import LeadCard from "@/app/components/admin/calling/LeadCard";
+import FiltersPanel from "@/app/components/admin/calling/FiltersPanel";
 import { supabase } from "@/lib/supabaseClient";
 
 type FollowUp = {
@@ -25,6 +26,8 @@ type Lead = {
   enquiryDate: string;
   followUps: FollowUp[];
   attendanceLast10: AttendanceSignal[];
+  lead_stage?: string;
+  city?: string;
 };
 
 type Branch = {
@@ -39,6 +42,13 @@ export default function CallingPage() {
 
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string>("All");
+
+  const [statuses, setStatuses] = useState<string[]>([]);
+  const [selectedStatus, setSelectedStatus] = useState<string>("All");
+
+  const [showFilters, setShowFilters] = useState(false);
+
+  const [filters, setFilters] = useState<any>({});
 
   useEffect(() => {
     initPage();
@@ -65,24 +75,35 @@ export default function CallingPage() {
       .eq("id", userData.role_id)
       .single();
 
-    await loadBranches(roleData?.branch_access || []);
-    await loadLeads(roleData?.branch_access || []);
+    const access = roleData?.branch_access || [];
+
+    await loadBranches(access);
+    await loadLeads(access);
+    await loadStatuses(access);
   }
 
   async function loadBranches(access: string[]) {
+    let query = supabase.from("branches").select("id,name").order("name");
+    if (access.length) query = query.in("name", access);
+    const { data } = await query;
+    setBranches(data || []);
+  }
 
-    let query = supabase
-      .from("branches")
-      .select("id,name")
-      .order("name");
-
-    if (access.length) {
-      query = query.in("name", access);
-    }
+  async function loadStatuses(access: string[]) {
+    let query = supabase.from("leads").select("lead_stage");
+    if (access.length) query = query.in("branch", access);
 
     const { data } = await query;
 
-    setBranches(data || []);
+    const unique = Array.from(
+      new Set(
+        (data || [])
+          .map((d: any) => (d.lead_stage || "").trim())
+          .filter(Boolean)
+      )
+    );
+
+    setStatuses(unique);
   }
 
   async function loadLeads(access: string[]) {
@@ -92,9 +113,7 @@ export default function CallingPage() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (access.length) {
-      query = query.in("branch", access);
-    }
+    if (access.length) query = query.in("branch", access);
 
     const { data } = await query;
     if (!data) return;
@@ -163,6 +182,8 @@ export default function CallingPage() {
         enquiryDate: l.created_at,
         followUps: followupMap[l.id] || [],
         attendanceLast10: last10,
+        lead_stage: (l.lead_stage || "").trim(),
+        city: l.city || ""
       };
     });
 
@@ -170,9 +191,35 @@ export default function CallingPage() {
   }
 
   const filteredLeads = useMemo(() => {
-    if (selectedBranch === "All") return leads;
-    return leads.filter((l) => l.branch === selectedBranch);
-  }, [leads, selectedBranch]);
+
+    let data = [...leads];
+
+    if (selectedBranch !== "All") {
+      data = data.filter((l) => l.branch === selectedBranch);
+    }
+
+    if (selectedStatus !== "All") {
+      data = data.filter(
+        (l) =>
+          (l.lead_stage || "").toLowerCase() ===
+          selectedStatus.toLowerCase()
+      );
+    }
+
+    // ✅ MULTI SELECT FILTER FIX
+    Object.entries(filters).forEach(([key, val]) => {
+
+      if (!val || val.length === 0) return;
+
+      data = data.filter((l: any) =>
+        val.includes(l[key])
+      );
+
+    });
+
+    return data;
+
+  }, [leads, selectedBranch, selectedStatus, filters]);
 
   const addFollowUp = async (
     leadId: string,
@@ -211,28 +258,44 @@ export default function CallingPage() {
 
       <div className="min-h-screen bg-gray-50">
 
-        <div className="flex gap-2 overflow-x-auto p-3 bg-white sticky top-0 z-10">
+        <div className="sticky top-0 z-20 bg-white shadow-sm">
 
-          <button
-            onClick={() => setSelectedBranch("All")}
-            className={`px-4 py-1 rounded-full text-sm whitespace-nowrap ${
-              selectedBranch === "All" ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
-          >
-            All
-          </button>
-
-          {branches.map((b) => (
-            <button
-              key={b.id}
-              onClick={() => setSelectedBranch(b.name)}
-              className={`px-4 py-1 rounded-full text-sm whitespace-nowrap ${
-                selectedBranch === b.name ? "bg-blue-600 text-white" : "bg-gray-200"
-              }`}
-            >
-              {b.name}
+          <div className="flex gap-2 overflow-x-auto p-3">
+            <button onClick={() => setSelectedBranch("All")}
+              className={`px-4 py-1 rounded-full text-sm ${selectedBranch === "All" ? "bg-blue-600 text-white" : "bg-gray-200"}`}>
+              All
             </button>
-          ))}
+            {branches.map((b) => (
+              <button key={b.id}
+                onClick={() => setSelectedBranch(b.name)}
+                className={`px-4 py-1 rounded-full text-sm ${selectedBranch === b.name ? "bg-blue-600 text-white" : "bg-gray-200"}`}>
+                {b.name}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between px-3 pb-2">
+            <div className="flex gap-2 overflow-x-auto">
+              <button onClick={() => setSelectedStatus("All")}
+                className={`px-3 py-1 rounded-full text-sm ${selectedStatus === "All" ? "bg-green-600 text-white" : "bg-gray-200"}`}>
+                All
+              </button>
+              {statuses.map((s) => (
+                <button key={s}
+                  onClick={() => setSelectedStatus(s)}
+                  className={`px-3 py-1 rounded-full text-sm ${selectedStatus === s ? "bg-green-600 text-white" : "bg-gray-200"}`}>
+                  {s}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setShowFilters(true)}
+              className="text-sm px-3 py-1 bg-black text-white rounded"
+            >
+              Filters ⚙️
+            </button>
+          </div>
 
         </div>
 
@@ -247,6 +310,12 @@ export default function CallingPage() {
             />
           ))}
         </div>
+
+        <FiltersPanel
+          open={showFilters}
+          onClose={() => setShowFilters(false)}
+          onApply={(f) => setFilters(f)}
+        />
 
       </div>
 
