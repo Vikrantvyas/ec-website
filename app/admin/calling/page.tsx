@@ -209,13 +209,15 @@ export default function CallingPage() {
     // ✅ MULTI SELECT FILTER FIX
     Object.entries(filters).forEach(([key, val]) => {
 
-      if (!val || val.length === 0) return;
+  const values = val as string[];
 
-      data = data.filter((l: any) =>
-        val.includes(l[key])
-      );
+  if (!values || values.length === 0) return;
 
-    });
+  data = data.filter((l: any) =>
+    values.includes(l[key])
+  );
+
+});
 
     return data;
 
