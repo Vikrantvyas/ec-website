@@ -16,6 +16,13 @@ const branchParam = searchParams.get("branch");
 
 const today = new Date().toISOString().split("T")[0];
 
+/* DATE FORMAT */
+function formatDate(date?: string) {
+  if (!date) return "";
+  const d = new Date(date);
+  return `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
+}
+
 /* STATES */
 
 const [branch,setBranch] = useState("");
@@ -45,85 +52,65 @@ const [dueDate,setDueDate] = useState("");
 
 const [receipts,setReceipts] = useState<any[]>([]);
 
+/* ✅ CALCULATED TOTAL DUE */
+
+const totalFeeVal = Number(receipts[0]?.total_fee || 0);
+const discountVal = Number(receipts[0]?.discount || 0);
+
+const totalPaid = receipts.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+
+const finalDue = totalFeeVal - discountVal - totalPaid;
+
 /* LOAD INITIAL */
 
 useEffect(()=>{ fetchBranches(); },[]);
 
-/* ✅ BRANCH AUTO SELECT (FINAL FIX) */
-
 useEffect(()=>{
-
 if(!branchParam || !branches.length) return;
-
 const b = branches.find(
-  (x:any)=> (x.name || "").trim().toLowerCase() === (branchParam || "").trim().toLowerCase()
+(x:any)=> (x.name || "").trim().toLowerCase() === (branchParam || "").trim().toLowerCase()
 );
-
 if(b && branchName !== b.name){
 setBranchName(b.name.trim());
 setBranch(b.id);
 }
-
 },[branchParam,branches]);
 
-/* BRANCH CHANGE */
-
 useEffect(()=>{
-if(branchName){
+if(branch){
 fetchStudents();
 fetchBatches();
 }
-},[branchName]);
-
-/* ✅ STUDENT AUTO SELECT */
+},[branch]);
 
 useEffect(()=>{
-
 if(studentIdParam && students.length){
-
 const s = students.find((x:any)=>x.id === studentIdParam);
-
 if(s){
 handleStudentChange(s.student_name);
 }
-
 }
-
 },[studentIdParam,students]);
 
-/* AUTO DUE */
-
 useEffect(()=>{
-
 const fee = Number(totalFee)||0;
 const disc = Number(discount)||0;
 const amt = Number(amount)||0;
-
 const d = fee - disc - amt;
-
 setDue(d>0 ? String(d) : "0");
-
 },[totalFee,discount,amount]);
 
-/* DAYS → DATE */
-
 useEffect(()=>{
-
 if(!due || Number(due)===0){
 setDays("");
 setDueDate("");
 return;
 }
-
 if(days){
-
 const base = new Date(date);
 base.setDate(base.getDate()+Number(days));
-
 setDueDate(base.toISOString().split("T")[0]);
-
 }
-
 },[days,due,date]);
 
 /* FETCH */
@@ -148,7 +135,7 @@ while(!finished){
 const { data, error } = await supabase
 .from("leads")
 .select("id,student_name,department,course")
-.eq("branch",branchName)
+.eq("branch_id",branch)
 .order("student_name")
 .range(from,to);
 
@@ -194,17 +181,13 @@ setReceipts(data||[]);
 /* STUDENT CHANGE */
 
 const handleStudentChange = (name:string)=>{
-
 setSelectedStudent(name);
 setSearchText("");
-
 const s = students.find((x:any)=>x.student_name===name);
-
 if(s){
 setStudentInfo(s);
 loadReceipts(name);
 }
-
 };
 
 /* OPTIONS */
@@ -231,14 +214,11 @@ const handleSubmit = async (e:any)=>{
 e.preventDefault();
 
 const payload = {
-
-branch:branchName,
+branch_id:branch,
 student_name:selectedStudent,
 batch,
-
 department:studentInfo?.department,
 course:studentInfo?.course,
-
 date,
 receipt_no:receiptNo,
 account,
@@ -248,7 +228,6 @@ total_fee:totalFee,
 discount,
 due,
 due_date:dueDate
-
 };
 
 await supabase.from("receipts").insert([payload]);
@@ -274,12 +253,9 @@ return(
 
 <div className="space-y-6 p-6">
 
-{/* BACK */}
 <button onClick={()=>router.back()} className="text-sm text-blue-600">
 ⬅ Back
 </button>
-
-{/* BRANCH */}
 
 <BranchSelector
 branches={branches.map((b:any)=>b.name)}
@@ -290,8 +266,6 @@ const selected = branches.find((b:any)=>b.name===name);
 if(selected) setBranch(selected.id);
 }}
 />
-
-{/* STUDENT */}
 
 <div className="flex gap-3">
 
@@ -346,13 +320,13 @@ Add
 
 </div>
 
-{/* STUDENT INFO + PAYMENTS */}
-
 {studentInfo && (
 
 <div className="border rounded-lg p-4 space-y-4 bg-gray-50">
 
-<div className="text-sm font-semibold">
+<div className={`text-sm font-semibold ${
+finalDue > 0 ? "text-red-600" : "text-green-600"
+}`}>
 {studentInfo.student_name} - {studentInfo.department} - {studentInfo.course} - {batch}
 </div>
 
@@ -363,8 +337,10 @@ Add
 <th className="p-2 text-left">Date</th>
 <th className="p-2 text-left">Amount</th>
 <th className="p-2 text-left">R. No.</th>
+<th className="p-2 text-left">Account</th>
 <th className="p-2 text-left">Mode</th>
 <th className="p-2 text-left">Total Fee</th>
+<th className="p-2 text-left">Discount</th>
 <th className="p-2 text-left">Due</th>
 <th className="p-2 text-left">Due Date</th>
 </tr>
@@ -372,17 +348,27 @@ Add
 
 <tbody>
 
-{receipts.map((r:any)=>(
-<tr key={r.id} className="border-t">
-<td className="p-2">{r.date}</td>
-<td className="p-2">{r.amount}</td>
-<td className="p-2">{r.receipt_no}</td>
-<td className="p-2">{r.mode}</td>
-<td className="p-2">{r.total_fee}</td>
-<td className="p-2">{r.due}</td>
-<td className="p-2">{r.due_date}</td>
-</tr>
-))}
+{receipts.map((r:any, index:number) => {
+  return (
+    <tr key={r.id} className="border-t">
+      <td className="p-2">{formatDate(r.date)}</td>
+      <td className="p-2">{r.amount}</td>
+      <td className="p-2">{r.receipt_no}</td>
+      <td className="p-2">{r.account}</td>
+      <td className="p-2">{r.mode}</td>
+      <td className="p-2">{r.total_fee}</td>
+      <td className="p-2">{r.discount}</td>
+      <td className={`p-2 ${
+        index === receipts.length - 1 && Number(r.due) > 0
+          ? "text-red-600 font-semibold"
+          : "text-green-600 font-semibold"
+      }`}>
+        {r.due}
+      </td>
+      <td className="p-2">{formatDate(r.due_date)}</td>
+    </tr>
+  );
+})}
 
 </tbody>
 
@@ -391,8 +377,6 @@ Add
 </div>
 
 )}
-
-{/* FORM */}
 
 <form onSubmit={handleSubmit} className="grid md:grid-cols-5 gap-4">
 

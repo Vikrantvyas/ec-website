@@ -163,7 +163,7 @@ export default function AddStudentsModal({
     onClose();
   }
 
-  // ✅ FIXED QUICK CREATE
+  // ✅ FINAL WORKING CREATE
   async function createQuickLead() {
 
     if (!newStudent.name || !newStudent.mobile) {
@@ -173,7 +173,7 @@ export default function AddStudentsModal({
 
     const { data: batchData } = await supabase
       .from("batches")
-      .select("branch_id, batch_name, start_time")
+      .select("branch_id, batch_name, start_time") // ✅ FIX
       .eq("id", batchId)
       .single();
 
@@ -184,7 +184,7 @@ export default function AddStudentsModal({
         mobile_number: newStudent.mobile,
         age: newStudent.age ? Number(newStudent.age) : null,
         gender: newStudent.gender,
-        branch: batchData?.branch_id,
+        branch_id: batchData?.branch_id, // ✅ FIX
         preferred_batch: batchData?.batch_name,
         preferred_timing: batchData?.start_time,
         enquiry_date: new Date().toISOString().split("T")[0]
@@ -197,13 +197,11 @@ export default function AddStudentsModal({
       return;
     }
 
-    // ✅ IMPORTANT: selected में add करो (summary में दिखेगा)
     setSelected((prev)=>[
       ...prev,
       { id: lead.id, student_name: lead.student_name }
     ]);
 
-    // reset form
     setShowQuickForm(false);
     setNewStudent({
       name: "",
