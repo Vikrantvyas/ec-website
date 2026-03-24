@@ -14,10 +14,12 @@ import {
   List,
   Layers,
   ReceiptText,
+  ClipboardList,
 } from "lucide-react";
 
 export const adminMenu = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  // ✅ Fixed Dashboard route
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
 
   { name: "Lead", href: "/admin/lead", icon: UserRoundPlus },
   { name: "Lead List", href: "/admin/lead/list", icon: List },
@@ -30,6 +32,10 @@ export const adminMenu = [
 
   { name: "Students", href: "/admin/students", icon: Users },
   { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
+
+  // ✅ New Attendance
+  { name: "New Attendance", href: "/admin/attendance2", icon: ClipboardList },
+
   { name: "Fees", href: "/admin/fees", icon: CreditCard },
 
   { name: "Receipt", href: "/admin/receipt", icon: ReceiptText },
