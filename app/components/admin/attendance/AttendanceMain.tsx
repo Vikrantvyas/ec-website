@@ -189,7 +189,7 @@ export default function AttendanceMain({
               {isExpanded && (
                 <StudentActions 
                   studentId={student.id} 
-                   branchId={selectedBranch}
+                  branchId={selectedBranch}
                 />
               )}
 
@@ -250,12 +250,11 @@ export default function AttendanceMain({
       )}
 
       {showAddModal && (
-      <AddStudentsModal
-  batchId={selectedBatchId}
-  branchId={selectedBranch}
-  onClose={() => setShowAddModal(false)}
-  onSuccess={reloadStudents}
-/>
+        <AddStudentsModal
+          batchId={selectedBatchId}
+          onClose={() => setShowAddModal(false)}
+          onSuccess={reloadStudents}
+        />
       )}
 
     </div>
