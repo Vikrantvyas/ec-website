@@ -189,7 +189,7 @@ export default function AttendanceMain({
               {isExpanded && (
                 <StudentActions 
                   studentId={student.id} 
-                  branchId={selectedBranch}
+                  
                 />
               )}
 
