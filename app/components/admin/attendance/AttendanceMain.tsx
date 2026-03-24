@@ -49,7 +49,6 @@ export default function AttendanceMain({
   return (
     <div className="flex flex-col h-full overflow-hidden">
 
-      {/* HEADER */}
       <div className="px-3 py-2 bg-white shadow-sm flex justify-between items-end">
         <div>
           <div className="font-semibold text-sm">{selectedBatchName}</div>
@@ -88,7 +87,6 @@ export default function AttendanceMain({
         </button>
       </div>
 
-      {/* STUDENTS */}
       <div className="flex-1 overflow-y-auto p-2 bg-gray-50">
 
         {studentsData.map((student: Student, index: number) => {
@@ -106,7 +104,6 @@ export default function AttendanceMain({
 
               <div className="flex justify-between">
 
-                {/* LEFT */}
                 <div className="flex gap-3">
 
                   <div className="flex flex-col items-center">
@@ -124,7 +121,6 @@ export default function AttendanceMain({
 
                   <div className="flex flex-col gap-1">
 
-                    {/* 🔥 NAME CLICKABLE */}
                     <div
                       onClick={() => router.push(`/admin/lead/${student.id}`)}
                       className={`font-semibold text-sm cursor-pointer text-blue-600 underline ${
@@ -162,7 +158,6 @@ export default function AttendanceMain({
 
                 </div>
 
-                {/* RIGHT */}
                 <div className="flex flex-col items-end justify-between pr-2">
 
                   <button
@@ -191,7 +186,6 @@ export default function AttendanceMain({
 
               </div>
 
-              {/* EXPAND */}
               {isExpanded && (
                 <StudentActions 
                   studentId={student.id} 
@@ -205,7 +199,6 @@ export default function AttendanceMain({
 
       </div>
 
-      {/* CONFIRM */}
       {showConfirm && !saved && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-4 w-[90%] max-w-md max-h-[80vh] overflow-y-auto">
@@ -257,11 +250,12 @@ export default function AttendanceMain({
       )}
 
       {showAddModal && (
-        <AddStudentsModal
-          batchId={selectedBatchId}
-          onClose={() => setShowAddModal(false)}
-          onSuccess={reloadStudents}
-        />
+      <AddStudentsModal
+  batchId={selectedBatchId}
+  branchId={selectedBranch}
+  onClose={() => setShowAddModal(false)}
+  onSuccess={reloadStudents}
+/>
       )}
 
     </div>

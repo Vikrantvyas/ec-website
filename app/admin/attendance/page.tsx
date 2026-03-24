@@ -158,7 +158,6 @@ export default function AttendancePage() {
       studentCountMap[c.batch_id] = (studentCountMap[c.batch_id] || 0) + 1;
     });
 
-    // ✅ FINAL CORRECT UNPAID LOGIC
     const unpaidMap: Record<string, number> = {};
 
     for (const batch of batchData) {
@@ -218,8 +217,6 @@ export default function AttendancePage() {
     setBatches(formatted);
   }
 
-  // 🔴 बाकी code untouched (same as your original)
-
   async function reloadAllData() {
     const { data } = await supabase.auth.getSession();
     const user = data.session?.user;
@@ -264,7 +261,7 @@ export default function AttendancePage() {
 
     const { data: leads } = await supabase
       .from("leads")
-      .select("id,student_name,enquiry_date,course")
+      .select("id,student_name,enquiry_date,course,branch_id") // ✅ FIX
       .in("id", leadIds);
 
     const { data: receipts } = await supabase
