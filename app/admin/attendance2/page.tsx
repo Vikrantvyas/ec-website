@@ -383,7 +383,28 @@ export default function AttendancePage() {
               reloadStudents={reloadAllData}
             />
           ) : (
-            <div className="p-4 text-gray-500">Batches UI coming here</div>
+            <div className="p-3 space-y-3">
+
+  {batches.map((batch) => (
+
+    <div
+      key={batch.id}
+      onClick={() => setSelectedBatch(batch.id)}
+      className="cursor-pointer"
+    >
+      <BatchCard
+        id={batch.id}
+        name={batch.batch_name}
+        department={""}
+        teacher={batch.teacher_name}
+        courses={[]}
+        students={batch.student_count || 0}
+      />
+    </div>
+
+  ))}
+
+</div>
           )
         ) : (
           <AdminSplitLayout
