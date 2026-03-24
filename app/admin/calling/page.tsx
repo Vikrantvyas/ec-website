@@ -22,6 +22,7 @@ type Lead = {
   mobile: string;
   course: string;
   branch: string;
+  branch_id?: string; // ✅ added
   status: string;
   enquiryDate: string;
   followUps: FollowUp[];
@@ -91,8 +92,6 @@ export default function CallingPage() {
 
   async function loadStatuses(access: string[]) {
     let query = supabase.from("leads").select("lead_stage");
-    if (access.length) query = query.in("branch", access);
-
     const { data } = await query;
 
     const unique = Array.from(
@@ -112,8 +111,6 @@ export default function CallingPage() {
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
-
-    if (access.length) query = query.in("branch", access);
 
     const { data } = await query;
     if (!data) return;
@@ -167,6 +164,8 @@ export default function CallingPage() {
 
     const formatted: Lead[] = data.map((l: any) => {
 
+      const branchName = branches.find(b => b.id === l.branch_id)?.name || "";
+
       const last10 = last10Dates.map((date) => {
         return attendanceMap[l.id]?.[date] || "N";
       });
@@ -175,9 +174,10 @@ export default function CallingPage() {
         id: l.id,
         name: l.student_name || "",
         gender: l.gender || "Male",
-        mobile: l.mobile || "",
+        mobile: l.mobile_number || "",
         course: l.course || "",
-        branch: l.branch || "",
+        branch: branchName,
+        branch_id: l.branch_id, // ✅ added
         status: l.status || "Cold",
         enquiryDate: l.created_at,
         followUps: followupMap[l.id] || [],
@@ -195,33 +195,26 @@ export default function CallingPage() {
     let data = [...leads];
 
     if (selectedBranch !== "All") {
-      data = data.filter((l) => l.branch === selectedBranch);
+      data = data.filter((l) => l.branch_id === selectedBranch);
     }
 
-    if (selectedStatus !== "All") {
-      data = data.filter(
-        (l) =>
-          (l.lead_stage || "").toLowerCase() ===
-          selectedStatus.toLowerCase()
-      );
-    }
+    // status logic intentionally ignored (UI removed)
 
-    // ✅ MULTI SELECT FILTER FIX
     Object.entries(filters).forEach(([key, val]) => {
 
-  const values = val as string[];
+      const values = val as string[];
 
-  if (!values || values.length === 0) return;
+      if (!values || values.length === 0) return;
 
-  data = data.filter((l: any) =>
-    values.includes(l[key])
-  );
+      data = data.filter((l: any) =>
+        values.includes(l[key])
+      );
 
-});
+    });
 
     return data;
 
-  }, [leads, selectedBranch, selectedStatus, filters]);
+  }, [leads, selectedBranch, filters]);
 
   const addFollowUp = async (
     leadId: string,
@@ -250,7 +243,7 @@ export default function CallingPage() {
       return;
     }
 
-    loadLeads(branches.map(b => b.name));
+    loadLeads([]);
     setExpandedId(null);
   };
 
@@ -269,28 +262,16 @@ export default function CallingPage() {
             </button>
             {branches.map((b) => (
               <button key={b.id}
-                onClick={() => setSelectedBranch(b.name)}
-                className={`px-4 py-1 rounded-full text-sm ${selectedBranch === b.name ? "bg-blue-600 text-white" : "bg-gray-200"}`}>
+                onClick={() => setSelectedBranch(b.id)} // ✅ FIX
+                className={`px-4 py-1 rounded-full text-sm ${selectedBranch === b.id ? "bg-blue-600 text-white" : "bg-gray-200"}`}>
                 {b.name}
               </button>
             ))}
           </div>
 
-          <div className="flex items-center justify-between px-3 pb-2">
-            <div className="flex gap-2 overflow-x-auto">
-              <button onClick={() => setSelectedStatus("All")}
-                className={`px-3 py-1 rounded-full text-sm ${selectedStatus === "All" ? "bg-green-600 text-white" : "bg-gray-200"}`}>
-                All
-              </button>
-              {statuses.map((s) => (
-                <button key={s}
-                  onClick={() => setSelectedStatus(s)}
-                  className={`px-3 py-1 rounded-full text-sm ${selectedStatus === s ? "bg-green-600 text-white" : "bg-gray-200"}`}>
-                  {s}
-                </button>
-              ))}
-            </div>
+          {/* ❌ STATUS FILTER REMOVED */}
 
+          <div className="flex justify-end px-3 pb-2">
             <button
               onClick={() => setShowFilters(true)}
               className="text-sm px-3 py-1 bg-black text-white rounded"
@@ -303,13 +284,21 @@ export default function CallingPage() {
 
         <div className="p-3 space-y-3 pb-24">
           {filteredLeads.map((lead) => (
-            <LeadCard
+            <div
               key={lead.id}
-              lead={lead}
-              expandedId={expandedId}
-              setExpandedId={setExpandedId}
-              addFollowUp={addFollowUp}
-            />
+              onClick={() => {
+                if (/Mobi|Android/i.test(navigator.userAgent)) {
+                  window.location.href = `tel:${lead.mobile}`;
+                }
+              }}
+            >
+              <LeadCard
+                lead={lead}
+                expandedId={expandedId}
+                setExpandedId={setExpandedId}
+                addFollowUp={addFollowUp}
+              />
+            </div>
           ))}
         </div>
 
