@@ -16,12 +16,26 @@ const branchParam = searchParams.get("branch");
 
 const today = new Date().toISOString().split("T")[0];
 
-/* DATE FORMAT */
 function formatDate(date?: string) {
   if (!date) return "";
   const d = new Date(date);
   return `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
 }
+
+const accountOptions = [
+  { label: "Registration", value: "Registration" },
+  { label: "1st Installment", value: "1st Installment" },
+  { label: "2nd Installment", value: "2nd Installment" },
+  { label: "Full Fee", value: "Full Fee" },
+  { label: "Monthly", value: "Monthly" }
+];
+
+const paymentModes = [
+  { label: "Cash", value: "Cash" },
+  { label: "UPI", value: "UPI" },
+  { label: "Card", value: "Card" },
+  { label: "Bank Transfer", value: "Bank Transfer" }
+];
 
 /* STATES */
 
@@ -52,13 +66,14 @@ const [dueDate,setDueDate] = useState("");
 
 const [receipts,setReceipts] = useState<any[]>([]);
 
-/* ✅ CALCULATED TOTAL DUE */
+const [showConfirm,setShowConfirm] = useState(false);
+const [saving,setSaving] = useState(false);
+
+/* CALCULATIONS */
 
 const totalFeeVal = Number(receipts[0]?.total_fee || 0);
 const discountVal = Number(receipts[0]?.discount || 0);
-
 const totalPaid = receipts.reduce((sum, r) => sum + Number(r.amount || 0), 0);
-
 const finalDue = totalFeeVal - discountVal - totalPaid;
 
 /* LOAD INITIAL */
@@ -116,10 +131,7 @@ setDueDate(base.toISOString().split("T")[0]);
 /* FETCH */
 
 const fetchBranches = async ()=>{
-const { data } = await supabase
-.from("branches")
-.select("id,name")
-.order("name");
+const { data } = await supabase.from("branches").select("id,name").order("name");
 setBranches(data||[]);
 };
 
@@ -139,26 +151,17 @@ const { data, error } = await supabase
 .order("student_name")
 .range(from,to);
 
-if(error){
-console.log(error);
-return;
-}
+if(error){ console.log(error); return; }
 
-if(data){
-allStudents = [...allStudents, ...data];
-}
+if(data){ allStudents = [...allStudents, ...data]; }
 
-if(!data || data.length < 1000){
-finished = true;
-}
+if(!data || data.length < 1000){ finished = true; }
 
 from += 1000;
 to += 1000;
-
 }
 
 setStudents(allStudents);
-
 };
 
 const fetchBatches = async ()=>{
@@ -190,28 +193,22 @@ loadReceipts(name);
 }
 };
 
-/* OPTIONS */
+/* SAVE FLOW */
 
-const accountOptions = [
-{label:"Registration",value:"Registration"},
-{label:"1st Installment",value:"1st Installment"},
-{label:"2nd Installment",value:"2nd Installment"},
-{label:"Full Fee",value:"Full Fee"},
-{label:"Monthly",value:"Monthly"}
-];
-
-const paymentModes = [
-{label:"Cash",value:"Cash"},
-{label:"UPI",value:"UPI"},
-{label:"Card",value:"Card"},
-{label:"Bank Transfer",value:"Bank Transfer"}
-];
-
-/* SAVE */
-
-const handleSubmit = async (e:any)=>{
-
+const handleSubmit = (e:any)=>{
 e.preventDefault();
+
+if(!selectedStudent || !amount || !account){
+alert("Please fill required fields");
+return;
+}
+
+setShowConfirm(true);
+};
+
+const handleFinalSave = async ()=>{
+
+setSaving(true);
 
 const payload = {
 branch_id:branch,
@@ -219,18 +216,28 @@ student_name:selectedStudent,
 batch,
 department:studentInfo?.department,
 course:studentInfo?.course,
-date,
+date: date || null,
 receipt_no:receiptNo,
 account,
 mode,
-amount,
-total_fee:totalFee,
-discount,
-due,
-due_date:dueDate
+amount:Number(amount),
+total_fee:Number(totalFee||0),
+discount:Number(discount||0),
+due:Number(due||0),
+due_date: dueDate || null
 };
 
-await supabase.from("receipts").insert([payload]);
+const { data, error } = await supabase.from("receipts").insert([payload]);
+
+setSaving(false);
+
+if(error){
+alert(error.message);
+console.log(error);
+return;
+}
+
+alert("Receipt Saved Successfully");
 
 await loadReceipts(selectedStudent);
 
@@ -243,6 +250,9 @@ setDue("");
 setDays("");
 setDueDate("");
 
+setShowConfirm(false);
+
+router.refresh();
 };
 
 /* UI */
@@ -334,15 +344,15 @@ finalDue > 0 ? "text-red-600" : "text-green-600"
 
 <thead className="bg-gray-100">
 <tr>
-<th className="p-2 text-left">Date</th>
-<th className="p-2 text-left">Amount</th>
-<th className="p-2 text-left">R. No.</th>
-<th className="p-2 text-left">Account</th>
-<th className="p-2 text-left">Mode</th>
-<th className="p-2 text-left">Total Fee</th>
-<th className="p-2 text-left">Discount</th>
-<th className="p-2 text-left">Due</th>
-<th className="p-2 text-left">Due Date</th>
+<th className="text-left px-2 py-1">Date</th>
+<th className="text-right px-2 py-1">Amount</th>
+<th className="text-left px-2 py-1">R. No.</th>
+<th className="text-left px-2 py-1">Account</th>
+<th className="text-left px-2 py-1">Mode</th>
+<th className="text-right px-2 py-1">Total Fee</th>
+<th className="text-right px-2 py-1">Discount</th>
+<th className="text-right px-2 py-1">Due</th>
+<th className="text-left px-2 py-1">Due Date</th>
 </tr>
 </thead>
 
@@ -350,22 +360,22 @@ finalDue > 0 ? "text-red-600" : "text-green-600"
 
 {receipts.map((r:any, index:number) => {
   return (
-    <tr key={r.id} className="border-t">
-      <td className="p-2">{formatDate(r.date)}</td>
-      <td className="p-2">{r.amount}</td>
-      <td className="p-2">{r.receipt_no}</td>
-      <td className="p-2">{r.account}</td>
-      <td className="p-2">{r.mode}</td>
-      <td className="p-2">{r.total_fee}</td>
-      <td className="p-2">{r.discount}</td>
-      <td className={`p-2 ${
+    <tr key={r.id} className="border-t text-sm">
+      <td className="px-2 py-1">{formatDate(r.date)}</td>
+      <td className="text-right px-2 py-1">{Number(r.amount || 0).toFixed(2)}</td>
+      <td className="px-2 py-1">{r.receipt_no}</td>
+      <td className="px-2 py-1">{r.account}</td>
+      <td className="px-2 py-1">{r.mode}</td>
+      <td className="text-right px-2 py-1">{Number(r.total_fee || 0).toFixed(2)}</td>
+      <td className="text-right px-2 py-1">{Number(r.discount || 0).toFixed(2)}</td>
+      <td className={`text-right px-2 py-1 ${
         index === receipts.length - 1 && Number(r.due) > 0
           ? "text-red-600 font-semibold"
           : "text-green-600 font-semibold"
       }`}>
-        {r.due}
+        {Number(r.due || 0).toFixed(2)}
       </td>
-      <td className="p-2">{formatDate(r.due_date)}</td>
+      <td className="px-2 py-1">{formatDate(r.due_date)}</td>
     </tr>
   );
 })}
@@ -398,6 +408,34 @@ Save Receipt
 </div>
 
 </form>
+
+{showConfirm && (
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+<div className="bg-white p-5 rounded-lg w-[90%] max-w-md">
+
+<h3 className="font-semibold mb-3">Confirm Receipt</h3>
+
+<div className="text-sm space-y-1">
+<div><b>Name:</b> {selectedStudent}</div>
+<div><b>Amount:</b> ₹{amount}</div>
+<div><b>Account:</b> {account}</div>
+<div><b>Mode:</b> {mode}</div>
+<div><b>Due:</b> {due}</div>
+</div>
+
+<div className="flex justify-end gap-2 mt-4">
+<button onClick={()=>setShowConfirm(false)} className="px-3 py-1 bg-gray-300 rounded">
+Cancel
+</button>
+
+<button onClick={handleFinalSave} className="px-4 py-1 bg-blue-600 text-white rounded">
+{saving ? "Saving..." : "OK"}
+</button>
+</div>
+
+</div>
+</div>
+)}
 
 </div>
 
