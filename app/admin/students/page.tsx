@@ -4,9 +4,11 @@ import { useEffect, useState, useMemo } from "react";
 import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import { supabase } from "@/lib/supabaseClient";
 import BranchSelector from "@/app/components/ui/BranchSelector";
+import Link from "next/link";
 
 type Student = {
   id: string;
+  lead_id: string;
   name: string;
   mobile: string;
   course: string;
@@ -15,13 +17,20 @@ type Student = {
   total_fee: number;
   paid: number;
   due: number;
+  due_date: string;
 };
+
+type SortKey = "batch" | "name" | "course" | "total_fee" | "paid" | "due" | "due_date";
 
 export default function StudentsPage() {
 
   const [students, setStudents] = useState<Student[]>([]);
   const [branches, setBranches] = useState<string[]>([]);
   const [selectedBranch, setSelectedBranch] = useState("");
+
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("batch");
+  const [sortAsc, setSortAsc] = useState(true);
 
   useEffect(() => {
     loadStudents();
@@ -39,7 +48,7 @@ export default function StudentsPage() {
 
     const { data: leads } = await supabase
       .from("leads")
-      .select("id, student_name, mobile_number, course")
+      .select("id, student_name, mobile_number, course, next_follow_date")
       .in("id", leadIds);
 
     const { data: batches } = await supabase
@@ -56,7 +65,6 @@ export default function StudentsPage() {
 
     if (!leads || !batches || !branchesData) return;
 
-    // branch map
     const branchMap: Record<string, string> = {};
     branchesData.forEach((b: any) => {
       branchMap[b.id] = b.name;
@@ -64,7 +72,6 @@ export default function StudentsPage() {
 
     setBranches(branchesData.map((b: any) => b.name));
 
-    // batch map
     const batchMap: Record<string, { name: string; branch: string }> = {};
     batches.forEach((b: any) => {
       batchMap[b.id] = {
@@ -73,7 +80,6 @@ export default function StudentsPage() {
       };
     });
 
-    // fee maps
     const paidMap: Record<string, number> = {};
     const feeMap: Record<string, number> = {};
 
@@ -87,7 +93,6 @@ export default function StudentsPage() {
       }
     });
 
-    // final
     const result: Student[] = [];
 
     batchStudents.forEach((b: any, index: number) => {
@@ -102,6 +107,7 @@ export default function StudentsPage() {
 
       result.push({
         id: lead.id + "_" + index,
+        lead_id: lead.id,
         name: lead.student_name || "",
         mobile: lead.mobile_number || "",
         course: lead.course || "",
@@ -110,6 +116,7 @@ export default function StudentsPage() {
         total_fee: total,
         paid: paid,
         due: Math.max(total - paid, 0),
+        due_date: lead.next_follow_date || "",
       });
 
     });
@@ -121,42 +128,86 @@ export default function StudentsPage() {
 
   const filteredStudents = useMemo(() => {
 
-    if (!selectedBranch) return students;
+    let data = students;
 
-    return students.filter(s => s.branch === selectedBranch);
+    if (selectedBranch) {
+      data = data.filter(s => s.branch === selectedBranch);
+    }
 
-  }, [students, selectedBranch]);
+    if (search) {
+      const s = search.toLowerCase();
+      data = data.filter(st =>
+        st.name.toLowerCase().includes(s) ||
+        st.mobile.includes(s) ||
+        st.course.toLowerCase().includes(s) ||
+        st.batch.toLowerCase().includes(s)
+      );
+    }
+
+    data = [...data].sort((a, b) => {
+      let valA: any = a[sortKey];
+      let valB: any = b[sortKey];
+
+      if (typeof valA === "string") valA = valA.toLowerCase();
+      if (typeof valB === "string") valB = valB.toLowerCase();
+
+      if (valA < valB) return sortAsc ? -1 : 1;
+      if (valA > valB) return sortAsc ? 1 : -1;
+      return 0;
+    });
+
+    return data;
+
+  }, [students, selectedBranch, search, sortKey, sortAsc]);
+
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortKey(key);
+      setSortAsc(true);
+    }
+  }
 
   return (
 
     <PermissionGuard page="Students">
 
-      <div className="p-6 space-y-4">
+      <div className="p-3 space-y-2">
 
-        {/* Branch */}
         <BranchSelector
           branches={branches}
           value={selectedBranch}
           onChange={setSelectedBranch}
         />
 
-        {/* Heading */}
-        <h1 className="text-xl font-semibold">
-          Students ({filteredStudents.length})
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-base font-semibold">
+            Students ({filteredStudents.length})
+          </h1>
 
-        <div className="overflow-x-auto bg-white rounded shadow">
+          <input
+            type="text"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border px-2 py-1 rounded text-sm w-60"
+          />
+        </div>
+
+        <div className="overflow-auto bg-white rounded shadow h-[75vh]">
 
           <table className="min-w-full text-sm">
 
             <thead className="bg-gray-100 sticky top-0 z-10">
               <tr>
-                <th className="p-2 text-left">Batch</th>
-                <th className="p-2 text-left">Name</th>
-                <th className="p-2 text-left">Course</th>
-                <th className="p-2 text-right">Fee</th>
-                <th className="p-2 text-right">Paid</th>
-                <th className="p-2 text-right">Due</th>
+                <th onClick={() => handleSort("batch")} className="p-2 text-left cursor-pointer">Batch</th>
+                <th onClick={() => handleSort("name")} className="p-2 text-left cursor-pointer">Name</th>
+                <th onClick={() => handleSort("course")} className="p-2 text-left cursor-pointer">Course</th>
+                <th onClick={() => handleSort("total_fee")} className="p-2 text-right cursor-pointer">Fee</th>
+                <th onClick={() => handleSort("paid")} className="p-2 text-right cursor-pointer">Paid</th>
+                <th onClick={() => handleSort("due")} className="p-2 text-right cursor-pointer">Due</th>
+                <th onClick={() => handleSort("due_date")} className="p-2 text-left cursor-pointer">Due Date</th>
                 <th className="p-2 text-left">Mobile</th>
               </tr>
             </thead>
@@ -165,13 +216,20 @@ export default function StudentsPage() {
               {filteredStudents.map((s) => (
                 <tr key={s.id} className="border-t">
                   <td className="p-2 font-medium">{s.batch}</td>
-                  <td className="p-2">{s.name}</td>
+
+                  <td className="p-2 text-blue-600 underline">
+                    <Link href={`/admin/lead/${s.lead_id}`}>
+                      {s.name}
+                    </Link>
+                  </td>
+
                   <td className="p-2">{s.course}</td>
                   <td className="p-2 text-right">{formatAmount(s.total_fee)}</td>
                   <td className="p-2 text-right">{formatAmount(s.paid)}</td>
                   <td className="p-2 text-right text-red-600 font-medium">
                     {formatAmount(s.due)}
                   </td>
+                  <td className="p-2">{s.due_date}</td>
                   <td className="p-2">{s.mobile}</td>
                 </tr>
               ))}
