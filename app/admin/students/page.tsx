@@ -51,6 +51,15 @@ export default function StudentsPage() {
     loadStudents();
   }, []);
 
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortKey(key);
+      setSortAsc(true);
+    }
+  }
+
   async function loadStudents() {
 
     const { data: batchStudents } = await supabase
@@ -100,6 +109,8 @@ export default function StudentsPage() {
         branch: branchMap[b.branch_id] || ""
       };
     });
+
+    // ✅ FIXED INSTALLMENT LOGIC
 
     const paidMap: Record<string, number> = {};
     const totalMap: Record<string, number> = {};
@@ -180,25 +191,23 @@ export default function StudentsPage() {
 
   const formatAmount = (num: number) => num.toFixed(2);
 
-  function handleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortAsc(!sortAsc);
-    } else {
-      setSortKey(key);
-      setSortAsc(true);
-    }
-  }
-
   function getBadge(s: Student) {
-    if (s.total_fee === 0) return <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">New</span>;
-    if (s.due === 0) return <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Paid</span>;
+    if (s.total_fee === 0) {
+      return <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded">New</span>;
+    }
+    if (s.total_fee > 0 && s.due === 0) {
+      return <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Paid</span>;
+    }
     return <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded">Due</span>;
   }
 
   const filteredStudents = useMemo(() => {
+
     let data = students;
 
-    if (selectedBranch) data = data.filter(s => s.branch === selectedBranch);
+    if (selectedBranch) {
+      data = data.filter(s => s.branch === selectedBranch);
+    }
 
     if (search) {
       const s = search.toLowerCase();
@@ -210,14 +219,14 @@ export default function StudentsPage() {
     }
 
     data = [...data].sort((a, b) => {
-      let A: any = a[sortKey];
-      let B: any = b[sortKey];
+      let valA: any = a[sortKey];
+      let valB: any = b[sortKey];
 
-      if (typeof A === "string") A = A.toLowerCase();
-      if (typeof B === "string") B = B.toLowerCase();
+      if (typeof valA === "string") valA = valA.toLowerCase();
+      if (typeof valB === "string") valB = valB.toLowerCase();
 
-      if (A < B) return sortAsc ? -1 : 1;
-      if (A > B) return sortAsc ? 1 : -1;
+      if (valA < valB) return sortAsc ? -1 : 1;
+      if (valA > valB) return sortAsc ? 1 : -1;
       return 0;
     });
 
@@ -226,8 +235,10 @@ export default function StudentsPage() {
   }, [students, selectedBranch, search, sortKey, sortAsc]);
 
   return (
+
     <PermissionGuard page="Students">
-      <div className="p-3 space-y-2">
+
+      <div className="p-3 space-y-2 students-page">
 
         <BranchSelector
           branches={branches}
@@ -235,7 +246,7 @@ export default function StudentsPage() {
           onChange={setSelectedBranch}
         />
 
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <h1 className="text-base font-semibold">
             Students ({filteredStudents.length})
           </h1>
@@ -259,9 +270,9 @@ export default function StudentsPage() {
                 <th onClick={() => handleSort("name")} className="p-2 cursor-pointer">Name</th>
                 <th onClick={() => handleSort("course")} className="p-2 cursor-pointer">Course</th>
                 <th className="p-2">Att</th>
-                <th onClick={() => handleSort("total_fee")} className="p-2 cursor-pointer text-right">Fee</th>
-                <th onClick={() => handleSort("paid")} className="p-2 cursor-pointer text-right">Paid</th>
-                <th onClick={() => handleSort("due")} className="p-2 cursor-pointer text-right">Due</th>
+                <th onClick={() => handleSort("total_fee")} className="p-2 text-right cursor-pointer">Fee</th>
+                <th onClick={() => handleSort("paid")} className="p-2 text-right cursor-pointer">Paid</th>
+                <th onClick={() => handleSort("due")} className="p-2 text-right cursor-pointer">Due</th>
                 <th onClick={() => handleSort("due_date")} className="p-2 cursor-pointer">Due Date</th>
               </tr>
             </thead>
@@ -269,9 +280,9 @@ export default function StudentsPage() {
             <tbody>
               {filteredStudents.map((s) => (
                 <tr key={s.id} className="hover:bg-gray-50">
-                  <td className="p-2">{s.batch}</td>
+                  <td className="p-2 font-medium">{s.batch}</td>
 
-                  <td className="p-2 flex gap-2 items-center">
+                  <td className="p-2 flex items-center gap-2">
                     <Link href={`/admin/lead/${s.lead_id}`} className="text-blue-600 underline">
                       {s.name}
                     </Link>
@@ -307,6 +318,8 @@ export default function StudentsPage() {
         </div>
 
       </div>
+
     </PermissionGuard>
+
   );
 }
