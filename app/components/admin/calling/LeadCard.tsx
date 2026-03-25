@@ -48,6 +48,7 @@ export default function LeadCard({
   setExpandedId,
   addFollowUp,
 }: Props) {
+
   const router = useRouter();
   const isExpanded = expandedId === lead.id;
   const [openFU, setOpenFU] = useState<number | null>(null);
@@ -97,7 +98,7 @@ export default function LeadCard({
       <div className="flex justify-between items-start">
         <div className="flex-1">
 
-          {/* 🔹 NAME CLICK → DETAIL PAGE */}
+          {/* NAME */}
           <span
             className="font-semibold text-blue-600 underline cursor-pointer"
             onClick={(e) => {
@@ -119,9 +120,11 @@ export default function LeadCard({
             {lead.course} | {lead.branch}
           </p>
 
-          <p className="flex items-center gap-2">
-            Status: {lead.status}
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100">
+          {/* ✅ STATUS + ATTENDANCE INLINE */}
+          <p className="flex items-center gap-2 mt-1">
+            Status: <span className="font-medium">{lead.status}</span>
+
+            <span className="flex gap-[3px] ml-2">
               {lead.attendanceLast10.map((signal, idx) => (
                 <span
                   key={idx}
@@ -130,6 +133,7 @@ export default function LeadCard({
               ))}
             </span>
           </p>
+
         </div>
 
         <div className="ml-2">
@@ -141,15 +145,13 @@ export default function LeadCard({
         </div>
       </div>
 
+      {/* ACTIONS */}
       <div
         className="flex gap-4 mt-2 text-blue-600"
         onClick={(e) => e.stopPropagation()}
       >
         <a href={`tel:${lead.mobile}`}>Call</a>
-        <a
-          href={`https://wa.me/91${lead.mobile}`}
-          target="_blank"
-        >
+        <a href={`https://wa.me/91${lead.mobile}`} target="_blank">
           WhatsApp
         </a>
       </div>

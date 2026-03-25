@@ -5,6 +5,7 @@ import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import LeadCard from "@/app/components/admin/calling/LeadCard";
 import FiltersPanel from "@/app/components/admin/calling/FiltersPanel";
 import { supabase } from "@/lib/supabaseClient";
+import { Search } from "lucide-react";
 
 type FollowUp = {
   date: string;
@@ -22,7 +23,7 @@ type Lead = {
   mobile: string;
   course: string;
   branch: string;
-  branch_id?: string; // ✅ added
+  branch_id?: string;
   status: string;
   enquiryDate: string;
   followUps: FollowUp[];
@@ -48,8 +49,9 @@ export default function CallingPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
 
   const [showFilters, setShowFilters] = useState(false);
-
   const [filters, setFilters] = useState<any>({});
+
+  const [search, setSearch] = useState(""); // ✅ NEW
 
   useEffect(() => {
     initPage();
@@ -162,9 +164,13 @@ export default function CallingPage() {
       attendanceMap[a.lead_id][a.attendance_date] = a.status;
     });
 
-    const formatted: Lead[] = data.map((l: any) => {
+    // ✅ FIX: branch map stable
+    const branchMap: Record<string, string> = {};
+    branches.forEach(b => {
+      branchMap[b.id] = b.name;
+    });
 
-      const branchName = branches.find(b => b.id === l.branch_id)?.name || "";
+    const formatted: Lead[] = data.map((l: any) => {
 
       const last10 = last10Dates.map((date) => {
         return attendanceMap[l.id]?.[date] || "N";
@@ -176,8 +182,8 @@ export default function CallingPage() {
         gender: l.gender || "Male",
         mobile: l.mobile_number || "",
         course: l.course || "",
-        branch: branchName,
-        branch_id: l.branch_id, // ✅ added
+        branch: branchMap[l.branch_id] || "",
+        branch_id: l.branch_id,
         status: l.status || "Cold",
         enquiryDate: l.created_at,
         followUps: followupMap[l.id] || [],
@@ -198,45 +204,38 @@ export default function CallingPage() {
       data = data.filter((l) => l.branch_id === selectedBranch);
     }
 
-    // status logic intentionally ignored (UI removed)
+    // ✅ SEARCH SAFE
+    if (search.trim()) {
+      data = data.filter((l) =>
+        l.name.toLowerCase().includes(search.toLowerCase()) ||
+        l.mobile.includes(search)
+      );
+    }
 
     Object.entries(filters).forEach(([key, val]) => {
-
       const values = val as string[];
-
       if (!values || values.length === 0) return;
 
       data = data.filter((l: any) =>
         values.includes(l[key])
       );
-
     });
 
     return data;
 
-  }, [leads, selectedBranch, filters]);
+  }, [leads, selectedBranch, filters, search]);
 
-  const addFollowUp = async (
-    leadId: string,
-    data: {
-      result: string;
-      mood?: string;
-      remark?: string;
-      status: string;
-    }
-  ) => {
+  const addFollowUp = async (leadId: string, data: any) => {
 
     const { error } = await supabase
       .from("lead_followups")
-      .insert([
-        {
-          lead_id: leadId,
-          result: data.result,
-          mood: data.mood || "",
-          remark: data.remark || "",
-          status: data.status,
-        },
-      ]);
+      .insert([{
+        lead_id: leadId,
+        result: data.result,
+        mood: data.mood || "",
+        remark: data.remark || "",
+        status: data.status,
+      }]);
 
     if (error) {
       alert(error.message);
@@ -262,36 +261,41 @@ export default function CallingPage() {
             </button>
             {branches.map((b) => (
               <button key={b.id}
-                onClick={() => setSelectedBranch(b.id)} // ✅ FIX
+                onClick={() => setSelectedBranch(b.id)}
                 className={`px-4 py-1 rounded-full text-sm ${selectedBranch === b.id ? "bg-blue-600 text-white" : "bg-gray-200"}`}>
                 {b.name}
               </button>
             ))}
           </div>
 
-          {/* ❌ STATUS FILTER REMOVED */}
+          {/* ✅ SEARCH + FILTER */}
+          <div className="flex gap-2 px-3 pb-2">
 
-          <div className="flex justify-end px-3 pb-2">
+            <div className="flex items-center bg-gray-100 rounded px-2 flex-1">
+              <Search className="w-4 h-4 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search name or mobile..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="bg-transparent outline-none px-2 py-1 text-sm w-full"
+              />
+            </div>
+
             <button
               onClick={() => setShowFilters(true)}
               className="text-sm px-3 py-1 bg-black text-white rounded"
             >
               Filters ⚙️
             </button>
+
           </div>
 
         </div>
 
         <div className="p-3 space-y-3 pb-24">
           {filteredLeads.map((lead) => (
-            <div
-              key={lead.id}
-              onClick={() => {
-                if (/Mobi|Android/i.test(navigator.userAgent)) {
-                  window.location.href = `tel:${lead.mobile}`;
-                }
-              }}
-            >
+            <div key={lead.id}>
               <LeadCard
                 lead={lead}
                 expandedId={expandedId}
