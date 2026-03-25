@@ -6,6 +6,11 @@ import { supabase } from "@/lib/supabaseClient";
 import BranchSelector from "@/app/components/ui/BranchSelector";
 import Link from "next/link";
 
+type AttendanceItem = {
+  date: string;
+  status: string;
+};
+
 type Student = {
   id: string;
   lead_id: string;
@@ -18,6 +23,7 @@ type Student = {
   paid: number;
   due: number;
   due_date: string;
+  attendance: AttendanceItem[];
 };
 
 type SortKey = "batch" | "name" | "course" | "total_fee" | "paid" | "due" | "due_date";
@@ -45,10 +51,11 @@ export default function StudentsPage() {
     if (!batchStudents) return;
 
     const leadIds = batchStudents.map((b: any) => b.lead_id);
+    const batchIds = batchStudents.map((b: any) => b.batch_id);
 
     const { data: leads } = await supabase
       .from("leads")
-      .select("id, student_name, mobile_number, course, next_follow_date")
+      .select("id, student_name, mobile_number, course")
       .in("id", leadIds);
 
     const { data: batches } = await supabase
@@ -61,7 +68,14 @@ export default function StudentsPage() {
 
     const { data: receipts } = await supabase
       .from("receipts")
-      .select("student_name, amount, total_fee, discount");
+      .select("*")
+      .order("date", { ascending: false });
+
+    const { data: attendanceData } = await supabase
+      .from("attendance")
+      .select("lead_id, batch_id, status, attendance_date")
+      .in("lead_id", leadIds)
+      .order("attendance_date", { ascending: false });
 
     if (!leads || !batches || !branchesData) return;
 
@@ -81,32 +95,53 @@ export default function StudentsPage() {
     });
 
     const paidMap: Record<string, number> = {};
-    const feeMap: Record<string, number> = {};
+    const latestMap: Record<string, any> = {};
 
     (receipts || []).forEach((r: any) => {
-      const name = r.student_name || "";
+      const key = (r.student_name || "").toLowerCase().trim();
 
-      paidMap[name] = (paidMap[name] || 0) + (r.amount || 0);
+      paidMap[key] = (paidMap[key] || 0) + (r.amount || 0);
 
-      if (!feeMap[name]) {
-        feeMap[name] = (r.total_fee || 0) - (r.discount || 0);
+      if (!latestMap[key]) {
+        latestMap[key] = r;
       }
     });
 
-    const result: Student[] = [];
+    const uniqueMap = new Map<string, Student>();
 
-    batchStudents.forEach((b: any, index: number) => {
+    batchStudents.forEach((b: any) => {
 
       const lead = leads.find((l: any) => l.id === b.lead_id);
       if (!lead) return;
 
       const batchInfo = batchMap[b.batch_id] || { name: "", branch: "" };
 
-      const total = feeMap[lead.student_name] || 0;
-      const paid = paidMap[lead.student_name] || 0;
+      const key = `${lead.id}_${b.batch_id}`;
+      if (uniqueMap.has(key)) return;
 
-      result.push({
-        id: lead.id + "_" + index,
+      const nameKey = (lead.student_name || "").toLowerCase().trim();
+      const latest = latestMap[nameKey];
+
+      const total = latest?.total_fee || 0;
+      const paid = paidMap[nameKey] || 0;
+      const due = latest?.due ?? Math.max(total - paid, 0);
+      const dueDate = latest?.due_date || "";
+
+      // 🔥 attendance last 10
+      const att = (attendanceData || [])
+        .filter(a => a.lead_id === lead.id && a.batch_id === b.batch_id)
+        .slice(0, 10)
+        .map(a => ({
+          date: a.attendance_date,
+          status: a.status || "N"
+        }));
+
+      while (att.length < 10) {
+        att.push({ date: "", status: "N" });
+      }
+
+      uniqueMap.set(key, {
+        id: key,
         lead_id: lead.id,
         name: lead.student_name || "",
         mobile: lead.mobile_number || "",
@@ -115,13 +150,14 @@ export default function StudentsPage() {
         branch: batchInfo.branch,
         total_fee: total,
         paid: paid,
-        due: Math.max(total - paid, 0),
-        due_date: lead.next_follow_date || "",
+        due: due,
+        due_date: dueDate,
+        attendance: att,
       });
 
     });
 
-    setStudents(result);
+    setStudents(Array.from(uniqueMap.values()));
   }
 
   const formatAmount = (num: number) => num.toFixed(2);
@@ -201,38 +237,67 @@ export default function StudentsPage() {
 
             <thead className="bg-gray-100 sticky top-0 z-10">
               <tr>
-                <th onClick={() => handleSort("batch")} className="p-2 text-left cursor-pointer">Batch</th>
-                <th onClick={() => handleSort("name")} className="p-2 text-left cursor-pointer">Name</th>
-                <th onClick={() => handleSort("course")} className="p-2 text-left cursor-pointer">Course</th>
-                <th onClick={() => handleSort("total_fee")} className="p-2 text-right cursor-pointer">Fee</th>
-                <th onClick={() => handleSort("paid")} className="p-2 text-right cursor-pointer">Paid</th>
-                <th onClick={() => handleSort("due")} className="p-2 text-right cursor-pointer">Due</th>
-                <th onClick={() => handleSort("due_date")} className="p-2 text-left cursor-pointer">Due Date</th>
+                <th className="p-2 text-left">Batch</th>
+                <th className="p-2 text-left">Name</th>
+                <th className="p-2 text-left">Course</th>
+                <th className="p-2 text-left">Att</th>
+                <th className="p-2 text-right">Fee</th>
+                <th className="p-2 text-right">Paid</th>
+                <th className="p-2 text-right">Due</th>
+                <th className="p-2 text-left">Due Date</th>
                 <th className="p-2 text-left">Mobile</th>
               </tr>
             </thead>
 
             <tbody>
-              {filteredStudents.map((s) => (
-                <tr key={s.id} className="border-t">
-                  <td className="p-2 font-medium">{s.batch}</td>
+              {filteredStudents.map((s) => {
 
-                  <td className="p-2 text-blue-600 underline">
-                    <Link href={`/admin/lead/${s.lead_id}`}>
-                      {s.name}
-                    </Link>
-                  </td>
+                let rowColor = "";
 
-                  <td className="p-2">{s.course}</td>
-                  <td className="p-2 text-right">{formatAmount(s.total_fee)}</td>
-                  <td className="p-2 text-right">{formatAmount(s.paid)}</td>
-                  <td className="p-2 text-right text-red-600 font-medium">
-                    {formatAmount(s.due)}
-                  </td>
-                  <td className="p-2">{s.due_date}</td>
-                  <td className="p-2">{s.mobile}</td>
-                </tr>
-              ))}
+                if (s.total_fee === 0) rowColor = "bg-red-200";
+                else if (s.total_fee > 0 && s.due === 0) rowColor = "bg-green-100";
+                else if (s.due > 0) rowColor = "bg-red-50";
+
+                return (
+                  <tr key={s.id} className={`${rowColor} hover:bg-gray-100`}>
+                    <td className="p-2 font-medium">{s.batch}</td>
+
+                    <td className="p-2 text-blue-600 underline">
+                      <Link href={`/admin/lead/${s.lead_id}`}>
+                        {s.name}
+                      </Link>
+                    </td>
+
+                    <td className="p-2">{s.course}</td>
+
+                    {/* 🔥 ATTENDANCE */}
+                    <td className="p-2">
+                      <div className="flex gap-1">
+                        {s.attendance.map((a, i) => (
+                          <span
+                            key={i}
+                            className={`text-xs px-1 rounded ${
+                              a.status === "P"
+                                ? "bg-green-500 text-white"
+                                : a.status === "A"
+                                ? "bg-red-500 text-white"
+                                : "bg-gray-200"
+                            }`}
+                          >
+                            {a.status}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+
+                    <td className="p-2 text-right">{formatAmount(s.total_fee)}</td>
+                    <td className="p-2 text-right">{formatAmount(s.paid)}</td>
+                    <td className="p-2 text-right">{formatAmount(s.due)}</td>
+                    <td className="p-2">{s.due_date}</td>
+                    <td className="p-2">{s.mobile}</td>
+                  </tr>
+                );
+              })}
             </tbody>
 
           </table>
