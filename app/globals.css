@@ -106,3 +106,29 @@ h3 {
   transform: translateY(-4px);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
+
+/* ✅ ONLY ENGLISH PAGE SCROLL FIX */
+.english-page {
+  height: calc(100vh - 56px);
+  overflow: hidden;
+}
+
+.english-page * {
+  max-height: 100%;
+}
+
+.english-page {
+  position: relative;
+}
+
+/* ❌ body scroll disable ONLY when english page active */
+body:has(.english-page) {
+  overflow: hidden;
+}
+/* 🚫 SAFE OUTER SCROLL REMOVE (ENGLISH PAGE ONLY) */
+body:has(.english-page),
+body:has(.english-page) #__next,
+body:has(.english-page) main {
+  height: 100vh !important;
+  overflow: hidden !important;
+}
