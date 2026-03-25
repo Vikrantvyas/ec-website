@@ -247,8 +247,8 @@ value={filters.branch}
 onChange={(e)=>setFilters({...filters,branch:e.target.value})}
 >
 <option value="">All</option>
-{[...new Set(uniqueLeads.map(l=>l.branch))].map((d:any)=>(
-<option key={d}>{d}</option>
+{[...new Set(uniqueLeads.map(l => l.branch))].map((d, index) => (
+  <option key={d + index}>{d}</option>
 ))}
 </select>
 

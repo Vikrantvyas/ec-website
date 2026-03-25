@@ -369,7 +369,7 @@ export default function AttendancePage() {
 
   return (
     <PermissionGuard page="Attendance">
-      <div className="h-screen overflow-hidden">
+      <div className="h-[calc(100vh-56px)] overflow-hidden attendance-page">
 
         {isMobile ? (
           selectedBatch ? (
