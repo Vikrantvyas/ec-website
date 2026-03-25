@@ -51,21 +51,21 @@ h3 {
 /* 📱 Mobile spacing (header + bottom nav) */
 @media (max-width: 768px) {
   body {
-    padding-top: 56px;    /* MobileHeader */
-    padding-bottom: 64px; /* MobileBottomNav */
+    padding-top: 56px;
+    padding-bottom: 64px;
   }
 }
 
 /* 💻 Desktop spacing (fixed header) */
 @media (min-width: 769px) {
   body {
-    padding-top: 56px; /* DesktopHeader */
+    padding-top: 56px;
   }
 }
 
 /* =========================================
    ✨ SOFT YOUTH ANIMATIONS (GLOBAL)
-   ========================================= */
+========================================= */
 
 @keyframes fadeUp {
   from {
@@ -92,7 +92,7 @@ h3 {
 
 /* =========================================
    🌈 YOUTH POLISH HELPERS
-   ========================================= */
+========================================= */
 
 .hover-lift {
   transition: transform 0.25s ease, box-shadow 0.25s ease;
@@ -139,6 +139,24 @@ body:has(.attendance-page),
 html:has(.attendance-page),
 body:has(.attendance-page) #__next,
 body:has(.attendance-page) main {
+  height: 100vh !important;
+  overflow: hidden !important;
+}
+
+/* ================================
+   ✅ STUDENTS PAGE FIX (NEW)
+================================ */
+
+.students-page {
+  height: calc(100vh - 56px);
+  overflow: hidden;
+  position: relative;
+}
+
+body:has(.students-page),
+html:has(.students-page),
+body:has(.students-page) #__next,
+body:has(.students-page) main {
   height: 100vh !important;
   overflow: hidden !important;
 }

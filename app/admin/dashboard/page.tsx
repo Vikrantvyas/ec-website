@@ -2,11 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import {
-  LayoutDashboard,
   UserPlus,
   Users,
   CalendarCheck,
-  CreditCard,
   FileBarChart,
   Database,
   Settings,
@@ -17,7 +15,8 @@ import {
   List,
   Layers,
   ReceiptText,
-  ClipboardList,
+  BookOpen,      // ✅ English
+  User,          // ✅ User
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -29,7 +28,6 @@ export default function AdminDashboard() {
     { name: "Lead List", href: "/admin/lead/list", icon: List },
 
     { name: "Admission", href: "/admin/admission", icon: GraduationCap },
-    { name: "Admission 2", href: "/admin/admission2", icon: GraduationCap }, // ✅ added
 
     { name: "Enquiry", href: "/admin/enquiry", icon: UserPlus },
     { name: "Calling", href: "/admin/calling", icon: PhoneCall },
@@ -39,10 +37,12 @@ export default function AdminDashboard() {
     { name: "Students", href: "/admin/students", icon: Users },
 
     { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
-    { name: "New Attendance", href: "/admin/attendance2", icon: ClipboardList },
 
-    { name: "Fees", href: "/admin/fees", icon: CreditCard },
     { name: "Receipt", href: "/admin/receipt", icon: ReceiptText },
+
+    // ✅ NEW ADDED
+    { name: "English", href: "/admin/english", icon: BookOpen },
+    { name: "User", href: "/admin/user", icon: User },
 
     { name: "Reports", href: "/admin/reports", icon: FileBarChart },
     { name: "Masters", href: "/admin/masters", icon: Database },
@@ -55,7 +55,7 @@ export default function AdminDashboard() {
 
     <div className="p-6">
 
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
 
         {menu.map((item, index) => {
 
