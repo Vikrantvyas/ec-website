@@ -51,7 +51,7 @@ export default function CallingPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<any>({});
 
-  const [search, setSearch] = useState(""); // ✅ NEW
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     initPage();
@@ -164,7 +164,6 @@ export default function CallingPage() {
       attendanceMap[a.lead_id][a.attendance_date] = a.status;
     });
 
-    // ✅ FIX: branch map stable
     const branchMap: Record<string, string> = {};
     branches.forEach(b => {
       branchMap[b.id] = b.name;
@@ -204,7 +203,6 @@ export default function CallingPage() {
       data = data.filter((l) => l.branch_id === selectedBranch);
     }
 
-    // ✅ SEARCH SAFE
     if (search.trim()) {
       data = data.filter((l) =>
         l.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -250,8 +248,9 @@ export default function CallingPage() {
 
     <PermissionGuard page="Calling">
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="calling-page flex flex-col h-[calc(100vh-56px)] bg-gray-50 overflow-hidden">
 
+        {/* HEADER */}
         <div className="sticky top-0 z-20 bg-white shadow-sm">
 
           <div className="flex gap-2 overflow-x-auto p-3">
@@ -268,7 +267,6 @@ export default function CallingPage() {
             ))}
           </div>
 
-          {/* ✅ SEARCH + FILTER */}
           <div className="flex gap-2 px-3 pb-2">
 
             <div className="flex items-center bg-gray-100 rounded px-2 flex-1">
@@ -293,7 +291,8 @@ export default function CallingPage() {
 
         </div>
 
-        <div className="p-3 space-y-3 pb-24">
+        {/* SCROLL AREA */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
           {filteredLeads.map((lead) => (
             <div key={lead.id}>
               <LeadCard

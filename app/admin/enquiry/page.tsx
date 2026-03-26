@@ -16,7 +16,7 @@ export default function EnquiryPage() {
 
     <PermissionGuard page="Enquiry">
 
-      <div className="flex h-full relative overflow-hidden bg-white">
+      <div className="enquiry-page flex h-[calc(100vh-56px)] relative overflow-hidden bg-white">
 
         {/* MOBILE TOP BAR */}
         <div className="md:hidden absolute top-0 left-0 right-0 h-12 bg-white border-b border-gray-200 flex items-center px-4 z-20">
@@ -32,7 +32,7 @@ export default function EnquiryPage() {
         </div>
 
         {/* DESKTOP SIDEBAR */}
-        <div className="hidden md:block shrink-0">
+        <div className="hidden md:block shrink-0 h-full overflow-y-auto">
 
           <EnqSidebar
             onSelectEnquiry={(enq) => {
@@ -57,7 +57,7 @@ export default function EnquiryPage() {
               onClick={() => setMobileSidebarOpen(false)}
             />
 
-            <div className="absolute left-0 top-0 h-full w-[85%] bg-white shadow-xl">
+            <div className="absolute left-0 top-0 h-full w-[85%] bg-white shadow-xl overflow-y-auto">
 
               <EnqSidebar
                 onSelectEnquiry={(enq) => {
@@ -81,11 +81,15 @@ export default function EnquiryPage() {
         {/* MAIN PANEL */}
         <div className="flex-1 min-w-0 md:pt-0 pt-12 overflow-hidden">
 
-          <EnqMainPanel
-            selectedStudent={selectedLead}
-            isNewEnquiry={isNewEnquiry}
-            onAddEnquiry={() => {}}
-          />
+          <div className="h-full overflow-y-auto">
+
+            <EnqMainPanel
+              selectedStudent={selectedLead}
+              isNewEnquiry={isNewEnquiry}
+              onAddEnquiry={() => {}}
+            />
+
+          </div>
 
         </div>
 
