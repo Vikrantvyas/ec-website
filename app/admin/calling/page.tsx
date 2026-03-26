@@ -16,19 +16,19 @@ type FollowUp = {
 
 type AttendanceSignal = "P" | "A" | "N";
 
-type Lead = {
-  id: string;
-  name: string;
-  mobile: string;
-  course: string;
-  branch: string;
-  branch_id?: string;
-  enquiryDate: string;
-  followUps: FollowUp[];
-  attendanceLast10: AttendanceSignal[];
-  lead_stage?: string;
-  lead_chances?: string; // ✅ FIX
-  city?: string;
+return {
+  id: l.id,
+  name: l.student_name || "",
+  mobile: l.mobile_number || "",
+  course: l.course || "",
+  branch: "", // ✅ FIX
+  branch_id: l.branch_id,
+  enquiryDate: l.created_at,
+  followUps: followupMap[l.id] || [],
+  attendanceLast10: last10,
+  lead_stage: (l.lead_stage || "").trim(),
+  lead_chances: (l.lead_chances || "").trim(),
+  batch_name: leadBatchMap[l.id] || "",
 };
 
 type Branch = {
