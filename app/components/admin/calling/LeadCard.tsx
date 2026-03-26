@@ -219,7 +219,7 @@ export default function LeadCard({
 
           <InlineCallingForm
             leadId={lead.id}
-            currentStatus={lead.lead_stage}
+            currentStatus={lead.lead_stage || ""}
             onSave={(data) => {
               addFollowUp(lead.id, {
                 result: data.result,
