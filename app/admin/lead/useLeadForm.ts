@@ -69,7 +69,7 @@ export default function useLeadForm() {
   const [loading, setLoading] = useState(false);
 
   const [cities, setCities] = useState<string[]>([]);
-  const [branches, setBranches] = useState<string[]>([]);
+  const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
   const [methods, setMethods] = useState<string[]>([]);
   const [channels, setChannels] = useState<string[]>([]);
   const [areas, setAreas] = useState<string[]>([]);
