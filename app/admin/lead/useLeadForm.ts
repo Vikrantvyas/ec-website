@@ -47,9 +47,6 @@ export default function useLeadForm() {
     schoolTiming: "Morning",
     contactTime: "Any Time",
 
-    department: ["English"],
-    course: ["Basic + Advance English"],
-
     preferredTime: "Any Time",
     preferredBatch: "Any Time",
 
@@ -111,6 +108,7 @@ export default function useLeadForm() {
 
   },[formData.city]);
 
+  // ✅ FIXED EFFECT
   useEffect(() => {
 
     if (!formData.department || formData.department.length === 0) {
@@ -123,6 +121,18 @@ export default function useLeadForm() {
       .map((c) => c.name);
 
     setCourses(filtered);
+
+    // 👉 DEFAULT COURSE AUTO SELECT (ONLY FIRST LOAD)
+    if (!formData.course || formData.course.length === 0) {
+      const defaultCourses = [
+        "Basic + Advance English"
+      ].filter((c) => filtered.includes(c));
+
+      setFormData((prev:any)=>({
+        ...prev,
+        course: defaultCourses
+      }));
+    }
 
   }, [formData.department, allCourses]);
 
@@ -241,8 +251,6 @@ export default function useLeadForm() {
 
   };
 
-  // ---- बाकी आपके existing fetch functions same हैं ----
-
   const fetchCities = async () => {
 
     const { data } = await supabase
@@ -266,17 +274,17 @@ export default function useLeadForm() {
 
   };
 
-  const fetchBranches = async () => {
+ const fetchBranches = async () => {
 
-    const { data } = await supabase
-      .from("branches")
-      .select("name")
-      .eq("status","Active")
-      .order("name");
+  const { data } = await supabase
+    .from("branches")
+    .select("id, name")
+    .eq("status","Active")
+    .order("name");
 
-    if (data) setBranches(data.map((b:any)=>b.name));
+  if (data) setBranches(data);
 
-  };
+};
 
   const fetchMethods = async () => {
 
@@ -334,7 +342,7 @@ export default function useLeadForm() {
       setAllCourses(data);
 
       const filtered = data
-        .filter((c:any)=>initialState.department.includes(c.department))
+        .filter((c:any)=>formData.department?.includes(c.department))
         .map((c:any)=>c.name);
 
       setCourses(filtered);
