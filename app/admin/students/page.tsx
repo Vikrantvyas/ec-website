@@ -6,6 +6,11 @@ import { supabase } from "@/lib/supabaseClient";
 import BranchSelector from "@/app/components/ui/BranchSelector";
 import Link from "next/link";
 
+type Branch = {
+  id: string;
+  name: string;
+};
+
 type AttendanceItem = {
   date: string;
   status: string;
@@ -40,7 +45,7 @@ function formatDate(dateStr: string) {
 export default function StudentsPage() {
 
   const [students, setStudents] = useState<Student[]>([]);
-  const [branches, setBranches] = useState<string[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState("");
 
   const [search, setSearch] = useState("");
@@ -100,7 +105,8 @@ export default function StudentsPage() {
       branchMap[b.id] = b.name;
     });
 
-    setBranches(branchesData.map((b: any) => b.name));
+    // ✅ FIX HERE
+    setBranches(branchesData);
 
     const batchMap: Record<string, { name: string; branch: string }> = {};
     batches.forEach((b: any) => {
@@ -109,8 +115,6 @@ export default function StudentsPage() {
         branch: branchMap[b.branch_id] || ""
       };
     });
-
-    // ✅ FIXED INSTALLMENT LOGIC
 
     const paidMap: Record<string, number> = {};
     const totalMap: Record<string, number> = {};
