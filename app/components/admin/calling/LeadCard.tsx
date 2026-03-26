@@ -17,14 +17,14 @@ type AttendanceSignal = "P" | "A" | "N";
 type Lead = {
   id: string;
   name: string;
-  gender: "Male" | "Female";
   mobile: string;
   course: string;
-  branch: string;
-  status: string;
   enquiryDate: string;
   followUps: FollowUp[];
   attendanceLast10: AttendanceSignal[];
+  lead_stage: string;
+  lead_chances: string;
+  batch_name?: string;
 };
 
 type Props = {
@@ -48,30 +48,12 @@ export default function LeadCard({
   setExpandedId,
   addFollowUp,
 }: Props) {
-
   const router = useRouter();
   const isExpanded = expandedId === lead.id;
   const [openFU, setOpenFU] = useState<number | null>(null);
 
-  const attendanceColor = (signal: AttendanceSignal) => {
-    if (signal === "P") return "bg-green-500";
-    if (signal === "A") return "bg-red-500";
-    return "bg-gray-300";
-  };
-
-  const frameColor = (status: string) => {
-    if (status === "Hot") return "border-red-500";
-    if (status === "Warm") return "border-yellow-500";
-    if (status === "Cold") return "border-blue-400";
-    if (status === "Closed") return "border-gray-400";
-    return "border-gray-200";
-  };
-
   const resultColor = (type: string) => {
-    if (
-      type === "Received by Student" ||
-      type === "Received by Parent"
-    )
+    if (type === "Received by Student" || type === "Received by Parent")
       return "text-green-600";
 
     if (
@@ -86,74 +68,99 @@ export default function LeadCard({
     return "text-red-600";
   };
 
+  const hasAttendance = lead.attendanceLast10.some(
+    (a) => a === "P" || a === "A"
+  );
+
   return (
     <div
-      className={`bg-white border-l-4 ${frameColor(
-        lead.status
-      )} rounded shadow-sm p-3 text-xs cursor-pointer`}
-      onClick={() =>
-        setExpandedId(isExpanded ? null : lead.id)
-      }
+      className="bg-white rounded shadow-sm p-3 text-xs cursor-pointer w-full hover:bg-gray-50 transition"
+      onClick={() => setExpandedId(isExpanded ? null : lead.id)}
     >
       <div className="flex justify-between items-start">
-        <div className="flex-1">
+        <div className="flex-1 space-y-1">
 
-          {/* NAME */}
-          <span
-            className="font-semibold text-blue-600 underline cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/admin/lead/${lead.id}`);
-            }}
-          >
-            {lead.name}
-          </span>
-
-          <span className="text-gray-400 ml-2">
-            {new Date(lead.enquiryDate).toLocaleDateString(
-              "en-GB",
-              { day: "2-digit", month: "short" }
-            )} ({lead.followUps.length} Calls)
-          </span>
-
-          <p>
-            {lead.course} | {lead.branch}
-          </p>
-
-          {/* ✅ STATUS + ATTENDANCE INLINE */}
-          <p className="flex items-center gap-2 mt-1">
-            Status: <span className="font-medium">{lead.status}</span>
-
-            <span className="flex gap-[3px] ml-2">
-              {lead.attendanceLast10.map((signal, idx) => (
-                <span
-                  key={idx}
-                  className={`h-2 w-2 rounded-full ${attendanceColor(signal)}`}
-                />
-              ))}
+          {/* ROW 1 */}
+          <div>
+            <span
+              className="font-semibold text-blue-600 underline cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/admin/lead/${lead.id}`);
+              }}
+            >
+              {lead.name}
             </span>
-          </p>
+
+            <span className="text-black ml-2">
+              {new Date(lead.enquiryDate).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+              })}{" "}
+              ({lead.followUps.length} Calls)
+            </span>
+          </div>
+
+          {/* ROW 2 */}
+          <div className="text-gray-700 font-medium">
+            {lead.course}
+          </div>
+
+          {/* ROW 3 */}
+          <div className="text-gray-800">
+            {lead.lead_stage} - {lead.lead_chances}
+          </div>
 
         </div>
 
         <div className="ml-2">
-          {isExpanded ? (
-            <ChevronUp size={16} />
-          ) : (
-            <ChevronDown size={16} />
-          )}
+          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </div>
       </div>
 
-      {/* ACTIONS */}
+      {/* ROW 5 */}
       <div
-        className="flex gap-4 mt-2 text-blue-600"
+        className="flex justify-between mt-2 text-xs"
         onClick={(e) => e.stopPropagation()}
       >
-        <a href={`tel:${lead.mobile}`}>Call</a>
-        <a href={`https://wa.me/91${lead.mobile}`} target="_blank">
-          WhatsApp
-        </a>
+        <div className="text-gray-700">
+
+          {/* BATCH */}
+          <div>
+            {lead.batch_name ? lead.batch_name : "No Batch"}
+          </div>
+
+          {/* ATTENDANCE */}
+          <div className="mt-1 text-gray-500">
+            {hasAttendance ? (
+              <div className="flex gap-[3px]">
+                {lead.attendanceLast10.map((signal, idx) => (
+                  <span
+                    key={idx}
+                    className={`h-2 w-2 rounded-full ${
+                      signal === "P"
+                        ? "bg-green-500"
+                        : signal === "A"
+                        ? "bg-red-500"
+                        : "bg-gray-300"
+                    }`}
+                  />
+                ))}
+              </div>
+            ) : (
+              "No Attendance"
+            )}
+          </div>
+
+        </div>
+
+        {/* CALL BUTTONS */}
+        <div className="flex gap-4 text-blue-600">
+          <a href={`tel:${lead.mobile}`}>Call</a>
+          <a href={`https://wa.me/91${lead.mobile}`} target="_blank">
+            WhatsApp
+          </a>
+        </div>
       </div>
 
       {isExpanded && (
@@ -161,59 +168,58 @@ export default function LeadCard({
           className="mt-3 border-t pt-2 space-y-2 text-gray-700"
           onClick={(e) => e.stopPropagation()}
         >
-          {lead.followUps
-            .slice(0, 5)
-            .map((fu, i) => {
-              const hasExtra = fu.mood || fu.note;
-              const isOpen = openFU === i;
+          {lead.followUps.slice(0, 5).map((fu, i) => {
+            const hasExtra = fu.mood || fu.note;
+            const isOpen = openFU === i;
 
-              return (
+            return (
+              <div
+                key={i}
+                className={`${hasExtra ? "bg-gray-50 rounded" : "bg-white"}`}
+              >
                 <div
-                  key={i}
-                  className={`${hasExtra ? "bg-gray-50 rounded" : "bg-white"}`}
+                  className={`flex justify-between items-center p-2 ${
+                    hasExtra ? "cursor-pointer" : ""
+                  }`}
+                  onClick={(e) => {
+                    if (!hasExtra) return;
+                    e.stopPropagation();
+                    setOpenFU(isOpen ? null : i);
+                  }}
                 >
-                  <div
-                    className={`flex justify-between items-center p-2 ${
-                      hasExtra ? "cursor-pointer" : ""
-                    }`}
-                    onClick={(e) => {
-                      if (!hasExtra) return;
-                      e.stopPropagation();
-                      setOpenFU(isOpen ? null : i);
-                    }}
-                  >
-                    <p className="font-semibold text-gray-800">
-                      {new Date(fu.date).toLocaleDateString(
-                        "en-GB",
-                        { day: "2-digit", month: "short", year: "2-digit" }
-                      )}{" "}
-                      -{" "}
-                      <span className={resultColor(fu.type)}>
-                        {fu.type}
-                      </span>
-                    </p>
+                  <p className="font-semibold text-gray-800">
+                    {new Date(fu.date).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "2-digit",
+                    })}{" "}
+                    -{" "}
+                    <span className={resultColor(fu.type)}>
+                      {fu.type}
+                    </span>
+                  </p>
 
-                    {hasExtra &&
-                      (isOpen ? (
-                        <ChevronUp size={14} />
-                      ) : (
-                        <ChevronDown size={14} />
-                      ))}
-                  </div>
-
-                  {hasExtra && isOpen && (
-                    <div className="px-2 pb-2 space-y-1 text-gray-600">
-                      {fu.mood && <p>Mood - {fu.mood}</p>}
-                      {fu.note && <p>Remark - {fu.note}</p>}
-                    </div>
-                  )}
+                  {hasExtra &&
+                    (isOpen ? (
+                      <ChevronUp size={14} />
+                    ) : (
+                      <ChevronDown size={14} />
+                    ))}
                 </div>
-              );
-            })}
+
+                {hasExtra && isOpen && (
+                  <div className="px-2 pb-2 space-y-1 text-gray-600">
+                    {fu.mood && <p>Mood - {fu.mood}</p>}
+                    {fu.note && <p>Remark - {fu.note}</p>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           <InlineCallingForm
             leadId={lead.id}
-            currentStatus={lead.status}
+            currentStatus={lead.lead_stage}
             onSave={(data) => {
               addFollowUp(lead.id, {
                 result: data.result,

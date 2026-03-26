@@ -19,16 +19,15 @@ type AttendanceSignal = "P" | "A" | "N";
 type Lead = {
   id: string;
   name: string;
-  gender: "Male" | "Female";
   mobile: string;
   course: string;
   branch: string;
   branch_id?: string;
-  status: string;
   enquiryDate: string;
   followUps: FollowUp[];
   attendanceLast10: AttendanceSignal[];
   lead_stage?: string;
+  lead_chances?: string; // ✅ FIX
   city?: string;
 };
 
@@ -46,7 +45,6 @@ export default function CallingPage() {
   const [selectedBranch, setSelectedBranch] = useState<string>("All");
 
   const [statuses, setStatuses] = useState<string[]>([]);
-  const [selectedStatus, setSelectedStatus] = useState<string>("All");
 
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<any>({});
@@ -82,7 +80,7 @@ export default function CallingPage() {
 
     await loadBranches(access);
     await loadLeads(access);
-    await loadStatuses(access);
+    await loadStatuses();
   }
 
   async function loadBranches(access: string[]) {
@@ -92,9 +90,8 @@ export default function CallingPage() {
     setBranches(data || []);
   }
 
-  async function loadStatuses(access: string[]) {
-    let query = supabase.from("leads").select("lead_stage");
-    const { data } = await query;
+  async function loadStatuses() {
+    const { data } = await supabase.from("leads").select("lead_stage");
 
     const unique = Array.from(
       new Set(
@@ -109,91 +106,107 @@ export default function CallingPage() {
 
   async function loadLeads(access: string[]) {
 
-    let query = supabase
-      .from("leads")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const { data } = await supabase
+    .from("leads")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-    const { data } = await query;
-    if (!data) return;
+  if (!data) return;
 
-    const leadIds = data.map((l: any) => l.id);
+  const leadIds = data.map((l: any) => l.id);
 
-    const { data: followups } = await supabase
-      .from("lead_followups")
-      .select("*")
-      .in("lead_id", leadIds)
-      .order("created_at", { ascending: false });
+  // ✅ FOLLOWUPS
+  const { data: followups } = await supabase
+    .from("lead_followups")
+    .select("*")
+    .in("lead_id", leadIds)
+    .order("created_at", { ascending: false });
 
-    const followupMap: any = {};
+  const followupMap: any = {};
 
-    followups?.forEach((f: any) => {
-      if (!followupMap[f.lead_id]) followupMap[f.lead_id] = [];
-      followupMap[f.lead_id].push({
-        date: f.created_at,
-        type: f.result,
-        mood: f.mood,
-        note: f.remark,
-      });
+  followups?.forEach((f: any) => {
+    if (!followupMap[f.lead_id]) followupMap[f.lead_id] = [];
+    followupMap[f.lead_id].push({
+      date: f.created_at,
+      type: f.result,
+      mood: f.mood,
+      note: f.remark,
     });
+  });
 
-    const today = new Date();
-    const last10Dates: string[] = [];
+  // ✅ BATCH MAP
+  const { data: batchStudents } = await supabase
+    .from("batch_students")
+    .select("lead_id, batch_id");
 
-    for (let i = 0; i < 10; i++) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
+  const batchIds = (batchStudents || []).map((b: any) => b.batch_id);
 
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
+  const { data: batches } = await supabase
+    .from("batches")
+    .select("id, batch_name")
+    .in("id", batchIds);
 
-      last10Dates.push(`${yyyy}-${mm}-${dd}`);
-    }
+  const batchMap: any = {};
+  batches?.forEach((b: any) => {
+    batchMap[b.id] = b.batch_name;
+  });
 
-    const { data: attendanceData } = await supabase
-      .from("attendance")
-      .select("lead_id, attendance_date, status")
-      .in("lead_id", leadIds)
-      .in("attendance_date", last10Dates);
+  const leadBatchMap: any = {};
+  batchStudents?.forEach((bs: any) => {
+    leadBatchMap[bs.lead_id] = batchMap[bs.batch_id] || "";
+  });
 
-    const attendanceMap: any = {};
+  // ✅ ATTENDANCE
+  const today = new Date();
+  const last10Dates: string[] = [];
 
-    attendanceData?.forEach((a: any) => {
-      if (!attendanceMap[a.lead_id]) attendanceMap[a.lead_id] = {};
-      attendanceMap[a.lead_id][a.attendance_date] = a.status;
-    });
+  for (let i = 0; i < 10; i++) {
+    const d = new Date();
+    d.setDate(today.getDate() - i);
 
-    const branchMap: Record<string, string> = {};
-    branches.forEach(b => {
-      branchMap[b.id] = b.name;
-    });
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
 
-    const formatted: Lead[] = data.map((l: any) => {
-
-      const last10 = last10Dates.map((date) => {
-        return attendanceMap[l.id]?.[date] || "N";
-      });
-
-      return {
-        id: l.id,
-        name: l.student_name || "",
-        gender: l.gender || "Male",
-        mobile: l.mobile_number || "",
-        course: l.course || "",
-        branch: branchMap[l.branch_id] || "",
-        branch_id: l.branch_id,
-        status: l.status || "Cold",
-        enquiryDate: l.created_at,
-        followUps: followupMap[l.id] || [],
-        attendanceLast10: last10,
-        lead_stage: (l.lead_stage || "").trim(),
-        city: l.city || ""
-      };
-    });
-
-    setLeads(formatted);
+    last10Dates.push(`${yyyy}-${mm}-${dd}`);
   }
+
+  const { data: attendanceData } = await supabase
+    .from("attendance")
+    .select("lead_id, attendance_date, status")
+    .in("lead_id", leadIds)
+    .in("attendance_date", last10Dates);
+
+  const attendanceMap: any = {};
+
+  attendanceData?.forEach((a: any) => {
+    if (!attendanceMap[a.lead_id]) attendanceMap[a.lead_id] = {};
+    attendanceMap[a.lead_id][a.attendance_date] = a.status;
+  });
+
+  const formatted: Lead[] = data.map((l: any) => {
+
+    const last10 = last10Dates.map((date) => {
+      return attendanceMap[l.id]?.[date] || "N";
+    });
+
+    return {
+      id: l.id,
+      name: l.student_name || "",
+      mobile: l.mobile_number || "",
+      course: l.course || "",
+      branch_id: l.branch_id,
+      enquiryDate: l.created_at,
+      followUps: followupMap[l.id] || [],
+      attendanceLast10: last10,
+      lead_stage: (l.lead_stage || "").trim(),
+      lead_chances: (l.lead_chances || "").trim(),
+      batch_name: leadBatchMap[l.id] || "" // ✅ NEW
+    };
+  });
+
+  setLeads(formatted);
+}
 
   const filteredLeads = useMemo(() => {
 
@@ -248,7 +261,7 @@ export default function CallingPage() {
 
     <PermissionGuard page="Calling">
 
-      <div className="calling-page flex flex-col h-[calc(100vh-56px)] bg-gray-50 overflow-hidden">
+      <div className="calling-page flex flex-col h-[calc(100vh-56px)] bg-white-50 overflow-hidden">
 
         {/* HEADER */}
         <div className="sticky top-0 z-20 bg-white shadow-sm">
@@ -291,17 +304,16 @@ export default function CallingPage() {
 
         </div>
 
-        {/* SCROLL AREA */}
+        {/* LIST */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
           {filteredLeads.map((lead) => (
-            <div key={lead.id}>
-              <LeadCard
-                lead={lead}
-                expandedId={expandedId}
-                setExpandedId={setExpandedId}
-                addFollowUp={addFollowUp}
-              />
-            </div>
+            <LeadCard
+              key={lead.id}
+              lead={lead}
+              expandedId={expandedId}
+              setExpandedId={setExpandedId}
+              addFollowUp={addFollowUp}
+            />
           ))}
         </div>
 
