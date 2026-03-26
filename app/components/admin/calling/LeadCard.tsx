@@ -22,8 +22,8 @@ type Lead = {
   enquiryDate: string;
   followUps: FollowUp[];
   attendanceLast10: AttendanceSignal[];
-  lead_stage: string;
-  lead_chances: string;
+  lead_stage?: string;
+lead_chances?: string;
   batch_name?: string;
 };
 
@@ -108,8 +108,8 @@ export default function LeadCard({
 
           {/* ROW 3 */}
           <div className="text-gray-800">
-            {lead.lead_stage} - {lead.lead_chances}
-          </div>
+  {(lead.lead_stage || "")} - {(lead.lead_chances || "")}
+</div>
 
         </div>
 
