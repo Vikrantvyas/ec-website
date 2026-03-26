@@ -1,6 +1,8 @@
 export const buildLeadPayload = (formData: any, override?: any) => {
   return {
-    branch: formData.branch,
+    // ✅ FIX
+    branch_id: formData.branch,
+
     enquiry_date: formData.enquiryDate,
     enquiry_time: formData.enquiryTime,
     method: formData.method,
@@ -23,11 +25,14 @@ export const buildLeadPayload = (formData: any, override?: any) => {
     school_timing: formData.schoolTiming,
     contact_time: formData.contactTime,
 
-    department: formData.department,
+    department: Array.isArray(formData.department)
+  ? formData.department.join(", ")
+  : formData.department,
     course: Array.isArray(formData.course)
       ? formData.course.join(", ")
       : formData.course,
-    preferred_timing: formData.preferredTiming,
+    preferred_timing: formData.preferredTime, // 🔧 small fix भी
+
     preferred_batch: formData.preferredBatch,
 
     lead_chances: formData.leadChances,

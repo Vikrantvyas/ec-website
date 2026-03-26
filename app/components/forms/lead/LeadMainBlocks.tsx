@@ -86,12 +86,37 @@ export default function LeadMainBlocks({
     "1 PM","2 PM","3 PM","4 PM","5 PM","6 PM","7 PM","8 PM"
   ]);
 
+  // 👉 FORMAT: yyyy-mm-dd → dd-mm-yyyy
+  const formatDate = (val:string) => {
+    if(!val) return "";
+    const [y,m,d] = val.split("-");
+    return `${d}-${m}-${y}`;
+  };
+
+  // 👉 REVERSE: dd-mm-yyyy → yyyy-mm-dd (store)
+  const parseDate = (val:string) => {
+    const parts = val.split("-");
+    if(parts.length !== 3) return val;
+    const [d,m,y] = parts;
+    return `${y}-${m}-${d}`;
+  };
+
   return (
     <>
 
       <Block title="Basic Info">
 
-        <Input label="Date" name="enquiryDate" value={formData.enquiryDate} readOnly />
+        <Input
+          label="Date"
+          name="enquiryDate"
+          value={formatDate(formData.enquiryDate)}
+          onChange={(e:any)=>{
+            setFormData({
+              ...formData,
+              enquiryDate: parseDate(e.target.value)
+            });
+          }}
+        />
 
         <Input label="Time" name="enquiryTime" value={formData.enquiryTime} readOnly />
 
@@ -274,19 +299,23 @@ export default function LeadMainBlocks({
 
       <Block title="Counselling & Action">
 
-        <SelectField
-          label="Lead Chances"
-          value={formData.leadChances}
-          options={mapOptions(leadChances)}
-          onChange={(val:string)=>setFormData({ ...formData, leadChances: val })}
-        />
+  {/* ✅ Lead Stage FIRST */}
+  <SelectField
+    label="Lead Stage"
+    value={formData.leadStage}
+    options={mapOptions(leadStages)}
+    onChange={(val:string)=>setFormData({ ...formData, leadStage: val })}
+  />
 
-        <SelectField
-          label="Lead Stage"
-          value={formData.leadStage}
-          options={mapOptions(leadStages)}
-          onChange={(val:string)=>setFormData({ ...formData, leadStage: val })}
-        />
+  {/* ✅ Lead Chances (ONLY when Lead) */}
+  {formData.leadStage === "Lead" && (
+    <SelectField
+      label="Lead Chances"
+      value={formData.leadChances}
+      options={mapOptions(leadChances)}
+      onChange={(val:string)=>setFormData({ ...formData, leadChances: val })}
+    />
+  )}
 
         <SelectField
           label="Action"

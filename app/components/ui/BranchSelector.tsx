@@ -1,9 +1,14 @@
 "use client";
 
+interface Branch {
+  id: string;
+  name: string;
+}
+
 interface Props {
-  branches: string[];
+  branches: Branch[];
   value: string;
-  onChange: (branch: string) => void;
+  onChange: (branchId: string) => void;
 }
 
 export default function BranchSelector({
@@ -12,12 +17,12 @@ export default function BranchSelector({
   onChange
 }: Props) {
 
-  const handleClick = (branch:string) => {
+  const handleClick = (branchId:string) => {
 
-    if(value === branch){
-      onChange("");   // unselect branch
+    if(value === branchId){
+      onChange("");   // unselect
     }else{
-      onChange(branch);
+      onChange(branchId);
     }
 
   };
@@ -30,29 +35,22 @@ export default function BranchSelector({
         Branch
       </label>
 
-      <div
-        className="
-        flex gap-2 overflow-x-auto pb-1
-        scrollbar-hide
-        "
-      >
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
 
-        {branches.map((b:string)=>(
-
+        {branches.map((b)=>(
           <button
-            key={b}
+            key={b.id}
             type="button"
-            onClick={()=>handleClick(b)}
+            onClick={()=>handleClick(b.id)}
             className={`whitespace-nowrap h-[36px] px-3 rounded-md border text-sm transition
             ${
-              (value || "").trim() === b.trim()   // ✅ FIXED
+              value === b.id
               ? "bg-blue-600 text-white border-blue-600"
               : "bg-white border-gray-300 hover:bg-gray-50"
             }`}
           >
-            {b}
+            {b.name}
           </button>
-
         ))}
 
       </div>
