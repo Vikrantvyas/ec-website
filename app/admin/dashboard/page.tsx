@@ -42,7 +42,7 @@ export default function AdminDashboard() {
 
     // ✅ NEW ADDED
     { name: "English", href: "/admin/english", icon: BookOpen },
-    { name: "User", href: "/admin/user", icon: User },
+    { name: "User", href: "/admin/users", icon: User },
 
     { name: "Reports", href: "/admin/reports", icon: FileBarChart },
     { name: "Masters", href: "/admin/masters", icon: Database },

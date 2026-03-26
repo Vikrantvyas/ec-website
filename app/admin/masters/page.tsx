@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { SelectField } from "@/app/components/ui/FormFields";
+
+import PermissionGuard from "@/app/components/admin/PermissionGuard";
 
 import BranchMaster from "@/app/components/admin/masters/BranchMaster";
 import MethodMaster from "@/app/components/admin/masters/MethodMaster";
@@ -22,6 +25,8 @@ import EducationMaster from "@/app/components/admin/masters/EducationMaster";
 import FeeMaster from "@/app/components/admin/masters/FeeMaster";
 
 export default function MastersPage() {
+
+  const searchParams = useSearchParams();
 
   const [selectedCategory,setSelectedCategory] = useState("leads");
   const [selectedMaster,setSelectedMaster] = useState("");
@@ -72,74 +77,88 @@ export default function MastersPage() {
   const mapOptions = (arr:any[]) =>
     arr.map((v:any)=>({label:v.label,value:v.value}));
 
+  // ✅ URL TAB FIX
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+
+    if (tab === "batches") {
+      setSelectedCategory("batches");
+      setSelectedMaster("batches");
+    }
+  }, [searchParams]);
+
   return (
 
-    <div className="space-y-6 text-sm p-6">
+    <PermissionGuard page="Masters">
 
-      {/* STICKY MASTER SELECTOR */}
+      <div className="space-y-6 text-sm p-6">
 
-      <div className="sticky top-0 z-30 bg-gray-50 pb-4">
+        {/* STICKY MASTER SELECTOR */}
 
-        <div className="bg-white rounded-xl shadow-sm p-5">
+        <div className="sticky top-0 z-30 bg-gray-50 pb-4">
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="bg-white rounded-xl shadow-sm p-5">
 
-            <SelectField
-              label="Category"
-              value={selectedCategory}
-              options={[
-                {label:"Leads",value:"leads"},
-                {label:"Staff",value:"staff"},
-                {label:"Batches",value:"batches"},
-                {label:"Fees",value:"fees"}
-              ]}
-              onChange={(val:string)=>{
-                setSelectedCategory(val);
-                setSelectedMaster("");
-              }}
-            />
+            <div className="grid md:grid-cols-2 gap-4">
 
-            <SelectField
-              label="Master"
-              value={selectedMaster}
-              options={mapOptions(masters)}
-              onChange={(val:string)=>setSelectedMaster(val)}
-            />
+              <SelectField
+                label="Category"
+                value={selectedCategory}
+                options={[
+                  {label:"Leads",value:"leads"},
+                  {label:"Staff",value:"staff"},
+                  {label:"Batches",value:"batches"},
+                  {label:"Fees",value:"fees"}
+                ]}
+                onChange={(val:string)=>{
+                  setSelectedCategory(val);
+                  setSelectedMaster("");
+                }}
+              />
+
+              <SelectField
+                label="Master"
+                value={selectedMaster}
+                options={mapOptions(masters)}
+                onChange={(val:string)=>setSelectedMaster(val)}
+              />
+
+            </div>
 
           </div>
 
         </div>
 
+        {/* MASTER CONTENT */}
+
+        {selectedMaster && (
+
+          <div className="bg-white rounded-xl shadow-sm p-6">
+
+            {selectedMaster === "branches" && <BranchMaster />}
+            {selectedMaster === "method" && <MethodMaster />}
+            {selectedMaster === "channel" && <ChannelMaster />}
+            {selectedMaster === "for" && <ForMaster />}
+            {selectedMaster === "city" && <CityMaster />}
+            {selectedMaster === "area" && <AreaMaster />}
+            {selectedMaster === "education" && <EducationMaster />}
+            {selectedMaster === "department" && <DepartmentMaster />}
+            {selectedMaster === "courses" && <CourseMaster />}
+            {selectedMaster === "lead_chances" && <LeadChanceMaster />}
+            {selectedMaster === "lead_stage" && <LeadStageMaster />}
+            {selectedMaster === "action" && <ActionMaster />}
+            {selectedMaster === "counsellor" && <CounsellorMaster />}
+            {selectedMaster === "teachers" && <TeacherMaster />}
+            {selectedMaster === "batches" && <BatchMaster />}
+            {selectedMaster === "fee_schemes" && <FeeMaster />}
+
+          </div>
+
+        )}
+
       </div>
 
-      {/* MASTER CONTENT */}
-
-      {selectedMaster && (
-
-        <div className="bg-white rounded-xl shadow-sm p-6">
-
-          {selectedMaster === "branches" && <BranchMaster />}
-          {selectedMaster === "method" && <MethodMaster />}
-          {selectedMaster === "channel" && <ChannelMaster />}
-          {selectedMaster === "for" && <ForMaster />}
-          {selectedMaster === "city" && <CityMaster />}
-          {selectedMaster === "area" && <AreaMaster />}
-          {selectedMaster === "education" && <EducationMaster />}
-          {selectedMaster === "department" && <DepartmentMaster />}
-          {selectedMaster === "courses" && <CourseMaster />}
-          {selectedMaster === "lead_chances" && <LeadChanceMaster />}
-          {selectedMaster === "lead_stage" && <LeadStageMaster />}
-          {selectedMaster === "action" && <ActionMaster />}
-          {selectedMaster === "counsellor" && <CounsellorMaster />}
-          {selectedMaster === "teachers" && <TeacherMaster />}
-          {selectedMaster === "batches" && <BatchMaster />}
-          {selectedMaster === "fee_schemes" && <FeeMaster />}
-
-        </div>
-
-      )}
-
-    </div>
+    </PermissionGuard>
 
   );
 

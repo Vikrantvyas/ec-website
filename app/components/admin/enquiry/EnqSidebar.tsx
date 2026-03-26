@@ -47,9 +47,10 @@ export default function EnqSidebar({
   );
 
   return (
-    <aside className="w-[320px] bg-white border-r border-gray-200 flex flex-col">
+    <aside className="w-[320px] h-full bg-white border-r border-gray-200 flex flex-col overflow-hidden">
 
-      <div className="px-4 pt-4">
+      {/* 🔒 TOP FIXED AREA */}
+      <div className="px-4 pt-4 shrink-0">
 
         {/* Search */}
         <div className="flex items-center bg-gray-100 border rounded-full px-3 py-2">
@@ -83,7 +84,7 @@ export default function EnqSidebar({
 
       </div>
 
-      {/* List */}
+      {/* ✅ ONLY LIST SCROLL */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 mt-4 space-y-2">
 
         {filtered.map((enquiry) => (

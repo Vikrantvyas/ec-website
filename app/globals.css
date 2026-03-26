@@ -144,7 +144,7 @@ body:has(.attendance-page) main {
 }
 
 /* ================================
-   ✅ STUDENTS PAGE FIX (NEW)
+   ✅ STUDENTS PAGE FIX
 ================================ */
 
 .students-page {
@@ -157,6 +157,58 @@ body:has(.students-page),
 html:has(.students-page),
 body:has(.students-page) #__next,
 body:has(.students-page) main {
+  height: 100vh !important;
+  overflow: hidden !important;
+}
+
+/* ================================
+   ✅ CALLING PAGE FIX
+================================ */
+
+.calling-page {
+  height: calc(100vh - 56px);
+  overflow: hidden;
+  position: relative;
+}
+
+body:has(.calling-page),
+html:has(.calling-page),
+body:has(.calling-page) #__next,
+body:has(.calling-page) main {
+  height: 100vh !important;
+  overflow: hidden !important;
+}
+/* ================================
+   ✅ ENQUIRY PAGE FIX
+================================ */
+
+.enquiry-page {
+  height: calc(100vh - 56px);
+  overflow: hidden;
+  position: relative;
+}
+
+body:has(.enquiry-page),
+html:has(.enquiry-page),
+body:has(.enquiry-page) #__next,
+body:has(.enquiry-page) main {
+  height: 100vh !important;
+  overflow: hidden !important;
+}
+/* ================================
+   ✅ BATCHES PAGE FIX
+================================ */
+
+.batches-page {
+  height: calc(100vh - 56px);
+  overflow: hidden;
+  position: relative;
+}
+
+body:has(.batches-page),
+html:has(.batches-page),
+body:has(.batches-page) #__next,
+body:has(.batches-page) main {
   height: 100vh !important;
   overflow: hidden !important;
 }

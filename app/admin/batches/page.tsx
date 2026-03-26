@@ -33,15 +33,11 @@ export default function BatchesPage() {
       .select("*");
 
     if (data) {
-
       setBranches(data);
-
       if (data.length > 0) {
         setBranchId(data[0].id);
       }
-
     }
-
   }
 
   async function loadBatches() {
@@ -58,12 +54,9 @@ export default function BatchesPage() {
       .order("start_time", { ascending: true });
 
     if (data) {
-
       setBatches(data);
       loadStudentCounts(data);
-
     }
-
   }
 
   async function loadStudentCounts(batchList:any[]) {
@@ -83,7 +76,6 @@ export default function BatchesPage() {
     });
 
     setStudentCounts(counts);
-
   }
 
   const englishBatches = batches.filter(b => b.department === "English");
@@ -91,110 +83,108 @@ export default function BatchesPage() {
 
   return (
 
-    <div className="p-6">
+    <div className="batches-page flex flex-col h-[calc(100vh-56px)] overflow-hidden bg-white">
+      {/* 🔒 TOP FIXED BAR */}
+      <div className="shrink-0 bg-white p-4 shadow-sm space-y-3">
 
-      <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between">
 
-        <h1 className="text-2xl font-semibold">
-          Batches
-        </h1>
+          <BranchSelector
+            branches={branches.map((b) => b.name)}
+            value={branches.find((b) => b.id === branchId)?.name || ""}
+            onChange={(name) => {
+              const branch = branches.find((b) => b.name === name);
+              if (branch) {
+                setBranchId(branch.id);
+              }
+            }}
+          />
 
-        <button
-          onClick={() => router.push("/admin/masters?tab=batches")}
-          className="bg-[#0a1f44] text-white px-4 py-2 rounded-md hover:bg-[#163d7a] transition"
-        >
-          Create Batch
-        </button>
-
-      </div>
-
-      <div className="mt-4">
-
-        <BranchSelector
-          branches={branches.map((b) => b.name)}
-          value={branches.find((b) => b.id === branchId)?.name || ""}
-          onChange={(name) => {
-
-            const branch = branches.find((b) => b.name === name);
-
-            if (branch) {
-              setBranchId(branch.id);
-            }
-
-          }}
-        />
-
-      </div>
-
-      {batches.length === 0 ? (
-
-        <p className="mt-6 text-gray-500">
-          No batches found
-        </p>
-
-      ) : (
-
-        <div className="mt-6 space-y-8">
-
-          {englishBatches.length > 0 && (
-            <div>
-
-              <h2 className="text-lg font-semibold mb-3 text-blue-700">
-                English Batches
-              </h2>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-
-                {englishBatches.map((batch) => (
-
-                  <BatchCard
-                    key={batch.id}
-                    id={batch.id}
-                    name={batch.batch_name}
-                    department={batch.department}
-                    teacher={batch.teachers?.name}
-                    courses={[batch.course]}
-                    students={studentCounts[batch.id] || 0}
-                  />
-
-                ))}
-
-              </div>
-
-            </div>
-          )}
-
-          {computerBatches.length > 0 && (
-            <div>
-
-              <h2 className="text-lg font-semibold mb-3 text-green-700">
-                Computer Batches
-              </h2>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-
-                {computerBatches.map((batch) => (
-
-                  <BatchCard
-                    key={batch.id}
-                    id={batch.id}
-                    name={batch.batch_name}
-                    department={batch.department}
-                    teacher={batch.teachers?.name}
-                    courses={[batch.course]}
-                    students={studentCounts[batch.id] || 0}
-                  />
-
-                ))}
-
-              </div>
-
-            </div>
-          )}
+          <button
+            onClick={() => router.push("/admin/masters?tab=batches")}
+            className="text-blue-600 font-medium text-sm hover:underline"
+          >
+            + Create Batch
+          </button>
 
         </div>
 
-      )}
+      </div>
+
+      {/* ✅ SCROLL AREA (CARDS) */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-8">
+
+        {batches.length === 0 ? (
+
+          <p className="text-gray-500">
+            No batches found
+          </p>
+
+        ) : (
+
+          <>
+
+            {englishBatches.length > 0 && (
+              <div>
+
+                <h2 className="text-lg font-semibold mb-3 text-blue-700">
+                  English Batches
+                </h2>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+
+                  {englishBatches.map((batch) => (
+
+                    <BatchCard
+                      key={batch.id}
+                      id={batch.id}
+                      name={batch.batch_name}
+                      department={batch.department}
+                      teacher={batch.teachers?.name}
+                      courses={[batch.course]}
+                      students={studentCounts[batch.id] || 0}
+                    />
+
+                  ))}
+
+                </div>
+
+              </div>
+            )}
+
+            {computerBatches.length > 0 && (
+              <div>
+
+                <h2 className="text-lg font-semibold mb-3 text-green-700">
+                  Computer Batches
+                </h2>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+
+                  {computerBatches.map((batch) => (
+
+                    <BatchCard
+                      key={batch.id}
+                      id={batch.id}
+                      name={batch.batch_name}
+                      department={batch.department}
+                      teacher={batch.teachers?.name}
+                      courses={[batch.course]}
+                      students={studentCounts[batch.id] || 0}
+                    />
+
+                  ))}
+
+                </div>
+
+              </div>
+            )}
+
+          </>
+
+        )}
+
+      </div>
 
     </div>
 

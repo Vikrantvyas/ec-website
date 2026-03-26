@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
+
+import PermissionGuard from "@/app/components/admin/PermissionGuard";
 
 export default function EnglishPage() {
 
@@ -11,103 +13,108 @@ export default function EnglishPage() {
 
   return (
 
-    <div className="flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden english-page">
+    <PermissionGuard page="english">
 
-      {/* 🔥 LEFT MINI TOOLBAR */}
-      <div className="w-14 bg-white border-r flex flex-col items-center py-3 gap-3">
+      <div className="flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden english-page">
 
-        <button
-          onClick={() => setWhiteboard(false)}
-          className={`w-10 h-10 rounded ${
-            !whiteboard ? "bg-blue-600 text-white" : "bg-gray-200"
-          }`}
-        >
-          📄
-        </button>
+        {/* 🔥 LEFT MINI TOOLBAR */}
+        <div className="w-14 bg-white border-r flex flex-col items-center py-3 gap-3">
 
-        <button
-          onClick={() => setWhiteboard(true)}
-          className={`w-10 h-10 rounded ${
-            whiteboard ? "bg-green-600 text-white" : "bg-gray-200"
-          }`}
-        >
-          ✏️
-        </button>
+          <button
+            onClick={() => setWhiteboard(false)}
+            className={`w-10 h-10 rounded ${
+              !whiteboard ? "bg-blue-600 text-white" : "bg-gray-200"
+            }`}
+          >
+            📄
+          </button>
 
-      </div>
-
-      {/* MAIN AREA */}
-      <div className="flex-1 flex flex-col items-center justify-start pt-4 gap-2 overflow-hidden">
-
-        {/* 🔽 TABS */}
-        <div className="flex gap-2">
-          {tabs.map((t) => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={`px-3 py-1 rounded text-sm ${
-                activeTab === t
-                  ? "bg-blue-600 text-white"
-                  : "bg-white border"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        {/* 📺 MAIN BOX */}
-       <div
-  className="bg-white border shadow overflow-hidden"
-  style={{
-    width: "25cm",
-    height: "12cm",
-  }}
->
-
-          {!whiteboard ? (
-            <div className="h-full overflow-y-auto p-3 space-y-2">
-
-              <h2 className="font-semibold">{activeTab}</h2>
-
-              <p>Teaching content...</p>
-              <p>Scroll content...</p>
-              <p>More content...</p>
-
-              <p>Teaching content...</p>
-              <p>Scroll content...</p>
-              <p>More content...</p>
-
-              <p>Teaching content...</p>
-              <p>Scroll content...</p>
-              <p>More content...</p>
-
-              <p>Teaching content...</p>
-              <p>Scroll content...</p>
-              <p>More content...</p>
-
-              <p>Teaching content...</p>
-              <p>Scroll content...</p>
-              <p>More content...</p>
-
-              <p>Teaching content...</p>
-              <p>Scroll content...</p>
-              <p>More content...</p>
-
-              <p>Teaching content...</p>
-              <p>Scroll content...</p>
-              <p>More content...</p>
-
-            </div>
-          ) : (
-            <WhiteBoard />
-          )}
+          <button
+            onClick={() => setWhiteboard(true)}
+            className={`w-10 h-10 rounded ${
+              whiteboard ? "bg-green-600 text-white" : "bg-gray-200"
+            }`}
+          >
+            ✏️
+          </button>
 
         </div>
 
+        {/* MAIN AREA */}
+        <div className="flex-1 flex flex-col items-center justify-start pt-4 gap-2 overflow-hidden">
+
+          {/* 🔽 TABS */}
+          <div className="flex gap-2">
+            {tabs.map((t) => (
+              <button
+                key={t}
+                onClick={() => setActiveTab(t)}
+                className={`px-3 py-1 rounded text-sm ${
+                  activeTab === t
+                    ? "bg-blue-600 text-white"
+                    : "bg-white border"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          {/* 📺 MAIN BOX */}
+          <div
+            className="bg-white border shadow overflow-hidden"
+            style={{
+              width: "25cm",
+              height: "12cm",
+            }}
+          >
+
+            {!whiteboard ? (
+              <div className="h-full overflow-y-auto p-3 space-y-2">
+
+                <h2 className="font-semibold">{activeTab}</h2>
+
+                <p>Teaching content...</p>
+                <p>Scroll content...</p>
+                <p>More content...</p>
+
+                <p>Teaching content...</p>
+                <p>Scroll content...</p>
+                <p>More content...</p>
+
+                <p>Teaching content...</p>
+                <p>Scroll content...</p>
+                <p>More content...</p>
+
+                <p>Teaching content...</p>
+                <p>Scroll content...</p>
+                <p>More content...</p>
+
+                <p>Teaching content...</p>
+                <p>Scroll content...</p>
+                <p>More content...</p>
+
+                <p>Teaching content...</p>
+                <p>Scroll content...</p>
+                <p>More content...</p>
+
+                <p>Teaching content...</p>
+                <p>Scroll content...</p>
+                <p>More content...</p>
+
+              </div>
+            ) : (
+              <WhiteBoard />
+            )}
+
+          </div>
+
+        </div>
+
       </div>
 
-    </div>
+    </PermissionGuard>
+
   );
 }
 
@@ -115,17 +122,17 @@ export default function EnglishPage() {
 
 function WhiteBoard() {
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [drawing, setDrawing] = useState(false);
 
-  const start = (e: any) => {
+  const start = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setDrawing(true);
     draw(e);
   };
 
   const end = () => setDrawing(false);
 
-  const draw = (e: any) => {
+  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
 
     if (!drawing) return;
 
@@ -141,8 +148,11 @@ function WhiteBoard() {
     const y = e.clientY - rect.top;
 
     ctx.lineWidth = 2;
+    ctx.lineCap = "round";
     ctx.lineTo(x, y);
     ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
   };
 
   const clear = () => {
@@ -154,6 +164,7 @@ function WhiteBoard() {
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
   };
 
   return (
