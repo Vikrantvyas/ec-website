@@ -27,7 +27,6 @@ type Lead = {
   lead_chances?: string;
   batch_name?: string;
 };
-
 type Branch = {
   id: string;
   name: string;
