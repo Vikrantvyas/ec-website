@@ -23,7 +23,7 @@ type Lead = {
   followUps: FollowUp[];
   attendanceLast10: AttendanceSignal[];
   lead_stage?: string;
-lead_chances?: string;
+  lead_chances?: string;
   batch_name?: string;
 };
 
@@ -68,22 +68,18 @@ export default function LeadCard({
     return "text-red-600";
   };
 
-  const hasAttendance = lead.attendanceLast10.some(
-    (a) => a === "P" || a === "A"
-  );
-
   return (
     <div
-      className="bg-white rounded shadow-sm p-3 text-xs cursor-pointer w-full hover:bg-gray-50 transition"
+      className="bg-white rounded shadow-sm p-3 text-sm cursor-pointer w-full hover:bg-gray-50 transition"
       onClick={() => setExpandedId(isExpanded ? null : lead.id)}
     >
       <div className="flex justify-between items-start">
         <div className="flex-1 space-y-1">
 
           {/* ROW 1 */}
-          <div>
+          <div className="flex items-center flex-wrap gap-1">
             <span
-              className="font-semibold text-blue-600 underline cursor-pointer"
+              className="font-medium text-blue-600 underline cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 router.push(`/admin/lead/${lead.id}`);
@@ -92,24 +88,34 @@ export default function LeadCard({
               {lead.name}
             </span>
 
-            <span className="text-black ml-2">
+            <span className="text-gray-700 text-sm">
               {new Date(lead.enquiryDate).toLocaleDateString("en-GB", {
                 day: "2-digit",
                 month: "short",
               })}{" "}
-              ({lead.followUps.length} Calls)
+              ({lead.followUps.length})
             </span>
           </div>
 
           {/* ROW 2 */}
-          <div className="text-gray-700 font-medium">
+          <div className="text-gray-700 text-sm">
             {lead.course}
           </div>
 
-          {/* ROW 3 */}
-          <div className="text-gray-800">
-  {(lead.lead_stage || "")} - {(lead.lead_chances || "")}
-</div>
+          {/* ROW 3 → BADGES */}
+          <div className="flex gap-2 flex-wrap text-xs">
+            {lead.lead_stage && (
+              <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                {lead.lead_stage}
+              </span>
+            )}
+
+            {lead.lead_chances && (
+              <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                {lead.lead_chances}
+              </span>
+            )}
+          </div>
 
         </div>
 
@@ -118,54 +124,27 @@ export default function LeadCard({
         </div>
       </div>
 
+      {/* ROW 4 */}
+      <div className="mt-1 text-sm text-gray-700">
+        <div className="text-gray-600">
+          {lead.batch_name ? lead.batch_name : "No Batch"}
+        </div>
+      </div>
+
       {/* ROW 5 */}
       <div
-        className="flex justify-between mt-2 text-xs"
+        className="flex gap-5 mt-1.5 text-blue-600 text-sm"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="text-gray-700">
-
-          {/* BATCH */}
-          <div>
-            {lead.batch_name ? lead.batch_name : "No Batch"}
-          </div>
-
-          {/* ATTENDANCE */}
-          <div className="mt-1 text-gray-500">
-            {hasAttendance ? (
-              <div className="flex gap-[3px]">
-                {lead.attendanceLast10.map((signal, idx) => (
-                  <span
-                    key={idx}
-                    className={`h-2 w-2 rounded-full ${
-                      signal === "P"
-                        ? "bg-green-500"
-                        : signal === "A"
-                        ? "bg-red-500"
-                        : "bg-gray-300"
-                    }`}
-                  />
-                ))}
-              </div>
-            ) : (
-              "No Attendance"
-            )}
-          </div>
-
-        </div>
-
-        {/* CALL BUTTONS */}
-        <div className="flex gap-4 text-blue-600">
-          <a href={`tel:${lead.mobile}`}>Call</a>
-          <a href={`https://wa.me/91${lead.mobile}`} target="_blank">
-            WhatsApp
-          </a>
-        </div>
+        <a href={`tel:${lead.mobile}`}>Call</a>
+        <a href={`https://wa.me/91${lead.mobile}`} target="_blank">
+          WhatsApp
+        </a>
       </div>
 
       {isExpanded && (
         <div
-          className="mt-3 border-t pt-2 space-y-2 text-gray-700"
+          className="mt-2 border-t pt-2 space-y-2 text-gray-700 text-sm"
           onClick={(e) => e.stopPropagation()}
         >
           {lead.followUps.slice(0, 5).map((fu, i) => {
@@ -178,7 +157,7 @@ export default function LeadCard({
                 className={`${hasExtra ? "bg-gray-50 rounded" : "bg-white"}`}
               >
                 <div
-                  className={`flex justify-between items-center p-2 ${
+                  className={`flex justify-between items-center px-2 py-1 ${
                     hasExtra ? "cursor-pointer" : ""
                   }`}
                   onClick={(e) => {
@@ -187,7 +166,7 @@ export default function LeadCard({
                     setOpenFU(isOpen ? null : i);
                   }}
                 >
-                  <p className="font-semibold text-gray-800">
+                  <p className="font-medium text-gray-800 text-sm">
                     {new Date(fu.date).toLocaleDateString("en-GB", {
                       day: "2-digit",
                       month: "short",
@@ -208,7 +187,7 @@ export default function LeadCard({
                 </div>
 
                 {hasExtra && isOpen && (
-                  <div className="px-2 pb-2 space-y-1 text-gray-600">
+                  <div className="px-2 pb-2 space-y-1 text-gray-600 text-sm">
                     {fu.mood && <p>Mood - {fu.mood}</p>}
                     {fu.note && <p>Remark - {fu.note}</p>}
                   </div>
