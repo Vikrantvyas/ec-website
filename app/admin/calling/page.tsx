@@ -14,8 +14,6 @@ type FollowUp = {
   mood?: string;
 };
 
-type AttendanceSignal = "P" | "A" | "N";
-
 type Lead = {
   id: string;
   name: string;
@@ -25,7 +23,6 @@ type Lead = {
   branch_id?: string;
   enquiryDate: string;
   followUps: FollowUp[];
-  attendanceLast10: AttendanceSignal[];
   lead_stage?: string;
   lead_chances?: string;
   batch_name?: string;
@@ -46,7 +43,6 @@ export default function CallingPage() {
 
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<any>({});
-
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -106,7 +102,6 @@ export default function CallingPage() {
       .order("created_at", { ascending: false });
 
     const followupMap: any = {};
-
     followups?.forEach((f: any) => {
       if (!followupMap[f.lead_id]) followupMap[f.lead_id] = [];
       followupMap[f.lead_id].push({
@@ -139,45 +134,14 @@ export default function CallingPage() {
       leadBatchMap[bs.lead_id] = batchMap[bs.batch_id] || "";
     });
 
-    // ATTENDANCE
-    const today = new Date();
-    const last10Dates: string[] = [];
-
-    for (let i = 0; i < 10; i++) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
-
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
-
-      last10Dates.push(`${yyyy}-${mm}-${dd}`);
-    }
-
-    const { data: attendanceData } = await supabase
-      .from("attendance")
-      .select("lead_id, attendance_date, status")
-      .in("lead_id", leadIds)
-      .in("attendance_date", last10Dates);
-
-    const attendanceMap: any = {};
-
-    attendanceData?.forEach((a: any) => {
-      if (!attendanceMap[a.lead_id]) attendanceMap[a.lead_id] = {};
-      attendanceMap[a.lead_id][a.attendance_date] = a.status;
-    });
-
-    // ✅ BRANCH MAP FIX
+    // BRANCH MAP
     const branchMap: Record<string, string> = {};
     branches.forEach((b) => {
       branchMap[b.id] = b.name;
     });
 
+    // FINAL DATA (NO ATTENDANCE)
     const formatted: Lead[] = data.map((l: any) => {
-
-      const last10 = last10Dates.map((date) => {
-        return attendanceMap[l.id]?.[date] || "N";
-      });
 
       return {
         id: l.id,
@@ -188,7 +152,6 @@ export default function CallingPage() {
         branch_id: l.branch_id,
         enquiryDate: l.created_at,
         followUps: followupMap[l.id] || [],
-        attendanceLast10: last10,
         lead_stage: (l.lead_stage || "").trim(),
         lead_chances: (l.lead_chances || "").trim(),
         batch_name: leadBatchMap[l.id] || "",
