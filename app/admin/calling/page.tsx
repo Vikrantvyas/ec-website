@@ -130,9 +130,18 @@ export default function CallingPage() {
     });
 
     const leadBatchMap: any = {};
-    batchStudents?.forEach((bs: any) => {
-      leadBatchMap[bs.lead_id] = batchMap[bs.batch_id] || "";
-    });
+
+batchStudents?.forEach((bs: any) => {
+  if (!leadBatchMap[bs.lead_id]) {
+    leadBatchMap[bs.lead_id] = new Set();
+  }
+
+  const batchName = batchMap[bs.batch_id] || "";
+
+  if (batchName) {
+    leadBatchMap[bs.lead_id].add(batchName);
+  }
+});
 
     // BRANCH MAP
     const branchMap: Record<string, string> = {};
@@ -154,7 +163,9 @@ export default function CallingPage() {
         followUps: followupMap[l.id] || [],
         lead_stage: (l.lead_stage || "").trim(),
         lead_chances: (l.lead_chances || "").trim(),
-        batch_name: leadBatchMap[l.id] || "",
+        batch_name: leadBatchMap[l.id]
+  ? Array.from(leadBatchMap[l.id]).join(", ")
+  : "",
       };
     });
 
