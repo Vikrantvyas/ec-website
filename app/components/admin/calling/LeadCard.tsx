@@ -12,8 +12,6 @@ type FollowUp = {
   mood?: string;
 };
 
-type AttendanceSignal = "P" | "A" | "N";
-
 type Lead = {
   id: string;
   name: string;
@@ -98,22 +96,32 @@ export default function LeadCard({
 
           {/* ROW 2 */}
           <div className="text-gray-700 text-sm">
-            {lead.course}
+            Course - {lead.course ? lead.course : "N/A"}
           </div>
 
-          {/* ROW 3 → BADGES */}
+          {/* ROW 3 */}
           <div className="flex gap-2 flex-wrap text-xs">
-            {lead.lead_stage && (
+
+            {lead.lead_stage === "Lead" ? (
               <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                {lead.lead_stage}
+                Lead Stage - {lead.lead_stage}
+              </span>
+            ) : (
+              <span className="text-gray-700">
+                Lead Stage {lead.lead_stage ? lead.lead_stage : "N/A"}
               </span>
             )}
 
-            {lead.lead_chances && (
+            {lead.lead_chances === "High" ? (
               <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                {lead.lead_chances}
+                Lead Chances - {lead.lead_chances}
+              </span>
+            ) : (
+              <span className="text-gray-700">
+                Lead Chances {lead.lead_chances ? lead.lead_chances : "N/A"}
               </span>
             )}
+
           </div>
 
         </div>
