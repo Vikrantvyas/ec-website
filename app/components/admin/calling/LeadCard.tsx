@@ -21,7 +21,6 @@ type Lead = {
   course: string;
   enquiryDate: string;
   followUps: FollowUp[];
-  attendanceLast10: AttendanceSignal[];
   lead_stage?: string;
   lead_chances?: string;
   batch_name?: string;
