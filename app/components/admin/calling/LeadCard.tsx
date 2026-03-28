@@ -79,6 +79,8 @@ export default function LeadCard({
               className="font-medium text-blue-600 underline cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
+                console.log("Lead ID from Name Click:", lead.id);
+                if (!lead?.id) return;
                 router.push(`/admin/lead/${lead.id}`);
               }}
             >
@@ -147,6 +149,18 @@ export default function LeadCard({
         <a href={`https://wa.me/91${lead.mobile}`} target="_blank">
           WhatsApp
         </a>
+
+        {/* ✅ FIXED BUTTON */}
+        <span
+          className="underline cursor-pointer"
+          onClick={() => {
+            console.log("Lead ID from Call Feedback:", lead.id);
+            if (!lead?.id) return;
+            router.push(`/admin/calling/${lead.id}`);
+          }}
+        >
+          Call Feedback
+        </span>
       </div>
 
       {isExpanded && (
