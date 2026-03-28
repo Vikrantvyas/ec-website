@@ -1,50 +1,24 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import BottomSheetSelect from "@/app/components/ui/BottomSheetSelect";
+import { supabase } from "@/lib/supabaseClient";
 
 type Props = {
   leadId: string;
   currentStatus: string;
-  onSave: (data: {
-    purpose: string;
-    result: string;
-    mood: string;
-    nextAction: string;
-    nextCallDate: string;
-    status: string;
-    remark: string;
-  }) => void;
+  onSave: (data: any) => void;
 };
 
-/* ================= DATA ================= */
+const callTypes = ["Incoming", "Outgoing"];
+const callingPersons = ["Admin", "Counsellor", "Reception"];
 
-const enquiryPurposes = [
-  "Fresh Enquiry Follow-up",
-  "General Follow-up",
-];
+const enquiryPurposes = ["Fresh Enquiry Follow-up", "General Follow-up"];
+const demoPurposes = ["Demo Reminder", "Demo Feedback"];
+const admissionPurposes = ["Admission Discussion", "Admission Confirmation"];
+const studentPurposes = ["Fee Reminder", "Absent Alert", "Feedback Call"];
 
-const demoPurposes = [
-  "Demo Reminder",
-  "Demo Feedback",
-];
-
-const admissionPurposes = [
-  "Admission Discussion",
-  "Admission Confirmation",
-];
-
-const studentPurposes = [
-  "Fee Reminder",
-  "Absent Alert",
-  "Feedback Call",
-];
-
-const positiveResults = [
-  "Received by Student",
-  "Received by Parent",
-];
-
+const positiveResults = ["Received by Student", "Received by Parent"];
 const neutralResults = [
   "Phone Busy",
   "Not Received",
@@ -52,11 +26,7 @@ const neutralResults = [
   "Switched Off",
   "Voice Issue",
 ];
-
-const negativeResults = [
-  "Cut the Call",
-  "Not in Service",
-];
+const negativeResults = ["Cut the Call", "Not in Service"];
 
 const positiveMoods = [
   "Very Interested",
@@ -66,7 +36,6 @@ const positiveMoods = [
   "Will Visit Institute",
   "Fees Ready",
 ];
-
 const neutralMoods = [
   "Call Back Later",
   "Thinking",
@@ -74,7 +43,6 @@ const neutralMoods = [
   "Discussing with Family",
   "Asked for Details on WhatsApp",
 ];
-
 const negativeMoods = [
   "Not Interested",
   "Joined Somewhere Else",
@@ -90,26 +58,47 @@ const followUpOptions = [
   "Select Date",
 ];
 
-const statusOptions = ["Cold", "Warm", "Hot", "Closed"];
-
 export default function InlineCallingForm({
   leadId,
   currentStatus,
   onSave,
 }: Props) {
 
+  const today = new Date().toLocaleDateString("en-GB").split("/").join("-");
+
+  const [callingDate, setCallingDate] = useState(today);
+  const [callType, setCallType] = useState("Outgoing");
   const [purpose, setPurpose] = useState("");
   const [result, setResult] = useState("");
   const [mood, setMood] = useState("");
+  const [leadStage, setLeadStage] = useState("");
+  const [leadChance, setLeadChance] = useState("");
   const [nextAction, setNextAction] = useState("");
   const [nextCallDate, setNextCallDate] = useState("");
-  const [status, setStatus] = useState("");
+  const [callingPerson, setCallingPerson] = useState("");
   const [remark, setRemark] = useState("");
 
   const dateRef = useRef<HTMLInputElement>(null);
 
+  // 🔥 FETCH LEAD DATA
   useEffect(() => {
+    const fetchLead = async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("lead_stage, lead_chances")
+        .eq("id", leadId)
+        .single();
 
+      if (data) {
+        setLeadStage(data.lead_stage || "");
+        setLeadChance(data.lead_chances || "");
+      }
+    };
+
+    if (leadId) fetchLead();
+  }, [leadId]);
+
+  useEffect(() => {
     if (!nextAction) return;
 
     const today = new Date();
@@ -127,53 +116,32 @@ export default function InlineCallingForm({
     if (nextAction !== "Select Date") {
       setNextCallDate(next.toISOString().split("T")[0]);
     }
-
   }, [nextAction]);
 
   const needsDatePicker = nextAction === "Select Date";
 
   useEffect(() => {
-
     if (needsDatePicker) {
-
       setTimeout(() => {
         dateRef.current?.showPicker?.();
       }, 100);
-
     }
-
   }, [needsDatePicker]);
 
-  const autoStatus = useMemo(() => {
-
-    if (negativeResults.includes(result)) return "Closed";
-    if (negativeMoods.includes(mood)) return "Closed";
-    if (positiveMoods.includes(mood)) return "Hot";
-    if (neutralMoods.includes(mood)) return "Warm";
-    if (neutralResults.includes(result)) return "Cold";
-
-    return "Warm";
-
-  }, [result, mood]);
-
-  useEffect(() => {
-
-    if (result) setStatus(autoStatus);
-
-  }, [autoStatus, result]);
-
   const handleSave = () => {
-
     if (!purpose || !result) return;
-    if (!remark.trim()) return;
 
     onSave({
+      callingDate,
+      callType,
       purpose,
       result,
       mood,
+      leadStage,
+      leadChance,
       nextAction,
       nextCallDate,
-      status,
+      callingPerson,
       remark,
     });
 
@@ -182,16 +150,30 @@ export default function InlineCallingForm({
     setMood("");
     setNextAction("");
     setNextCallDate("");
-    setStatus("");
+    setCallingPerson("");
     setRemark("");
-
   };
 
   return (
     <div className="space-y-2 mt-3 text-xs">
 
+      <div className="grid grid-cols-2 gap-2">
+        <input
+          value={callingDate}
+          readOnly
+          className="border px-2 py-1 rounded text-sm bg-gray-50"
+        />
+
+        <BottomSheetSelect
+          label="Call Type"
+          value={callType}
+          options={callTypes.map((c) => ({ label: c, value: c }))}
+          onChange={setCallType}
+        />
+      </div>
+
       <BottomSheetSelect
-        label="Calling Purpose"
+        label="Call Purpose"
         value={purpose}
         options={[
           ...enquiryPurposes,
@@ -203,7 +185,6 @@ export default function InlineCallingForm({
       />
 
       <div className="grid grid-cols-2 gap-2">
-
         <BottomSheetSelect
           label="Call Result"
           value={result}
@@ -249,35 +230,42 @@ export default function InlineCallingForm({
           ]}
           onChange={setMood}
         />
-
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-
         <BottomSheetSelect
-          label="Next Follow Up"
-          value={nextAction}
-          options={followUpOptions.map((a) => ({
-            label: a,
-            value: a,
+          label="Lead Stage"
+          value={leadStage}
+          options={["Lead", "Demo", "Admission", "Student"].map((l) => ({
+            label: l,
+            value: l,
           }))}
-          onChange={(val) => {
-            setNextAction(val);
-            setNextCallDate("");
-          }}
+          onChange={setLeadStage}
         />
 
         <BottomSheetSelect
-          label="Status"
-          value={status}
-          options={statusOptions.map((s) => ({
-            label: s,
-            value: s,
+          label="Lead Chances"
+          value={leadChance}
+          options={["High", "Medium", "Low"].map((l) => ({
+            label: l,
+            value: l,
           }))}
-          onChange={setStatus}
+          onChange={setLeadChance}
         />
-
       </div>
+
+      <BottomSheetSelect
+        label="Next Follow Up"
+        value={nextAction}
+        options={followUpOptions.map((a) => ({
+          label: a,
+          value: a,
+        }))}
+        onChange={(val) => {
+          setNextAction(val);
+          setNextCallDate("");
+        }}
+      />
 
       {needsDatePicker && (
         <input
@@ -289,8 +277,18 @@ export default function InlineCallingForm({
         />
       )}
 
+      <BottomSheetSelect
+        label="Calling Person"
+        value={callingPerson}
+        options={callingPersons.map((c) => ({
+          label: c,
+          value: c,
+        }))}
+        onChange={setCallingPerson}
+      />
+
       <textarea
-        className="w-full border border-gray-300 px-3 py-2 rounded-md text-sm"
+        className="w-full border px-3 py-2 rounded-md text-sm"
         rows={2}
         placeholder="Remark"
         value={remark}
@@ -299,7 +297,7 @@ export default function InlineCallingForm({
 
       <button
         onClick={handleSave}
-        className="w-full bg-blue-600 text-white py-2 rounded text-sm font-medium"
+        className="w-full bg-blue-600 text-white py-2 rounded text-sm"
       >
         Save
       </button>
