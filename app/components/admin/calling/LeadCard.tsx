@@ -156,7 +156,7 @@ export default function LeadCard({
 
       {/* TOTAL PAID */}
       <div className="mt-1 text-sm text-green-700 font-medium">
-        Total Paid: ₹ {totalPaid}
+        Total Paid: {totalPaid}.00
       </div>
 
       {/* BATCH */}
