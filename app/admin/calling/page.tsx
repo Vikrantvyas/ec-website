@@ -152,22 +152,55 @@ batchStudents?.forEach((bs: any) => {
     // FINAL DATA (NO ATTENDANCE)
     const formatted: Lead[] = data.map((l: any) => {
 
-      return {
-        id: l.id,
-        name: l.student_name || "",
-        mobile: l.mobile_number || "",
-        course: l.course || "",
-        branch: branchMap[l.branch_id] || "",
-        branch_id: l.branch_id,
-        enquiryDate: l.created_at,
-        followUps: followupMap[l.id] || [],
-        lead_stage: (l.lead_stage || "").trim(),
-        lead_chances: (l.lead_chances || "").trim(),
-        batch_name: leadBatchMap[l.id]
-  ? Array.from(leadBatchMap[l.id]).join(", ")
-  : "",
-      };
-    });
+  return {
+    id: l.id,
+    name: l.student_name || "",
+    mobile: l.mobile_number || "",
+    course: l.course || "",
+    branch: branchMap[l.branch_id] || "",
+    branch_id: l.branch_id,
+    enquiryDate: l.created_at,
+    followUps: followupMap[l.id] || [],
+    lead_stage: (l.lead_stage || "").trim(),
+    lead_chances: (l.lead_chances || "").trim(),
+    batch_name: leadBatchMap[l.id]
+      ? Array.from(leadBatchMap[l.id]).join(", ")
+      : "",
+
+    // ✅ ADD FULL DATA (IMPORTANT FIX)
+    area: l.area,
+    city: l.city,
+    gender: l.gender,
+    age: l.age,
+    marital_status: l.marital_status,
+    profession: l.profession,
+    education: l.education,
+    school_college_job: l.school_college_job,
+    school_timing: l.school_timing,
+    contact_time: l.contact_time,
+
+    enquiry_date: l.enquiry_date,
+    enquiry_time: l.enquiry_time,
+    method: l.method,
+    channel: l.channel,
+    enquired_by: l.enquired_by,
+    for_whom: l.for_whom,
+
+    department: l.department,
+    preferred_timing: l.preferred_timing,
+    preferred_batch: l.preferred_batch,
+
+    action: l.action,
+    next_follow_date: l.next_follow_date,
+    next_follow_time: l.next_follow_time,
+    counsellor: l.counsellor,
+    remark: l.remark,
+
+    alternate_number: l.alternate_number,
+    created_at: l.created_at,
+    updated_at: l.updated_at,
+  };
+});
 
     setLeads(formatted);
   }
@@ -230,19 +263,39 @@ batchStudents?.forEach((bs: any) => {
         {/* HEADER */}
         <div className="sticky top-0 z-20 bg-white shadow-sm">
 
-          <div className="flex gap-2 overflow-x-auto p-3">
-            <button onClick={() => setSelectedBranch("All")}
-              className={`px-4 py-1 rounded-full text-sm ${selectedBranch === "All" ? "bg-blue-600 text-white" : "bg-gray-200"}`}>
-              All
-            </button>
-            {branches.map((b) => (
-              <button key={b.id}
-                onClick={() => setSelectedBranch(b.id)}
-                className={`px-4 py-1 rounded-full text-sm ${selectedBranch === b.id ? "bg-blue-600 text-white" : "bg-gray-200"}`}>
-                {b.name}
-              </button>
-            ))}
-          </div>
+        <div className="flex gap-2 overflow-x-auto p-3">
+
+  <button
+    onClick={() => {
+      setSelectedBranch("All");
+    }}
+    className={`px-3 py-1 rounded text-xs md:text-sm whitespace-nowrap shadow-sm transition
+      ${selectedBranch === "All"
+        ? "bg-blue-600 text-white"
+        : "bg-white"
+      }`}
+  >
+    All
+  </button>
+
+  {branches.map((b) => (
+    <button
+      key={b.id}
+      onClick={() => {
+        setSelectedBranch(b.id);
+        setExpandedId(null); // reset open card (important)
+      }}
+      className={`px-3 py-1 rounded text-xs md:text-sm whitespace-nowrap shadow-sm transition
+        ${selectedBranch === b.id
+          ? "bg-blue-600 text-white"
+          : "bg-white"
+        }`}
+    >
+      {b.name}
+    </button>
+  ))}
+
+</div>
 
           <div className="flex gap-2 px-3 pb-2">
 
