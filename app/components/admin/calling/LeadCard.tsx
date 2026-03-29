@@ -2,8 +2,9 @@
 
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import InlineCallingForm from "./InlineCallingForm";
+import { supabase } from "@/lib/supabaseClient";
 
 type FollowUp = {
   date: string;
@@ -49,6 +50,25 @@ export default function LeadCard({
   const isExpanded = expandedId === lead.id;
   const [openFU, setOpenFU] = useState<number | null>(null);
 
+  const [totalPaid, setTotalPaid] = useState(0);
+
+  // ✅ TOTAL PAID FETCH
+  useEffect(() => {
+    const fetchPayments = async () => {
+      const { data } = await supabase
+        .from("receipts")
+        .select("amount, student_name")
+        .eq("student_name", lead.name);
+
+      if (data) {
+        const total = data.reduce((s, r) => s + (r.amount || 0), 0);
+        setTotalPaid(total);
+      }
+    };
+
+    fetchPayments();
+  }, [lead.name]);
+
   const resultColor = (type: string) => {
     if (type === "Received by Student" || type === "Received by Parent")
       return "text-green-600";
@@ -79,7 +99,6 @@ export default function LeadCard({
               className="font-medium text-blue-600 underline cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                console.log("Lead ID from Name Click:", lead.id);
                 if (!lead?.id) return;
                 router.push(`/admin/lead/${lead.id}`);
               }}
@@ -98,30 +117,30 @@ export default function LeadCard({
 
           {/* ROW 2 */}
           <div className="text-gray-700 text-sm">
-            Course - {lead.course ? lead.course : "N/A"}
+            {lead.course ? (
+              <span>{lead.course}</span>
+            ) : (
+              <span className="text-gray-400">Course N/A</span>
+            )}
           </div>
 
           {/* ROW 3 */}
           <div className="flex gap-2 flex-wrap text-xs">
 
-            {lead.lead_stage === "Lead" ? (
+            {lead.lead_stage ? (
               <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                Lead Stage - {lead.lead_stage}
+                {lead.lead_stage}
               </span>
             ) : (
-              <span className="text-gray-700">
-                Lead Stage {lead.lead_stage ? lead.lead_stage : "N/A"}
-              </span>
+              <span className="text-gray-400">Stage N/A</span>
             )}
 
-            {lead.lead_chances === "High" ? (
-              <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                Lead Chances - {lead.lead_chances}
+            {lead.lead_chances ? (
+              <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                {lead.lead_chances}
               </span>
             ) : (
-              <span className="text-gray-700">
-                Lead Chances {lead.lead_chances ? lead.lead_chances : "N/A"}
-              </span>
+              <span className="text-gray-400">Chances N/A</span>
             )}
 
           </div>
@@ -133,11 +152,14 @@ export default function LeadCard({
         </div>
       </div>
 
-      {/* ROW 4 */}
-      <div className="mt-1 text-sm text-gray-700">
-        <div className="text-gray-600">
-          {lead.batch_name ? lead.batch_name : "No Batch"}
-        </div>
+      {/* ✅ NEW ROW → TOTAL PAID */}
+      <div className="mt-1 text-sm text-green-700 font-medium">
+        Total Paid : {totalPaid}.00
+      </div>
+
+      {/* ROW 4 → BATCH */}
+      <div className="mt-1 text-sm text-gray-600">
+        {lead.batch_name ? lead.batch_name : "No Batch"}
       </div>
 
       {/* ROW 5 */}
@@ -150,11 +172,9 @@ export default function LeadCard({
           WhatsApp
         </a>
 
-        {/* ✅ FIXED BUTTON */}
         <span
-          className="underline cursor-pointer"
+          className="cursor-pointer"
           onClick={() => {
-            console.log("Lead ID from Call Feedback:", lead.id);
             if (!lead?.id) return;
             router.push(`/admin/calling/${lead.id}`);
           }}
