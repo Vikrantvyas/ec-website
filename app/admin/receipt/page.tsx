@@ -267,15 +267,25 @@ return(
 ⬅ Back
 </button>
 
-<BranchSelector
-branches={branches.map((b:any)=>b.name)}
-value={branchName}
-onChange={(name)=>{
-setBranchName(name);
-const selected = branches.find((b:any)=>b.name===name);
-if(selected) setBranch(selected.id);
-}}
-/>
+<div className="flex gap-2 overflow-x-auto pb-2">
+  {branches.map((b:any)=>(
+    <button
+      key={b.id}
+      onClick={()=>{
+        setBranch(b.id);
+        setBranchName(b.name);
+      }}
+      className={`px-3 py-1 rounded text-xs md:text-sm whitespace-nowrap shadow-sm transition
+        ${
+          branch === b.id
+            ? "bg-blue-600 text-white"
+            : "bg-white"
+        }`}
+    >
+      {b.name}
+    </button>
+  ))}
+</div>
 
 <div className="flex gap-3">
 
