@@ -1,211 +1,229 @@
 "use client";
 
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { Phone, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import LeadDetails from "./LeadDetails";
+import LeadFees from "@/app/components/admin/lead/LeadFees";
+import LeadAttendance from "@/app/components/admin/lead/LeadAttendance";
 import { supabase } from "@/lib/supabaseClient";
 
 type FollowUp = {
   date: string;
   note: string;
   type: string;
-  mood?: string;
 };
 
 type Lead = {
   id: string;
   name: string;
   mobile: string;
+  alternate_number?: string;
+  email?: string;
+  area?: string;
+  city?: string;
+  address?: string;
+  permanent_address?: string;
+
   course: string;
   enquiryDate: string;
   followUps: FollowUp[];
   lead_stage?: string;
   lead_chances?: string;
   batch_name?: string;
-
-  area?: string;
-  city?: string;
   gender?: string;
   age?: number;
-  profession?: string;
-  education?: string;
-  alternate_number?: string;
-  contact_time?: string;
-  enquiry_date?: string;
-  enquiry_time?: string;
-  method?: string;
-  channel?: string;
-  enquired_by?: string;
-  for_whom?: string;
-  department?: string;
-  preferred_timing?: string;
-  preferred_batch?: string;
-  next_follow_date?: string;
-  next_follow_time?: string;
-  counsellor?: string;
-  remark?: string;
 };
 
 type Props = {
   lead: Lead;
-  expandedId: string | null;
-  setExpandedId: (id: string | null) => void;
 };
 
-export default function LeadCard({
-  lead,
-  expandedId,
-  setExpandedId,
-}: Props) {
+export default function LeadCard({ lead }: Props) {
   const router = useRouter();
-  const isExpanded = expandedId === lead.id;
+
   const [totalPaid, setTotalPaid] = useState(0);
+  const [receipts, setReceipts] = useState<any[]>([]);
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState("overview");
 
-  // ✅ TOTAL PAID FETCH
   useEffect(() => {
-    const fetchPayments = async () => {
-      const { data } = await supabase
-        .from("receipts")
-        .select("amount, student_name")
-        .eq("student_name", lead.name);
+    fetchData();
+  }, [lead.id]);
 
-      if (data) {
-        const total = data.reduce((s, r) => s + (r.amount || 0), 0);
-        setTotalPaid(total);
-      }
-    };
+  async function fetchData() {
+    const { data: receiptData } = await supabase
+      .from("receipts")
+      .select("*")
+      .eq("student_name", lead.name);
 
-    fetchPayments();
-  }, [lead.name]);
+    if (receiptData) {
+      setReceipts(receiptData);
+      const total = receiptData.reduce((s, r) => s + (r.amount || 0), 0);
+      setTotalPaid(total);
+    }
 
-  const resultColor = (type: string) => {
-    if (type === "Received by Student" || type === "Received by Parent")
-      return "text-green-600";
+    const { data: attendanceData } = await supabase
+      .from("attendance")
+      .select("status, attendance_date, batch_id")
+      .eq("lead_id", lead.id);
 
-    if (
-      type === "Phone Busy" ||
-      type === "Not Received" ||
-      type === "Not Reachable" ||
-      type === "Switched Off" ||
-      type === "Voice Issue"
-    )
-      return "text-blue-600";
+    if (attendanceData) {
+      const batchIds = attendanceData.map((a) => a.batch_id);
 
-    return "text-red-600";
-  };
+      const { data: batches } = await supabase
+        .from("batches")
+        .select("id, batch_name")
+        .in("id", batchIds);
+
+      const batchMap: any = {};
+      batches?.forEach((b) => {
+        batchMap[b.id] = b.batch_name;
+      });
+
+      const formatted = attendanceData.map((a) => ({
+        batch_name: batchMap[a.batch_id] || "",
+        date: a.attendance_date,
+        status: a.status,
+      }));
+
+      setAttendance(formatted);
+    }
+  }
+
+  const genderShort =
+    lead.gender?.toLowerCase() === "male"
+      ? "M"
+      : lead.gender?.toLowerCase() === "female"
+      ? "F"
+      : "-";
 
   return (
-    <div
-      className="bg-white rounded shadow-sm p-3 text-sm cursor-pointer w-full hover:bg-gray-50 transition"
-      onClick={() => setExpandedId(isExpanded ? null : lead.id)}
-    >
+    <div className="bg-white rounded shadow-sm p-3 text-sm w-full space-y-2">
+
       {/* HEADER */}
-      <div className="flex justify-between items-start">
-        <div className="flex-1 space-y-1">
-
-          {/* NAME + DATE */}
-          <div className="flex items-center flex-wrap gap-1">
-            <span
-              className="font-medium text-blue-600 underline cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                router.push(`/admin/lead/${lead.id}`);
-              }}
-            >
-              {lead.name}
-            </span>
-
-            <span className="text-gray-700 text-sm">
-              {new Date(lead.enquiryDate).toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-              })}{" "}
-              ({lead.followUps.length})
-            </span>
-          </div>
-
-          {/* COURSE */}
-          <div className="text-gray-700 text-sm">
-            {lead.course || (
-              <span className="text-gray-400">Course N/A</span>
-            )}
-          </div>
-
-          {/* STAGE + CHANCES */}
-          <div className="flex gap-2 flex-wrap text-xs">
-            {lead.lead_stage && (
-              <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                {lead.lead_stage}
-              </span>
-            )}
-            {lead.lead_chances && (
-              <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                {lead.lead_chances}
-              </span>
-            )}
-          </div>
-
+      <div className="flex justify-between items-center">
+        <div className="font-medium text-blue-600">
+          {lead.name} {lead.age || "-"} {genderShort}
         </div>
 
-        {/* ARROW */}
-        <div className="ml-2">
-          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        <div className="flex gap-3 text-blue-600">
+          <a href={`tel:${lead.mobile}`}>
+            <Phone size={16} />
+          </a>
+
+          <a href={`https://wa.me/91${lead.mobile}`} target="_blank">
+            <MessageCircle size={16} />
+          </a>
+
+          <span
+            className="cursor-pointer text-xs"
+            onClick={() => router.push(`/admin/calling/${lead.id}`)}
+          >
+            CF
+          </span>
         </div>
       </div>
 
-      {/* TOTAL PAID */}
-      <div className="mt-1 text-sm text-green-700 font-medium">
-        Total Paid: {totalPaid}.00
+      {/* TABS */}
+      <div className="flex gap-3 text-xs overflow-x-auto">
+        {[
+          "overview",
+          "general",
+          "contacts",
+          "attendance",
+          "fees",
+          "callhistory",
+        ].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-2 py-1 rounded whitespace-nowrap ${
+              activeTab === tab
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100"
+            }`}
+          >
+            {tab === "callhistory" ? "CALL HISTORY" : tab.toUpperCase()}
+          </button>
+        ))}
       </div>
 
-      {/* BATCH */}
-      <div className="mt-1 text-sm text-gray-600">
-        {lead.batch_name || "No Batch"}
-      </div>
+      {/* TAB CONTENT */}
+      <div className="h-[120px] overflow-y-auto space-y-1">
 
-      {/* ACTIONS */}
-      <div
-        className="flex gap-5 mt-1.5 text-blue-600 text-sm"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <a href={`tel:${lead.mobile}`}>Call</a>
-        <a href={`https://wa.me/91${lead.mobile}`} target="_blank">
-          WhatsApp
-        </a>
+        {activeTab === "overview" && (
+          <>
+            <p>
+              {new Date(lead.enquiryDate).toLocaleDateString("en-GB")} (
+              {lead.followUps.length} Calls)
+            </p>
 
-        <span
-          className="cursor-pointer"
-          onClick={() => {
-            router.push(`/admin/calling/${lead.id}`);
-          }}
-        >
-          Call Feedback
-        </span>
-      </div>
+            <p>{lead.course || "Course N/A"}</p>
 
-      {/* EXPANDED CONTENT */}
-      {isExpanded && (
-        <div
-          className="mt-2 border-t pt-2 space-y-2 text-gray-700 text-sm"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* FOLLOWUPS */}
-          {lead.followUps.slice(0, 5).map((fu, i) => (
-            <div key={i}>
-              <p className="text-sm">
-                {new Date(fu.date).toLocaleDateString("en-GB")} -{" "}
-                <span className={resultColor(fu.type)}>
-                  {fu.type}
+            <div className="flex gap-2 text-xs">
+              {lead.lead_stage && (
+                <span className="bg-green-100 px-2 rounded">
+                  {lead.lead_stage}
                 </span>
-              </p>
+              )}
+              {lead.lead_chances && (
+                <span className="bg-blue-100 px-2 rounded">
+                  {lead.lead_chances}
+                </span>
+              )}
             </div>
-          ))}
 
-          {/* ✅ DIRECT DETAILS (NO EXTRA CLICK) */}
-          <LeadDetails lead={lead} />
-        </div>
-      )}
+            <p className="text-green-700">
+              Total Paid: {totalPaid}
+            </p>
+
+            <p>{lead.batch_name || "No Batch"}</p>
+          </>
+        )}
+
+        {activeTab === "general" && <LeadDetails lead={lead} />}
+
+        {activeTab === "contacts" && (
+          <div className="space-y-1">
+            <p>Mobile: {lead.mobile}</p>
+            <p>Alt No: {lead.alternate_number || "-"}</p>
+            <p>Email: {lead.email || "-"}</p>
+            <p>Area: {lead.area || "-"}</p>
+            <p>City: {lead.city || "-"}</p>
+            <p>Local Address: {lead.address || "-"}</p>
+            <p>Permanent Address: {lead.permanent_address || "-"}</p>
+          </div>
+        )}
+
+        {activeTab === "attendance" && (
+          <LeadAttendance attendance={attendance} />
+        )}
+
+        {activeTab === "fees" && (
+          <LeadFees receipts={receipts} />
+        )}
+
+        {/* ✅ FINAL WORKING CALL HISTORY */}
+        {activeTab === "callhistory" && (
+          <div className="space-y-1">
+            {lead.followUps && lead.followUps.length === 0 && (
+              <p className="text-gray-400">No history</p>
+            )}
+
+            {lead.followUps &&
+              lead.followUps.map((fu, i) => (
+                <div key={i} className="border-b pb-1">
+                  <p className="text-xs text-gray-500">
+                    {new Date(fu.date).toLocaleDateString("en-GB")}
+                  </p>
+                  <p className="font-medium">{fu.type}</p>
+                  <p className="text-gray-600">{fu.note}</p>
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
