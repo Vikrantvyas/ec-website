@@ -244,11 +244,22 @@ export default function StudentsPage() {
 
       <div className="p-3 space-y-2 students-page">
 
-        <BranchSelector
-          branches={branches}
-          value={selectedBranch}
-          onChange={setSelectedBranch}
-        />
+        <div className="flex gap-2 overflow-x-auto pb-2">
+  {branches.map((b:any)=>(
+    <button
+      key={b.id}
+      onClick={()=>setSelectedBranch(b.name)}
+      className={`px-3 py-1 rounded text-xs md:text-sm whitespace-nowrap shadow-sm transition
+        ${
+          selectedBranch === b.name
+            ? "bg-blue-600 text-white"
+            : "bg-white"
+        }`}
+    >
+      {b.name}
+    </button>
+  ))}
+</div>
 
         <div className="flex items-center justify-between">
           <h1 className="text-base font-semibold">
