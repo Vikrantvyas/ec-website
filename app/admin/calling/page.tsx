@@ -324,11 +324,9 @@ batchStudents?.forEach((bs: any) => {
         {/* LIST */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3 pb-24">
           {filteredLeads.map((lead) => (
-           <LeadCard
+          <LeadCard
   key={lead.id}
   lead={lead}
-  expandedId={expandedId}
-  setExpandedId={setExpandedId}
 />
           ))}
         </div>
