@@ -304,16 +304,22 @@ return(
 Batch Master
 </p>
 
-<BranchSelector
-branches={branches.map(b=>b.name)}
-value={branches.find(b=>b.id===branch)?.name || ""}
-onChange={(name)=>{
-
-const selected = branches.find(b=>b.name===name);
-if(selected) setBranch(selected.id);
-
-}}
-/>
+<div className="flex gap-2 overflow-x-auto pb-2">
+  {branches.map((b:any)=>(
+    <button
+      key={b.id}
+      onClick={()=>setBranch(b.id)}
+      className={`px-3 py-1 rounded text-xs md:text-sm whitespace-nowrap shadow-sm transition
+        ${
+          branch === b.id
+            ? "bg-blue-600 text-white"
+            : "bg-white"
+        }`}
+    >
+      {b.name}
+    </button>
+  ))}
+</div>
 
 <form
 onSubmit={handleSubmit}
