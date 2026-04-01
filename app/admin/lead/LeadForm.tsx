@@ -46,6 +46,10 @@ export default function LeadForm() {
   const [groupOpen, setGroupOpen] = useState(false);
   const [groupMembers, setGroupMembers] = useState<any[]>([]);
 
+  // ✅ NEW: CITY MODAL STATE
+  const [cityModalOpen, setCityModalOpen] = useState(false);
+  const [newCity, setNewCity] = useState("");
+
   const isPrimaryValid =
     formData.studentName?.trim() &&
     /^\d{10}$/.test(formData.mobileNumber);
@@ -59,10 +63,9 @@ export default function LeadForm() {
       return;
     }
 
+    // ✅ AUTO NAME
     if (!formData.studentName.trim()) {
-      alert("Student Name required");
-      studentRef.current?.focus();
-      return;
+      formData.studentName = `${formData.channel || "Lead"} ${formData.mobileNumber}`;
     }
 
     if (!/^\d{10}$/.test(formData.mobileNumber)) {
@@ -107,14 +110,27 @@ export default function LeadForm() {
 
       }
 
+      // ✅ CITY DUPLICATE SAFE INSERT
       if (formData.city?.trim()) {
 
-        const { error } = await supabase
-          .from("cities")
-          .insert([{ name: formData.city.trim() }]);
+        const cityName = formData.city.trim();
 
-        if (error && !error.message.includes("duplicate")) {
-          console.error(error);
+        const { data: existing } = await supabase
+          .from("cities")
+          .select("id")
+          .ilike("name", cityName)
+          .limit(1);
+
+        if (!existing || existing.length === 0) {
+
+          const { error } = await supabase
+            .from("cities")
+            .insert([{ name: cityName }]);
+
+          if (error) {
+            console.error(error);
+          }
+
         }
 
       }
@@ -142,7 +158,6 @@ export default function LeadForm() {
     <form onSubmit={handleSubmit} className="space-y-8 text-sm">
 
       {/* BRANCH */}
-
       <BranchSelector
         branches={branches}
         value={formData.branch}
@@ -153,32 +168,34 @@ export default function LeadForm() {
 
         <>
 
-          <LeadMainBlocks
+         <LeadMainBlocks
 
-            formData={formData}
-            setFormData={setFormData}
-            handleChange={handleChange}
+  formData={formData}
+  setFormData={setFormData}
+  handleChange={handleChange}
 
-            mapOptions={mapOptions}
+  mapOptions={mapOptions}
 
-            studentRef={studentRef}
-            mobileRef={mobileRef}
+  studentRef={studentRef}
+  mobileRef={mobileRef}
 
-            cities={cities}
+  cities={cities}
 
-            methods={methods}
-            channels={channels}
-            areas={areas}
-            leadFor={leadFor}
-            departments={departments}
-            courses={courses}
-            leadChances={leadChances}
-            leadStages={leadStages}
-            actions={actions}
-            counsellors={counsellors}
-            educations={educations}
+  methods={methods}
+  channels={channels}
+  areas={areas}
+  leadFor={leadFor}
+  departments={departments}
+  courses={courses}
+  leadChances={leadChances}
+  leadStages={leadStages}
+  actions={actions}
+  counsellors={counsellors}
+  educations={educations}
 
-          />
+  openCityModal={() => setCityModalOpen(true)}  // ✅ NEW LINE
+
+/>
 
           <div className="flex justify-between items-center pt-4">
 
@@ -210,11 +227,66 @@ export default function LeadForm() {
 
       )}
 
+      {/* GROUP MODAL */}
       <GroupEntryModal
         isOpen={groupOpen}
         onClose={()=>setGroupOpen(false)}
         onSave={(members)=>setGroupMembers(members)}
       />
+
+      {/* ✅ CITY MODAL */}
+      {cityModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded shadow w-80 space-y-3">
+
+            <h3 className="font-semibold">Add New City</h3>
+
+            <input
+              value={newCity}
+              onChange={(e) => setNewCity(e.target.value)}
+              placeholder="Enter city name"
+              className="w-full border px-2 py-1 rounded"
+            />
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setCityModalOpen(false)}
+                className="px-3 py-1 bg-gray-300 rounded"
+              >
+                Cancel
+              </button>
+
+                              <button
+  type="button"   // ✅ THIS IS THE FIX
+  onClick={async () => {
+
+                  if (!newCity.trim()) return;
+
+                  await supabase
+  .from("cities")
+  .insert([{ name: newCity.trim() }]);
+
+await fetchCities();
+
+// 👉 auto select new city
+setFormData((prev:any) => ({
+  ...prev,
+  city: newCity.trim()
+}));
+
+setCityModalOpen(false);
+setNewCity("");
+
+                }}
+                className="px-3 py-1 bg-blue-600 text-white rounded"
+              >
+                Save
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </form>
 

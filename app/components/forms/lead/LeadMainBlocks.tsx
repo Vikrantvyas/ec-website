@@ -24,6 +24,9 @@ interface Props {
   actions: string[];
   counsellors: string[];
   educations: string[];
+
+  // ✅ NEW PROP
+  openCityModal: () => void;
 }
 
 export default function LeadMainBlocks({
@@ -45,7 +48,9 @@ export default function LeadMainBlocks({
   leadStages = [],
   actions = [],
   counsellors = [],
-  educations = []
+  educations = [],
+
+  openCityModal
 }: Props) {
 
   const departmentValue = Array.isArray(formData.department) ? formData.department : [];
@@ -58,26 +63,15 @@ export default function LeadMainBlocks({
   const educationOptions = mapOptions(educations);
 
   const schoolTimingOptions = mapOptions([
-    "Morning",
-    "Noon",
-    "Evening",
-    "Shift Job"
+    "Morning","Noon","Evening","Shift Job"
   ]);
 
   const contactTimeOptions = mapOptions([
-    "Any Time",
-    "8 to 10 AM",
-    "10 to 2",
-    "2 to 5",
-    "5 to 9"
+    "Any Time","8 to 10 AM","10 to 2","2 to 5","5 to 9"
   ]);
 
   const preferredTimeOptions = mapOptions([
-    "Any Time",
-    "Morning",
-    "Afternoon",
-    "Evening",
-    "Night"
+    "Any Time","Morning","Afternoon","Evening","Night"
   ]);
 
   const preferredBatchOptions = mapOptions([
@@ -86,14 +80,12 @@ export default function LeadMainBlocks({
     "1 PM","2 PM","3 PM","4 PM","5 PM","6 PM","7 PM","8 PM"
   ]);
 
-  // 👉 FORMAT: yyyy-mm-dd → dd-mm-yyyy
   const formatDate = (val:string) => {
     if(!val) return "";
     const [y,m,d] = val.split("-");
     return `${d}-${m}-${y}`;
   };
 
-  // 👉 REVERSE: dd-mm-yyyy → yyyy-mm-dd (store)
   const parseDate = (val:string) => {
     const parts = val.split("-");
     if(parts.length !== 3) return val;
@@ -189,12 +181,26 @@ export default function LeadMainBlocks({
           onChange={handleChange}
         />
 
-        <SelectField
-          label="City"
-          value={formData.city}
-          options={mapOptions(cities)}
-          onChange={(val:string)=>setFormData({ ...formData, city: val })}
-        />
+        {/* ✅ ONLY CHANGE HERE */}
+        <div>
+  <div className="flex justify-between items-center mb-1">
+    <label className="text-xs font-medium">City</label>
+
+    <span
+      className="text-blue-600 text-xs cursor-pointer"
+      onClick={openCityModal}
+    >
+      + Add
+    </span>
+  </div>
+
+  <SelectField
+    label=""
+    value={formData.city}
+    options={mapOptions(cities)}
+    onChange={(val:string)=>setFormData({ ...formData, city: val })}
+  />
+</div>
 
         <SelectField
           label="Area"

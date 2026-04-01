@@ -89,16 +89,22 @@ export default function BatchesPage() {
 
         <div className="flex items-center justify-between">
 
-          <BranchSelector
-            branches={branches.map((b) => b.name)}
-            value={branches.find((b) => b.id === branchId)?.name || ""}
-            onChange={(name) => {
-              const branch = branches.find((b) => b.name === name);
-              if (branch) {
-                setBranchId(branch.id);
-              }
-            }}
-          />
+          <div className="flex gap-2 overflow-x-auto">
+  {branches.map((b:any)=>(
+    <button
+      key={b.id}
+      onClick={()=>setBranchId(b.id)}
+      className={`px-3 py-1 rounded text-xs md:text-sm whitespace-nowrap shadow-sm transition
+        ${
+          branchId === b.id
+            ? "bg-blue-600 text-white"
+            : "bg-white"
+        }`}
+    >
+      {b.name}
+    </button>
+  ))}
+</div>
 
           <button
             onClick={() => router.push("/admin/masters?tab=batches")}
