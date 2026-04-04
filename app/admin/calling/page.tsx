@@ -88,29 +88,35 @@ export default function CallingPage() {
     const { data } = await supabase
       .from("leads")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("enquiry_date", { ascending: false })
+.order("created_at", { ascending: false });
 
     if (!data) return;
 
     const leadIds = data.map((l: any) => l.id);
 
     // FOLLOWUPS
-    const { data: followups } = await supabase
-      .from("lead_followups")
-      .select("*")
-      .in("lead_id", leadIds)
-      .order("created_at", { ascending: false });
+    // FOLLOWUPS (FINAL FIX)
+const { data: followups } = await supabase
+  .from("lead_followups")
+  .select("*")
+  .in("lead_id", leadIds);
 
-    const followupMap: any = {};
-    followups?.forEach((f: any) => {
-      if (!followupMap[f.lead_id]) followupMap[f.lead_id] = [];
-      followupMap[f.lead_id].push({
-        date: f.created_at,
-        type: f.result,
-        mood: f.mood,
-        note: f.remark,
-      });
+const followupMap: any = {};
+
+if (followups && followups.length > 0) {
+  followups.forEach((f: any) => {
+    if (!followupMap[f.lead_id]) {
+      followupMap[f.lead_id] = [];
+    }
+
+    followupMap[f.lead_id].push({
+      date: f.call_date || f.created_at,
+      type: f.result || "",
+      note: f.remark || "",
     });
+  });
+}
 
     // BATCH MAP
     const { data: batchStudents } = await supabase
@@ -159,7 +165,7 @@ batchStudents?.forEach((bs: any) => {
     course: l.course || "",
     branch: branchMap[l.branch_id] || "",
     branch_id: l.branch_id,
-    enquiryDate: l.created_at,
+    enquiryDate: l.enquiry_date || l.created_at,
     followUps: followupMap[l.id] || [],
     lead_stage: (l.lead_stage || "").trim(),
     lead_chances: (l.lead_chances || "").trim(),

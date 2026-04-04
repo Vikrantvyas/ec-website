@@ -226,9 +226,19 @@ export default function CallingFeedbackPage() {
 
     setSaving(false);
 
-    alert("Saved Successfully ✅");
+alert("Saved Successfully ✅");
 
-    router.back();
+// ✅ reload history immediately
+await fetchHistory();
+
+// ✅ optional form reset
+setPurpose("");
+setResult("");
+setMood("");
+setRemark("");
+setNextAction("");
+setNextCallDate("");
+setCallingPerson("");
   };
 
   return (
