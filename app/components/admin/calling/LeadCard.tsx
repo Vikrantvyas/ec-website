@@ -1,6 +1,6 @@
 "use client";
 
-import { Phone, MessageCircle } from "lucide-react";
+import { Phone, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import LeadDetails from "./LeadDetails";
@@ -79,25 +79,7 @@ export default function LeadCard({ lead }: Props) {
       .eq("lead_id", lead.id);
 
     if (attendanceData) {
-      const batchIds = attendanceData.map((a) => a.batch_id);
-
-      const { data: batches } = await supabase
-        .from("batches")
-        .select("id, batch_name")
-        .in("id", batchIds);
-
-      const batchMap: any = {};
-      batches?.forEach((b) => {
-        batchMap[b.id] = b.batch_name;
-      });
-
-      const formatted = attendanceData.map((a) => ({
-        batch_name: batchMap[a.batch_id] || "",
-        date: a.attendance_date,
-        status: a.status,
-      }));
-
-      setAttendance(formatted);
+      setAttendance(attendanceData);
     }
   }
 
@@ -108,50 +90,46 @@ export default function LeadCard({ lead }: Props) {
       ? "F"
       : "-";
 
+  const handleDelete = async () => {
+    if (!confirm("Delete this lead?")) return;
+    await supabase.from("leads").delete().eq("id", lead.id);
+    router.refresh();
+  };
+
   return (
     <div className="bg-white rounded shadow-sm p-3 text-sm w-full space-y-2">
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
-        <div className="font-medium text-blue-600">
+
+        {/* ✅ NAME BLACK + BIG */}
+        <div className="font-semibold text-black text-base">
           {lead.name} {lead.age || "-"} {genderShort}
         </div>
 
-        <div className="flex gap-3 text-blue-600">
-          <a href={`tel:${lead.mobile}`}>
-            <Phone size={16} />
-          </a>
-
-          <a href={`https://wa.me/91${lead.mobile}`} target="_blank">
-            <MessageCircle size={16} />
-          </a>
-
-          <span
-            className="cursor-pointer text-xs"
-            onClick={() => router.push(`/admin/calling/${lead.id}`)}
-          >
-            CF
-          </span>
+        {/* ✅ EDIT + DELETE */}
+        <div className="flex gap-3 items-center">
+          <Pencil
+            size={16}
+            className="cursor-pointer text-blue-600"
+            onClick={() => router.push(`/admin/leads/${lead.id}`)}
+          />
+          <Trash2
+            size={16}
+            className="cursor-pointer text-red-500"
+            onClick={handleDelete}
+          />
         </div>
       </div>
 
       {/* TABS */}
       <div className="flex gap-3 text-xs overflow-x-auto">
-        {[
-          "overview",
-          "general",
-          "contacts",
-          "attendance",
-          "fees",
-          "callhistory",
-        ].map((tab) => (
+        {["overview", "general", "contacts", "attendance", "fees", "callhistory"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-2 py-1 rounded whitespace-nowrap ${
-              activeTab === tab
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100"
+              activeTab === tab ? "bg-blue-600 text-white" : "bg-gray-100"
             }`}
           >
             {tab === "callhistory" ? "CALL HISTORY" : tab.toUpperCase()}
@@ -159,50 +137,25 @@ export default function LeadCard({ lead }: Props) {
         ))}
       </div>
 
-      {/* TAB CONTENT */}
+      {/* CONTENT */}
       <div className="h-[240px] overflow-y-auto space-y-1">
 
-        {/* OVERVIEW */}
         {activeTab === "overview" && (
           <>
-            <p>
-              {new Date(lead.enquiryDate).toLocaleDateString("en-GB")}
-            </p>
+            <p>{new Date(lead.enquiryDate).toLocaleDateString("en-GB")}</p>
 
             <p>{lead.course || "Course N/A"}</p>
 
-            <div className="flex gap-2 text-xs">
-              {lead.lead_stage && (
-                <span className="bg-green-100 px-2 rounded">
-                  {lead.lead_stage}
-                </span>
-              )}
-              {lead.lead_chances && (
-                <span className="bg-blue-100 px-2 rounded">
-                  {lead.lead_chances}
-                </span>
-              )}
-            </div>
+            <p className="text-green-700">Total Paid: {totalPaid}</p>
 
-            <p className="text-green-700">
-              Total Paid: {totalPaid}
-            </p>
-
-            <p>{lead.batch_name || "No Batch"}</p>
-
-            {/* ✅ DIRECT DB CALL */}
             <div className="border-t pt-1 mt-1">
               {latestCall ? (
                 <>
                   <p className="text-xs text-gray-500">
                     {new Date(latestCall.call_date || latestCall.created_at).toLocaleDateString("en-GB")}
                   </p>
-                  <p className="font-medium text-xs">
-                    {latestCall.result}
-                  </p>
-                  <p className="text-gray-600 text-xs">
-                    {latestCall.remark}
-                  </p>
+                  <p className="font-medium text-xs">{latestCall.result}</p>
+                  <p className="text-gray-600 text-xs">{latestCall.remark}</p>
                 </>
               ) : (
                 <p className="text-gray-400 text-xs">No recent call</p>
@@ -231,7 +184,6 @@ export default function LeadCard({ lead }: Props) {
           <LeadFees receipts={receipts} />
         )}
 
-        {/* CALL HISTORY */}
         {activeTab === "callhistory" && (
           <div className="space-y-1">
             {callHistory.length === 0 && (
@@ -249,6 +201,33 @@ export default function LeadCard({ lead }: Props) {
             ))}
           </div>
         )}
+      </div>
+
+      {/* ✅ BOTTOM ACTION BUTTONS */}
+      <div className="flex gap-2 pt-2 border-t">
+
+        <a
+          href={`tel:${lead.mobile}`}
+          className="flex-1 text-center bg-blue-600 text-white py-2 rounded text-sm"
+        >
+          📞 Call
+        </a>
+
+        <a
+          href={`https://wa.me/91${lead.mobile}`}
+          target="_blank"
+          className="flex-1 text-center bg-green-600 text-white py-2 rounded text-sm"
+        >
+          💬 WhatsApp
+        </a>
+
+        <button
+          onClick={() => router.push(`/admin/calling/${lead.id}`)}
+          className="flex-1 text-center bg-black text-white py-2 rounded text-sm"
+        >
+          📝 Feedback
+        </button>
+
       </div>
     </div>
   );
