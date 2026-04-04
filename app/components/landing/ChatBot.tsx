@@ -2,22 +2,24 @@
 
 import { useState } from "react";
 
-export default function ChatBot() {
+type Props = {
+  leadId: string | null;
+};
+
+export default function ChatBot({ leadId }: Props) {
   const [step, setStep] = useState(1);
   const [mobile, setMobile] = useState("");
-  const [show, setShow] = useState(true); // 👈 NEW
+  const [show, setShow] = useState(true);
 
-  if (!show) return null; // 👈 popup hide
+  if (!show) return null;
 
   return (
     <>
-      {/* BACKDROP */}
       <div className="fixed inset-0 bg-black/40 z-40 flex items-center justify-center">
 
-        {/* POPUP BOX */}
         <div className="bg-white w-[90%] max-w-sm rounded-lg shadow-lg p-4 space-y-4">
 
-          {/* STEP 1: MOBILE */}
+          {/* STEP 1 */}
           {step === 1 && (
             <>
               <h2 className="text-lg font-semibold text-center">
@@ -44,22 +46,18 @@ export default function ChatBot() {
             </>
           )}
 
-          {/* STEP 2: GENDER */}
+          {/* STEP 2 */}
           {step === 2 && (
             <>
               <h2 className="text-lg font-semibold text-center">
                 Select Your Gender
               </h2>
 
-              <div className="flex gap-3 justify-center">
+              <div className="flex gap-3">
                 <button
                   onClick={() => setStep(3)}
                   className="flex flex-col items-center border p-3 rounded w-full"
                 >
-                  <img
-                    src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png"
-                    className="w-12 h-12"
-                  />
                   <span>Male</span>
                 </button>
 
@@ -67,28 +65,19 @@ export default function ChatBot() {
                   onClick={() => setStep(3)}
                   className="flex flex-col items-center border p-3 rounded w-full"
                 >
-                  <img
-                    src="https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
-                    className="w-12 h-12"
-                  />
                   <span>Female</span>
                 </button>
               </div>
             </>
           )}
 
-          {/* STEP 3: DONE */}
+          {/* STEP 3 */}
           {step === 3 && (
             <>
               <h2 className="text-lg font-semibold text-center">
                 🎉 Done!
               </h2>
 
-              <p className="text-sm text-center text-gray-600">
-                Please scroll and explore details below
-              </p>
-
-              {/* 👇 CLOSE BUTTON */}
               <button
                 onClick={() => setShow(false)}
                 className="w-full bg-green-600 text-white py-2 rounded"
