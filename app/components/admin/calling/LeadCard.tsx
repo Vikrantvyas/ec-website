@@ -8,12 +8,6 @@ import LeadFees from "@/app/components/admin/lead/LeadFees";
 import LeadAttendance from "@/app/components/admin/lead/LeadAttendance";
 import { supabase } from "@/lib/supabaseClient";
 
-type FollowUp = {
-  date: string;
-  note: string;
-  type: string;
-};
-
 type Lead = {
   id: string;
   name: string;
@@ -27,7 +21,6 @@ type Lead = {
 
   course: string;
   enquiryDate: string;
-  followUps: FollowUp[];
   lead_stage?: string;
   lead_chances?: string;
   batch_name?: string;
@@ -47,9 +40,26 @@ export default function LeadCard({ lead }: Props) {
   const [attendance, setAttendance] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
 
+  const [latestCall, setLatestCall] = useState<any>(null);
+  const [callHistory, setCallHistory] = useState<any[]>([]);
+
   useEffect(() => {
     fetchData();
+    fetchCalls();
   }, [lead.id]);
+
+  async function fetchCalls() {
+    const { data } = await supabase
+      .from("lead_followups")
+      .select("*")
+      .eq("lead_id", lead.id)
+      .order("created_at", { ascending: false });
+
+    if (data && data.length > 0) {
+      setLatestCall(data[0]);
+      setCallHistory(data);
+    }
+  }
 
   async function fetchData() {
     const { data: receiptData } = await supabase
@@ -150,13 +160,13 @@ export default function LeadCard({ lead }: Props) {
       </div>
 
       {/* TAB CONTENT */}
-      <div className="h-[120px] overflow-y-auto space-y-1">
+      <div className="h-[240px] overflow-y-auto space-y-1">
 
+        {/* OVERVIEW */}
         {activeTab === "overview" && (
           <>
             <p>
-              {new Date(lead.enquiryDate).toLocaleDateString("en-GB")} (
-              {lead.followUps.length} Calls)
+              {new Date(lead.enquiryDate).toLocaleDateString("en-GB")}
             </p>
 
             <p>{lead.course || "Course N/A"}</p>
@@ -179,6 +189,25 @@ export default function LeadCard({ lead }: Props) {
             </p>
 
             <p>{lead.batch_name || "No Batch"}</p>
+
+            {/* ✅ DIRECT DB CALL */}
+            <div className="border-t pt-1 mt-1">
+              {latestCall ? (
+                <>
+                  <p className="text-xs text-gray-500">
+                    {new Date(latestCall.call_date || latestCall.created_at).toLocaleDateString("en-GB")}
+                  </p>
+                  <p className="font-medium text-xs">
+                    {latestCall.result}
+                  </p>
+                  <p className="text-gray-600 text-xs">
+                    {latestCall.remark}
+                  </p>
+                </>
+              ) : (
+                <p className="text-gray-400 text-xs">No recent call</p>
+              )}
+            </div>
           </>
         )}
 
@@ -191,8 +220,6 @@ export default function LeadCard({ lead }: Props) {
             <p>Email: {lead.email || "-"}</p>
             <p>Area: {lead.area || "-"}</p>
             <p>City: {lead.city || "-"}</p>
-            <p>Local Address: {lead.address || "-"}</p>
-            <p>Permanent Address: {lead.permanent_address || "-"}</p>
           </div>
         )}
 
@@ -204,23 +231,22 @@ export default function LeadCard({ lead }: Props) {
           <LeadFees receipts={receipts} />
         )}
 
-        {/* ✅ FINAL WORKING CALL HISTORY */}
+        {/* CALL HISTORY */}
         {activeTab === "callhistory" && (
           <div className="space-y-1">
-            {lead.followUps && lead.followUps.length === 0 && (
+            {callHistory.length === 0 && (
               <p className="text-gray-400">No history</p>
             )}
 
-            {lead.followUps &&
-              lead.followUps.map((fu, i) => (
-                <div key={i} className="border-b pb-1">
-                  <p className="text-xs text-gray-500">
-                    {new Date(fu.date).toLocaleDateString("en-GB")}
-                  </p>
-                  <p className="font-medium">{fu.type}</p>
-                  <p className="text-gray-600">{fu.note}</p>
-                </div>
-              ))}
+            {callHistory.map((h, i) => (
+              <div key={i} className="border-b pb-1">
+                <p className="text-xs text-gray-500">
+                  {new Date(h.call_date || h.created_at).toLocaleDateString("en-GB")}
+                </p>
+                <p className="font-medium">{h.result}</p>
+                <p className="text-gray-600">{h.remark}</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
