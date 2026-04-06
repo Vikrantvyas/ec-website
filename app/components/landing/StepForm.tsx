@@ -9,7 +9,7 @@ type Props = {
 
 export default function StepForm({ leadId }: Props) {
 
-  const [open, setOpen] = useState(true); // ✅ popup control
+  const [open, setOpen] = useState(true);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -26,14 +26,15 @@ export default function StepForm({ leadId }: Props) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  const remaining = 5 - step;
+  // 🔥 अब 3 steps ही हैं
+  const remaining = 4 - step;
   const headingText =
-    remaining === 4
-      ? "बस 4 बातें, ताकि हम आपको सही जानकारी दे सके"
-      : remaining === 3
-      ? "बस 3 बातें और"
+    remaining === 3
+      ? "बस 3 बातें, ताकि हम आपको सही जानकारी दे सके"
       : remaining === 2
       ? "बस 2 बातें और"
+      : remaining === 1
+      ? "बस 1 बात और"
       : "ये आखिरी";
 
   async function createLead() {
@@ -70,7 +71,6 @@ export default function StepForm({ leadId }: Props) {
 
   async function updateLead(field: any) {
     if (!currentLeadId) return;
-
     await supabase.from("leads").update(field).eq("id", currentLeadId);
   }
 
@@ -79,6 +79,7 @@ export default function StepForm({ leadId }: Props) {
     if (loading) return;
     setLoading(true);
 
+    // STEP 1 - MOBILE
     if (step === 1) {
       if (!/^\d{10}$/.test(form.mobile_number)) {
         alert("Enter valid mobile");
@@ -102,33 +103,34 @@ export default function StepForm({ leadId }: Props) {
       return;
     }
 
+    // STEP 2 - NAME + GENDER
     if (step === 2) {
-      if (!form.student_name.trim()) {
-        alert("Enter name");
-        setLoading(false);
-        return;
-      }
 
-      await updateLead({ student_name: form.student_name });
-      setStep(3);
-      setLoading(false);
-      return;
-    }
-
-    if (step === 3) {
       if (!form.gender) {
         alert("Select gender");
         setLoading(false);
         return;
       }
 
-      await updateLead({ gender: form.gender });
-      setStep(4);
+      if (!form.student_name.trim()) {
+        alert("Enter name");
+        setLoading(false);
+        return;
+      }
+
+      await updateLead({
+        student_name: form.student_name,
+        gender: form.gender,
+      });
+
+      setStep(3);
       setLoading(false);
       return;
     }
 
-    if (step === 4) {
+    // STEP 3 - EDUCATION
+    if (step === 3) {
+
       if (!form.education) {
         alert("Select education");
         setLoading(false);
@@ -137,10 +139,8 @@ export default function StepForm({ leadId }: Props) {
 
       await updateLead({ education: form.education });
 
-      // ✅ DONE STATE
       setDone(true);
 
-      // ✅ auto close (NO reload)
       setTimeout(() => {
         setOpen(false);
       }, 1500);
@@ -149,7 +149,6 @@ export default function StepForm({ leadId }: Props) {
     }
   }
 
-  // ✅ popup close
   if (!open) return null;
 
   return (
@@ -180,77 +179,119 @@ export default function StepForm({ leadId }: Props) {
               </>
             )}
 
-            {/* STEP 2 */}
+            {/* STEP 2 - GENDER + NAME */}
             {step === 2 && (
               <>
-                <p>आपका नाम</p>
+                <p>पहले gender चुनें, फिर नाम लिखें</p>
+
+                <div className="flex gap-3">
+
+                  <div
+                    onClick={() => handleChange("gender", "Male")}
+                    className={`flex-1 p-2 border rounded cursor-pointer text-center ${
+                      form.gender === "Male" ? "bg-blue-100" : ""
+                    }`}
+                  >
+                    👨
+                  </div>
+
+                  <div
+                    onClick={() => handleChange("gender", "Female")}
+                    className={`flex-1 p-2 border rounded cursor-pointer text-center ${
+                      form.gender === "Female" ? "bg-pink-100" : ""
+                    }`}
+                  >
+                    👩
+                  </div>
+
+                </div>
+
                 <input
                   value={form.student_name}
+                  disabled={!form.gender}
                   onChange={(e) =>
                     handleChange("student_name", e.target.value)
                   }
-                  className="border px-3 py-2 rounded w-full"
+                  placeholder="आपका नाम"
+                  className={`border px-3 py-2 rounded w-full ${
+                    !form.gender ? "bg-gray-100" : ""
+                  }`}
                 />
               </>
             )}
 
             {/* STEP 3 */}
-            {step === 3 && (
-              <>
-                <p>आपका gender</p>
+            {/* STEP 3 - EDUCATION BUTTON GRID */}
+{step === 3 && (
+  <>
+    <p>आपकी education</p>
 
-                <div className="flex gap-4 justify-center">
+    <div className="space-y-2">
 
-                  <div
-                    onClick={() => handleChange("gender", "Male")}
-                    className={`p-4 border rounded-lg cursor-pointer ${
-                      form.gender === "Male" ? "bg-blue-100" : ""
-                    }`}
-                  >
-                    👨 Male
-                  </div>
+      {/* Row 1 */}
+      <div className="grid grid-cols-6 gap-2">
+        {["1st","2nd","3rd","4th","5th","6th"].map((item) => (
+          <div
+            key={item}
+            onClick={() => handleChange("education", item)}
+            className={`text-center py-2 border rounded cursor-pointer text-xs ${
+              form.education === item ? "bg-blue-100 border-blue-500" : ""
+            }`}
+          >
+            {item}
+          </div>
+        ))}
+      </div>
 
-                  <div
-                    onClick={() => handleChange("gender", "Female")}
-                    className={`p-4 border rounded-lg cursor-pointer ${
-                      form.gender === "Female" ? "bg-pink-100" : ""
-                    }`}
-                  >
-                    👩 Female
-                  </div>
+      {/* Row 2 */}
+      <div className="grid grid-cols-6 gap-2">
+        {["7th","8th","9th","10th","11th","12th"].map((item) => (
+          <div
+            key={item}
+            onClick={() => handleChange("education", item)}
+            className={`text-center py-2 border rounded cursor-pointer text-xs ${
+              form.education === item ? "bg-blue-100 border-blue-500" : ""
+            }`}
+          >
+            {item}
+          </div>
+        ))}
+      </div>
 
-                </div>
-              </>
-            )}
+      {/* Row 3 */}
+      <div className="grid grid-cols-4 gap-2">
+        {["1st Y.","2nd Y.","3rd Y.","Graduate"].map((item) => (
+          <div
+            key={item}
+            onClick={() => handleChange("education", item)}
+            className={`text-center py-2 border rounded cursor-pointer text-xs ${
+              form.education === item ? "bg-blue-100 border-blue-500" : ""
+            }`}
+          >
+            {item}
+          </div>
+        ))}
+      </div>
 
-            {/* STEP 4 */}
-            {step === 4 && (
-              <>
-                <p>आपकी education</p>
-                <select
-                  value={form.education}
-                  onChange={(e) =>
-                    handleChange("education", e.target.value)
-                  }
-                  className="border px-3 py-2 rounded w-full"
-                >
-                  <option value="">Select</option>
+      {/* Row 4 */}
+      <div className="grid grid-cols-2 gap-2">
+        {["PG","Other"].map((item) => (
+          <div
+            key={item}
+            onClick={() => handleChange("education", item)}
+            className={`text-center py-2 border rounded cursor-pointer text-xs ${
+              form.education === item ? "bg-blue-100 border-blue-500" : ""
+            }`}
+          >
+            {item}
+          </div>
+        ))}
+      </div>
 
-                  {[...Array(12)].map((_, i) => (
-                    <option key={i}>Class {i + 1}</option>
-                  ))}
+    </div>
+  </>
+)}
 
-                  <option>1st Year</option>
-                  <option>2nd Year</option>
-                  <option>3rd Year</option>
-                  <option>Graduate</option>
-                  <option>Post Graduate</option>
-                  <option>Other</option>
-                </select>
-              </>
-            )}
-
-            {/* BUTTON */}
             <button
               onClick={handleNext}
               disabled={loading}
