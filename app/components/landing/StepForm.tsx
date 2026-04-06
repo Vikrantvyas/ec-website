@@ -11,6 +11,7 @@ export default function StepForm({ leadId }: Props) {
 
   const [open, setOpen] = useState(true);
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     mobile_number: "",
@@ -38,7 +39,27 @@ export default function StepForm({ leadId }: Props) {
       ? "बस 2 बातें और"
       : "ये आखिरी";
 
+  async function updateLead(field: any) {
+    if (!leadId) return;
+
+    const { error } = await supabase
+      .from("leads")
+      .update(field)
+      .eq("id", leadId);
+
+    if (error) {
+      console.error("Update error:", error);
+      alert("Something went wrong, try again");
+      return false;
+    }
+
+    return true;
+  }
+
   async function handleNext() {
+
+    if (loading) return; // ✅ double click protection
+    setLoading(true);
 
     let field: any = {};
 
@@ -46,16 +67,20 @@ export default function StepForm({ leadId }: Props) {
     if (step === 1) {
       if (!/^\d{10}$/.test(form.mobile_number)) {
         alert("Enter valid 10 digit mobile");
+        setLoading(false);
         return;
       }
 
       field = { mobile_number: form.mobile_number };
 
-      if (leadId) {
-        await supabase.from("leads").update(field).eq("id", leadId);
+      const ok = await updateLead(field);
+      if (ok === false) {
+        setLoading(false);
+        return;
       }
 
       setStep(2);
+      setLoading(false);
       return;
     }
 
@@ -63,16 +88,20 @@ export default function StepForm({ leadId }: Props) {
     if (step === 2) {
       if (!form.student_name.trim()) {
         alert("Enter your name");
+        setLoading(false);
         return;
       }
 
       field = { student_name: form.student_name };
 
-      if (leadId) {
-        await supabase.from("leads").update(field).eq("id", leadId);
+      const ok = await updateLead(field);
+      if (ok === false) {
+        setLoading(false);
+        return;
       }
 
       setStep(3);
+      setLoading(false);
       return;
     }
 
@@ -80,16 +109,20 @@ export default function StepForm({ leadId }: Props) {
     if (step === 3) {
       if (!form.gender) {
         alert("Select gender");
+        setLoading(false);
         return;
       }
 
       field = { gender: form.gender };
 
-      if (leadId) {
-        await supabase.from("leads").update(field).eq("id", leadId);
+      const ok = await updateLead(field);
+      if (ok === false) {
+        setLoading(false);
+        return;
       }
 
       setStep(4);
+      setLoading(false);
       return;
     }
 
@@ -97,18 +130,22 @@ export default function StepForm({ leadId }: Props) {
     if (step === 4) {
       if (!form.education) {
         alert("Select education");
+        setLoading(false);
         return;
       }
 
       field = { education: form.education };
 
-      if (leadId) {
-        await supabase.from("leads").update(field).eq("id", leadId);
+      const ok = await updateLead(field);
+      if (ok === false) {
+        setLoading(false);
+        return;
       }
 
-      // ✅ Direct close (no thank you message)
-      setOpen(false);
+      setOpen(false); // ✅ close popup
     }
+
+    setLoading(false);
   }
 
   if (!open) return null;
@@ -126,7 +163,7 @@ export default function StepForm({ leadId }: Props) {
           ✕
         </button>
 
-        {/* ✅ UPDATED HEADING */}
+        {/* HEADING */}
         <h2 className="text-lg font-semibold text-center">
           {headingText}
         </h2>
@@ -195,18 +232,9 @@ export default function StepForm({ leadId }: Props) {
             >
               <option value="">Select</option>
 
-              <option>Class 1</option>
-              <option>Class 2</option>
-              <option>Class 3</option>
-              <option>Class 4</option>
-              <option>Class 5</option>
-              <option>Class 6</option>
-              <option>Class 7</option>
-              <option>Class 8</option>
-              <option>Class 9</option>
-              <option>Class 10</option>
-              <option>Class 11</option>
-              <option>Class 12</option>
+              {[...Array(12)].map((_, i) => (
+                <option key={i}>Class {i + 1}</option>
+              ))}
 
               <option>1st Year</option>
               <option>2nd Year</option>
@@ -222,9 +250,10 @@ export default function StepForm({ leadId }: Props) {
         {/* BUTTON */}
         <button
           onClick={handleNext}
-          className="w-full bg-blue-600 text-white py-2 rounded"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-2 rounded disabled:bg-gray-400"
         >
-          Next
+          {loading ? "Please wait..." : "Next"}
         </button>
 
       </div>
