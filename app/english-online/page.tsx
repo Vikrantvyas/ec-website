@@ -80,6 +80,11 @@ export default function EnglishOnlinePage() {
         </p>
       </div>
 
+      {/* POPUP / STEP FORM */}
+      <div className="bg-white p-3 rounded shadow-sm">
+        <StepForm leadId={leadId} defaultOpen={true} />
+      </div>
+
       {/* TEACHER SECTION */}
       <div className="bg-white p-4 rounded shadow text-center space-y-3">
 
@@ -96,22 +101,13 @@ export default function EnglishOnlinePage() {
         </p>
 
         <p className="text-sm text-gray-600">
-          15+ years experience in Spoken English training
+          10+ years experience in Spoken English training
         </p>
 
-        {/* VIDEO */}
-        <video
-          controls
-          className="w-full rounded-lg"
-        >
+        <video controls className="w-full rounded-lg">
           <source src="/videos/teacher-message.mp4" />
         </video>
 
-      </div>
-
-      {/* FORM ONLY */}
-      <div className="bg-white p-3 rounded shadow-sm">
-        <StepForm leadId={leadId} />
       </div>
 
       {/* FAQ */}
@@ -159,6 +155,13 @@ export default function EnglishOnlinePage() {
           <summary>क्या जॉब में मदद मिलेगी?</summary>
           <p className="text-gray-600">
             Yes, interview practice & speaking confidence build कराया जाता है
+          </p>
+        </details>
+
+        <details onClick={() => trackFAQ("Practice")}>
+          <summary>क्या प्रैक्टिस भी करवाई जाती है?</summary>
+          <p className="text-gray-600">
+            Daily speaking + listening + reading practice कराया जाता है
           </p>
         </details>
 
