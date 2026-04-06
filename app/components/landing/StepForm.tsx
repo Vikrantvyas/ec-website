@@ -30,7 +30,7 @@ export default function StepForm({ leadId }: Props) {
   const remaining = 4 - step;
   const headingText =
     remaining === 3
-      ? "बस 3 बातें, ताकि हम आपको सही जानकारी दे सके"
+      ? "सही बैच और फीस जानने के लिए थोड़ा सा अपने बारे में बता दीजिए"
       : remaining === 2
       ? "बस 2 बातें और"
       : remaining === 1
@@ -165,7 +165,7 @@ export default function StepForm({ leadId }: Props) {
             {/* STEP 1 */}
             {step === 1 && (
               <>
-                <p>मोबाइल नंबर दर्ज करें</p>
+                <p>मोबाइल नंबर </p>
                 <input
                   value={form.mobile_number}
                   onChange={(e) => {
@@ -182,7 +182,7 @@ export default function StepForm({ leadId }: Props) {
             {/* STEP 2 - GENDER + NAME */}
             {step === 2 && (
               <>
-                <p>पहले gender चुनें, फिर नाम लिखें</p>
+                <p>पहले Gender चुनें, फिर नाम लिखें</p>
 
                 <div className="flex gap-3">
 
@@ -212,7 +212,7 @@ export default function StepForm({ leadId }: Props) {
                   onChange={(e) =>
                     handleChange("student_name", e.target.value)
                   }
-                  placeholder="आपका नाम"
+                  placeholder="Student's Name"
                   className={`border px-3 py-2 rounded w-full ${
                     !form.gender ? "bg-gray-100" : ""
                   }`}
@@ -224,7 +224,7 @@ export default function StepForm({ leadId }: Props) {
             {/* STEP 3 - EDUCATION BUTTON GRID */}
 {step === 3 && (
   <>
-    <p>आपकी education</p>
+    <p>स्‍टूडेन्‍ट की शिक्षा </p>
 
     <div className="space-y-2">
 
