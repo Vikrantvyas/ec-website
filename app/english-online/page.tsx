@@ -82,7 +82,7 @@ export default function EnglishOnlinePage() {
 
       {/* POPUP / STEP FORM */}
       <div className="bg-white p-3 rounded shadow-sm">
-        <StepForm leadId={leadId} defaultOpen={true} />
+        <StepForm leadId={leadId} />
       </div>
 
       {/* TEACHER SECTION */}
