@@ -2,11 +2,17 @@
 
 import { Phone, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import LeadDetails from "./LeadDetails";
 import LeadFees from "@/app/components/admin/lead/LeadFees";
 import LeadAttendance from "@/app/components/admin/lead/LeadAttendance";
 import { supabase } from "@/lib/supabaseClient";
+
+type FollowUp = {
+  date: string;
+  note: string;
+  type: string;
+};
 
 type Lead = {
   id: string;
@@ -21,6 +27,7 @@ type Lead = {
 
   course: string;
   enquiryDate: string;
+  followUps?: FollowUp[]; // ✅ OLD SUPPORT
   lead_stage?: string;
   lead_chances?: string;
   batch_name?: string;
@@ -40,8 +47,22 @@ export default function LeadCard({ lead }: Props) {
   const [attendance, setAttendance] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("overview");
 
-  const [latestCall, setLatestCall] = useState<any>(null);
   const [callHistory, setCallHistory] = useState<any[]>([]);
+
+  // ✅ HYBRID SYSTEM
+  const sortedFollowUps = useMemo(() => {
+    if (lead.followUps && lead.followUps.length > 0) {
+      return [...lead.followUps].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+    }
+
+    return callHistory.map((f: any) => ({
+      date: f.call_date || f.created_at,
+      type: f.result,
+      note: f.remark,
+    }));
+  }, [lead.followUps, callHistory]);
 
   useEffect(() => {
     fetchData();
@@ -55,33 +76,58 @@ export default function LeadCard({ lead }: Props) {
       .eq("lead_id", lead.id)
       .order("created_at", { ascending: false });
 
-    if (data && data.length > 0) {
-      setLatestCall(data[0]);
+    if (data) {
       setCallHistory(data);
     }
   }
 
   async function fetchData() {
-    const { data: receiptData } = await supabase
+  // 👉 1. PARALLEL FETCH
+  const [receiptRes, attendanceRes] = await Promise.all([
+    supabase
       .from("receipts")
       .select("*")
-      .eq("student_name", lead.name);
+      .eq("student_name", lead.name),
 
-    if (receiptData) {
-      setReceipts(receiptData);
-      const total = receiptData.reduce((s, r) => s + (r.amount || 0), 0);
-      setTotalPaid(total);
-    }
-
-    const { data: attendanceData } = await supabase
+    supabase
       .from("attendance")
       .select("status, attendance_date, batch_id")
-      .eq("lead_id", lead.id);
+      .eq("lead_id", lead.id),
+  ]);
 
-    if (attendanceData) {
-      setAttendance(attendanceData);
-    }
+  const receiptData = receiptRes.data || [];
+  const attendanceData = attendanceRes.data || [];
+
+  // 👉 2. RECEIPTS SAFE
+  setReceipts(receiptData);
+  const total = receiptData.reduce((s, r) => s + (r.amount || 0), 0);
+  setTotalPaid(total);
+
+  // 👉 3. ATTENDANCE SAFE
+  if (attendanceData.length > 0) {
+    const batchIds = attendanceData.map((a) => a.batch_id);
+
+    const { data: batches } = await supabase
+      .from("batches")
+      .select("id, batch_name")
+      .in("id", batchIds);
+
+    const batchMap: any = {};
+    batches?.forEach((b) => {
+      batchMap[b.id] = b.batch_name;
+    });
+
+    const formatted = attendanceData.map((a) => ({
+      batch_name: batchMap[a.batch_id] || "",
+      date: a.attendance_date,
+      status: a.status,
+    }));
+
+    setAttendance(formatted);
+  } else {
+    setAttendance([]); // ✅ prevent stale data
   }
+}
 
   const genderShort =
     lead.gender?.toLowerCase() === "male"
@@ -101,13 +147,10 @@ export default function LeadCard({ lead }: Props) {
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
-
-        {/* ✅ NAME BLACK + BIG */}
         <div className="font-semibold text-black text-base">
           {lead.name} {lead.age || "-"} {genderShort}
         </div>
 
-        {/* ✅ EDIT + DELETE */}
         <div className="flex gap-3 items-center">
           <Pencil
             size={16}
@@ -142,20 +185,37 @@ export default function LeadCard({ lead }: Props) {
 
         {activeTab === "overview" && (
           <>
-            <p>{new Date(lead.enquiryDate).toLocaleDateString("en-GB")}</p>
+            <p>
+              {new Date(lead.enquiryDate).toLocaleDateString("en-GB")} (
+              {sortedFollowUps.length} Calls)
+            </p>
 
             <p>{lead.course || "Course N/A"}</p>
 
+            <div className="flex gap-2 text-xs">
+              {lead.lead_stage && (
+                <span className="bg-green-100 px-2 rounded">{lead.lead_stage}</span>
+              )}
+              {lead.lead_chances && (
+                <span className="bg-blue-100 px-2 rounded">{lead.lead_chances}</span>
+              )}
+            </div>
+
             <p className="text-green-700">Total Paid: {totalPaid}</p>
 
+            <p>{lead.batch_name || "No Batch"}</p>
+
+            {/* ✅ LATEST CALL */}
             <div className="border-t pt-1 mt-1">
-              {latestCall ? (
+              {sortedFollowUps.length > 0 ? (
                 <>
                   <p className="text-xs text-gray-500">
-                    {new Date(latestCall.call_date || latestCall.created_at).toLocaleDateString("en-GB")}
+                    {new Date(sortedFollowUps[0].date).toLocaleDateString("en-GB")}
                   </p>
-                  <p className="font-medium text-xs">{latestCall.result}</p>
-                  <p className="text-gray-600 text-xs">{latestCall.remark}</p>
+                  <p className="font-medium text-xs">{sortedFollowUps[0].type}</p>
+                  <p className="text-gray-600 text-xs line-clamp-1">
+                    {sortedFollowUps[0].note}
+                  </p>
                 </>
               ) : (
                 <p className="text-gray-400 text-xs">No recent call</p>
@@ -173,6 +233,8 @@ export default function LeadCard({ lead }: Props) {
             <p>Email: {lead.email || "-"}</p>
             <p>Area: {lead.area || "-"}</p>
             <p>City: {lead.city || "-"}</p>
+            <p>Local Address: {lead.address || "-"}</p>
+            <p>Permanent Address: {lead.permanent_address || "-"}</p>
           </div>
         )}
 
@@ -186,38 +248,30 @@ export default function LeadCard({ lead }: Props) {
 
         {activeTab === "callhistory" && (
           <div className="space-y-1">
-            {callHistory.length === 0 && (
+            {sortedFollowUps.length === 0 && (
               <p className="text-gray-400">No history</p>
             )}
 
-            {callHistory.map((h, i) => (
+            {sortedFollowUps.map((fu, i) => (
               <div key={i} className="border-b pb-1">
                 <p className="text-xs text-gray-500">
-                  {new Date(h.call_date || h.created_at).toLocaleDateString("en-GB")}
+                  {new Date(fu.date).toLocaleDateString("en-GB")}
                 </p>
-                <p className="font-medium">{h.result}</p>
-                <p className="text-gray-600">{h.remark}</p>
+                <p className="font-medium">{fu.type}</p>
+                <p className="text-gray-600">{fu.note}</p>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* ✅ BOTTOM ACTION BUTTONS */}
+      {/* ACTION BUTTONS */}
       <div className="flex gap-2 pt-2 border-t">
-
-        <a
-          href={`tel:${lead.mobile}`}
-          className="flex-1 text-center bg-blue-600 text-white py-2 rounded text-sm"
-        >
+        <a href={`tel:${lead.mobile}`} className="flex-1 text-center bg-blue-600 text-white py-2 rounded text-sm">
           📞 Call
         </a>
 
-        <a
-          href={`https://wa.me/91${lead.mobile}`}
-          target="_blank"
-          className="flex-1 text-center bg-green-600 text-white py-2 rounded text-sm"
-        >
+        <a href={`https://wa.me/91${lead.mobile}`} target="_blank" className="flex-1 text-center bg-green-600 text-white py-2 rounded text-sm">
           💬 WhatsApp
         </a>
 
@@ -227,7 +281,6 @@ export default function LeadCard({ lead }: Props) {
         >
           📝 Feedback
         </button>
-
       </div>
     </div>
   );

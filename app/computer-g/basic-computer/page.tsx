@@ -209,13 +209,13 @@ export default function BasicComputerPage() {
         <h2 className="text-2xl font-bold mb-6">
           Basic Computer Trainer
         </h2>
-        <Image
-          src="/home/trainer.jpg"
-          alt="Basic Computer Trainer"
-          width={120}
-          height={120}
-          className="mx-auto rounded-full mb-4"
-        />
+       <Image
+  src="/nanda-nagar/Rahul.jpg"
+  alt="Basic Computer Trainer"
+  width={120}
+  height={120}
+  className="mx-auto rounded-full mb-4"
+/>
         <p className="font-semibold text-gray-800">
           Experienced Computer Faculty
         </p>
@@ -243,11 +243,11 @@ export default function BasicComputerPage() {
         description="See how students learn computers practically in our lab with real assignments."
       />
 
-      <GallerySection
-        title="Basic Computer Lab Gallery"
-        subtitle="Real classroom & lab practice moments"
-        basePath="/computer-g/basic"
-      />
+     <GallerySection
+  title="Basic Computer Lab Gallery"
+  subtitle="Real classroom & lab practice moments"
+  basePath="/nanda-nagar"
+/>
 
       <HomeVideoReviewsSection
         title="Basic Computer Student Video Reviews"
