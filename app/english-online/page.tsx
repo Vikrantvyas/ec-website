@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import ChatBot from "@/app/components/landing/ChatBot";
 import StepForm from "@/app/components/landing/StepForm";
+import Image from "next/image";
 
 export default function EnglishOnlinePage() {
   const [leadId, setLeadId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"chat" | "form">("chat");
 
   useEffect(() => {
     handleLead();
@@ -32,7 +31,7 @@ export default function EnglishOnlinePage() {
 
     const now = new Date();
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("leads")
       .insert([
         {
@@ -54,7 +53,6 @@ export default function EnglishOnlinePage() {
       .single();
 
     if (data) setLeadId(data.id);
-    if (error) console.error("Lead insert error:", error);
   }
 
   async function trackFAQ(question: string) {
@@ -70,7 +68,7 @@ export default function EnglishOnlinePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 space-y-4">
+    <div className="min-h-screen bg-gray-50 p-4 space-y-6">
 
       {/* HERO */}
       <div className="text-center space-y-2">
@@ -82,92 +80,88 @@ export default function EnglishOnlinePage() {
         </p>
       </div>
 
-      {/* MODE SWITCH */}
-      <div className="flex justify-center gap-2">
-        <button
-          onClick={() => setMode("chat")}
-          className={`px-3 py-1 rounded ${
-            mode === "chat" ? "bg-blue-600 text-white" : "bg-gray-200"
-          }`}
-        >
-          Chat Mode
-        </button>
+      {/* TEACHER SECTION */}
+      <div className="bg-white p-4 rounded shadow text-center space-y-3">
 
-        <button
-          onClick={() => setMode("form")}
-          className={`px-3 py-1 rounded ${
-            mode === "form" ? "bg-blue-600 text-white" : "bg-gray-200"
-          }`}
+        <Image
+          src="/nanda-nagar/teacher.jpg"
+          alt="English Trainer"
+          width={120}
+          height={120}
+          className="mx-auto rounded-full"
+        />
+
+        <p className="font-semibold text-gray-800">
+          Vikrant Vyas
+        </p>
+
+        <p className="text-sm text-gray-600">
+          15+ years experience in Spoken English training
+        </p>
+
+        {/* VIDEO */}
+        <video
+          controls
+          className="w-full rounded-lg"
         >
-          Quick Form
-        </button>
+          <source src="/videos/teacher-message.mp4" />
+        </video>
+
       </div>
 
-      {/* CONTENT */}
+      {/* FORM ONLY */}
       <div className="bg-white p-3 rounded shadow-sm">
-        {mode === "chat" ? (
-          <ChatBot leadId={leadId} />
-        ) : (
-          <StepForm leadId={leadId} />
-        )}
+        <StepForm leadId={leadId} />
       </div>
 
       {/* FAQ */}
       <div className="bg-white p-3 rounded shadow-sm space-y-2 text-sm">
         <p className="font-medium">FAQs</p>
 
-        <details onClick={() => trackFAQ("Free Demo Class Timing")}>
-          <summary>Free Demo Class Timing?</summary>
-          <p className="whitespace-pre-line text-gray-600">
+        <details onClick={() => trackFAQ("Demo Timing")}>
+          <summary>फ्री डेमो क्लास कब होती है?</summary>
+          <p className="text-gray-600">
             Daily 12 PM & 7 PM
-            {"\n"}Zoom Link:
-            {"\n"}https://us06web.zoom.us/j/87344889114?pwd=m2AMsx6OgvFphUZfQPu3JghNciw1Vv.1
           </p>
         </details>
 
-        <details onClick={() => trackFAQ("Regular Batches Timing")}>
-          <summary>Regular Batches Timing?</summary>
-          <p className="whitespace-pre-line text-gray-600">
-            3 PM — Women
-            {"\n"}6 PM — School Students
-            {"\n"}8 PM — Mixed Batch
+        <details onClick={() => trackFAQ("Batch Timing")}>
+          <summary>कौन-कौन से बैच उपलब्ध हैं?</summary>
+          <p className="text-gray-600">
+            Morning, Afternoon & Evening batches available
           </p>
         </details>
 
-        <details onClick={() => trackFAQ("New Batches")}>
-          <summary>New Upcoming Batches?</summary>
-          <p className="whitespace-pre-line text-gray-600">
-            8 AM — Mixed
-            {"\n"}1 PM — Women
-            {"\n"}2 PM — Women
-            {"\n"}4 PM — Mixed
+        <details onClick={() => trackFAQ("Duration")}>
+          <summary>कोर्स कितने दिनों का है?</summary>
+          <p className="text-gray-600">
+            3 Months (Mon–Fri, 1 hour daily)
           </p>
         </details>
 
-        <details onClick={() => trackFAQ("Course Details")}>
-          <summary>Course Duration & Class Time?</summary>
-          <p className="whitespace-pre-line text-gray-600">
-            Duration: 3 Months
-            {"\n"}Class: 1 Hour
-            {"\n"}Days: Monday to Friday
+        <details onClick={() => trackFAQ("Fees")}>
+          <summary>फीस कितनी है?</summary>
+          <p className="text-gray-600">
+            ₹1000/month  
+            Full payment discount available
           </p>
         </details>
 
-        <details onClick={() => trackFAQ("Fees Details")}>
-          <summary>Fees Details?</summary>
-          <p className="whitespace-pre-line text-gray-600">
-            ₹1000/month
-            {"\n"}₹2000 full payment (₹1000 discount)
-            {"\n"}Offline: ₹5000
+        <details onClick={() => trackFAQ("Online vs Offline")}>
+          <summary>ऑनलाइन और ऑफलाइन में क्या अंतर है?</summary>
+          <p className="text-gray-600">
+            Online: Zoom classes  
+            Offline: Classroom + lab practice
           </p>
         </details>
 
-        <details onClick={() => trackFAQ("Reviews")}>
-          <summary>Student Reviews?</summary>
-          <p className="text-blue-600">
-            https://share.google/GFCU0sp1FV1kyXufk
+        <details onClick={() => trackFAQ("Job Help")}>
+          <summary>क्या जॉब में मदद मिलेगी?</summary>
+          <p className="text-gray-600">
+            Yes, interview practice & speaking confidence build कराया जाता है
           </p>
         </details>
+
       </div>
     </div>
   );
