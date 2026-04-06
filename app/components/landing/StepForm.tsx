@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 type Props = {
@@ -9,9 +9,11 @@ type Props = {
 
 export default function StepForm({ leadId }: Props) {
 
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(true); // ✅ popup control
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [currentLeadId, setCurrentLeadId] = useState<string | null>(leadId);
 
   const [form, setForm] = useState({
     mobile_number: "",
@@ -24,59 +26,75 @@ export default function StepForm({ leadId }: Props) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  useEffect(() => {
-    setOpen(true);
-  }, []);
-
-  // ✅ Dynamic heading
   const remaining = 5 - step;
   const headingText =
     remaining === 4
-      ? "बस 4 बातें बता दीजिए ताकि हम आपको सही जानकारी दे सके"
+      ? "बस 4 बातें, ताकि हम आपको सही जानकारी दे सके"
       : remaining === 3
       ? "बस 3 बातें और"
       : remaining === 2
       ? "बस 2 बातें और"
       : "ये आखिरी";
 
-  async function updateLead(field: any) {
-    if (!leadId) return;
+  async function createLead() {
+    const now = new Date();
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("leads")
-      .update(field)
-      .eq("id", leadId);
+      .insert([
+        {
+          mobile_number: form.mobile_number,
+          enquiry_date: now.toISOString().split("T")[0],
+          enquiry_time: now.toLocaleTimeString(),
+          method: "Social Media",
+          channel: "Meta Ad",
+          department: "English",
+          course: "Basic + Adv. English",
+          lead_stage: "Lead",
+          lead_chances: "High",
+          action: "Follow up",
+          next_follow_date: now.toISOString().split("T")[0],
+          branch_id: "628ac5fa-0289-48e0-9ae8-35bf8806ff78",
+        },
+      ])
+      .select()
+      .single();
 
     if (error) {
-      console.error("Update error:", error);
-      alert("Something went wrong, try again");
-      return false;
+      alert("Error creating lead");
+      return null;
     }
 
-    return true;
+    return data.id;
+  }
+
+  async function updateLead(field: any) {
+    if (!currentLeadId) return;
+
+    await supabase.from("leads").update(field).eq("id", currentLeadId);
   }
 
   async function handleNext() {
 
-    if (loading) return; // ✅ double click protection
+    if (loading) return;
     setLoading(true);
 
-    let field: any = {};
-
-    // STEP 1 - MOBILE
     if (step === 1) {
       if (!/^\d{10}$/.test(form.mobile_number)) {
-        alert("Enter valid 10 digit mobile");
+        alert("Enter valid mobile");
         setLoading(false);
         return;
       }
 
-      field = { mobile_number: form.mobile_number };
+      let id = currentLeadId;
 
-      const ok = await updateLead(field);
-      if (ok === false) {
-        setLoading(false);
-        return;
+      if (!id) {
+        id = await createLead();
+        if (!id) {
+          setLoading(false);
+          return;
+        }
+        setCurrentLeadId(id);
       }
 
       setStep(2);
@@ -84,28 +102,19 @@ export default function StepForm({ leadId }: Props) {
       return;
     }
 
-    // STEP 2 - NAME
     if (step === 2) {
       if (!form.student_name.trim()) {
-        alert("Enter your name");
+        alert("Enter name");
         setLoading(false);
         return;
       }
 
-      field = { student_name: form.student_name };
-
-      const ok = await updateLead(field);
-      if (ok === false) {
-        setLoading(false);
-        return;
-      }
-
+      await updateLead({ student_name: form.student_name });
       setStep(3);
       setLoading(false);
       return;
     }
 
-    // STEP 3 - GENDER
     if (step === 3) {
       if (!form.gender) {
         alert("Select gender");
@@ -113,20 +122,12 @@ export default function StepForm({ leadId }: Props) {
         return;
       }
 
-      field = { gender: form.gender };
-
-      const ok = await updateLead(field);
-      if (ok === false) {
-        setLoading(false);
-        return;
-      }
-
+      await updateLead({ gender: form.gender });
       setStep(4);
       setLoading(false);
       return;
     }
 
-    // STEP 4 - EDUCATION (LAST STEP)
     if (step === 4) {
       if (!form.education) {
         alert("Select education");
@@ -134,128 +135,131 @@ export default function StepForm({ leadId }: Props) {
         return;
       }
 
-      field = { education: form.education };
+      await updateLead({ education: form.education });
 
-      const ok = await updateLead(field);
-      if (ok === false) {
-        setLoading(false);
-        return;
-      }
+      // ✅ DONE STATE
+      setDone(true);
 
-      setOpen(false); // ✅ close popup
+      // ✅ auto close (NO reload)
+      setTimeout(() => {
+        setOpen(false);
+      }, 1500);
+
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
+  // ✅ popup close
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-3">
 
-      <div className="bg-white w-full max-w-md p-5 rounded-lg space-y-4 relative">
+      <div className="bg-white w-full max-w-sm p-5 rounded-xl space-y-4">
 
-        {/* CLOSE */}
-        <button
-          onClick={() => setOpen(false)}
-          className="absolute top-2 right-3 text-gray-500"
-        >
-          ✕
-        </button>
-
-        {/* HEADING */}
         <h2 className="text-lg font-semibold text-center">
-          {headingText}
+          {done ? "Thanks 😊" : headingText}
         </h2>
 
-        {/* STEP 1 */}
-        {step === 1 && (
+        {!done && (
           <>
-            <p>अपना मोबाइल नंबर दर्ज करें</p>
-            <input
-              value={form.mobile_number}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, "");
-                if (val.length <= 10) {
-                  handleChange("mobile_number", val);
-                }
-              }}
-              className="border px-2 py-2 rounded w-full"
-              placeholder="10 digit mobile"
-            />
-          </>
-        )}
+            {/* STEP 1 */}
+            {step === 1 && (
+              <>
+                <p>मोबाइल नंबर दर्ज करें</p>
+                <input
+                  value={form.mobile_number}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    if (val.length <= 10) {
+                      handleChange("mobile_number", val);
+                    }
+                  }}
+                  className="border px-3 py-2 rounded w-full"
+                />
+              </>
+            )}
 
-        {/* STEP 2 */}
-        {step === 2 && (
-          <>
-            <p>अपना नाम बताएं</p>
-            <input
-              value={form.student_name}
-              onChange={(e) =>
-                handleChange("student_name", e.target.value)
-              }
-              className="border px-2 py-2 rounded w-full"
-              placeholder="Your name"
-            />
-          </>
-        )}
+            {/* STEP 2 */}
+            {step === 2 && (
+              <>
+                <p>आपका नाम</p>
+                <input
+                  value={form.student_name}
+                  onChange={(e) =>
+                    handleChange("student_name", e.target.value)
+                  }
+                  className="border px-3 py-2 rounded w-full"
+                />
+              </>
+            )}
 
-        {/* STEP 3 */}
-        {step === 3 && (
-          <>
-            <p>अपना gender चुनें</p>
-            <select
-              value={form.gender}
-              onChange={(e) =>
-                handleChange("gender", e.target.value)
-              }
-              className="border px-2 py-2 rounded w-full"
+            {/* STEP 3 */}
+            {step === 3 && (
+              <>
+                <p>आपका gender</p>
+
+                <div className="flex gap-4 justify-center">
+
+                  <div
+                    onClick={() => handleChange("gender", "Male")}
+                    className={`p-4 border rounded-lg cursor-pointer ${
+                      form.gender === "Male" ? "bg-blue-100" : ""
+                    }`}
+                  >
+                    👨 Male
+                  </div>
+
+                  <div
+                    onClick={() => handleChange("gender", "Female")}
+                    className={`p-4 border rounded-lg cursor-pointer ${
+                      form.gender === "Female" ? "bg-pink-100" : ""
+                    }`}
+                  >
+                    👩 Female
+                  </div>
+
+                </div>
+              </>
+            )}
+
+            {/* STEP 4 */}
+            {step === 4 && (
+              <>
+                <p>आपकी education</p>
+                <select
+                  value={form.education}
+                  onChange={(e) =>
+                    handleChange("education", e.target.value)
+                  }
+                  className="border px-3 py-2 rounded w-full"
+                >
+                  <option value="">Select</option>
+
+                  {[...Array(12)].map((_, i) => (
+                    <option key={i}>Class {i + 1}</option>
+                  ))}
+
+                  <option>1st Year</option>
+                  <option>2nd Year</option>
+                  <option>3rd Year</option>
+                  <option>Graduate</option>
+                  <option>Post Graduate</option>
+                  <option>Other</option>
+                </select>
+              </>
+            )}
+
+            {/* BUTTON */}
+            <button
+              onClick={handleNext}
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-2 rounded"
             >
-              <option value="">Select</option>
-              <option>Male</option>
-              <option>Female</option>
-            </select>
+              {loading ? "Please wait..." : "Next"}
+            </button>
           </>
         )}
-
-        {/* STEP 4 */}
-        {step === 4 && (
-          <>
-            <p>अपनी education चुनें</p>
-            <select
-              value={form.education}
-              onChange={(e) =>
-                handleChange("education", e.target.value)
-              }
-              className="border px-2 py-2 rounded w-full"
-            >
-              <option value="">Select</option>
-
-              {[...Array(12)].map((_, i) => (
-                <option key={i}>Class {i + 1}</option>
-              ))}
-
-              <option>1st Year</option>
-              <option>2nd Year</option>
-              <option>3rd Year</option>
-
-              <option>Graduate</option>
-              <option>Post Graduate</option>
-              <option>Other</option>
-            </select>
-          </>
-        )}
-
-        {/* BUTTON */}
-        <button
-          onClick={handleNext}
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded disabled:bg-gray-400"
-        >
-          {loading ? "Please wait..." : "Next"}
-        </button>
-
       </div>
     </div>
   );
