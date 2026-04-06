@@ -5,6 +5,17 @@ import { supabase } from "@/lib/supabaseClient";
 import StepForm from "@/app/components/landing/StepForm";
 import Image from "next/image";
 
+// ✅ Import sections (home page se)
+import HomeVideoSection from "@/app/components/HomeVideoSection";
+import HomeVideoReviewsSection from "@/app/components/HomeVideoReviewsSection";
+import BranchesSection from "@/app/components/BranchesSection";
+import TrustSection from "@/app/components/TrustSection";
+import MapSection from "@/app/components/MapSection";
+import TestimonialsSection from "@/app/components/TestimonialsSection";
+import GallerySection from "@/app/components/GallerySection";
+import ContactSection from "@/app/components/ContactSection";
+import Footer from "@/app/components/Footer";
+
 export default function EnglishOnlinePage() {
   const [leadId, setLeadId] = useState<string | null>(null);
 
@@ -80,10 +91,8 @@ export default function EnglishOnlinePage() {
         </p>
       </div>
 
-      {/* POPUP / STEP FORM */}
-      <div className="bg-white p-3 rounded shadow-sm">
-        <StepForm leadId={leadId} />
-      </div>
+      {/* ✅ STEP FORM (NO WRAPPER = no white strip) */}
+      <StepForm leadId={leadId} />
 
       {/* TEACHER SECTION */}
       <div className="bg-white p-4 rounded shadow text-center space-y-3">
@@ -104,10 +113,7 @@ export default function EnglishOnlinePage() {
           10+ years experience in Spoken English training
         </p>
 
-        <video controls className="w-full rounded-lg">
-          <source src="/videos/teacher-message.mp4" />
-        </video>
-
+        
       </div>
 
       {/* FAQ */}
@@ -116,56 +122,57 @@ export default function EnglishOnlinePage() {
 
         <details onClick={() => trackFAQ("Demo Timing")}>
           <summary>फ्री डेमो क्लास कब होती है?</summary>
-          <p className="text-gray-600">
-            Daily 12 PM & 7 PM
-          </p>
+          <p>Daily 12 PM & 7 PM</p>
         </details>
 
         <details onClick={() => trackFAQ("Batch Timing")}>
           <summary>कौन-कौन से बैच उपलब्ध हैं?</summary>
-          <p className="text-gray-600">
-            Morning, Afternoon & Evening batches available
-          </p>
+          <p>Morning, Afternoon & Evening batches</p>
         </details>
 
         <details onClick={() => trackFAQ("Duration")}>
           <summary>कोर्स कितने दिनों का है?</summary>
-          <p className="text-gray-600">
-            3 Months (Mon–Fri, 1 hour daily)
-          </p>
+          <p>3 Months (Mon–Fri, 1 hour daily)</p>
         </details>
 
         <details onClick={() => trackFAQ("Fees")}>
           <summary>फीस कितनी है?</summary>
-          <p className="text-gray-600">
-            ₹1000/month  
-            Full payment discount available
-          </p>
+          <p>₹1000/month</p>
         </details>
 
         <details onClick={() => trackFAQ("Online vs Offline")}>
           <summary>ऑनलाइन और ऑफलाइन में क्या अंतर है?</summary>
-          <p className="text-gray-600">
-            Online: Zoom classes  
-            Offline: Classroom + lab practice
-          </p>
+          <p>Online: Zoom classes | Offline: Classroom</p>
         </details>
 
         <details onClick={() => trackFAQ("Job Help")}>
           <summary>क्या जॉब में मदद मिलेगी?</summary>
-          <p className="text-gray-600">
-            Yes, interview practice & speaking confidence build कराया जाता है
-          </p>
+          <p>Yes, interview practice कराया जाता है</p>
         </details>
 
         <details onClick={() => trackFAQ("Practice")}>
           <summary>क्या प्रैक्टिस भी करवाई जाती है?</summary>
-          <p className="text-gray-600">
-            Daily speaking + listening + reading practice कराया जाता है
-          </p>
+          <p>Daily speaking + listening practice</p>
         </details>
-
       </div>
+
+      {/* 🎥 HOW IT WORKS */}
+      <HomeVideoSection />
+
+      {/* 🎤 STUDENT REVIEWS */}
+      <HomeVideoReviewsSection />
+
+      {/* 📍 BRANCHES */}
+      <BranchesSection />
+
+      {/* 🔥 TRUST + बाकी content */}
+      <TrustSection />
+      <MapSection />
+      <TestimonialsSection />
+      <GallerySection />
+      <ContactSection />
+      <Footer />
+
     </div>
   );
 }
