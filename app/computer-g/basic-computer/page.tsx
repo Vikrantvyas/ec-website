@@ -217,7 +217,7 @@ export default function BasicComputerPage() {
   className="mx-auto rounded-full mb-4"
 />
         <p className="font-semibold text-gray-800">
-          Experienced Computer Faculty
+          Rahul Malviya
         </p>
         <p className="text-gray-600 text-sm">
           10+ years experience in computer & office software training
