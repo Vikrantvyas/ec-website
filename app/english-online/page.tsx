@@ -9,6 +9,27 @@ import HomeVideoSection from "@/app/components/HomeVideoSection";
 import HomeVideoReviewsSection from "@/app/components/HomeVideoReviewsSection";
 import BranchesSection from "@/app/components/BranchesSection";
 
+export const metadata = {
+  title: "Spoken English Course - English Club Indore",
+  description: "3 महीने में English बोलना सीखें | Daily Practice | Expert Trainers",
+
+  openGraph: {
+    title: "Spoken English Course - English Club",
+    description: "3 महीने में English बोलना सीखें",
+    url: "https://ecindore.com/english-online",
+    siteName: "English Club",
+    images: [
+      {
+        url: "https://ecindore.com/og-image.jpg", // 👈 important
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: "en_IN",
+    type: "website",
+  },
+};
+
 export default function EnglishOnlinePage() {
   const [leadId, setLeadId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
