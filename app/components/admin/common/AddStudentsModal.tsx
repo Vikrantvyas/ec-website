@@ -212,10 +212,10 @@ export default function AddStudentsModal({
   }
 
   const filteredStudents = students
-    .filter((s)=>!existingIds.includes(s.id))
-    .filter((s)=>
-      s.student_name.toLowerCase().includes(search.toLowerCase())
-    );
+  .filter((s)=>!existingIds.includes(s.id))
+  .filter((s)=>
+    (s.student_name || "").toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

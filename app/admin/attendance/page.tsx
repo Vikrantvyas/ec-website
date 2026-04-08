@@ -174,10 +174,15 @@ export default function AttendancePage() {
         continue;
       }
 
-      const { data: leads } = await supabase
-        .from("leads")
-        .select("id,student_name")
-        .in("id", leadIds);
+      const { data: leadsRaw } = await supabase
+  .from("leads")
+  .select("id,student_name,enquiry_date,course,branch_id")
+  .in("id", leadIds);
+
+const leads = (leadsRaw || []).map(l => ({
+  ...l,
+  student_name: l.student_name || "No Name"
+}));
 
       const studentNames = leads?.map(l => l.student_name) || [];
 
@@ -259,15 +264,23 @@ export default function AttendancePage() {
       return;
     }
 
-    const { data: leads } = await supabase
-      .from("leads")
-      .select("id,student_name,enquiry_date,course,branch_id") // ✅ FIX
-      .in("id", leadIds);
+   const { data: leadsRaw } = await supabase
+  .from("leads")
+  .select("id,student_name,enquiry_date,course,branch_id")
+  .in("id", leadIds);
+
+const leads = (leadsRaw || []).map(l => ({
+  ...l,
+  student_name: l.student_name || "No Name"
+}));
 
     const { data: receipts } = await supabase
       .from("receipts")
       .select("student_name,amount,total_fee,discount,created_at,batch")
-      .in("student_name", leads?.map(l => l.student_name) || [])
+      .in(
+  "student_name",
+  (leads || []).map(l => l.student_name).filter(Boolean)
+)
       .order("created_at", { ascending: false });
 
     const { data: attendance } = await supabase
@@ -290,13 +303,14 @@ export default function AttendancePage() {
 
     const students: Student[] = [];
 
-    for (const lead of leads || []) {
+   for (const lead of leads || []) {
 
-      const latest = latestReceiptMap[lead.student_name];
+  const studentName = lead.student_name || "No Name";
+  const latest = latestReceiptMap[studentName];
 
       const totalFee = latest?.total_fee || 0;
       const discount = latest?.discount || 0;
-      const paid = totalPaidMap[lead.student_name] || 0;
+      const paid = totalPaidMap[studentName] || 0;
 
       const finalFee = totalFee - discount;
 
@@ -312,7 +326,7 @@ export default function AttendancePage() {
 
       students.push({
         id: lead.id,
-        name: lead.student_name,
+        name: studentName,
         joiningDate: lead.enquiry_date,
         course: lead.course,
         due: Math.max(finalFee - paid, 0),
