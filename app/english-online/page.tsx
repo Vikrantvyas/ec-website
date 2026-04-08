@@ -4,8 +4,8 @@ export const metadata = {
   title: "English Club - Indore (M.P.)",
   description: "छोड़िए ता है, ती है, रहा है, रही है...",
   openGraph: {
-    title: "Spoken English Course - English Club",
-    description: "Improve English",
+    title: "English Club - Indore (M.P.)",
+    description: "छोड़िए ता है, ती है, रहा है, रही है...",
     url: "https://ecindore.com/english-online",
     images: [
       {
