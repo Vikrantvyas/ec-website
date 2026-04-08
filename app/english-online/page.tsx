@@ -2,8 +2,7 @@ import ClientPage from "./ClientPage";
 
 export const metadata = {
   title: "English Club - Indore (M.P.)",
-  description: "छोड़िए ता है, ती है, रहा है, रही है, 
-इंग्लिश को जिएं, हँस कर, खेलकर, गाकर, मज़े से...",
+  description: "छोड़िए ता है, ती है, रहा है, रही है...",
   openGraph: {
     title: "Spoken English Course - English Club",
     description: "3 महीने में English बोलना सीखें",
