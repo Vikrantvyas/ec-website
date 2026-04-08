@@ -50,7 +50,7 @@ h3 {
 
 /* 📱 Mobile spacing (header + bottom nav) */
 @media (max-width: 768px) {
-  body {
+  body:not(.landing-body) {
     padding-top: 56px;
     padding-bottom: 64px;
   }
@@ -227,7 +227,7 @@ body:has(.landing-page) footer {
 body:has(.landing-page) .bottom-nav,
 body:has(.landing-page) .mobile-nav,
 body:has(.landing-page) .app-nav,
-body:has(.landing-page) [class*="bottom"] {
+body:has(.landing-page) .bottom-nav {
   display: none !important;
 }
 
@@ -238,12 +238,15 @@ body:has(.landing-page) {
 }
 
 /* Fix height + scroll */
-body:has(.landing-page),
+/* 🔥 LANDING PAGE FINAL FIX */
 html:has(.landing-page),
-body:has(.landing-page) #__next,
-body:has(.landing-page) main {
+body:has(.landing-page) {
   height: auto !important;
-  overflow: auto !important;
+  overflow-x: hidden;
+}
+
+body:has(.landing-page) #__next {
+  height: auto !important;
 }
 /* 🔥 FINAL LANDING PAGE BODY FIX */
 .landing-body {
@@ -275,4 +278,34 @@ body:has(.landing-page) main {
   content: "";
   display: block;
   height: 0;
+}
+/* 🔥 HARD FIX – REMOVE BOTTOM GAP COMPLETELY */
+body.landing-body {
+  padding-bottom: 0 !important;
+}
+
+html:has(.landing-page),
+body:has(.landing-page) {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Force remove any bottom space */
+body:has(.landing-page)::after {
+  display: none !important;
+}
+/* 🔥 SAFE AREA FIX (FINAL) */
+.safe-bottom {
+  bottom: calc(16px + env(safe-area-inset-bottom));
+}
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+.cta-btn {
+  animation: shake 1.2s infinite;
 }

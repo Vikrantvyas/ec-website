@@ -11,52 +11,18 @@ import BranchesSection from "@/app/components/BranchesSection";
 
 export default function EnglishOnlinePage() {
   const [leadId, setLeadId] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
+  // ✅ Visitor ID (mobile safe)
   useEffect(() => {
-    handleLead();
-  }, []);
+    let visitorId = localStorage.getItem("visitor_id");
 
-  async function handleLead() {
-    const params = new URLSearchParams(window.location.search);
-    const mobile = params.get("mobile");
-
-    if (!mobile) return;
-
-    const { data: existing } = await supabase
-      .from("leads")
-      .select("id")
-      .eq("mobile_number", mobile)
-      .maybeSingle();
-
-    if (existing) {
-      setLeadId(existing.id);
-      return;
+    if (!visitorId) {
+      visitorId =
+        Date.now().toString() + Math.random().toString(36).substring(2);
+      localStorage.setItem("visitor_id", visitorId);
     }
-
-    const now = new Date();
-
-    const { data } = await supabase
-      .from("leads")
-      .insert([
-        {
-          mobile_number: mobile,
-          channel: "whatsapp",
-          method: "online",
-          course: "Spoken English",
-          enquiry_date: now.toISOString().split("T")[0],
-          enquiry_time: now.toLocaleTimeString(),
-          lead_stage: "new",
-          lead_chances: "hot",
-          remark: "Landing Page",
-          enquired_by: "website",
-          department: "english",
-        },
-      ])
-      .select()
-      .single();
-
-    if (data) setLeadId(data.id);
-  }
+  }, []);
 
   async function trackFAQ(question: string) {
     if (!leadId) return;
@@ -70,10 +36,40 @@ export default function EnglishOnlinePage() {
     ]);
   }
 
-  return (
-    <div className="landing-page min-h-screen bg-gray-50 p-4 space-y-6">
+  // ✅ CTA BUTTON (auto shake ALWAYS)
+  const CTA = () => (
+    <div className="text-center">
+      <button
+        onClick={() => setShowForm(true)}
+        className="mt-3 px-6 py-3 rounded-full text-white font-semibold shadow-lg 
+        bg-gradient-to-r from-blue-600 to-indigo-600 shake-btn"
+      >
+        🎯 Free Demo Book करें
+      </button>
+    </div>
+  );
 
-      {/* HERO */}
+  return (
+    <div className="landing-page bg-gray-50 p-4 space-y-6">
+
+      {/* 🔥 GLOBAL STYLE (NO DELAY) */}
+      <style>
+        {`
+          .shake-btn {
+            animation: shakeX 1s infinite;
+          }
+
+          @keyframes shakeX {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            50% { transform: translateX(4px); }
+            75% { transform: translateX(-4px); }
+            100% { transform: translateX(0); }
+          }
+        `}
+      </style>
+
+      {/* HERO (NO BUTTON HERE) */}
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold text-blue-600">
           Speak English Confidently in 3 Months
@@ -98,7 +94,9 @@ export default function EnglishOnlinePage() {
         </p>
       </div>
 
-      {/* ❓ FAQ (TOP TRUST BLOCK) */}
+      <CTA />
+
+      {/* FAQ */}
       <div className="bg-white p-4 rounded shadow-sm space-y-3 text-sm">
         <p className="font-semibold text-lg text-center">FAQs</p>
 
@@ -109,81 +107,36 @@ export default function EnglishOnlinePage() {
 
         <details onClick={() => trackFAQ("Fees")}>
           <summary>फीस कितनी है?</summary>
-          <p>₹1000/month (discount available)</p>
+          <p>₹1000/month</p>
         </details>
 
         <details onClick={() => trackFAQ("Duration")}>
           <summary>कोर्स कितने दिनों का है?</summary>
-          <p>3 Months (daily practice)</p>
-        </details>
-
-        <details onClick={() => trackFAQ("Online Offline")}>
-          <summary>ऑनलाइन और ऑफलाइन में क्या फर्क है?</summary>
-          <p>Online: Zoom | Offline: Classroom + lab</p>
-        </details>
-
-        <details onClick={() => trackFAQ("Practice")}>
-          <summary>क्या रोज प्रैक्टिस होती है?</summary>
-          <p>Yes, speaking + listening + reading daily</p>
-        </details>
-
-        <details onClick={() => trackFAQ("Job")}>
-          <summary>क्या जॉब में मदद मिलेगी?</summary>
-          <p>Interview practice कराया जाता है</p>
-        </details>
-
-        <details onClick={() => trackFAQ("Timing")}>
-          <summary>कौन-कौन से बैच उपलब्ध हैं?</summary>
-          <p>Morning, Afternoon & Evening</p>
-        </details>
-
-        <details onClick={() => trackFAQ("Beginner")}>
-          <summary>अगर मुझे बिल्कुल English नहीं आती?</summary>
-          <p>Basic से शुरू कराया जाता है</p>
-        </details>
-
-        <details onClick={() => trackFAQ("Age")}>
-          <summary>क्या उम्र की कोई limit है?</summary>
-          <p>No, anyone can join</p>
-        </details>
-
-        <details onClick={() => trackFAQ("Result")}>
-          <summary>क्या सच में English बोलना आ जाएगा?</summary>
-          <p>Yes, daily practice से confidence build होता है</p>
+          <p>3 Months</p>
         </details>
       </div>
+
+      <CTA />
 
       {/* VIDEO */}
       <HomeVideoSection />
+      <CTA />
 
       {/* REVIEWS */}
       <HomeVideoReviewsSection />
+      <CTA />
 
       {/* BRANCH */}
       <BranchesSection />
+      <CTA />
 
-      {/* 🔥 POPUP FORM */}
-      <StepForm leadId={leadId} />
-
-      {/* 🔥 FLOATING BUTTONS */}
-      <div className="fixed bottom-4 left-4 z-50">
-        <a
-          href="tel:9893XXXXXX"
-          className="bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg"
-        >
-          📞 Call
-        </a>
-      </div>
-
-      <div className="fixed bottom-4 right-4 z-50">
-        <a
-          href="https://wa.me/919893XXXXXX"
-          target="_blank"
-          className="bg-green-500 text-white px-4 py-2 rounded-full shadow-lg"
-        >
-          💬 WhatsApp
-        </a>
-      </div>
+      {/* STEP FORM */}
+      {showForm && (
+        <StepForm
+          leadId={leadId}
+          onClose={() => setShowForm(false)}
+        />
+      )}
 
     </div>
   );

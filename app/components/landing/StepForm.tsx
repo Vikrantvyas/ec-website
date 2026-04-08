@@ -5,9 +5,10 @@ import { supabase } from "@/lib/supabaseClient";
 
 type Props = {
   leadId: string | null;
+  onClose?: () => void;
 };
 
-export default function StepForm({ leadId }: Props) {
+export default function StepForm({ leadId, onClose }: Props) {
 
   const [open, setOpen] = useState(true);
   const [step, setStep] = useState(1);
@@ -154,7 +155,18 @@ export default function StepForm({ leadId }: Props) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-3">
 
-      <div className="bg-white w-full max-w-sm p-5 rounded-xl space-y-4">
+      <div className="bg-white w-full max-w-sm p-5 rounded-xl space-y-4 relative">
+  
+  {/* ❌ CLOSE BUTTON */}
+  <button
+    onClick={() => {
+      setOpen(false);
+      onClose?.();
+    }}
+    className="absolute top-2 right-3 text-xl text-gray-500"
+  >
+    ✕
+  </button>
 
         <h2 className="text-lg font-semibold text-center">
           {done ? "Thanks 😊" : headingText}

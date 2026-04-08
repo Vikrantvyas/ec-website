@@ -16,7 +16,7 @@ export default function RootLayout({
   const pathname = usePathname();
 
   const isAdmin = pathname.startsWith("/admin");
-  const isLanding = pathname === "/english-online";
+  const isLanding = pathname === "/english-online" || pathname === "/test-landing";
 
   return (
     <html lang="en">
