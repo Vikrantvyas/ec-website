@@ -212,3 +212,67 @@ body:has(.batches-page) main {
   height: 100vh !important;
   overflow: hidden !important;
 }
+/* ================================
+   🔥 LANDING PAGE CLEAN MODE
+================================ */
+
+/* Header, Navbar, Footer hide */
+body:has(.landing-page) header,
+body:has(.landing-page) nav,
+body:has(.landing-page) footer {
+  display: none !important;
+}
+
+/* Mobile bottom menu hide (common classes) */
+body:has(.landing-page) .bottom-nav,
+body:has(.landing-page) .mobile-nav,
+body:has(.landing-page) .app-nav,
+body:has(.landing-page) [class*="bottom"] {
+  display: none !important;
+}
+
+/* Remove body padding for landing page */
+body:has(.landing-page) {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Fix height + scroll */
+body:has(.landing-page),
+html:has(.landing-page),
+body:has(.landing-page) #__next,
+body:has(.landing-page) main {
+  height: auto !important;
+  overflow: auto !important;
+}
+/* 🔥 FINAL LANDING PAGE BODY FIX */
+.landing-body {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+/* 🔥 FINAL SCROLL FIX (IMPORTANT) */
+.landing-body {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  overflow-x: hidden;
+}
+
+/* Remove extra bottom scroll space */
+.landing-body::after {
+  content: "";
+  display: block;
+  height: 0;
+}
+/* 🔥 FINAL SCROLL FIX (IMPORTANT) */
+.landing-body {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  overflow-x: hidden;
+}
+
+/* Remove extra bottom scroll space */
+.landing-body::after {
+  content: "";
+  display: block;
+  height: 0;
+}

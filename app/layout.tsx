@@ -14,13 +14,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+
   const isAdmin = pathname.startsWith("/admin");
+  const isLanding = pathname === "/english-online";
 
   return (
     <html lang="en">
-      <body className="overflow-x-hidden">
+      <body
+        className={`overflow-x-hidden ${
+          isLanding ? "landing-body" : ""
+        }`}
+      >
 
-        {!isAdmin && (
+        {!isAdmin && !isLanding && (
           <>
             <MobileHeader />
             <DesktopHeader />
@@ -29,7 +35,7 @@ export default function RootLayout({
 
         {children}
 
-        {!isAdmin && (
+        {!isAdmin && !isLanding && (
           <>
             <MobileBottomNav />
             <StickyButtons />
