@@ -320,7 +320,7 @@ export default function EnglishOnlinePage() {
       <CTA />
 
       <HomeVideoSection />
-      <HomeVideoReviewsSection />
+      
       <CTA />
 
       <BranchesSection />
