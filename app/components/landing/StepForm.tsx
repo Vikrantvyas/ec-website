@@ -140,7 +140,7 @@ export default function StepForm({ leadId, onClose }: Props) {
 
       // ✅ WhatsApp
       const message = `Hi 👋
-I have booked a demo class.
+कृपया डेमो क्‍लास का समय और क्‍लास की लिंक भेजिये.
 
 Name: ${form.student_name}
 Mobile: ${form.mobile_number}`;
