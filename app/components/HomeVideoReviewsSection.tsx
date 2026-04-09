@@ -23,7 +23,7 @@ export default function HomeVideoReviewsSection({
   courseLabel = "Spoken English",
 }: Props) {
   return (
-    <section className="px-4 py-16 bg-gradient-to-b from-white to-green-50">
+    <section className="px-4 py-6 bg-gradient-to-b from-white to-green-50">
       <div className="max-w-6xl mx-auto">
 
         {/* HEADING */}

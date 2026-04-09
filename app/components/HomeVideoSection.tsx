@@ -6,12 +6,12 @@ type Props = {
 };
 
 export default function HomeVideoSection({
-  title = "Watch How English Club Works",
+  title = "ऑनलाईन क्‍लास कैसे लेते हैं?",
   description =
-    "This short video will help you understand our teaching method, classroom environment, online classes, and how we help students speak English confidently.",
+    "यह वीडियो हमारी स्‍कूल-स्‍टूडेन्‍ट्स-बैच का है, आपको इसे देखने से हमारी तरीकों का आइडिया हो जाएगा",
 }: Props) {
   return (
-    <section className="px-4 py-12 bg-gradient-to-b from-blue-50 to-white">
+    <section className="px-4 py-6 bg-gradient-to-b from-blue-50 to-white">
       <div className="max-w-5xl mx-auto">
 
         <h2 className="text-2xl md:text-3xl font-bold text-center text-blue-700 mb-4">
