@@ -27,11 +27,10 @@ export default function StepForm({ leadId, onClose }: Props) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  // 🔥 अब 3 steps ही हैं
   const remaining = 4 - step;
   const headingText =
     remaining === 3
-      ? "सही बैच और फीस जानने के लिए थोड़ा सा अपने बारे में बता दीजिए"
+      ? "सिर्फ अपना नम्‍बर, नाम और शिक्षा बता दीजिए, ताकि आपको आपके अनुसार क्‍लास की लिंक भेजी जा सके"
       : remaining === 2
       ? "बस 2 बातें और"
       : remaining === 1
@@ -80,7 +79,6 @@ export default function StepForm({ leadId, onClose }: Props) {
     if (loading) return;
     setLoading(true);
 
-    // STEP 1 - MOBILE
     if (step === 1) {
       if (!/^\d{10}$/.test(form.mobile_number)) {
         alert("Enter valid mobile");
@@ -104,7 +102,6 @@ export default function StepForm({ leadId, onClose }: Props) {
       return;
     }
 
-    // STEP 2 - NAME + GENDER
     if (step === 2) {
 
       if (!form.gender) {
@@ -129,7 +126,6 @@ export default function StepForm({ leadId, onClose }: Props) {
       return;
     }
 
-    // STEP 3 - EDUCATION
     if (step === 3) {
 
       if (!form.education) {
@@ -142,9 +138,21 @@ export default function StepForm({ leadId, onClose }: Props) {
 
       setDone(true);
 
+      // ✅ WhatsApp
+      const message = `Hi 👋
+I have booked a demo class.
+
+Name: ${form.student_name}
+Mobile: ${form.mobile_number}`;
+
+      window.open(
+        `https://wa.me/919713014234?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
+
       setTimeout(() => {
         setOpen(false);
-      }, 1500);
+      }, 3000);
 
       setLoading(false);
     }
@@ -157,19 +165,18 @@ export default function StepForm({ leadId, onClose }: Props) {
 
       <div className="bg-white w-full max-w-sm p-5 rounded-xl space-y-4 relative">
   
-  {/* ❌ CLOSE BUTTON */}
-  <button
-    onClick={() => {
-      setOpen(false);
-      onClose?.();
-    }}
-    className="absolute top-2 right-3 text-xl text-gray-500"
-  >
-    ✕
-  </button>
+        <button
+          onClick={() => {
+            setOpen(false);
+            onClose?.();
+          }}
+          className="absolute top-2 right-3 text-xl text-gray-500"
+        >
+          ✕
+        </button>
 
-        <h2 className="text-lg font-semibold text-center">
-          {done ? "Thanks 😊" : headingText}
+        <h2 className="text-sm font-semibold text-center">
+          {done ? "🎉 Demo Booked Successfully" : headingText}
         </h2>
 
         {!done && (
@@ -191,118 +198,71 @@ export default function StepForm({ leadId, onClose }: Props) {
               </>
             )}
 
-            {/* STEP 2 - GENDER + NAME */}
+            {/* STEP 2 */}
             {step === 2 && (
               <>
                 <p>पहले Gender चुनें, फिर नाम लिखें</p>
 
                 <div className="flex gap-3">
-
-                  <div
-                    onClick={() => handleChange("gender", "Male")}
-                    className={`flex-1 p-2 border rounded cursor-pointer text-center ${
-                      form.gender === "Male" ? "bg-blue-100" : ""
-                    }`}
-                  >
-                    👨
-                  </div>
-
-                  <div
-                    onClick={() => handleChange("gender", "Female")}
-                    className={`flex-1 p-2 border rounded cursor-pointer text-center ${
-                      form.gender === "Female" ? "bg-pink-100" : ""
-                    }`}
-                  >
-                    👩
-                  </div>
-
+                  <div onClick={() => handleChange("gender", "Male")} className={`flex-1 p-2 border rounded text-center ${form.gender === "Male" ? "bg-blue-100" : ""}`}>👨</div>
+                  <div onClick={() => handleChange("gender", "Female")} className={`flex-1 p-2 border rounded text-center ${form.gender === "Female" ? "bg-pink-100" : ""}`}>👩</div>
                 </div>
 
                 <input
                   value={form.student_name}
                   disabled={!form.gender}
-                  onChange={(e) =>
-                    handleChange("student_name", e.target.value)
-                  }
-                  placeholder="Student's Name"
-                  className={`border px-3 py-2 rounded w-full ${
-                    !form.gender ? "bg-gray-100" : ""
-                  }`}
+                  onChange={(e) => handleChange("student_name", e.target.value)}
+                  className={`border px-3 py-2 rounded w-full ${!form.gender ? "bg-gray-100" : ""}`}
                 />
               </>
             )}
 
-            {/* STEP 3 */}
-            {/* STEP 3 - EDUCATION BUTTON GRID */}
-{step === 3 && (
-  <>
-    <p>स्‍टूडेन्‍ट की शिक्षा </p>
+            {/* ✅ STEP 3 FULL GRID (UNCHANGED) */}
+            {step === 3 && (
+              <>
+                <p>स्‍टूडेन्‍ट की शिक्षा </p>
 
-    <div className="space-y-2">
+                <div className="space-y-2">
 
-      {/* Row 1 */}
-      <div className="grid grid-cols-6 gap-2">
-        {["1st","2nd","3rd","4th","5th","6th"].map((item) => (
-          <div
-            key={item}
-            onClick={() => handleChange("education", item)}
-            className={`text-center py-2 border rounded cursor-pointer text-xs ${
-              form.education === item ? "bg-blue-100 border-blue-500" : ""
-            }`}
-          >
-            {item}
-          </div>
-        ))}
-      </div>
+                  <div className="grid grid-cols-6 gap-2">
+                    {["1st","2nd","3rd","4th","5th","6th"].map((item) => (
+                      <div key={item} onClick={() => handleChange("education", item)}
+                        className={`text-center py-2 border rounded text-xs ${form.education === item ? "bg-blue-100 border-blue-500" : ""}`}>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
 
-      {/* Row 2 */}
-      <div className="grid grid-cols-6 gap-2">
-        {["7th","8th","9th","10th","11th","12th"].map((item) => (
-          <div
-            key={item}
-            onClick={() => handleChange("education", item)}
-            className={`text-center py-2 border rounded cursor-pointer text-xs ${
-              form.education === item ? "bg-blue-100 border-blue-500" : ""
-            }`}
-          >
-            {item}
-          </div>
-        ))}
-      </div>
+                  <div className="grid grid-cols-6 gap-2">
+                    {["7th","8th","9th","10th","11th","12th"].map((item) => (
+                      <div key={item} onClick={() => handleChange("education", item)}
+                        className={`text-center py-2 border rounded text-xs ${form.education === item ? "bg-blue-100 border-blue-500" : ""}`}>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
 
-      {/* Row 3 */}
-      <div className="grid grid-cols-4 gap-2">
-        {["1st Y.","2nd Y.","3rd Y.","Graduate"].map((item) => (
-          <div
-            key={item}
-            onClick={() => handleChange("education", item)}
-            className={`text-center py-2 border rounded cursor-pointer text-xs ${
-              form.education === item ? "bg-blue-100 border-blue-500" : ""
-            }`}
-          >
-            {item}
-          </div>
-        ))}
-      </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {["1st Y.","2nd Y.","3rd Y.","Graduate"].map((item) => (
+                      <div key={item} onClick={() => handleChange("education", item)}
+                        className={`text-center py-2 border rounded text-xs ${form.education === item ? "bg-blue-100 border-blue-500" : ""}`}>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
 
-      {/* Row 4 */}
-      <div className="grid grid-cols-2 gap-2">
-        {["PG","Other"].map((item) => (
-          <div
-            key={item}
-            onClick={() => handleChange("education", item)}
-            className={`text-center py-2 border rounded cursor-pointer text-xs ${
-              form.education === item ? "bg-blue-100 border-blue-500" : ""
-            }`}
-          >
-            {item}
-          </div>
-        ))}
-      </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {["PG","Other"].map((item) => (
+                      <div key={item} onClick={() => handleChange("education", item)}
+                        className={`text-center py-2 border rounded text-xs ${form.education === item ? "bg-blue-100 border-blue-500" : ""}`}>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
 
-    </div>
-  </>
-)}
+                </div>
+              </>
+            )}
 
             <button
               onClick={handleNext}
@@ -313,6 +273,21 @@ export default function StepForm({ leadId, onClose }: Props) {
             </button>
           </>
         )}
+
+        {done && (
+          <div className="text-center space-y-3">
+            <p className="text-green-600">आपका डेमो बुक हो गया ✅</p>
+
+            <a
+              href="https://zoom.us/j/xxxx"
+              target="_blank"
+              className="bg-blue-600 text-white px-4 py-2 rounded inline-block"
+            >
+              Join Demo Class
+            </a>
+          </div>
+        )}
+
       </div>
     </div>
   );

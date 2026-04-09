@@ -120,14 +120,14 @@ export default function EnglishOnlinePage() {
                 <p onClick={() => {toggleSub("q1"); trackFAQ("online_vs_offline")}} className="cursor-pointer">
                   👉 ऑनलाइन और ऑफलाइन क्लास में क्या अंतर है?
                 </p>
-                {openSub === "q1" && <p className="pl-4 text-gray-600">ऑनलाइन घर से, ऑफलाइन सेंटर पर।</p>}
+                {openSub === "q1" && <p className="pl-4 text-gray-600">ऑनलाइन घर से मोबाईल पर जॉईन कर सकते हैं, ऑफलाइन क्‍लास के लिए हमारे सेंटर पर आना होता है ।</p>}
               </div>
 
               <div>
                 <p onClick={() => {toggleSub("q2"); trackFAQ("online_process")}} className="cursor-pointer">
                   👉 क्या ऑनलाइन क्लास लाइव होती है?
                 </p>
-                {openSub === "q2" && <p className="pl-4 text-gray-600">हाँ, सभी क्लास लाइव होती हैं।</p>}
+                {openSub === "q2" && <p className="pl-4 text-gray-600">हाँ, यह क्लास लाइव होती हैं, टीचर और स्‍टूडेन्‍ट्स की वीडियो क्‍लास हाेती है, आपस में बातचीत होती है । आप इसका नीचे वीडियो भी देख सकते हैं ।</p>}
               </div>
 
             </div>
