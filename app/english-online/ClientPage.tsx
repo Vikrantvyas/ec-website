@@ -148,21 +148,21 @@ export default function EnglishOnlinePage() {
                 <p onClick={() => {toggleSub("q3"); trackFAQ("duration")}} className="cursor-pointer">
                   👉 यह कोर्स कितने दिनों का है?
                 </p>
-                {openSub === "q3" && <p className="pl-4 text-gray-600">3 महीने का कोर्स।</p>}
+                {openSub === "q3" && <p className="pl-4 text-gray-600">यह 3 महीनों का कोर्स है ।</p>}
               </div>
 
               <div>
                 <p onClick={() => {toggleSub("q4"); trackFAQ("daily_time")}} className="cursor-pointer">
                   👉 रोज कितनी देर की क्लास होती है?
                 </p>
-                {openSub === "q4" && <p className="pl-4 text-gray-600">1 घंटे की क्लास।</p>}
+                {openSub === "q4" && <p className="pl-4 text-gray-600">क्‍लास रोज 1 घंटे की होती है ।।</p>}
               </div>
 
               <div>
                 <p onClick={() => {toggleSub("q5"); trackFAQ("weekly_days")}} className="cursor-pointer">
                   👉 क्लास सप्ताह में कितने दिन होती है?
                 </p>
-                {openSub === "q5" && <p className="pl-4 text-gray-600">सप्ताह में 5 दिन क्लास।</p>}
+                {openSub === "q5" && <p className="pl-4 text-gray-600">क्‍लास सोमवार से शुक्रवार प्रतिदिन होती है, शनिवार की क्‍लास की जगह रविवार को सुबह 10 बजे क्‍लास होती है ।</p>}
               </div>
 
             </div>
@@ -183,21 +183,21 @@ export default function EnglishOnlinePage() {
                 <p onClick={() => {toggleSub("q6"); trackFAQ("batch_size")}} className="cursor-pointer">
                   👉 एक बैच में कितने स्टूडेंट्स होते हैं?
                 </p>
-                {openSub === "q6" && <p className="pl-4 text-gray-600">छोटे बैच।</p>}
+                {openSub === "q6" && <p className="pl-4 text-gray-600">आमतौर पर 10 से 15।</p>}
               </div>
 
               <div>
                 <p onClick={() => {toggleSub("q7"); trackFAQ("separate_batches")}} className="cursor-pointer">
-                  👉 क्या अलग-अलग बैचेस होती हैं?
+                  👉 क्या सब तरह के लोगों की एक ही बैच होती हैं?
                 </p>
-                {openSub === "q7" && <p className="pl-4 text-gray-600">हाँ, अलग बैचेस।</p>}
+                {openSub === "q7" && <p className="pl-4 text-gray-600">नहीं, महिलाओं, बच्‍चों, स्‍कूल स्‍टूडेन्‍ट्स, जॉब वाले लोग सभी की अलग - अलग बैच होती है, कुछ बैचेस मिक्‍स भी हाेती हैं ।।</p>}
               </div>
 
               <div>
                 <p onClick={() => {toggleSub("q8"); trackFAQ("fees")}} className="cursor-pointer">
                   👉 कोर्स की फीस क्या है?
                 </p>
-                {openSub === "q8" && <p className="pl-4 text-gray-600">₹1000/month</p>}
+                {openSub === "q8" && <p className="pl-4 text-gray-600">कोर्स की कुल फीस 3000.00 रूपये हैं, जिन्‍हें आप 1000.00 रूपये प्रतिमाह जमा कर सकते हैं, यदि आप इकठ्ठा 2000.00 रूपये जमा करते हैं, तो आपको 1000.00 रूपये का डिस्‍काउंट मिल जाता है यानी दो माह का इकठ्ठा जमा करने पर तीसरा माह फ्री ।</p>}
               </div>
 
             </div>
@@ -218,35 +218,35 @@ export default function EnglishOnlinePage() {
                 <p onClick={() => {toggleSub("q9"); trackFAQ("demo_free")}} className="cursor-pointer">
                   👉 क्या डेमो क्लास फ्री है?
                 </p>
-                {openSub === "q9" && <p className="pl-4 text-gray-600">हाँ, बिल्कुल फ्री।</p>}
+                {openSub === "q9" && <p className="pl-4 text-gray-600">हाँ, डेमो क्‍लास बिल्कुल फ्री है ।</p>}
               </div>
 
               <div>
                 <p onClick={() => {toggleSub("q10"); trackFAQ("demo_days")}} className="cursor-pointer">
-                  👉 डेमो क्लास कितने दिन की है?
+                  👉 क्‍या डेमो क्लास रोज़ होती है?
                 </p>
-                {openSub === "q10" && <p className="pl-4 text-gray-600">1 दिन।</p>}
+                {openSub === "q10" && <p className="pl-4 text-gray-600">यह तय न‍हीं है, स्‍टूडेन्‍ट्स की डिमांड और टीचर के अवेलेबल होने पर रोज की डेमो क्‍लास तय होती हैं ।</p>}
               </div>
 
               <div>
                 <p onClick={() => {toggleSub("q11"); trackFAQ("demo_time")}} className="cursor-pointer">
-                  👉 डेमो का टाइम क्या है?
+                  👉 डेमो क्‍लास का टाइम क्या है?
                 </p>
-                {openSub === "q11" && <p className="pl-4 text-gray-600">12 PM और 7 PM।</p>}
+                {openSub === "q11" && <p className="pl-4 text-gray-600">डेमो क्‍लास का कोई निश्चित समय नहीं होता है, स्‍टूडेन्‍ट्स की सुविधा के अनुसार डेमो क्‍लास का समय निश्चित किया जाता है । अगले डेमो के टाईमिंग की जानकारी आपको डेमो बुक करने पर मिल जाती है ।।</p>}
               </div>
 
               <div>
                 <p onClick={() => {toggleSub("q12"); trackFAQ("app_needed")}} className="cursor-pointer">
-                  👉 क्या ऐप चाहिए?
+                  👉 क्‍या डेमो क्‍लास के लिए मोबाईल में कोई ऐप होना चाहिए?
                 </p>
-                {openSub === "q12" && <p className="pl-4 text-gray-600">Zoom ऐप चाहिए।</p>}
+                {openSub === "q12" && <p className="pl-4 text-gray-600">हॉं, हम अपनी क्‍लासेस के लिए Zoom App का उपयोग करते हैं, इसलिए यह आपके मोबाईल में होना चाहिए । नीचे ज़ूम ऐप से जुड़े प्रश्‍नों मे आपको इसके बारे में सारी जानकारी मिल जाएगी ।</p>}
               </div>
 
               <div>
                 <p onClick={() => {toggleSub("q13"); trackFAQ("demo_booking")}} className="cursor-pointer">
-                  👉 फ्री डेमो कैसे लें?
+                  👉 फ्री क्‍लास डेमो कैसे लें?
                 </p>
-                {openSub === "q13" && <p className="pl-4 text-gray-600">नीचे बटन से बुक करें।</p>}
+                {openSub === "q13" && <p className="pl-4 text-gray-600">नीचे "Free Demo Book करें" बटन से डेमो बुक करें।</p>}
               </div>
 
             </div>
@@ -267,38 +267,51 @@ export default function EnglishOnlinePage() {
                 <p onClick={() => {toggleSub("q14"); trackFAQ("zoom_safe")}} className="cursor-pointer">
                   👉 ज़ूम ऐप क्या है? क्या यह सुरक्षित है?
                 </p>
-                {openSub === "q14" && <p className="pl-4 text-gray-600">हाँ, यह सुरक्षित वीडियो ऐप है।</p>}
+                {openSub === "q14" && <p className="pl-4 text-gray-600">यह ऑनलाईन क्‍लास के लिए फेमस ऐप है, बहुत-सी क्‍लासेस और स्‍टूडेन्‍ट्स इसका उपयोग करते हैं और यह सुरक्षित वीडियो ऐप है।</p>}
               </div>
 
               <div>
                 <p onClick={() => {toggleSub("q15"); trackFAQ("zoom_free")}} className="cursor-pointer">
                   👉 क्या ज़ूम ऐप फ्री है?
                 </p>
-                {openSub === "q15" && <p className="pl-4 text-gray-600">हाँ, फ्री है।</p>}
+                {openSub === "q15" && <p className="pl-4 text-gray-600">हाँ, यह फ्री ऐप है।</p>}
               </div>
 
               <div>
-                <p onClick={() => {toggleSub("q16"); trackFAQ("zoom_download")}} className="cursor-pointer">
-                  👉 ज़ूम ऐप कैसे डाउनलोड करें?
-                </p>
-                {openSub === "q16" && <p className="pl-4 text-gray-600">Play Store से डाउनलोड करें।</p>}
-              </div>
+                <p 
+  onClick={() => {toggleSub("q16"); trackFAQ("zoom_download")}} 
+  className="cursor-pointer"
+>
+  👉 ज़ूम ऐप कैसे डाउनलोड करें?
+</p>
 
-              <div>
+{openSub === "q16" && (
+  <p className="pl-4 text-gray-600">
+    Play Store से डाउनलोड करें या इस लिंक का उपयोग करें - 
+    <a
+      href="https://play.google.com/store/apps/details?id=us.zoom.videomeetings"
+      target="_blank"
+      className="text-blue-600 underline ml-1"
+    >
+      Click Here
+    </a>
+  </p>
+)}
                 <p onClick={() => {toggleSub("q17"); trackFAQ("zoom_after")}} className="cursor-pointer">
                   👉 डाउनलोड के बाद क्या करें?
                 </p>
-                {openSub === "q17" && <p className="pl-4 text-gray-600">लिंक से जॉइन करें।</p>}
+                {openSub === "q17" && <p className="pl-4 text-gray-600">क्‍लास की लिंक से, क्‍लास के समय पर जॉइन करें।</p>}
               </div>
 
               <div>
                 <p onClick={() => {toggleSub("q18"); trackFAQ("zoom_join")}} className="cursor-pointer">
-                  👉 लिंक पर क्लिक के बाद क्या करें?
+                  👉 क्‍लास लिंक कैसे मिलेगी?
                 </p>
-                {openSub === "q18" && <p className="pl-4 text-gray-600">Join Meeting दबाएं।</p>}
+                {openSub === "q18" && <p className="pl-4 text-gray-600">इसके लिए आप नीचे दिए "Free Demo Book करें" बटन को दबाऍं ।</p>}
               </div>
 
             </div>
+            
           )}
         </div>
 
