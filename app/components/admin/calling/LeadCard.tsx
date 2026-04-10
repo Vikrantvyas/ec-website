@@ -33,6 +33,11 @@ type Lead = {
   batch_name?: string;
   gender?: string;
   age?: number;
+
+  // ✅ NEW FIELDS
+  method?: string;
+  channel?: string;
+  remark?: string;
 };
 
 type Props = {
@@ -82,7 +87,6 @@ export default function LeadCard({ lead }: Props) {
   }
 
   async function fetchData() {
-    // 👉 1. PARALLEL FETCH
     const [receiptRes, attendanceRes] = await Promise.all([
       supabase
         .from("receipts")
@@ -98,12 +102,10 @@ export default function LeadCard({ lead }: Props) {
     const receiptData = receiptRes.data || [];
     const attendanceData = attendanceRes.data || [];
 
-    // 👉 2. RECEIPTS SAFE
     setReceipts(receiptData);
     const total = receiptData.reduce((s, r) => s + (r.amount || 0), 0);
     setTotalPaid(total);
 
-    // 👉 3. ATTENDANCE SAFE
     if (attendanceData.length > 0) {
       const batchIds = attendanceData.map((a) => a.batch_id);
 
@@ -125,7 +127,7 @@ export default function LeadCard({ lead }: Props) {
 
       setAttendance(formatted);
     } else {
-      setAttendance([]); // ✅ prevent stale data
+      setAttendance([]);
     }
   }
 
@@ -137,23 +139,21 @@ export default function LeadCard({ lead }: Props) {
       : "-";
 
   const handleDelete = async () => {
-  if (!confirm("Delete this lead?")) return;
+    if (!confirm("Delete this lead?")) return;
 
-  const { error } = await supabase
-    .from("leads")
-    .delete()
-    .eq("id", lead.id);
+    const { error } = await supabase
+      .from("leads")
+      .delete()
+      .eq("id", lead.id);
 
-  if (error) {
-    alert("❌ Delete failed");
-    console.log("DELETE ERROR:", error);
-  } else {
-    alert("✅ Lead deleted successfully");
-
-    // 🔥 Force full reload (100% working)
-    window.location.reload();
-  }
-};
+    if (error) {
+      alert("❌ Delete failed");
+      console.log("DELETE ERROR:", error);
+    } else {
+      alert("✅ Lead deleted successfully");
+      window.location.reload();
+    }
+  };
 
   return (
     <div className="bg-white rounded shadow-sm p-3 text-sm w-full space-y-2">
@@ -198,42 +198,78 @@ export default function LeadCard({ lead }: Props) {
 
         {activeTab === "overview" && (
           <>
+            {/* ✅ DATE + METHOD + CHANNEL */}
             <p>
-              {new Date(lead.enquiryDate).toLocaleDateString("en-GB")} (
-              {sortedFollowUps.length} Calls)
+              {new Date(lead.enquiryDate).toLocaleDateString("en-GB")} | {lead.method || "-"} | {lead.channel || "-"}
             </p>
 
             <p>{lead.course || "Course N/A"}</p>
 
-            <div className="flex gap-2 text-xs">
+            {/* ✅ STAGE + CHANCES + TOTAL PAID INLINE */}
+            <div className="flex gap-2 text-xs flex-wrap">
               {lead.lead_stage && (
                 <span className="bg-green-100 px-2 rounded">{lead.lead_stage}</span>
               )}
               {lead.lead_chances && (
                 <span className="bg-blue-100 px-2 rounded">{lead.lead_chances}</span>
               )}
+              <span className="bg-yellow-100 px-2 rounded text-green-700">
+                ₹ {totalPaid}
+              </span>
             </div>
-
-            <p className="text-green-700">Total Paid: {totalPaid}</p>
 
             <p>{lead.batch_name || "No Batch"}</p>
 
-            {/* ✅ LATEST CALL */}
-            <div className="border-t pt-1 mt-1">
-              {sortedFollowUps.length > 0 ? (
-                <>
-                  <p className="text-xs text-gray-500">
-                    {new Date(sortedFollowUps[0].date).toLocaleDateString("en-GB")}
-                  </p>
-                  <p className="font-medium text-xs">{sortedFollowUps[0].type}</p>
-                  <p className="text-gray-600 text-xs line-clamp-1">
-                    {sortedFollowUps[0].note}
-                  </p>
-                </>
-              ) : (
-                <p className="text-gray-400 text-xs">No recent call</p>
-              )}
-            </div>
+            {/* REMARK */}
+<p className="text-gray-600 text-xs">
+  {lead.remark || "No remark"}
+</p>
+
+{/* SEPARATOR */}
+<div className="border-t my-2"></div>
+
+{/* RECENT CALL */}
+<div className="pt-2 space-y-2">
+  
+
+  {callHistory.length === 0 && (
+    <p className="text-gray-400 text-xs">No recent call</p>
+  )}
+
+  {callHistory.length > 0 && (
+    <div className="text-xs space-y-1">
+
+      <div className="font-medium">
+        {(callHistory[0].call_date || new Date(callHistory[0].created_at).toLocaleDateString("en-GB"))}
+        {" · "}
+        {callHistory[0].call_type}
+        {" · "}
+        {callHistory[0].purpose}
+      </div>
+
+      <div className="grid grid-cols-2">
+        <div>{callHistory[0].result}</div>
+        <div>{callHistory[0].mood}</div>
+      </div>
+
+      <div className="grid grid-cols-2">
+        <div>Stage: {lead.lead_stage || "-"}</div>
+        <div>Chance: {lead.lead_chances || "-"}</div>
+      </div>
+
+      <div className="grid grid-cols-2">
+        <div>{callHistory[0].next_follow_up || "-"}</div>
+        <div>{callHistory[0].calling_person || "-"}</div>
+      </div>
+
+      {callHistory[0].remark && (
+        <div>{callHistory[0].remark}</div>
+      )}
+
+    </div>
+  )}
+</div>
+
           </>
         )}
 
