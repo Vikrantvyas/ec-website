@@ -82,52 +82,52 @@ export default function LeadCard({ lead }: Props) {
   }
 
   async function fetchData() {
-  // 👉 1. PARALLEL FETCH
-  const [receiptRes, attendanceRes] = await Promise.all([
-    supabase
-      .from("receipts")
-      .select("*")
-      .eq("student_name", lead.name),
+    // 👉 1. PARALLEL FETCH
+    const [receiptRes, attendanceRes] = await Promise.all([
+      supabase
+        .from("receipts")
+        .select("*")
+        .eq("student_name", lead.name),
 
-    supabase
-      .from("attendance")
-      .select("status, attendance_date, batch_id")
-      .eq("lead_id", lead.id),
-  ]);
+      supabase
+        .from("attendance")
+        .select("status, attendance_date, batch_id")
+        .eq("lead_id", lead.id),
+    ]);
 
-  const receiptData = receiptRes.data || [];
-  const attendanceData = attendanceRes.data || [];
+    const receiptData = receiptRes.data || [];
+    const attendanceData = attendanceRes.data || [];
 
-  // 👉 2. RECEIPTS SAFE
-  setReceipts(receiptData);
-  const total = receiptData.reduce((s, r) => s + (r.amount || 0), 0);
-  setTotalPaid(total);
+    // 👉 2. RECEIPTS SAFE
+    setReceipts(receiptData);
+    const total = receiptData.reduce((s, r) => s + (r.amount || 0), 0);
+    setTotalPaid(total);
 
-  // 👉 3. ATTENDANCE SAFE
-  if (attendanceData.length > 0) {
-    const batchIds = attendanceData.map((a) => a.batch_id);
+    // 👉 3. ATTENDANCE SAFE
+    if (attendanceData.length > 0) {
+      const batchIds = attendanceData.map((a) => a.batch_id);
 
-    const { data: batches } = await supabase
-      .from("batches")
-      .select("id, batch_name")
-      .in("id", batchIds);
+      const { data: batches } = await supabase
+        .from("batches")
+        .select("id, batch_name")
+        .in("id", batchIds);
 
-    const batchMap: any = {};
-    batches?.forEach((b) => {
-      batchMap[b.id] = b.batch_name;
-    });
+      const batchMap: any = {};
+      batches?.forEach((b) => {
+        batchMap[b.id] = b.batch_name;
+      });
 
-    const formatted = attendanceData.map((a) => ({
-      batch_name: batchMap[a.batch_id] || "",
-      date: a.attendance_date,
-      status: a.status,
-    }));
+      const formatted = attendanceData.map((a) => ({
+        batch_name: batchMap[a.batch_id] || "",
+        date: a.attendance_date,
+        status: a.status,
+      }));
 
-    setAttendance(formatted);
-  } else {
-    setAttendance([]); // ✅ prevent stale data
+      setAttendance(formatted);
+    } else {
+      setAttendance([]); // ✅ prevent stale data
+    }
   }
-}
 
   const genderShort =
     lead.gender?.toLowerCase() === "male"
@@ -137,10 +137,23 @@ export default function LeadCard({ lead }: Props) {
       : "-";
 
   const handleDelete = async () => {
-    if (!confirm("Delete this lead?")) return;
-    await supabase.from("leads").delete().eq("id", lead.id);
-    router.refresh();
-  };
+  if (!confirm("Delete this lead?")) return;
+
+  const { error } = await supabase
+    .from("leads")
+    .delete()
+    .eq("id", lead.id);
+
+  if (error) {
+    alert("❌ Delete failed");
+    console.log("DELETE ERROR:", error);
+  } else {
+    alert("✅ Lead deleted successfully");
+
+    // 🔥 Force full reload (100% working)
+    window.location.reload();
+  }
+};
 
   return (
     <div className="bg-white rounded shadow-sm p-3 text-sm w-full space-y-2">
