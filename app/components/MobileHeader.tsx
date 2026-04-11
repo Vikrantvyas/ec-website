@@ -121,7 +121,7 @@ export default function MobileHeader() {
               onClick={() => setOpen(false)}
               className="block text-blue-600 font-medium"
             >
-              Admin Login
+              Login
             </Link>
           </div>
 

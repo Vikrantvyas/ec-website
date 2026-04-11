@@ -315,22 +315,31 @@ export default function LeadCard({ lead }: Props) {
       </div>
 
       {/* ACTION BUTTONS */}
-      <div className="flex gap-2 pt-2 border-t">
-        <a href={`tel:${lead.mobile}`} className="flex-1 text-center bg-blue-600 text-white py-2 rounded text-sm">
-          📞 Call
-        </a>
+      <div className="flex gap-2 pt-2 border-t text-xs">
 
-        <a href={`https://wa.me/91${lead.mobile}`} target="_blank" className="flex-1 text-center bg-green-600 text-white py-2 rounded text-sm">
-          💬 WhatsApp
-        </a>
+  <a
+    href={`tel:${lead.mobile}`}
+    className="flex-1 flex items-center justify-center gap-1 bg-blue-600 text-white py-1 rounded"
+  >
+    📞 <span>Call</span>
+  </a>
 
-        <button
-          onClick={() => router.push(`/admin/calling/${lead.id}`)}
-          className="flex-1 text-center bg-black text-white py-2 rounded text-sm"
-        >
-          📝 Feedback
-        </button>
-      </div>
+  <a
+    href={`https://wa.me/91${lead.mobile}`}
+    target="_blank"
+    className="flex-1 flex items-center justify-center gap-1 bg-green-600 text-white py-1 rounded"
+  >
+    💬 <span>WhatsApp</span>
+  </a>
+
+  <button
+    onClick={() => router.push(`/admin/calling/${lead.id}`)}
+    className="flex-1 flex items-center justify-center gap-1 bg-black text-white py-1 rounded"
+  >
+    📝 <span>Feedback</span>
+  </button>
+
+</div>
     </div>
   );
 }
