@@ -269,7 +269,7 @@ batchStudents?.forEach((bs: any) => {
         {/* HEADER */}
         <div className="sticky top-0 z-20 bg-white shadow-sm">
 
-        <div className="flex gap-2 overflow-x-auto p-3">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar whitespace-nowrap p-3">
 
   <button
     onClick={() => {
@@ -289,7 +289,7 @@ batchStudents?.forEach((bs: any) => {
       key={b.id}
       onClick={() => {
         setSelectedBranch(b.id);
-        setExpandedId(null); // reset open card (important)
+        setExpandedId(null);
       }}
       className={`px-3 py-1 rounded text-xs md:text-sm whitespace-nowrap shadow-sm transition
         ${selectedBranch === b.id
