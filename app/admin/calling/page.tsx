@@ -264,7 +264,7 @@ batchStudents?.forEach((bs: any) => {
 
     <PermissionGuard page="Calling">
 
-      <div className="calling-page flex flex-col h-[calc(100vh-56px)] bg-gray-50 overflow-hidden">
+      <div className="calling-page flex flex-col h-[calc(100vh-56px)] bg-blue-100 overflow-hidden">
 
         {/* HEADER */}
         <div className="sticky top-0 z-20 bg-white shadow-sm">

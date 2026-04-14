@@ -148,7 +148,7 @@ export default function LeadCard({ lead, selectedIds, setSelectedIds }: Props) {
   };
 
   return (
-    <div className="bg-white rounded shadow-sm p-3 text-sm w-full space-y-2">
+    <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 text-sm w-full space-y-2">
 
       {/* HEADER */}
       <div className="flex justify-between items-start">
@@ -162,15 +162,47 @@ export default function LeadCard({ lead, selectedIds, setSelectedIds }: Props) {
       onChange={toggleSelect}
     />
 
-    <div>
-      <div className="font-semibold text-black text-base">
-        {lead.name} {lead.age || "-"} {genderShort}
-      </div>
+   <div>
+  <div className="font-semibold text-black text-base">
+    {lead.name} {lead.age || "-"} {genderShort}
+  </div>
 
-      <div className="text-black text-base">
-        {lead.mobile}
-      </div>
+  <div className="flex items-center justify-between gap-2 text-sm">
+
+    {/* Mobile */}
+    <div className="text-black truncate">
+      {lead.mobile}
     </div>
+
+    {/* Links */}
+    <div className="flex gap-2 text-xs shrink-0">
+
+      <a
+        href={`tel:${lead.mobile}`}
+        className="text-blue-600"
+      >
+        Call
+      </a>
+
+      <a
+        href={`https://wa.me/91${lead.mobile}`}
+        target="_blank"
+        className="text-green-600"
+      >
+        Wapp
+      </a>
+
+      <button
+        onClick={() => router.push(`/admin/calling/${lead.id}`)}
+        className="text-black"
+      >
+        Feedback
+      </button>
+
+    </div>
+
+  </div>
+</div>
 
   </div>
 
@@ -290,7 +322,25 @@ export default function LeadCard({ lead, selectedIds, setSelectedIds }: Props) {
           </>
         )}
 
-        {activeTab === "general" && <LeadDetails lead={lead} />}
+        {activeTab === "general" && (
+  <div className="space-y-1 text-xs">
+
+    <p><b>Enquired By:</b> {lead.enquired_by || "-"}</p>
+    <p><b>For:</b> {lead.for_whom || "-"}</p>
+    <p><b>Marital Status:</b> {lead.marital_status || "-"}</p>
+    <p><b>Profession:</b> {lead.profession || "-"}</p>
+    <p><b>Education:</b> {lead.education || "-"}</p>
+    <p><b>School:</b> {lead.school_college_job || "-"}</p>
+    <p><b>School Time:</b> {lead.school_timing || "-"}</p>
+    <p><b>Contact Time:</b> {lead.contact_time || "-"}</p>
+    <p><b>Preferred Time:</b> {lead.preferred_timing || "-"}</p>
+    <p><b>Action:</b> {lead.action || "-"}</p>
+    <p><b>Next Follow up date:</b> {lead.next_follow_date || "-"}</p>
+    <p><b>Next follow up time:</b> {lead.next_follow_time || "-"}</p>
+    <p><b>Counseller:</b> {lead.counsellor || "-"}</p>
+
+  </div>
+)}
         {activeTab === "contacts" && (
           <div className="space-y-1">
             <p>Mobile: {lead.mobile}</p>
@@ -328,31 +378,7 @@ export default function LeadCard({ lead, selectedIds, setSelectedIds }: Props) {
       </div>
 
       {/* ACTION BUTTONS */}
-      <div className="flex gap-2 pt-2 border-t text-xs">
-
-        <a
-          href={`tel:${lead.mobile}`}
-          className="flex-1 flex items-center justify-center gap-1 bg-blue-600 text-white py-1 rounded"
-        >
-          📞 <span>Call</span>
-        </a>
-
-        <a
-          href={`https://wa.me/91${lead.mobile}`}
-          target="_blank"
-          className="flex-1 flex items-center justify-center gap-1 bg-green-600 text-white py-1 rounded"
-        >
-          💬 <span>WhatsApp</span>
-        </a>
-
-        <button
-          onClick={() => router.push(`/admin/calling/${lead.id}`)}
-          className="flex-1 flex items-center justify-center gap-1 bg-black text-white py-1 rounded"
-        >
-          📝 <span>Feedback</span>
-        </button>
-
-      </div>
+      
     </div>
   );
 }
