@@ -37,6 +37,19 @@ type Lead = {
   method?: string;
   channel?: string;
   remark?: string;
+  enquired_by?: string;
+  for_whom?: string;
+  marital_status?: string;
+  profession?: string;
+  education?: string;
+  school_college_job?: string;
+  school_timing?: string;
+  contact_time?: string;
+  preferred_timing?: string;
+  action?: string;
+  next_follow_date?: string;
+  next_follow_time?: string;
+  counsellor?: string;
 };
 
 type Props = {
