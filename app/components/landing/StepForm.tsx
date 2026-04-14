@@ -199,23 +199,64 @@ Mobile: ${form.mobile_number}`;
             )}
 
             {/* STEP 2 */}
-            {step === 2 && (
-              <>
-                <p>पहले Gender चुनें, फिर नाम लिखें</p>
+{step === 2 && (
+  <>
+    {/* 🔥 CLEAR INSTRUCTION */}
+    <p className="text-center text-sm font-medium text-gray-700">
+      👉 पहले Gender के लिए बटन दबाएँ
+    </p>
 
-                <div className="flex gap-3">
-                  <div onClick={() => handleChange("gender", "Male")} className={`flex-1 p-2 border rounded text-center ${form.gender === "Male" ? "bg-blue-100" : ""}`}>👨</div>
-                  <div onClick={() => handleChange("gender", "Female")} className={`flex-1 p-2 border rounded text-center ${form.gender === "Female" ? "bg-pink-100" : ""}`}>👩</div>
-                </div>
+    <div className="flex gap-3">
+      <div
+        onClick={() => handleChange("gender", "Male")}
+        className={`flex-1 flex items-center justify-center gap-1 p-2 border rounded cursor-pointer ${
+          form.gender === "Male" ? "bg-blue-100 border-blue-500" : ""
+        }`}
+      >
+        👨 <span className="text-xs">M</span>
+      </div>
 
-                <input
-                  value={form.student_name}
-                  disabled={!form.gender}
-                  onChange={(e) => handleChange("student_name", e.target.value)}
-                  className={`border px-3 py-2 rounded w-full ${!form.gender ? "bg-gray-100" : ""}`}
-                />
-              </>
-            )}
+      <div
+        onClick={() => handleChange("gender", "Female")}
+        className={`flex-1 flex items-center justify-center gap-1 p-2 border rounded cursor-pointer ${
+          form.gender === "Female" ? "bg-pink-100 border-pink-500" : ""
+        }`}
+      >
+        👩 <span className="text-xs">F</span>
+      </div>
+    </div>
+
+    {/* 🔥 SECOND INSTRUCTION */}
+    <p className="text-xs text-gray-500 text-center mt-2">
+      👉 फिर नीचे अपना पूरा नाम लिखें
+    </p>
+
+    <input
+      value={form.student_name}
+      disabled={!form.gender}
+      onChange={(e) => {
+        let value = e.target.value;
+
+        // ✅ Only text allow
+        value = value.replace(/[^a-zA-Z\s]/g, "");
+
+        // ✅ Capitalize first letter of each word
+        value = value
+          .split(" ")
+          .map((word) =>
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          )
+          .join(" ");
+
+        handleChange("student_name", value);
+      }}
+      placeholder="अपना पूरा नाम यहाँ लिखें"
+      className={`border px-3 py-2 rounded w-full ${
+        !form.gender ? "bg-gray-100" : ""
+      }`}
+    />
+  </>
+)}
 
             {/* ✅ STEP 3 FULL GRID (UNCHANGED) */}
             {step === 3 && (
@@ -265,15 +306,14 @@ Mobile: ${form.mobile_number}`;
             )}
 
             <button
-              onClick={handleNext}
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-2 rounded"
-            >
-              {loading ? "Please wait..." : "Next"}
-            </button>
-          </>
+  onClick={handleNext}
+  disabled={loading}
+  className="w-full bg-blue-600 text-white py-2 rounded"
+>
+  {loading ? "Please wait..." : step === 3 ? "Finish" : "Next"}
+</button>
+</>
         )}
-
         {done && (
           <div className="text-center space-y-3">
             <p className="text-green-600">आपका डेमो बुक हो गया ✅</p>
