@@ -4,7 +4,6 @@
 html,
 body {
   max-width: 100%;
-  overflow-x: hidden;
 }
 
 /* 🎨 COLOR BASE */
@@ -308,4 +307,11 @@ body:has(.landing-page)::after {
 
 .cta-btn {
   animation: shake 1.2s infinite;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
