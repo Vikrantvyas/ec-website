@@ -310,7 +310,12 @@ setCallingPerson("");
           onChange={(e) => setRemark(e.target.value)} />
 
         <div className="flex gap-2">
-          <button onClick={() => router.back()} className="w-1/2 bg-gray-400 text-white py-2 rounded">Cancel</button>
+          <button
+  onClick={() => router.push("/admin/calling")}
+  className="w-1/2 bg-gray-400 text-white py-2 rounded"
+>
+  Cancel
+</button>
           <button onClick={handleSave} disabled={saving} className="w-1/2 bg-blue-600 text-white py-2 rounded">
             {saving ? "Saving..." : "Save"}
           </button>
