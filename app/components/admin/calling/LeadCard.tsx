@@ -7,7 +7,7 @@ import LeadDetails from "./LeadDetails";
 import LeadFees from "@/app/components/admin/lead/LeadFees";
 import LeadAttendance from "@/app/components/admin/lead/LeadAttendance";
 import { supabase } from "@/lib/supabaseClient";
-
+import InlineCallingForm from "@/app/components/admin/calling/InlineCallingForm";
 type FollowUp = {
   date: string;
   note: string;
@@ -56,9 +56,20 @@ type Props = {
   lead: Lead;
   selectedIds?: string[];
   setSelectedIds?: (ids: string[]) => void;
+
+  expandedId?: string | null;
+  setExpandedId?: (id: string | null) => void;
+  onSave?: () => void;
 };
 
-export default function LeadCard({ lead, selectedIds, setSelectedIds }: Props) {
+export default function LeadCard({
+  lead,
+  selectedIds,
+  setSelectedIds,
+  expandedId,
+  setExpandedId,
+  onSave
+}: Props) {
   const router = useRouter();
 
   const [totalPaid, setTotalPaid] = useState(0);
@@ -163,8 +174,8 @@ export default function LeadCard({ lead, selectedIds, setSelectedIds }: Props) {
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-100 p-3 text-sm w-full space-y-2">
 
-      {/* HEADER */}
-      <div className="flex justify-between items-start">
+ {/* HEADER */}
+<div className="flex justify-between items-start">
 
   <div className="flex gap-2 items-start">
 
@@ -175,61 +186,80 @@ export default function LeadCard({ lead, selectedIds, setSelectedIds }: Props) {
       onChange={toggleSelect}
     />
 
-   <div>
-  <div className="font-semibold text-black text-base">
-    {lead.name} {lead.age || "-"} {genderShort}
-  </div>
+    <div className="w-full">
 
-  <div className="flex items-center justify-between gap-2 text-sm">
+      <div className="font-semibold text-black text-base">
+        {lead.name} {lead.age || "-"} {genderShort}
+      </div>
 
-    {/* Mobile */}
-    <div className="text-black truncate">
-      {lead.mobile}
+      <div className="flex items-center justify-between gap-2 text-sm">
+
+        {/* Mobile */}
+        <div className="text-black truncate">
+          {lead.mobile}
+        </div>
+
+        {/* Links */}
+        <div className="flex gap-2 text-xs shrink-0">
+
+          <a href={`tel:${lead.mobile}`} className="text-blue-600">
+            Call
+          </a>
+
+          <a
+            href={`https://wa.me/91${lead.mobile}`}
+            target="_blank"
+            className="text-green-600"
+          >
+            Wapp
+          </a>
+
+          <button
+            onClick={() =>
+              setExpandedId?.(expandedId === lead.id ? null : lead.id)
+            }
+            className="text-black"
+          >
+            Feedback
+          </button>
+
+        </div>
+
+      </div>
+
     </div>
-
-    {/* Links */}
-    <div className="flex gap-2 text-xs shrink-0">
-
-      <a
-        href={`tel:${lead.mobile}`}
-        className="text-blue-600"
-      >
-        Call
-      </a>
-
-      <a
-        href={`https://wa.me/91${lead.mobile}`}
-        target="_blank"
-        className="text-green-600"
-      >
-        Wapp
-      </a>
-
-      <button
-        onClick={() => router.push(`/admin/calling/${lead.id}`)}
-        className="text-black"
-      >
-        Feedback
-      </button>
-
-    </div>
-
-  </div>
-</div>
 
   </div>
 
   <div className="flex gap-3 items-center">
-    <Pencil size={16} className="cursor-pointer text-blue-600"
-      onClick={() => router.push(`/admin/leads/${lead.id}`)}
+    <Pencil
+      size={16}
+      className="cursor-pointer text-blue-600"
+      onClick={() => router.push(`/admin/lead/${lead.id}`)}
     />
-    <Trash2 size={16} className="cursor-pointer text-red-500"
+    <Trash2
+      size={16}
+      className="cursor-pointer text-red-500"
       onClick={handleDelete}
     />
   </div>
 
 </div>
 
+{/* ✅ FORM (HEADER के बाहर, full width) */}
+{expandedId === lead.id && (
+  <div className="w-full mt-2 bg-gray-50 p-2 rounded-lg border">
+    <InlineCallingForm
+      leadId={lead.id}
+      currentStatus={lead.lead_stage || ""}
+      onSave={async () => {
+        await fetchCalls();
+        await onSave?.();
+        setExpandedId?.(null);
+      }}
+    />
+  </div>
+)}
       {/* TABS */}
     <div className="flex gap-3 text-xs overflow-x-auto no-scrollbar whitespace-nowrap">
   {["overview", "general", "contacts", "attendance", "fees", "callhistory"].map((tab) => (
