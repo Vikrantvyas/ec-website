@@ -24,6 +24,9 @@ import BatchMaster from "@/app/components/admin/masters/BatchMaster";
 import EducationMaster from "@/app/components/admin/masters/EducationMaster";
 import FeeMaster from "@/app/components/admin/masters/FeeMaster";
 
+/* 🔥 NEW IMPORT */
+import EnglishSentenceMaster from "@/app/components/admin/masters/EnglishSentenceMaster";
+
 export default function MastersPage() {
 
   const searchParams = useSearchParams();
@@ -44,7 +47,10 @@ export default function MastersPage() {
     { label:"Lead Chances", value:"lead_chances" },
     { label:"Lead Stage", value:"lead_stage" },
     { label:"Action", value:"action" },
-    { label:"Counsellor", value:"counsellor" }
+    { label:"Counsellor", value:"counsellor" },
+
+    /* 🔥 NEW MASTER */
+    { label:"English Sentences", value:"english_sentences" }
   ];
 
   const staffMasters = [
@@ -77,7 +83,6 @@ export default function MastersPage() {
   const mapOptions = (arr:any[]) =>
     arr.map((v:any)=>({label:v.label,value:v.value}));
 
-  // ✅ URL TAB FIX
   useEffect(() => {
     const tab = searchParams.get("tab");
 
@@ -151,6 +156,9 @@ export default function MastersPage() {
             {selectedMaster === "teachers" && <TeacherMaster />}
             {selectedMaster === "batches" && <BatchMaster />}
             {selectedMaster === "fee_schemes" && <FeeMaster />}
+
+            {/* 🔥 NEW MASTER UI */}
+            {selectedMaster === "english_sentences" && <EnglishSentenceMaster />}
 
           </div>
 
