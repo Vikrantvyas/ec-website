@@ -399,7 +399,11 @@ export default function LeadCard({
           <LeadAttendance attendance={attendance} />
         )}
         {activeTab === "fees" && (
-          <LeadFees receipts={receipts} />
+         <LeadFees 
+  receipts={receipts} 
+  leadId={lead.id} 
+  isEdit={false}
+/>
         )}
         {activeTab === "callhistory" && (
           <div className="space-y-1">
