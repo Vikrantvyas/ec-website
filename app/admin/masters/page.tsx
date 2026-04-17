@@ -24,7 +24,7 @@ import BatchMaster from "@/app/components/admin/masters/BatchMaster";
 import EducationMaster from "@/app/components/admin/masters/EducationMaster";
 import FeeMaster from "@/app/components/admin/masters/FeeMaster";
 
-/* 🔥 NEW IMPORT */
+/* 🔥 ENGLISH MODULE */
 import EnglishSentenceMaster from "@/app/components/admin/masters/EnglishSentenceMaster";
 
 export default function MastersPage() {
@@ -47,11 +47,15 @@ export default function MastersPage() {
     { label:"Lead Chances", value:"lead_chances" },
     { label:"Lead Stage", value:"lead_stage" },
     { label:"Action", value:"action" },
-    { label:"Counsellor", value:"counsellor" },
-
-    /* 🔥 NEW MASTER */
-    { label:"English Sentences", value:"english_sentences" }
+    { label:"Counsellor", value:"counsellor" }
   ];
+
+  const englishMasters = [
+  { label:"English Courses", value:"english_courses" },
+  { label:"Days", value:"english_days" },
+  { label:"Topics", value:"english_topics" },
+  { label:"Sentences", value:"english_sentences" } // existing safe
+];
 
   const staffMasters = [
     { label:"Teachers", value:"teachers" }
@@ -76,6 +80,9 @@ export default function MastersPage() {
   else if(selectedCategory === "fees"){
     masters = feeMasters;
   }
+  else if(selectedCategory === "english"){
+    masters = englishMasters;
+  }
   else{
     masters = leadMasters;
   }
@@ -98,7 +105,7 @@ export default function MastersPage() {
 
       <div className="space-y-6 text-sm p-6">
 
-        {/* STICKY MASTER SELECTOR */}
+        {/* SELECTOR */}
 
         <div className="sticky top-0 z-30 bg-gray-50 pb-4">
 
@@ -111,6 +118,7 @@ export default function MastersPage() {
                 value={selectedCategory}
                 options={[
                   {label:"Leads",value:"leads"},
+                  {label:"English",value:"english"},  // 🔥 NEW
                   {label:"Staff",value:"staff"},
                   {label:"Batches",value:"batches"},
                   {label:"Fees",value:"fees"}
@@ -134,12 +142,13 @@ export default function MastersPage() {
 
         </div>
 
-        {/* MASTER CONTENT */}
+        {/* CONTENT */}
 
         {selectedMaster && (
 
           <div className="bg-white rounded-xl shadow-sm p-6">
 
+            {/* LEADS */}
             {selectedMaster === "branches" && <BranchMaster />}
             {selectedMaster === "method" && <MethodMaster />}
             {selectedMaster === "channel" && <ChannelMaster />}
@@ -153,11 +162,20 @@ export default function MastersPage() {
             {selectedMaster === "lead_stage" && <LeadStageMaster />}
             {selectedMaster === "action" && <ActionMaster />}
             {selectedMaster === "counsellor" && <CounsellorMaster />}
+
+            {/* STAFF */}
             {selectedMaster === "teachers" && <TeacherMaster />}
+
+            {/* BATCH */}
             {selectedMaster === "batches" && <BatchMaster />}
+
+            {/* FEES */}
             {selectedMaster === "fee_schemes" && <FeeMaster />}
 
-            {/* 🔥 NEW MASTER UI */}
+            {/* 🔥 ENGLISH */}
+            {selectedMaster === "english_courses" && <div>English Course Master</div>}
+{selectedMaster === "english_days" && <div>English Day Master</div>}
+{selectedMaster === "english_topics" && <div>English Topic Master</div>}
             {selectedMaster === "english_sentences" && <EnglishSentenceMaster />}
 
           </div>

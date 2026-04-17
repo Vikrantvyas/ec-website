@@ -3,7 +3,6 @@
 import { useEffect, useState, useMemo } from "react";
 import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import { supabase } from "@/lib/supabaseClient";
-import BranchSelector from "@/app/components/ui/BranchSelector";
 import Link from "next/link";
 
 type Branch = {
@@ -31,7 +30,14 @@ type Student = {
   attendance: AttendanceItem[];
 };
 
-type SortKey = "batch" | "name" | "course" | "total_fee" | "paid" | "due" | "due_date";
+type SortKey =
+  | "batch"
+  | "name"
+  | "course"
+  | "total_fee"
+  | "paid"
+  | "due"
+  | "due_date";
 
 function formatDate(dateStr: string) {
   if (!dateStr) return "";
@@ -43,7 +49,6 @@ function formatDate(dateStr: string) {
 }
 
 export default function StudentsPage() {
-
   const [students, setStudents] = useState<Student[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState("");
@@ -66,7 +71,6 @@ export default function StudentsPage() {
   }
 
   async function loadStudents() {
-
     const { data: batchStudents } = await supabase
       .from("batch_students")
       .select("lead_id, batch_id");
@@ -90,7 +94,8 @@ export default function StudentsPage() {
 
     const { data: receipts } = await supabase
       .from("receipts")
-      .select("*");
+      .select("*")
+      .in("lead_id", leadIds);
 
     const { data: attendanceData } = await supabase
       .from("attendance")
@@ -105,44 +110,47 @@ export default function StudentsPage() {
       branchMap[b.id] = b.name;
     });
 
-    // ✅ FIX HERE
     setBranches(branchesData);
 
     const batchMap: Record<string, { name: string; branch: string }> = {};
     batches.forEach((b: any) => {
       batchMap[b.id] = {
         name: b.batch_name,
-        branch: branchMap[b.branch_id] || ""
+        branch: branchMap[b.branch_id] || "",
       };
     });
 
+    // ✅ FIXED RECEIPT LOGIC (ONLY CHANGE)
     const paidMap: Record<string, number> = {};
     const totalMap: Record<string, number> = {};
     const discountMap: Record<string, number> = {};
-    const dueDateMap: Record<string, string> = {};
+    const latestReceiptMap: Record<string, any> = {};
 
     (receipts || []).forEach((r: any) => {
-      const key = (r.student_name || "").toLowerCase().trim();
+      const leadId = r.lead_id;
+      if (!leadId) return;
 
-      paidMap[key] = (paidMap[key] || 0) + (r.amount || 0);
+      paidMap[leadId] = (paidMap[leadId] || 0) + (r.amount || 0);
 
-      if (!totalMap[key] || r.total_fee > totalMap[key]) {
-        totalMap[key] = r.total_fee || 0;
+      if (
+        !latestReceiptMap[leadId] ||
+        new Date(r.date) > new Date(latestReceiptMap[leadId].date)
+      ) {
+        latestReceiptMap[leadId] = r;
       }
 
-      if (!discountMap[key] || r.discount > discountMap[key]) {
-        discountMap[key] = r.discount || 0;
+      if (!totalMap[leadId] || r.total_fee > totalMap[leadId]) {
+        totalMap[leadId] = r.total_fee || 0;
       }
 
-      if (!dueDateMap[key] && r.due_date) {
-        dueDateMap[key] = r.due_date;
+      if (!discountMap[leadId] || r.discount > discountMap[leadId]) {
+        discountMap[leadId] = r.discount || 0;
       }
     });
 
     const uniqueMap = new Map<string, Student>();
 
     batchStudents.forEach((b: any) => {
-
       const lead = leads.find((l: any) => l.id === b.lead_id);
       if (!lead) return;
 
@@ -151,22 +159,27 @@ export default function StudentsPage() {
       const key = `${lead.id}_${b.batch_id}`;
       if (uniqueMap.has(key)) return;
 
-      const nameKey = (lead.student_name || "").toLowerCase().trim();
+      const leadId = lead.id;
 
-      const total = totalMap[nameKey] || 0;
-      const discount = discountMap[nameKey] || 0;
+      const total = totalMap[leadId] || 0;
+      const discount = discountMap[leadId] || 0;
       const finalTotal = total - discount;
 
-      const paid = paidMap[nameKey] || 0;
-      const due = Math.max(finalTotal - paid, 0);
-      const dueDate = dueDateMap[nameKey] || "";
+      const paid = paidMap[leadId] || 0;
+
+      const latest = latestReceiptMap[leadId];
+
+      const due = latest?.due ?? Math.max(finalTotal - paid, 0);
+      const dueDate = latest?.due_date || "";
 
       const att = (attendanceData || [])
-        .filter(a => a.lead_id === lead.id && a.batch_id === b.batch_id)
+        .filter(
+          (a) => a.lead_id === lead.id && a.batch_id === b.batch_id
+        )
         .slice(0, 10)
-        .map(a => ({
+        .map((a) => ({
           date: a.attendance_date,
-          status: a.status || "N"
+          status: a.status || "N",
         }));
 
       while (att.length < 10) {
@@ -187,7 +200,6 @@ export default function StudentsPage() {
         due_date: dueDate,
         attendance: att,
       });
-
     });
 
     setStudents(Array.from(uniqueMap.values()));
@@ -206,19 +218,19 @@ export default function StudentsPage() {
   }
 
   const filteredStudents = useMemo(() => {
-
     let data = students;
 
     if (selectedBranch) {
-      data = data.filter(s => s.branch === selectedBranch);
+      data = data.filter((s) => s.branch === selectedBranch);
     }
 
     if (search) {
       const s = search.toLowerCase();
-      data = data.filter(st =>
-        st.name.toLowerCase().includes(s) ||
-        st.course.toLowerCase().includes(s) ||
-        st.batch.toLowerCase().includes(s)
+      data = data.filter(
+        (st) =>
+          st.name.toLowerCase().includes(s) ||
+          st.course.toLowerCase().includes(s) ||
+          st.batch.toLowerCase().includes(s)
       );
     }
 
@@ -235,31 +247,27 @@ export default function StudentsPage() {
     });
 
     return data;
-
   }, [students, selectedBranch, search, sortKey, sortAsc]);
 
   return (
-
     <PermissionGuard page="Students">
-
       <div className="p-3 space-y-2 students-page">
 
         <div className="flex gap-2 overflow-x-auto pb-2">
-  {branches.map((b:any)=>(
-    <button
-      key={b.id}
-      onClick={()=>setSelectedBranch(b.name)}
-      className={`px-3 py-1 rounded text-xs md:text-sm whitespace-nowrap shadow-sm transition
-        ${
-          selectedBranch === b.name
-            ? "bg-blue-600 text-white"
-            : "bg-white"
-        }`}
-    >
-      {b.name}
-    </button>
-  ))}
-</div>
+          {branches.map((b:any)=>(
+            <button
+              key={b.id}
+              onClick={()=>setSelectedBranch(b.name)}
+              className={`px-3 py-1 rounded text-xs md:text-sm whitespace-nowrap shadow-sm transition ${
+                selectedBranch === b.name
+                  ? "bg-blue-600 text-white"
+                  : "bg-white"
+              }`}
+            >
+              {b.name}
+            </button>
+          ))}
+        </div>
 
         <div className="flex items-center justify-between">
           <h1 className="text-base font-semibold">
@@ -270,7 +278,7 @@ export default function StudentsPage() {
             type="text"
             placeholder="Search..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e)=>setSearch(e.target.value)}
             className="border px-2 py-1 rounded text-sm w-60"
           />
         </div>
@@ -281,19 +289,19 @@ export default function StudentsPage() {
 
             <thead className="bg-gray-100 sticky top-0 z-10">
               <tr>
-                <th onClick={() => handleSort("batch")} className="p-2 cursor-pointer">Batch</th>
-                <th onClick={() => handleSort("name")} className="p-2 cursor-pointer">Name</th>
-                <th onClick={() => handleSort("course")} className="p-2 cursor-pointer">Course</th>
+                <th onClick={()=>handleSort("batch")} className="p-2 cursor-pointer">Batch</th>
+                <th onClick={()=>handleSort("name")} className="p-2 cursor-pointer">Name</th>
+                <th onClick={()=>handleSort("course")} className="p-2 cursor-pointer">Course</th>
                 <th className="p-2">Att</th>
-                <th onClick={() => handleSort("total_fee")} className="p-2 text-right cursor-pointer">Fee</th>
-                <th onClick={() => handleSort("paid")} className="p-2 text-right cursor-pointer">Paid</th>
-                <th onClick={() => handleSort("due")} className="p-2 text-right cursor-pointer">Due</th>
-                <th onClick={() => handleSort("due_date")} className="p-2 cursor-pointer">Due Date</th>
+                <th onClick={()=>handleSort("total_fee")} className="p-2 text-right cursor-pointer">Fee</th>
+                <th onClick={()=>handleSort("paid")} className="p-2 text-right cursor-pointer">Paid</th>
+                <th onClick={()=>handleSort("due")} className="p-2 text-right cursor-pointer">Due</th>
+                <th onClick={()=>handleSort("due_date")} className="p-2 cursor-pointer">Due Date</th>
               </tr>
             </thead>
 
             <tbody>
-              {filteredStudents.map((s) => (
+              {filteredStudents.map((s)=>(
                 <tr key={s.id} className="hover:bg-gray-50">
                   <td className="p-2 font-medium">{s.batch}</td>
 
@@ -308,7 +316,7 @@ export default function StudentsPage() {
 
                   <td className="p-2">
                     <div className="flex gap-1">
-                      {s.attendance.map((a, i) => (
+                      {s.attendance.map((a,i)=>(
                         <span key={i} className={`text-xs px-1 rounded ${
                           a.status === "P" ? "bg-green-500 text-white" :
                           a.status === "A" ? "bg-red-500 text-white" :
@@ -333,8 +341,6 @@ export default function StudentsPage() {
         </div>
 
       </div>
-
     </PermissionGuard>
-
   );
 }

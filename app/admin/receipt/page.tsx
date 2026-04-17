@@ -111,7 +111,16 @@ useEffect(()=>{
 const fee = Number(totalFee)||0;
 const disc = Number(discount)||0;
 const amt = Number(amount)||0;
-const d = fee - disc - amt;
+
+const oldPaid = receipts.reduce(
+  (sum, r) => sum + Number(r.amount || 0),
+  0
+);
+
+const totalPaid = oldPaid + amt;
+
+const d = fee - disc - totalPaid;
+
 setDue(d>0 ? String(d) : "0");
 },[totalFee,discount,amount]);
 
@@ -172,24 +181,26 @@ const { data } = await supabase
 setBatches(data||[]);
 };
 
-const loadReceipts = async (student:string)=>{
+const loadReceipts = async (leadId:string)=>{
 const { data } = await supabase
 .from("receipts")
 .select("*")
-.eq("student_name",student)
+.eq("lead_id", leadId)
 .order("created_at",{ascending:true});
+
 setReceipts(data||[]);
 };
-
 /* STUDENT CHANGE */
 
 const handleStudentChange = (name:string)=>{
 setSelectedStudent(name);
 setSearchText("");
+
 const s = students.find((x:any)=>x.student_name===name);
+
 if(s){
 setStudentInfo(s);
-loadReceipts(name);
+loadReceipts(s.id); // ✅ ID use
 }
 };
 
@@ -210,6 +221,33 @@ const handleFinalSave = async ()=>{
 
 setSaving(true);
 
+// ✅ 1. पुराने receipts लो
+const { data: oldReceipts } = await supabase
+.from("receipts")
+.select("*")
+.eq("lead_id", studentInfo?.id)
+.order("date",{ascending:true});
+
+// ✅ 2. total & discount
+const totalFeeVal = Number(totalFee || oldReceipts?.[0]?.total_fee || 0);
+const discountVal = Number(discount || oldReceipts?.[0]?.discount || 0);
+
+const finalTotal = totalFeeVal - discountVal;
+
+// ✅ 3. total paid calculate
+const oldPaid = (oldReceipts || []).reduce(
+(sum, r) => sum + Number(r.amount || 0),
+0
+);
+
+const newAmount = Number(amount || 0);
+
+const totalPaid = oldPaid + newAmount;
+
+// ✅ 4. correct due
+const newDue = Math.max(finalTotal - totalPaid, 0);
+
+// ✅ 5. payload
 const payload = {
 branch_id:branch,
 student_name:selectedStudent,
@@ -220,14 +258,15 @@ date: date || null,
 receipt_no:receiptNo,
 account,
 mode,
-amount:Number(amount),
-total_fee:Number(totalFee||0),
-discount:Number(discount||0),
-due:Number(due||0),
-due_date: dueDate || null
+amount:newAmount,
+total_fee:totalFeeVal,
+discount:discountVal,
+due:newDue,
+due_date: newDue === 0 ? null : (dueDate || null),
+lead_id: studentInfo?.id
 };
 
-const { data, error } = await supabase.from("receipts").insert([payload]);
+const { error } = await supabase.from("receipts").insert([payload]);
 
 setSaving(false);
 
@@ -239,7 +278,7 @@ return;
 
 alert("Receipt Saved Successfully");
 
-await loadReceipts(selectedStudent);
+await loadReceipts(studentInfo?.id);
 
 setAmount("");
 setReceiptNo("");
@@ -385,7 +424,7 @@ finalDue > 0 ? "text-red-600" : "text-green-600"
       }`}>
         {Number(r.due || 0).toFixed(2)}
       </td>
-      <td className="px-2 py-1">{formatDate(r.due_date)}</td>
+      <td className="px-2 py-1">{Number(r.due) === 0 ? "" : formatDate(r.due_date)}</td>
     </tr>
   );
 })}
