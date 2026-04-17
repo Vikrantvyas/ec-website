@@ -17,6 +17,9 @@ export default function LeadDetailPage() {
 
   const [activeTab, setActiveTab] = useState("Overview");
   const [lead, setLead] = useState<any>(null);
+  const [formData, setFormData] = useState<any>(null);
+  const [isEdit, setIsEdit] = useState(false);
+
   const [lastFU, setLastFU] = useState<any>(null);
   const [receipts, setReceipts] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<any[]>([]);
@@ -46,11 +49,10 @@ export default function LeadDetailPage() {
     const { data: receiptData } = await supabase
       .from("receipts")
       .select("*")
-      .eq("student_name", leadData?.student_name)
+      .eq("lead_id", leadId)
       .order("date", { ascending: false });
 
-    // ✅ FINAL ATTENDANCE LOGIC (SYSTEM MATCHED)
-
+    // ✅ Attendance
     const { data: batchLinks } = await supabase
       .from("batch_students")
       .select("batch_id")
@@ -61,7 +63,6 @@ export default function LeadDetailPage() {
     let formattedAttendance: any[] = [];
 
     if (batchIds.length > 0) {
-
       const { data: batches } = await supabase
         .from("batches")
         .select("id,batch_name")
@@ -74,7 +75,6 @@ export default function LeadDetailPage() {
         .order("attendance_date", { ascending: false });
 
       batches?.forEach((batch: any) => {
-
         const studentAttendance =
           attendanceData
             ?.filter((a: any) => a.batch_id === batch.id)
@@ -86,10 +86,7 @@ export default function LeadDetailPage() {
         }));
 
         while (last10.length < 10) {
-          last10.push({
-            date: "",
-            status: "N",
-          });
+          last10.push({ date: "", status: "N" });
         }
 
         last10.forEach((item: any) => {
@@ -99,16 +96,27 @@ export default function LeadDetailPage() {
             status: item.status,
           });
         });
-
       });
     }
 
     setLead(leadData);
+    setFormData(leadData);
     setLastFU(fuData);
     setReceipts(receiptData || []);
     setAttendance(formattedAttendance);
 
     setLoading(false);
+  }
+
+  // ✅ UPDATE FUNCTION
+  async function handleUpdate() {
+    await supabase
+      .from("leads")
+      .update(formData)
+      .eq("id", leadId);
+
+    setIsEdit(false);
+    loadData();
   }
 
   if (loading) {
@@ -131,18 +139,49 @@ export default function LeadDetailPage() {
           </button>
 
           <h1 className="text-lg font-semibold flex items-center gap-2">
-            {lead.student_name}
+            {formData?.student_name}
             <span className="text-xs bg-yellow-400 text-black px-2 py-0.5 rounded">
-              {lead.lead_stage || "New"}
+              {formData?.lead_stage || "New"}
             </span>
           </h1>
 
-          <p>{lead.mobile_number}</p>
-          <p className="text-xs">{lead.course} • {lead.branch}</p>
+          <p>{formData?.mobile_number}</p>
+          <p className="text-xs">{formData?.course} • {formData?.branch}</p>
 
           <p className="text-xs">
-            {lead.gender} | {lead.age} | {lead.area} | {lead.city}
+            {formData?.gender} | {formData?.age} | {formData?.area} | {formData?.city}
           </p>
+
+          {/* ✅ EDIT BUTTONS */}
+          <div className="flex gap-2 mt-2">
+            {!isEdit ? (
+              <button
+                onClick={() => setIsEdit(true)}
+                className="bg-yellow-400 text-black px-3 py-1 text-xs rounded"
+              >
+                Edit
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={handleUpdate}
+                  className="bg-green-600 text-white px-3 py-1 text-xs rounded"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEdit(false);
+                    setFormData(lead);
+                  }}
+                  className="bg-gray-400 text-white px-3 py-1 text-xs rounded"
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
+
         </div>
 
         <div className="bg-white shadow-sm">
@@ -168,11 +207,16 @@ export default function LeadDetailPage() {
       <div className="p-3 space-y-3 text-sm">
 
         {activeTab === "Overview" && (
-          <LeadOverview lead={lead} lastFU={lastFU} />
+          <LeadOverview
+            lead={formData}
+            isEdit={isEdit}
+            setFormData={setFormData}
+            lastFU={lastFU}
+          />
         )}
 
         {activeTab === "Fees" && (
-          <LeadFees receipts={receipts} />
+          <LeadFees receipts={receipts} leadId={leadId} isEdit={isEdit} />
         )}
 
         {activeTab === "Attendance" && (
