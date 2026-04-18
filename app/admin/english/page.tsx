@@ -159,22 +159,27 @@ export default function EnglishPage() {
 
     <div className="english-page flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden">
       {/* LEFT PANEL */}
-   <div className="w-60 bg-white border-r p-3 space-y-3 overflow-y-auto">
+{/* LEFT PANEL */}
+<div className="w-60 bg-white border-r flex flex-col">
 
-  {/* COURSE */}
-  <select
-    value={selectedCourse}
-    onChange={(e)=>setSelectedCourse(e.target.value)}
-    className="border px-2 py-2 rounded w-full"
-  >
-    <option value="">Select Course</option>
-    {courses.map(c=>(
-      <option key={c.id} value={c.id}>{c.name}</option>
-    ))}
-  </select>
+  {/* 🔥 FIXED COURSE */}
+  <div className="p-3 border-b">
 
-  {/* DAYS */}
-  <div className="space-y-2">
+    <select
+      value={selectedCourse}
+      onChange={(e)=>setSelectedCourse(e.target.value)}
+      className="border px-2 py-2 rounded w-full"
+    >
+      <option value="">Select Course</option>
+      {courses.map(c=>(
+        <option key={c.id} value={c.id}>{c.name}</option>
+      ))}
+    </select>
+
+  </div>
+
+  {/* 🔥 SCROLL AREA */}
+  <div className="flex-1 overflow-y-auto p-3 space-y-2">
 
     {days.map(d => {
 
@@ -193,16 +198,13 @@ export default function EnglishPage() {
               isExpanded ? "bg-blue-600 text-white" : "bg-gray-100"
             }`}
           >
-
             <span>Day {d.day_number}</span>
 
-            {/* 🔥 DEFAULT + */}
             {hasTopics && (
               <span className="text-lg font-bold">
                 {isExpanded ? "−" : "+"}
               </span>
             )}
-
           </button>
 
           {/* TOPICS */}
@@ -224,10 +226,8 @@ export default function EnglishPage() {
                         : "bg-gray-100"
                     }`}
                   >
-
                     {t.topic_name}
 
-                    {/* 🔥 SENTENCE COUNT */}
                     {count > 0 && (
                       <span className="ml-2 text-xs text-gray-500">
                         ({count})
