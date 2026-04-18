@@ -24,7 +24,12 @@ export default function EnglishPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetchCourses(); }, []);
-  useEffect(() => { if (selectedCourse) fetchDays(); }, [selectedCourse]);
+  useEffect(() => {
+  if (selectedCourse) {
+    fetchDays();
+    fetchTopics(); // 🔥 ALL topics
+  }
+}, [selectedCourse]);
   useEffect(() => { if (selectedDay) fetchTopics(); }, [selectedDay]);
   useEffect(() => { if (selectedTopic) fetchSentences(); }, [selectedTopic]);
 
@@ -45,11 +50,14 @@ export default function EnglishPage() {
     if (data) setDays(data);
   };
 
-  const fetchTopics = async () => {
-    const { data } = await supabase.from("topics")
-      .select("*").eq("day_id", selectedDay).order("order_no");
-    if (data) setTopics(data);
-  };
+ const fetchTopics = async () => {
+  const { data } = await supabase
+    .from("topics")
+    .select("*, sentences(count)")
+    .order("order_no");
+
+  if (data) setTopics(data);
+};
 
   const fetchSentences = async () => {
     const { data } = await supabase.from("sentences")
@@ -62,7 +70,7 @@ export default function EnglishPage() {
     }
   };
 
-  // 🔥 FIXED NEXT LOGIC
+  // 🔥 SENTENCE NAV
   const nextSentence = () => {
     if (currentIndex < sentences.length) {
       setCurrentIndex(prev => prev + 1);
@@ -72,6 +80,47 @@ export default function EnglishPage() {
   const prevSentence = () => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
+    }
+  };
+
+  // 🔥 TOPIC NAV
+  const nextTopic = () => {
+
+    const idx = topics.findIndex(t => t.id === selectedTopic);
+
+    if (idx < topics.length - 1) {
+      setSelectedTopic(topics[idx + 1].id);
+    } else {
+      const dayIdx = days.findIndex(d => d.id === selectedDay);
+
+      if (dayIdx < days.length - 1) {
+        const nextDay = days[dayIdx + 1].id;
+        setSelectedDay(nextDay);
+
+        setTimeout(() => {
+          setSelectedTopic("");
+        }, 200);
+      }
+    }
+  };
+
+  const prevTopic = () => {
+
+    const idx = topics.findIndex(t => t.id === selectedTopic);
+
+    if (idx > 0) {
+      setSelectedTopic(topics[idx - 1].id);
+    } else {
+      const dayIdx = days.findIndex(d => d.id === selectedDay);
+
+      if (dayIdx > 0) {
+        const prevDay = days[dayIdx - 1].id;
+        setSelectedDay(prevDay);
+
+        setTimeout(() => {
+          setSelectedTopic("");
+        }, 200);
+      }
     }
   };
 
@@ -96,48 +145,99 @@ export default function EnglishPage() {
     <div className="flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden">
 
       {/* LEFT PANEL */}
-      <div className="w-60 bg-white border-r p-3 space-y-3">
+   <div className="w-60 bg-white border-r p-3 space-y-3 overflow-y-auto">
 
-        <select
-          value={selectedCourse}
-          onChange={(e)=>setSelectedCourse(e.target.value)}
-          className="border px-2 py-2 rounded w-full"
-        >
-          <option value="">Select Course</option>
-          {courses.map(c=>(
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
+  {/* COURSE */}
+  <select
+    value={selectedCourse}
+    onChange={(e)=>setSelectedCourse(e.target.value)}
+    className="border px-2 py-2 rounded w-full"
+  >
+    <option value="">Select Course</option>
+    {courses.map(c=>(
+      <option key={c.id} value={c.id}>{c.name}</option>
+    ))}
+  </select>
 
-        <div className="space-y-1 max-h-40 overflow-y-auto">
-          {days.map(d=>(
-            <button
-              key={d.id}
-              onClick={()=>setSelectedDay(d.id)}
-              className={`block w-full text-left px-2 py-1 rounded ${
-                selectedDay === d.id ? "bg-blue-600 text-white" : "bg-gray-100"
-              }`}
-            >
-              Day {d.day_number}
-            </button>
-          ))}
+  {/* DAYS */}
+  <div className="space-y-2">
+
+    {days.map(d => {
+
+      const dayTopics = topics.filter(t => t.day_id === d.id);
+      const isExpanded = selectedDay === d.id;
+      const hasTopics = dayTopics.length > 0;
+
+      return (
+
+        <div key={d.id}>
+
+          {/* DAY */}
+          <button
+            onClick={()=>setSelectedDay(isExpanded ? "" : d.id)}
+            className={`w-full flex justify-between items-center px-2 py-2 rounded ${
+              isExpanded ? "bg-blue-600 text-white" : "bg-gray-100"
+            }`}
+          >
+
+            <span>Day {d.day_number}</span>
+
+            {/* 🔥 DEFAULT + */}
+            {hasTopics && (
+              <span className="text-lg font-bold">
+                {isExpanded ? "−" : "+"}
+              </span>
+            )}
+
+          </button>
+
+          {/* TOPICS */}
+          {isExpanded && hasTopics && (
+            <div className="ml-3 mt-1 space-y-1">
+
+              {dayTopics.map(t => {
+
+                const count = t.sentences?.[0]?.count || 0;
+
+                return (
+
+                  <button
+                    key={t.id}
+                    onClick={()=>setSelectedTopic(t.id)}
+                    className={`w-full text-left px-2 py-1 rounded text-sm ${
+                      selectedTopic === t.id
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-100"
+                    }`}
+                  >
+
+                    {t.topic_name}
+
+                    {/* 🔥 SENTENCE COUNT */}
+                    {count > 0 && (
+                      <span className="ml-2 text-xs text-gray-500">
+                        ({count})
+                      </span>
+                    )}
+
+                  </button>
+
+                );
+
+              })}
+
+            </div>
+          )}
+
         </div>
 
-        <div className="space-y-1 border-t pt-2 max-h-40 overflow-y-auto">
-          {topics.map(t=>(
-            <button
-              key={t.id}
-              onClick={()=>setSelectedTopic(t.id)}
-              className={`block w-full text-left px-2 py-1 rounded ${
-                selectedTopic === t.id ? "bg-green-600 text-white" : "bg-gray-100"
-              }`}
-            >
-              {t.topic_name}
-            </button>
-          ))}
-        </div>
+      );
 
-      </div>
+    })}
+
+  </div>
+
+</div>
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col items-center pt-4 gap-2">
@@ -162,7 +262,7 @@ export default function EnglishPage() {
 
                 {showBoard ? (
 
-                  <div className="space-y-1"> {/* 🔥 GAP REDUCED */}
+                  <div className="space-y-1">
                     {visible.map((item, i)=>(
                       <div
                         key={item.id}
@@ -215,57 +315,49 @@ export default function EnglishPage() {
         </div>
 
         {/* CONTROLS */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap justify-center">
 
-  <button
-    onClick={prevSentence}
-    disabled={currentIndex === 0}
-    className="px-4 py-2 bg-gray-200 rounded disabled:opacity-40"
-  >
-    Prev
-  </button>
+          <button onClick={prevSentence} disabled={currentIndex === 0}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-40">
+            Prev
+          </button>
 
-  {/* 🔥 NEXT BUTTON */}
-  <button
-    onClick={nextSentence}
-    disabled={currentIndex >= sentences.length}
-    className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-40"
-  >
-    Next
-  </button>
+          <button onClick={nextSentence} disabled={currentIndex >= sentences.length}
+            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-40">
+            Next
+          </button>
 
-  {/* 🔥 RESET (ONLY WHEN END REACHED OR SHOW ALL) */}
-  {(currentIndex >= sentences.length || showAll) && (
-    <button
-      onClick={()=>{
-        setShowAll(false);
-        setCurrentIndex(0);
-      }}
-      className="px-4 py-2 bg-red-600 text-white rounded"
-    >
-      Reset
-    </button>
-  )}
+          {(currentIndex >= sentences.length || showAll) && (
+            <button onClick={()=>{ setShowAll(false); setCurrentIndex(0); }}
+              className="px-4 py-2 bg-red-600 text-white rounded">
+              Reset
+            </button>
+          )}
 
-  {/* SHOW ALL */}
-  {!showAll && currentIndex < sentences.length && (
-    <button
-      onClick={()=>setShowAll(true)}
-      className="px-4 py-2 bg-green-600 text-white rounded"
-    >
-      Show All
-    </button>
-  )}
+          {!showAll && currentIndex < sentences.length && (
+            <button onClick={()=>setShowAll(true)}
+              className="px-4 py-2 bg-green-600 text-white rounded">
+              Show All
+            </button>
+          )}
 
-  {/* WHITEBOARD */}
-  <button
-    onClick={()=>setShowBoard(prev=>!prev)}
-    className="px-4 py-2 bg-purple-600 text-white rounded"
-  >
-    {showBoard ? "Hide Board" : "Show Board"}
-  </button>
+          <button onClick={()=>setShowBoard(prev=>!prev)}
+            className="px-4 py-2 bg-purple-600 text-white rounded">
+            {showBoard ? "Hide Board" : "Show Board"}
+          </button>
 
-</div>
+          {/* 🔥 TOPIC BUTTONS */}
+          <button onClick={prevTopic}
+            className="px-4 py-2 bg-orange-500 text-white rounded">
+            ← Prev Topic
+          </button>
+
+          <button onClick={nextTopic}
+            className="px-4 py-2 bg-orange-600 text-white rounded">
+            Next Topic →
+          </button>
+
+        </div>
 
       </div>
 
