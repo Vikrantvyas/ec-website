@@ -1,5 +1,7 @@
 "use client";
-
+import EnglishCourseMaster from "@/app/components/admin/masters/EnglishCourseMaster";
+import EnglishDayMaster from "@/app/components/admin/masters/EnglishDayMaster";
+import EnglishTopicMaster from "@/app/components/admin/masters/EnglishTopicMaster";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -173,9 +175,13 @@ export default function MastersPage() {
             {selectedMaster === "fee_schemes" && <FeeMaster />}
 
             {/* 🔥 ENGLISH */}
-            {selectedMaster === "english_courses" && <div>English Course Master</div>}
-{selectedMaster === "english_days" && <div>English Day Master</div>}
-{selectedMaster === "english_topics" && <div>English Topic Master</div>}
+            
+
+{selectedMaster === "english_courses" && <EnglishCourseMaster />}
+
+
+{selectedMaster === "english_days" && <EnglishDayMaster />}
+{selectedMaster === "english_topics" && <EnglishTopicMaster />}
             {selectedMaster === "english_sentences" && <EnglishSentenceMaster />}
 
           </div>
