@@ -1,165 +1,271 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import WhiteBoard from "@/app/components/admin/english/WhiteBoard";
 
 export default function EnglishPage() {
 
-  const [activeTab, setActiveTab] = useState("Day 1");
-  const [whiteboard, setWhiteboard] = useState(false);
-
+  const [courses, setCourses] = useState<any[]>([]);
+  const [days, setDays] = useState<any[]>([]);
+  const [topics, setTopics] = useState<any[]>([]);
   const [sentences, setSentences] = useState<any[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const tabs = ["Day 1", "Day 2", "Day 3"];
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const [selectedDay, setSelectedDay] = useState("");
+  const [selectedTopic, setSelectedTopic] = useState("");
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showAll, setShowAll] = useState(false);
+  const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
+
+  const [showBoard, setShowBoard] = useState(true);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { fetchCourses(); }, []);
+  useEffect(() => { if (selectedCourse) fetchDays(); }, [selectedCourse]);
+  useEffect(() => { if (selectedDay) fetchTopics(); }, [selectedDay]);
+  useEffect(() => { if (selectedTopic) fetchSentences(); }, [selectedTopic]);
 
   useEffect(() => {
-    fetchSentences();
-  }, [activeTab]);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [currentIndex, showAll]);
+
+  const fetchCourses = async () => {
+    const { data } = await supabase.from("english_courses").select("*").order("name");
+    if (data) setCourses(data);
+  };
+
+  const fetchDays = async () => {
+    const { data } = await supabase.from("days")
+      .select("*").eq("course_id", selectedCourse).order("day_number");
+    if (data) setDays(data);
+  };
+
+  const fetchTopics = async () => {
+    const { data } = await supabase.from("topics")
+      .select("*").eq("day_id", selectedDay).order("order_no");
+    if (data) setTopics(data);
+  };
 
   const fetchSentences = async () => {
-    const { data } = await supabase
-      .from("english_sentences")
-      .select("*")
-      .eq("day", activeTab)
-      .order("order_no", { ascending: true });
+    const { data } = await supabase.from("sentences")
+      .select("*").eq("topic_id", selectedTopic).order("order_no");
 
     if (data) {
       setSentences(data);
       setCurrentIndex(0);
+      setShowAll(false);
     }
   };
 
+  // 🔥 FIXED NEXT LOGIC
   const nextSentence = () => {
-    if (currentIndex < sentences.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
+    if (currentIndex < sentences.length) {
+      setCurrentIndex(prev => prev + 1);
     }
   };
 
   const prevSentence = () => {
     if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
+      setCurrentIndex(prev => prev - 1);
     }
   };
 
-  const visible = sentences.slice(0, currentIndex + 1);
+  const toggleShowAll = () => {
+    if (showAll) {
+      setShowAll(false);
+      setCurrentIndex(0);
+    } else {
+      setShowAll(true);
+    }
+  };
+
+  const visible = showAll
+    ? sentences
+    : sentences.slice(0, currentIndex);
+
   const leftCol = visible.slice(0, 10);
-  const rightCol = visible.slice(10, 20);
+  const rightCol = visible.slice(10);
 
   return (
 
     <div className="flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden">
 
-      {/* LEFT TOOLBAR */}
-      <div className="w-14 bg-white border-r flex flex-col items-center py-3 gap-3">
+      {/* LEFT PANEL */}
+      <div className="w-60 bg-white border-r p-3 space-y-3">
 
-        <button
-          onClick={() => setWhiteboard(false)}
-          className={`w-10 h-10 rounded ${
-            !whiteboard ? "bg-blue-600 text-white" : "bg-gray-200"
-          }`}
+        <select
+          value={selectedCourse}
+          onChange={(e)=>setSelectedCourse(e.target.value)}
+          className="border px-2 py-2 rounded w-full"
         >
-          📄
-        </button>
+          <option value="">Select Course</option>
+          {courses.map(c=>(
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
 
-        <button
-          onClick={() => setWhiteboard(true)}
-          className={`w-10 h-10 rounded ${
-            whiteboard ? "bg-green-600 text-white" : "bg-gray-200"
-          }`}
-        >
-          ✏️
-        </button>
+        <div className="space-y-1 max-h-40 overflow-y-auto">
+          {days.map(d=>(
+            <button
+              key={d.id}
+              onClick={()=>setSelectedDay(d.id)}
+              className={`block w-full text-left px-2 py-1 rounded ${
+                selectedDay === d.id ? "bg-blue-600 text-white" : "bg-gray-100"
+              }`}
+            >
+              Day {d.day_number}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-1 border-t pt-2 max-h-40 overflow-y-auto">
+          {topics.map(t=>(
+            <button
+              key={t.id}
+              onClick={()=>setSelectedTopic(t.id)}
+              className={`block w-full text-left px-2 py-1 rounded ${
+                selectedTopic === t.id ? "bg-green-600 text-white" : "bg-gray-100"
+              }`}
+            >
+              {t.topic_name}
+            </button>
+          ))}
+        </div>
 
       </div>
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col items-center pt-4 gap-2">
 
-        {/* TABS */}
-        <div className="flex gap-2">
-          {tabs.map((t) => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={`px-3 py-1 rounded text-sm ${
-                activeTab === t
-                  ? "bg-blue-600 text-white"
-                  : "bg-white border"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        {/* BOX */}
         <div
-          className="bg-white border shadow flex flex-col p-4 gap-3"
+          className="bg-white border shadow flex flex-col overflow-hidden"
           style={{ width: "25cm", height: "12cm" }}
         >
 
-          {!whiteboard ? (
+          {/* HEADER */}
+          <div className="shadow-md bg-white px-4 py-2 text-sm flex justify-between z-10">
+            <div>Day {days.find(d=>d.id===selectedDay)?.day_number}</div>
+            <div>{topics.find(t=>t.id===selectedTopic)?.topic_name}</div>
+          </div>
 
-            <>
-              {/* HEADER */}
-              <div className="flex justify-between items-center border-b pb-2 px-2">
-                <div className="text-lg">{activeTab}</div>
-                <div className="text-xl">Topic Name</div>
+          {/* BODY */}
+          <div className="flex flex-1 overflow-hidden">
+
+            <div className={`${showBoard ? "w-1/2" : "w-full"} p-4 flex flex-col`}>
+
+              <div ref={scrollRef} className="flex-1 overflow-y-auto">
+
+                {showBoard ? (
+
+                  <div className="space-y-1"> {/* 🔥 GAP REDUCED */}
+                    {visible.map((item, i)=>(
+                      <div
+                        key={item.id}
+                        onClick={()=>setHighlightIndex(i)}
+                        className={`cursor-pointer text-2xl leading-tight ${
+                          highlightIndex === i ? "bg-yellow-200" : ""
+                        }`}
+                      >
+                        {i+1}. {item.sentence}
+                      </div>
+                    ))}
+                  </div>
+
+                ) : (
+
+                  <div className="flex gap-4">
+
+                    <div className="w-1/2 space-y-1">
+                      {leftCol.map((item, i)=>(
+                        <div key={item.id} className="text-2xl leading-tight">
+                          {i+1}. {item.sentence}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="w-1/2 space-y-1">
+                      {rightCol.map((item, i)=>(
+                        <div key={item.id} className="text-2xl leading-tight">
+                          {i+11}. {item.sentence}
+                        </div>
+                      ))}
+                    </div>
+
+                  </div>
+
+                )}
+
               </div>
 
-              {/* CONTENT */}
-              <div className="flex flex-1 gap-6">
+            </div>
 
-                {/* LEFT */}
-                <div className="w-1/2 space-y-1">
-                  {leftCol.map((item, i) => (
-                    <div key={item.id} className="text-2xl leading-tight">
-                      {i + 1}. {item.sentence}
-                    </div>
-                  ))}
-                </div>
-
-                {/* RIGHT */}
-                <div className="w-1/2 space-y-1">
-                  {rightCol.map((item, i) => (
-                    <div key={item.id} className="text-2xl leading-tight">
-                      {i + 11}. {item.sentence}
-                    </div>
-                  ))}
-                </div>
-
+            {showBoard && (
+              <div className="w-1/2 border-l">
+                <WhiteBoard />
               </div>
+            )}
 
-            </>
-
-          ) : (
-            <WhiteBoard />
-          )}
+          </div>
 
         </div>
 
-        {/* BUTTONS */}
-        {!whiteboard && (
-          <div className="flex gap-4 mt-2">
+        {/* CONTROLS */}
+        <div className="flex gap-3">
 
-            <button
-              onClick={prevSentence}
-              className="px-4 py-2 bg-gray-200 rounded"
-            >
-              ← Prev
-            </button>
+  <button
+    onClick={prevSentence}
+    disabled={currentIndex === 0}
+    className="px-4 py-2 bg-gray-200 rounded disabled:opacity-40"
+  >
+    Prev
+  </button>
 
-            <button
-              onClick={nextSentence}
-              className="px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              Next →
-            </button>
+  {/* 🔥 NEXT BUTTON */}
+  <button
+    onClick={nextSentence}
+    disabled={currentIndex >= sentences.length}
+    className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-40"
+  >
+    Next
+  </button>
 
-          </div>
-        )}
+  {/* 🔥 RESET (ONLY WHEN END REACHED OR SHOW ALL) */}
+  {(currentIndex >= sentences.length || showAll) && (
+    <button
+      onClick={()=>{
+        setShowAll(false);
+        setCurrentIndex(0);
+      }}
+      className="px-4 py-2 bg-red-600 text-white rounded"
+    >
+      Reset
+    </button>
+  )}
+
+  {/* SHOW ALL */}
+  {!showAll && currentIndex < sentences.length && (
+    <button
+      onClick={()=>setShowAll(true)}
+      className="px-4 py-2 bg-green-600 text-white rounded"
+    >
+      Show All
+    </button>
+  )}
+
+  {/* WHITEBOARD */}
+  <button
+    onClick={()=>setShowBoard(prev=>!prev)}
+    className="px-4 py-2 bg-purple-600 text-white rounded"
+  >
+    {showBoard ? "Hide Board" : "Show Board"}
+  </button>
+
+</div>
 
       </div>
 

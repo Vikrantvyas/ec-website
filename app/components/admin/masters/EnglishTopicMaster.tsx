@@ -3,18 +3,16 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function EnglishSentenceMaster() {
+export default function EnglishTopicMaster() {
 
   const [courses, setCourses] = useState<any[]>([]);
   const [days, setDays] = useState<any[]>([]);
   const [topics, setTopics] = useState<any[]>([]);
-  const [sentences, setSentences] = useState<any[]>([]);
 
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedDay, setSelectedDay] = useState("");
-  const [selectedTopic, setSelectedTopic] = useState("");
 
-  const [text, setText] = useState("");
+  const [topicName, setTopicName] = useState("");
   const [orderNo, setOrderNo] = useState("");
 
   useEffect(() => {
@@ -28,10 +26,6 @@ export default function EnglishSentenceMaster() {
   useEffect(() => {
     if (selectedDay) fetchTopics();
   }, [selectedDay]);
-
-  useEffect(() => {
-    if (selectedTopic) fetchSentences();
-  }, [selectedTopic]);
 
   const fetchCourses = async () => {
     const { data } = await supabase
@@ -62,37 +56,27 @@ export default function EnglishSentenceMaster() {
     if (data) setTopics(data);
   };
 
-  const fetchSentences = async () => {
-    const { data } = await supabase
-      .from("sentences")
-      .select("*")
-      .eq("topic_id", selectedTopic)
-      .order("order_no");
+  const addTopic = async () => {
+    if (!selectedDay || !topicName) return;
 
-    if (data) setSentences(data);
-  };
-
-  const addSentence = async () => {
-    if (!selectedTopic || !text) return;
-
-    await supabase.from("sentences").insert([
+    await supabase.from("topics").insert([
       {
-        topic_id: selectedTopic,
-        sentence: text,
+        day_id: selectedDay,
+        topic_name: topicName,
         order_no: Number(orderNo || 0)
       }
     ]);
 
-    setText("");
+    setTopicName("");
     setOrderNo("");
-    fetchSentences();
+    fetchTopics();
   };
 
-  const deleteSentence = async (id:string) => {
-    if (!confirm("Delete sentence?")) return;
+  const deleteTopic = async (id:string) => {
+    if (!confirm("Delete topic?")) return;
 
-    await supabase.from("sentences").delete().eq("id", id);
-    fetchSentences();
+    await supabase.from("topics").delete().eq("id", id);
+    fetchTopics();
   };
 
   return (
@@ -126,29 +110,16 @@ export default function EnglishSentenceMaster() {
           ))}
         </select>
 
-        <select
-          value={selectedTopic}
-          onChange={(e)=>setSelectedTopic(e.target.value)}
-          className="border px-3 py-2 rounded"
-        >
-          <option value="">Select Topic</option>
-          {topics.map(t=>(
-            <option key={t.id} value={t.id}>
-              {t.topic_name}
-            </option>
-          ))}
-        </select>
-
       </div>
 
       {/* FORM */}
       <div className="flex gap-2">
 
         <input
-          value={text}
-          onChange={(e)=>setText(e.target.value)}
-          placeholder="Sentence"
-          className="border px-3 py-2 rounded w-80"
+          value={topicName}
+          onChange={(e)=>setTopicName(e.target.value)}
+          placeholder="Topic name"
+          className="border px-3 py-2 rounded"
         />
 
         <input
@@ -160,10 +131,10 @@ export default function EnglishSentenceMaster() {
         />
 
         <button
-          onClick={addSentence}
+          onClick={addTopic}
           className="px-4 py-2 bg-blue-600 text-white rounded"
         >
-          Add
+          Add Topic
         </button>
 
       </div>
@@ -171,18 +142,18 @@ export default function EnglishSentenceMaster() {
       {/* LIST */}
       <div className="space-y-2">
 
-        {sentences.map(s=>(
+        {topics.map(t=>(
           <div
-            key={s.id}
+            key={t.id}
             className="flex justify-between items-center border p-2 rounded"
           >
 
             <div>
-              {s.order_no}. {s.sentence}
+              {t.order_no}. {t.topic_name}
             </div>
 
             <button
-              onClick={()=>deleteSentence(s.id)}
+              onClick={()=>deleteTopic(t.id)}
               className="text-red-600 text-sm"
             >
               Delete
