@@ -30,7 +30,13 @@ import FeeMaster from "@/app/components/admin/masters/FeeMaster";
 import EnglishSentenceMaster from "@/app/components/admin/masters/EnglishSentenceMaster";
 
 export default function MastersPage() {
+const [newCourse, setNewCourse] = useState("");
+const [newDay, setNewDay] = useState("");
+const [newTopic, setNewTopic] = useState("");
 
+const [showCourseInput, setShowCourseInput] = useState(false);
+const [showDayInput, setShowDayInput] = useState(false);
+const [showTopicInput, setShowTopicInput] = useState(false);
   const searchParams = useSearchParams();
 
   const [selectedCategory,setSelectedCategory] = useState("leads");
@@ -182,7 +188,7 @@ export default function MastersPage() {
 
 {selectedMaster === "english_days" && <EnglishDayMaster />}
 {selectedMaster === "english_topics" && <EnglishTopicMaster />}
-            {selectedMaster === "english_sentences" && <EnglishSentenceMaster />}
+{selectedMaster === "english_sentences" && <EnglishSentenceMaster />}
 
           </div>
 

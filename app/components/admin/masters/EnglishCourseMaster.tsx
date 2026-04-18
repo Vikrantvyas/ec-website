@@ -3,11 +3,44 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
+import {
+  DndContext,
+  closestCenter,
+} from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+  useSortable
+} from "@dnd-kit/sortable";
+
+import { CSS } from "@dnd-kit/utilities";
+
+/* SORTABLE */
+function SortableItem({ id, children }: any) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children(attributes, listeners)}
+    </div>
+  );
+}
+
 export default function EnglishCourseMaster() {
 
   const [courses, setCourses] = useState<any[]>([]);
   const [name, setName] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
 
   useEffect(() => {
     fetchCourses();
@@ -17,101 +50,137 @@ export default function EnglishCourseMaster() {
     const { data } = await supabase
       .from("english_courses")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("name");
 
     if (data) setCourses(data);
   };
 
-  const saveCourse = async () => {
+  // ADD
+  const addCourse = async () => {
     if (!name.trim()) return;
 
-    if (editingId) {
-      await supabase
-        .from("english_courses")
-        .update({ name })
-        .eq("id", editingId);
-
-      setEditingId(null);
-    } else {
-      await supabase
-        .from("english_courses")
-        .insert([{ name }]);
-    }
+    await supabase.from("english_courses").insert([{ name }]);
 
     setName("");
     fetchCourses();
   };
 
-  const editCourse = (c:any) => {
-    setName(c.name);
-    setEditingId(c.id);
+  // DELETE
+  const deleteCourse = async (id:string) => {
+    await supabase.from("english_courses").delete().eq("id", id);
+    fetchCourses();
   };
 
-  const deleteCourse = async (id:string) => {
-    if (!confirm("Delete course?")) return;
+  // EDIT
+  const startEdit = (c:any) => {
+    setEditId(c.id);
+    setEditText(c.name);
+  };
 
-    await supabase
-      .from("english_courses")
-      .delete()
-      .eq("id", id);
+  const saveEdit = async () => {
+    if (!editId) return;
 
+    await supabase.from("english_courses")
+      .update({ name: editText })
+      .eq("id", editId);
+
+    setEditId(null);
+    fetchCourses();
+  };
+
+  // DRAG
+  const handleDragEnd = (event:any) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = courses.findIndex(c => c.id === active.id);
+    const newIndex = courses.findIndex(c => c.id === over.id);
+
+    setCourses(arrayMove(courses, oldIndex, newIndex));
+  };
+
+  // OPTIONAL ORDER SAVE (अगर future में column add करो)
+  const saveOrder = async () => {
+    for (let i = 0; i < courses.length; i++) {
+      await supabase.from("english_courses")
+        .update({ name: courses[i].name }) // placeholder
+        .eq("id", courses[i].id);
+    }
     fetchCourses();
   };
 
   return (
+<div className="h-full flex flex-col">
+    
 
-    <div className="space-y-4">
-
-      {/* FORM */}
-      <div className="flex gap-2">
+      {/* TOP BAR */}
+      <div className="sticky top-0 bg-white z-20 p-3 border-b flex gap-2 items-center">
 
         <input
           value={name}
           onChange={(e)=>setName(e.target.value)}
           placeholder="Course name"
-          className="border px-3 py-2 rounded w-64"
+          className="border px-2 py-1 rounded w-72"
         />
 
-        <button
-          onClick={saveCourse}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-        >
-          {editingId ? "Update" : "Add"}
+        <button onClick={addCourse} className="bg-blue-600 text-white px-3 py-1 rounded">
+          Add
+        </button>
+
+        <button onClick={saveOrder} className="bg-purple-600 text-white px-3 py-1 rounded">
+          Save Order
         </button>
 
       </div>
 
       {/* LIST */}
-      <div className="space-y-2">
+      <div className="p-3 overflow-y-auto flex-1">
 
-        {courses.map((c)=>(
-          <div
-            key={c.id}
-            className="flex justify-between items-center border p-2 rounded"
-          >
+        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={courses.map(c=>c.id)} strategy={verticalListSortingStrategy}>
 
-            <div>{c.name}</div>
+            <div className="space-y-2">
 
-            <div className="flex gap-2">
+              {courses.map(c=>(
 
-              <button
-                onClick={()=>editCourse(c)}
-                className="text-blue-600 text-sm"
-              >
-                Edit
-              </button>
+                <SortableItem key={c.id} id={c.id}>
 
-              <button
-                onClick={()=>deleteCourse(c.id)}
-                className="text-red-600 text-sm"
-              >
-                Delete
-              </button>
+                  {(attributes:any, listeners:any)=>(
+
+                    <div className="flex items-center gap-2 border p-2 rounded bg-white">
+
+                      <div {...attributes} {...listeners} className="cursor-move">☰</div>
+
+                      {editId === c.id ? (
+                        <>
+                          <input
+                            value={editText}
+                            onChange={(e)=>setEditText(e.target.value)}
+                            className="border px-2 py-1 rounded flex-1"
+                          />
+                          <button onClick={saveEdit}>Save</button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex-1">{c.name}</div>
+
+                          <button onClick={()=>startEdit(c)}>Edit</button>
+                          <button onClick={()=>deleteCourse(c.id)}>Delete</button>
+                        </>
+                      )}
+
+                    </div>
+
+                  )}
+
+                </SortableItem>
+
+              ))}
 
             </div>
 
-          </div>
-        ))}
+          </SortableContext>
+        </DndContext>
 
       </div>
 
