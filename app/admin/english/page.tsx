@@ -33,11 +33,16 @@ export default function EnglishPage() {
   useEffect(() => { if (selectedDay) fetchTopics(); }, [selectedDay]);
   useEffect(() => { if (selectedTopic) fetchSentences(); }, [selectedTopic]);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  
+   useEffect(() => {
+  if (scrollRef.current) {
+    if (showAll) {
+      scrollRef.current.scrollTop = 0; // 🔥 TOP
+    } else {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight; // bottom
     }
-  }, [currentIndex, showAll]);
+  }
+}, [currentIndex, showAll]);
 
   const fetchCourses = async () => {
     const { data } = await supabase.from("english_courses").select("*").order("name");
@@ -86,52 +91,62 @@ export default function EnglishPage() {
   // 🔥 TOPIC NAV
   const nextTopic = () => {
 
-    const idx = topics.findIndex(t => t.id === selectedTopic);
+  const dayTopics = topics.filter(t => t.day_id === selectedDay);
 
-    if (idx < topics.length - 1) {
-      setSelectedTopic(topics[idx + 1].id);
-    } else {
-      const dayIdx = days.findIndex(d => d.id === selectedDay);
+  const idx = dayTopics.findIndex(t => t.id === selectedTopic);
 
-      if (dayIdx < days.length - 1) {
-        const nextDay = days[dayIdx + 1].id;
-        setSelectedDay(nextDay);
+  if (idx < dayTopics.length - 1) {
+    setSelectedTopic(dayTopics[idx + 1].id);
+  } else {
+    const dayIdx = days.findIndex(d => d.id === selectedDay);
 
-        setTimeout(() => {
-          setSelectedTopic("");
-        }, 200);
-      }
+    if (dayIdx < days.length - 1) {
+      const nextDay = days[dayIdx + 1].id;
+      setSelectedDay(nextDay);
+
+      setTimeout(() => {
+        const nextDayTopics = topics.filter(t => t.day_id === nextDay);
+        if (nextDayTopics.length > 0) {
+          setSelectedTopic(nextDayTopics[0].id);
+        }
+      }, 200);
     }
-  };
+  }
+};
 
   const prevTopic = () => {
 
-    const idx = topics.findIndex(t => t.id === selectedTopic);
+  const dayTopics = topics.filter(t => t.day_id === selectedDay);
 
-    if (idx > 0) {
-      setSelectedTopic(topics[idx - 1].id);
-    } else {
-      const dayIdx = days.findIndex(d => d.id === selectedDay);
+  const idx = dayTopics.findIndex(t => t.id === selectedTopic);
 
-      if (dayIdx > 0) {
-        const prevDay = days[dayIdx - 1].id;
-        setSelectedDay(prevDay);
+  if (idx > 0) {
+    setSelectedTopic(dayTopics[idx - 1].id);
+  } else {
+    const dayIdx = days.findIndex(d => d.id === selectedDay);
 
-        setTimeout(() => {
-          setSelectedTopic("");
-        }, 200);
-      }
+    if (dayIdx > 0) {
+      const prevDay = days[dayIdx - 1].id;
+      setSelectedDay(prevDay);
+
+      setTimeout(() => {
+        const prevDayTopics = topics.filter(t => t.day_id === prevDay);
+        if (prevDayTopics.length > 0) {
+          setSelectedTopic(prevDayTopics[prevDayTopics.length - 1].id);
+        }
+      }, 200);
     }
-  };
-
+  }
+};
   const toggleShowAll = () => {
-    if (showAll) {
-      setShowAll(false);
-      setCurrentIndex(0);
-    } else {
-      setShowAll(true);
-    }
-  };
+  if (showAll) {
+    setShowAll(false);
+    setCurrentIndex(0);
+  } else {
+    setShowAll(true);
+    setCurrentIndex(sentences.length); // 🔥 yaha fix
+  }
+};
 
   const visible = showAll
     ? sentences
@@ -142,8 +157,7 @@ export default function EnglishPage() {
 
   return (
 
-    <div className="flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden">
-
+    <div className="english-page flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden">
       {/* LEFT PANEL */}
    <div className="w-60 bg-white border-r p-3 space-y-3 overflow-y-auto">
 
@@ -335,7 +349,7 @@ export default function EnglishPage() {
           )}
 
           {!showAll && currentIndex < sentences.length && (
-            <button onClick={()=>setShowAll(true)}
+            <button onClick={toggleShowAll}
               className="px-4 py-2 bg-green-600 text-white rounded">
               Show All
             </button>
