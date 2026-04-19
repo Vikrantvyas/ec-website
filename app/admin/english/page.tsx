@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import WhiteBoard from "@/app/components/admin/english/WhiteBoard";
-
+import VocabularyPlayer from "@/app/components/admin/english/VocabularyPlayer";
 export default function EnglishPage() {
 
   const [courses, setCourses] = useState<any[]>([]);
@@ -22,7 +22,8 @@ export default function EnglishPage() {
   const [showBoard, setShowBoard] = useState(true);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-
+const isVocab =
+  courses.find(c => c.id === selectedCourse)?.name === "Vocabulary";
   useEffect(() => { fetchCourses(); }, []);
   useEffect(() => {
   if (selectedCourse) {
@@ -64,16 +65,41 @@ export default function EnglishPage() {
   if (data) setTopics(data);
 };
 
-  const fetchSentences = async () => {
-    const { data } = await supabase.from("sentences")
-      .select("*").eq("topic_id", selectedTopic).order("order_no");
+ const fetchSentences = async () => {
 
-    if (data) {
+  if (!selectedTopic) return;
+
+  if (isVocab) {
+
+    const { data, error } = await supabase
+      .from("vocabulary")
+      .select("*")
+      .eq("topic_id", selectedTopic)
+      .order("order_no");
+
+    if (!error && data) {
       setSentences(data);
       setCurrentIndex(0);
       setShowAll(false);
     }
-  };
+
+  } else {
+
+    const { data, error } = await supabase
+      .from("sentences")
+      .select("*")
+      .eq("topic_id", selectedTopic)
+      .order("order_no");
+
+    if (!error && data) {
+      setSentences(data);
+      setCurrentIndex(0);
+      setShowAll(false);
+    }
+
+  }
+
+};
 
   // 🔥 SENTENCE NAV
   const nextSentence = () => {
@@ -276,25 +302,39 @@ export default function EnglishPage() {
 
       {showBoard ? (
 
-        <div className="space-y-1">
-          {visible.map((item, i)=>(
+  isVocab ? (
+    <VocabularyPlayer data={sentences} />
+  ) : (
 
-            <div
-              key={item.id}
-              onClick={()=>{
-                setHighlightIndex(prev => prev === i ? null : i);
-              }}
-              className={`cursor-pointer select-none text-2xl leading-tight ${
-                highlightIndex === i ? "bg-yellow-200" : ""
-              }`}
-            >
-              {i+1}. {item.sentence}
-            </div>
+    <div className="space-y-1">
+      {visible.map((item, i)=>(
 
-          ))}
+        <div
+          key={item.id}
+          onClick={()=>{
+            setHighlightIndex(prev => prev === i ? null : i);
+          }}
+          className={`cursor-pointer select-none text-2xl leading-tight flex ${
+            highlightIndex === i ? "bg-yellow-200" : ""
+          }`}
+        >
+
+          <div className="w-10 shrink-0">
+            {i+1}.
+          </div>
+
+          <div className="flex-1">
+            {item.sentence}
+          </div>
+
         </div>
 
-      ) : (
+      ))}
+    </div>
+
+  )
+
+) : (
 
         <div className="flex gap-4">
 
