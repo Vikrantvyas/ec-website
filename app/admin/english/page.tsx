@@ -270,61 +270,91 @@ export default function EnglishPage() {
           {/* BODY */}
           <div className="flex flex-1 overflow-hidden">
 
-            <div className={`${showBoard ? "w-1/2" : "w-full"} p-4 flex flex-col`}>
+  <div className={`${showBoard ? "w-1/2" : "w-full"} p-4 flex flex-col`}>
 
-              <div ref={scrollRef} className="flex-1 overflow-y-auto">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
-                {showBoard ? (
+      {showBoard ? (
 
-                  <div className="space-y-1">
-                    {visible.map((item, i)=>(
-                      <div
-                        key={item.id}
-                        onClick={()=>setHighlightIndex(i)}
-                        className={`cursor-pointer text-2xl leading-tight ${
-                          highlightIndex === i ? "bg-yellow-200" : ""
-                        }`}
-                      >
-                        {i+1}. {item.sentence}
-                      </div>
-                    ))}
-                  </div>
+        <div className="space-y-1">
+          {visible.map((item, i)=>(
 
-                ) : (
-
-                  <div className="flex gap-4">
-
-                    <div className="w-1/2 space-y-1">
-                      {leftCol.map((item, i)=>(
-                        <div key={item.id} className="text-2xl leading-tight">
-                          {i+1}. {item.sentence}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="w-1/2 space-y-1">
-                      {rightCol.map((item, i)=>(
-                        <div key={item.id} className="text-2xl leading-tight">
-                          {i+11}. {item.sentence}
-                        </div>
-                      ))}
-                    </div>
-
-                  </div>
-
-                )}
-
-              </div>
-
+            <div
+              key={item.id}
+              onClick={()=>{
+                setHighlightIndex(prev => prev === i ? null : i);
+              }}
+              className={`cursor-pointer select-none text-2xl leading-tight ${
+                highlightIndex === i ? "bg-yellow-200" : ""
+              }`}
+            >
+              {i+1}. {item.sentence}
             </div>
 
-            {showBoard && (
-              <div className="w-1/2 border-l">
-                <WhiteBoard />
-              </div>
-            )}
+          ))}
+        </div>
 
+      ) : (
+
+        <div className="flex gap-4">
+
+          {/* LEFT COLUMN */}
+          <div className="w-1/2 space-y-1">
+            {leftCol.map((item, i)=>(
+
+              <div
+                key={item.id}
+                onClick={()=>{
+                  setHighlightIndex(prev => prev === i ? null : i);
+                }}
+                className={`cursor-pointer select-none text-2xl leading-tight ${
+                  highlightIndex === i ? "bg-yellow-200" : ""
+                }`}
+              >
+                {i+1}. {item.sentence}
+              </div>
+
+            ))}
           </div>
+
+          {/* RIGHT COLUMN */}
+          <div className="w-1/2 space-y-1">
+            {rightCol.map((item, i)=>{
+
+              const realIndex = i + 10;
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={()=>{
+                    setHighlightIndex(prev => prev === realIndex ? null : realIndex);
+                  }}
+                  className={`cursor-pointer select-none text-2xl leading-tight ${
+                    highlightIndex === realIndex ? "bg-yellow-200" : ""
+                  }`}
+                >
+                  {realIndex + 1}. {item.sentence}
+                </div>
+              );
+
+            })}
+          </div>
+
+        </div>
+
+      )}
+
+    </div>
+
+  </div>
+
+  {showBoard && (
+    <div className="w-1/2 border-l">
+      <WhiteBoard />
+    </div>
+  )}
+
+</div>
 
         </div>
 
