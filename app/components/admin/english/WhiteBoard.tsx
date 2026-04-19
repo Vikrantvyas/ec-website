@@ -32,14 +32,14 @@ export default function WhiteBoard() {
   };
 
   const addText = (e:any) => {
-    if (editingId) return;
+    
 
     const rect = e.currentTarget.getBoundingClientRect();
 
     let x = e.clientX - rect.left;
     let y = e.clientY - rect.top;
 
-    y = Math.floor(y / LINE_HEIGHT) * LINE_HEIGHT;
+    y = Math.round(y / LINE_HEIGHT) * LINE_HEIGHT;
 
     const id = Date.now().toString();
 
@@ -235,7 +235,9 @@ export default function WhiteBoard() {
               top:item.y,
               left:item.x,
               color:item.color,
-              fontSize:item.fontSize,
+              fontSize: /[\u0900-\u097F]/.test(item.text)
+  ? item.fontSize - 4   // 🔥 Hindi थोड़ा छोटा
+  : item.fontSize,
               cursor: "text"
             }}
           >
@@ -248,9 +250,15 @@ export default function WhiteBoard() {
                 onChange={(e)=>updateText(item.id,e.target.value)}
                 onBlur={()=>setEditingId(null)}
                 className="outline-none bg-transparent resize-none"
-                style={{
-                  textDecoration: item.underline?"underline":"none"
-                }}
+             style={{
+  textDecoration: item.underline?"underline":"none",
+  minWidth: "400px",      // 🔥 width increased
+  maxWidth: "90%",
+  width: "auto",
+  minHeight: "400px",      // 🔥 height increased
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word"
+}}
               />
 
             ) : (
