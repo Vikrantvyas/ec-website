@@ -1,59 +1,144 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function ScoreCard() {
 
   const [score, setScore] = useState(0);
 
+  // ⏱ STOPWATCH
+  const [time, setTime] = useState(0);
+  const [running, setRunning] = useState(false);
+
+  // ⏳ TIMER
+  const [timer, setTimer] = useState(60);
+  const [inputMin, setInputMin] = useState(1);
+  const [timerRunning, setTimerRunning] = useState(false);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // STOPWATCH
+  useEffect(() => {
+    let interval:any;
+    if (running) {
+      interval = setInterval(() => setTime(p => p + 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [running]);
+
+  // TIMER
+  useEffect(() => {
+    let interval:any;
+    if (timerRunning && timer > 0) {
+      interval = setInterval(() => {
+        setTimer(p => p - 1);
+      }, 1000);
+    }
+
+    // ⛔ TIME UP → BUZZER
+    if (timer === 0 && timerRunning) {
+      setTimerRunning(false);
+      audioRef.current?.play();
+    }
+
+    return () => clearInterval(interval);
+  }, [timerRunning, timer]);
+
+  const format = (t:number) => {
+    const m = Math.floor(t / 60);
+    const s = t % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
   return (
 
     <div className="h-full flex flex-col">
 
-      {/* TOP BAR (same feel as WhiteBoard) */}
-      <div className="flex gap-2 p-2 border-b justify-between items-center">
+      {/* 🔝 HEADER */}
+      <div className="flex justify-between items-center p-2 border-b">
 
-        <div className="font-semibold">
-          Score Card
-        </div>
+        <div className="font-semibold">Score Board</div>
 
         <button
           onClick={()=>setScore(0)}
           className="px-3 py-1 bg-gray-500 text-white text-sm rounded"
         >
-          Reset
+          Reset Score
         </button>
 
       </div>
 
-      {/* BODY */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-6">
+      {/* 🔊 BUZZER */}
+      <audio ref={audioRef} src="/buzzer.mp3" />
 
-        <div className="text-5xl font-bold">
-          {score}
+      {/* 🔽 BODY */}
+      <div className="flex-1 grid grid-cols-2 gap-4 p-4">
+
+        {/* 🎯 SCORE */}
+        <div className="flex flex-col items-center justify-center border rounded">
+
+          <div className="text-4xl font-bold">{score}</div>
+
+          <div className="flex gap-3 mt-4">
+            <button onClick={()=>setScore(p=>p+1)} className="px-4 py-2 bg-green-600 text-white rounded">+1</button>
+            <button onClick={()=>setScore(p=>Math.max(0,p-1))} className="px-4 py-2 bg-red-600 text-white rounded">-1</button>
+          </div>
+
         </div>
 
-        <div className="flex gap-4">
+        {/* ⏱ STOPWATCH */}
+        <div className="flex flex-col items-center justify-center border rounded">
 
-          <button
-            onClick={()=>setScore(prev => prev + 1)}
-            className="px-6 py-3 bg-green-600 text-white rounded text-lg"
-          >
-            +1
-          </button>
+          <div className="font-semibold">Stopwatch</div>
+          <div className="text-2xl mt-2">{format(time)}</div>
 
-          <button
-            onClick={()=>setScore(prev => Math.max(0, prev - 1))}
-            className="px-6 py-3 bg-red-600 text-white rounded text-lg"
-          >
-            -1
-          </button>
+          <div className="flex gap-2 mt-3">
+            <button onClick={()=>setRunning(true)} className="px-3 py-1 bg-blue-600 text-white rounded">Start</button>
+            <button onClick={()=>setRunning(false)} className="px-3 py-1 bg-yellow-500 text-white rounded">Stop</button>
+            <button onClick={()=>{setTime(0); setRunning(false)}} className="px-3 py-1 bg-gray-500 text-white rounded">Reset</button>
+          </div>
+
+        </div>
+
+        {/* ⏳ TIMER */}
+        <div className="flex flex-col items-center justify-center border rounded col-span-2">
+
+          <div className="font-semibold">Timer</div>
+          <div className="text-3xl mt-2">{format(timer)}</div>
+
+          {/* INPUT */}
+          <div className="flex gap-2 mt-3 items-center">
+
+            <input
+              type="number"
+              value={inputMin}
+              onChange={(e)=>setInputMin(Number(e.target.value))}
+              className="w-16 border px-2 py-1 text-center"
+            />
+
+            <button
+              onClick={()=>{
+                setTimer(inputMin * 60);
+                setTimerRunning(false);
+              }}
+              className="px-3 py-1 bg-gray-600 text-white rounded"
+            >
+              Set (min)
+            </button>
+
+          </div>
+
+          {/* CONTROLS */}
+          <div className="flex gap-2 mt-3">
+            <button onClick={()=>setTimerRunning(true)} className="px-3 py-1 bg-green-600 text-white rounded">Start</button>
+            <button onClick={()=>setTimerRunning(false)} className="px-3 py-1 bg-yellow-500 text-white rounded">Pause</button>
+            <button onClick={()=>{setTimer(inputMin*60); setTimerRunning(false)}} className="px-3 py-1 bg-gray-500 text-white rounded">Reset</button>
+          </div>
 
         </div>
 
       </div>
 
     </div>
-
   );
 }
