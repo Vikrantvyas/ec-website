@@ -61,7 +61,8 @@ export default function EnglishSentenceMaster() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [editOrder, setEditOrder] = useState("");
-
+const isVocab =
+  courses.find(c => c.id === selectedCourse)?.name === "Vocabulary";
   useEffect(() => { fetchCourses(); }, []);
   useEffect(() => { if (selectedCourse) fetchDays(); }, [selectedCourse]);
   useEffect(() => { if (selectedDay) fetchTopics(); }, [selectedDay]);
@@ -85,10 +86,38 @@ export default function EnglishSentenceMaster() {
   };
 
   const fetchSentences = async () => {
+
+  if (isVocab) {
+
+    const { data } = await supabase.from("vocabulary")
+      .select("*")
+      .eq("topic_id", selectedTopic)
+      .order("order_no");
+
+    if (data) {
+      // convert into same structure
+      const formatted = data.map((d:any) => ({
+        id: d.id,
+        sentence: `${d.hindi} - ${d.english}`,
+        order_no: d.order_no
+      }));
+
+      setSentences(formatted);
+    }
+
+  } else {
+
     const { data } = await supabase.from("sentences")
-      .select("*").eq("topic_id", selectedTopic).order("order_no");
+      .select("*")
+      .eq("topic_id", selectedTopic)
+      .order("order_no");
+
     if (data) setSentences(data);
-  };
+
+  }
+
+};
+     
 
   const addCourse = async () => {
     if (!newCourse) return;
@@ -137,11 +166,26 @@ export default function EnglishSentenceMaster() {
       ? Math.max(...sentences.map(s => s.order_no || 0))
       : 0;
 
-    await supabase.from("sentences").insert([{
-      topic_id: selectedTopic,
-      sentence: text,
-      order_no: Number(orderNo || maxOrder + 1)
-    }]);
+    if (isVocab) {
+
+  const parts = text.split("-");
+
+  await supabase.from("vocabulary").insert([{
+    topic_id: selectedTopic,
+    hindi: parts[0]?.trim() || "",
+    english: parts[1]?.trim() || "",
+    order_no: Number(orderNo || maxOrder + 1)
+  }]);
+
+} else {
+
+  await supabase.from("sentences").insert([{
+    topic_id: selectedTopic,
+    sentence: text,
+    order_no: Number(orderNo || maxOrder + 1)
+  }]);
+
+}
 
     setText("");
     setOrderNo("");
@@ -157,13 +201,32 @@ export default function EnglishSentenceMaster() {
       ? Math.max(...sentences.map(s => s.order_no || 0))
       : 0;
 
-    const data = lines.map((line, i) => ({
-      topic_id: selectedTopic,
-      sentence: line,
-      order_no: maxOrder + i + 1
-    }));
+    if (isVocab) {
 
-    await supabase.from("sentences").insert(data);
+  const data = lines.map((line, i) => {
+    const parts = line.split("-");
+
+    return {
+      topic_id: selectedTopic,
+      hindi: parts[0]?.trim() || "",
+      english: parts[1]?.trim() || "",
+      order_no: maxOrder + i + 1
+    };
+  });
+
+  await supabase.from("vocabulary").insert(data);
+
+} else {
+
+  const data = lines.map((line, i) => ({
+    topic_id: selectedTopic,
+    sentence: line,
+    order_no: maxOrder + i + 1
+  }));
+
+  await supabase.from("sentences").insert(data);
+
+}
     setBulkText("");
     fetchSentences();
   };
