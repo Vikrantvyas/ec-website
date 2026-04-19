@@ -300,12 +300,11 @@ const isVocab =
 
     <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
-      {showBoard ? (
+      
 
-  isVocab ? (
-    <VocabularyPlayer data={sentences} />
-  ) : (
-
+  {isVocab ? (
+  <VocabularyPlayer data={sentences} />
+) : showBoard ? (
     <div className="space-y-1">
       {visible.map((item, i)=>(
 
@@ -334,7 +333,7 @@ const isVocab =
 
   )
 
-) : (
+ : (
 
         <div className="flex gap-4">
 

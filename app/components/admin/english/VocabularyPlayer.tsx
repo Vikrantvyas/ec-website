@@ -25,19 +25,18 @@ export default function VocabularyPlayer({ data }: any) {
   // NEXT (🔥 AUTO REVEAL)
   const handleNext = () => {
 
-    // reveal current
-    setRevealedAnswers(prev => {
-      if (!prev.includes(currentIndex)) {
-        return [...prev, currentIndex];
-      }
-      return prev;
-    });
+  // अगर current reveal नहीं हुआ → पहले reveal करो
+  if (!revealedAnswers.includes(currentIndex)) {
+    setRevealedAnswers(prev => [...prev, currentIndex]);
+    return;
+  }
 
-    // move next
-    if (currentIndex < data.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    }
-  };
+  // अगर reveal हो चुका है → तब next word दिखाओ
+  if (currentIndex < data.length - 1) {
+    setCurrentIndex(prev => prev + 1);
+  }
+
+};
 
   const safeData = data || [];
   const visible = safeData.slice(0, currentIndex + 1);
