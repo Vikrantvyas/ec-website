@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import WhiteBoard from "@/app/components/admin/english/WhiteBoard";
 import VocabularyPlayer from "@/app/components/admin/english/VocabularyPlayer";
+import ScoreCard from "@/app/components/admin/english/ScoreCard";
 export default function EnglishPage() {
 
   const [courses, setCourses] = useState<any[]>([]);
@@ -20,7 +21,7 @@ export default function EnglishPage() {
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
 
   const [showBoard, setShowBoard] = useState(true);
-
+const [showScore, setShowScore] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 const isVocab =
   courses.find(c => c.id === selectedCourse)?.name === "Vocabulary";
@@ -296,7 +297,7 @@ const isVocab =
           {/* BODY */}
           <div className="flex flex-1 overflow-hidden">
 
-  <div className={`${showBoard ? "w-1/2" : "w-full"} p-4 flex flex-col`}>
+  <div className={`${(showBoard || showScore) ? "w-1/2" : "w-full"} p-4 flex flex-col`}>
 
     <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
@@ -387,11 +388,15 @@ const isVocab =
 
   </div>
 
-  {showBoard && (
-    <div className="w-1/2 border-l">
-      <WhiteBoard />
-    </div>
-  )}
+  {(showBoard || showScore) && (
+    
+  <div className="w-1/2 border-l">
+
+    {showBoard && <WhiteBoard />}
+    {showScore && <ScoreCard />}
+
+  </div>
+)}
 
 </div>
 
@@ -439,6 +444,21 @@ const isVocab =
             className="px-4 py-2 bg-orange-600 text-white rounded">
             Next Topic →
           </button>
+<button
+  onClick={()=>{
+    if (showScore) {
+      setShowScore(false);
+      setShowBoard(true);
+    } else {
+      setShowBoard(false);
+      setShowScore(true);
+    }
+  }}
+  className="px-4 py-2 bg-green-700 text-white rounded"
+>
+  {showScore ? "Hide Score" : "Show Score"}
+</button>
+
 
         </div>
 
