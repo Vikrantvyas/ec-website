@@ -20,19 +20,30 @@ export default function WhiteBoard() {
   const redoRef = useRef<any[]>([]);
   const clipboardRef = useRef<any>(null);
 
+  // ---------------- HISTORY ----------------
   const saveHistory = (newItems:any[]) => {
     historyRef.current.push(items);
     setItems(newItems);
     redoRef.current = [];
   };
 
+  // ---------------- EDIT ----------------
   const startEditing = (id:string) => {
     setEditingId(id);
     setSelectedId(id);
   };
 
+  const updateText = (id:string, value:string) => {
+    setItems(prev =>
+      prev.map(i => i.id === id ? { ...i, text:value } : i)
+    );
+  };
+
+  // ---------------- ADD ----------------
   const addText = (e:any) => {
-    
+
+    // अगर drag हो रहा है तो नया text मत बनाओ
+    if (draggingId) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
 
@@ -52,12 +63,7 @@ export default function WhiteBoard() {
     startEditing(id);
   };
 
-  const updateText = (id:string, value:string) => {
-    setItems(prev =>
-      prev.map(i => i.id === id ? { ...i, text:value } : i)
-    );
-  };
-
+  // ---------------- DELETE ----------------
   const deleteItem = () => {
     if(!selectedId) return;
     saveHistory(items.filter(i=>i.id !== selectedId));
@@ -71,6 +77,7 @@ export default function WhiteBoard() {
     setEditingId(null);
   };
 
+  // ---------------- CLIPBOARD ----------------
   const copy = () => {
     if(!selectedId) return;
     clipboardRef.current = items.find(i=>i.id === selectedId);
@@ -98,6 +105,7 @@ export default function WhiteBoard() {
     startEditing(newItem.id);
   };
 
+  // ---------------- DRAG ----------------
   const handleMouseDown = (id:string, e:any) => {
     e.stopPropagation();
     setDraggingId(id);
@@ -125,6 +133,7 @@ export default function WhiteBoard() {
     setDraggingId(null);
   };
 
+  // ---------------- UNDO / REDO ----------------
   const undo = () => {
     if(historyRef.current.length === 0) return;
     const prev = historyRef.current.pop();
@@ -143,6 +152,7 @@ export default function WhiteBoard() {
     setSelectedId(null);
   };
 
+  // ---------------- STYLE APPLY ----------------
   useEffect(()=>{
     if(!selectedId) return;
 
@@ -155,25 +165,37 @@ export default function WhiteBoard() {
     );
   },[color, underline, fontSize]);
 
+  // ---------------- SHORTCUTS ----------------
   useEffect(()=>{
     const handleKey = (e:any)=>{
+
       if(e.ctrlKey && e.key === "z") undo();
       if(e.ctrlKey && e.key === "y") redo();
       if(e.ctrlKey && e.key === "c") copy();
       if(e.ctrlKey && e.key === "x") cut();
       if(e.ctrlKey && e.key === "v") paste();
+
       if(e.key === "Delete") deleteItem();
+
+      // ESC → exit editing
+      if(e.key === "Escape") {
+        setEditingId(null);
+      }
+
     };
 
     window.addEventListener("keydown", handleKey);
     return ()=> window.removeEventListener("keydown", handleKey);
+
   },[items, selectedId]);
 
+  // ---------------- UI ----------------
   return (
 
     <div className="h-full flex flex-col">
 
-      <div className="flex gap-2 p-2 border-b items-center">
+      {/* TOOLBAR */}
+      <div className="flex gap-2 p-2 border-b items-center flex-wrap">
 
         <button onClick={clearAll} className="px-2 py-1 bg-red-500 text-white text-xs rounded">Clear</button>
         <button onClick={deleteItem} className="px-2 py-1 bg-gray-200 text-xs rounded">Delete</button>
@@ -211,13 +233,15 @@ export default function WhiteBoard() {
 
       </div>
 
+      {/* BOARD */}
       <div
         className="flex-1 relative bg-white"
         onClick={addText}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         style={{
-          backgroundImage: "repeating-linear-gradient(to bottom, #e5e7eb 0px, #e5e7eb 1px, transparent 1px, transparent 32px)"
+          backgroundImage:
+            "repeating-linear-gradient(to bottom, #e5e7eb 0px, #e5e7eb 1px, transparent 1px, transparent 32px)"
         }}
       >
 
@@ -236,8 +260,8 @@ export default function WhiteBoard() {
               left:item.x,
               color:item.color,
               fontSize: /[\u0900-\u097F]/.test(item.text)
-  ? item.fontSize - 4   // 🔥 Hindi थोड़ा छोटा
-  : item.fontSize,
+                ? item.fontSize - 4
+                : item.fontSize,
               cursor: "text"
             }}
           >
@@ -250,15 +274,14 @@ export default function WhiteBoard() {
                 onChange={(e)=>updateText(item.id,e.target.value)}
                 onBlur={()=>setEditingId(null)}
                 className="outline-none bg-transparent resize-none"
-             style={{
-  textDecoration: item.underline?"underline":"none",
-  minWidth: "400px",      // 🔥 width increased
-  maxWidth: "90%",
-  width: "auto",
-  minHeight: "400px",      // 🔥 height increased
-  whiteSpace: "pre-wrap",
-  wordBreak: "break-word"
-}}
+                style={{
+                  textDecoration: item.underline?"underline":"none",
+                  minWidth: "400px",
+                  maxWidth: "90%",
+                  minHeight: "120px",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word"
+                }}
               />
 
             ) : (

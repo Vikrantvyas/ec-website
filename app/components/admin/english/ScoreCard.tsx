@@ -14,6 +14,7 @@ export default function ScoreCard() {
   const [timer, setTimer] = useState(60);
   const [inputMin, setInputMin] = useState(1);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [timeUp, setTimeUp] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -29,15 +30,16 @@ export default function ScoreCard() {
   // TIMER
   useEffect(() => {
     let interval:any;
+
     if (timerRunning && timer > 0) {
       interval = setInterval(() => {
         setTimer(p => p - 1);
       }, 1000);
     }
 
-    // ⛔ TIME UP → BUZZER
     if (timer === 0 && timerRunning) {
       setTimerRunning(false);
+      setTimeUp(true);
       audioRef.current?.play();
     }
 
@@ -54,7 +56,7 @@ export default function ScoreCard() {
 
     <div className="h-full flex flex-col">
 
-      {/* 🔝 HEADER */}
+      {/* HEADER */}
       <div className="flex justify-between items-center p-2 border-b">
 
         <div className="font-semibold">Score Board</div>
@@ -68,28 +70,40 @@ export default function ScoreCard() {
 
       </div>
 
-      {/* 🔊 BUZZER */}
+      {/* BUZZER */}
       <audio ref={audioRef} src="/buzzer.mp3" />
 
-      {/* 🔽 BODY */}
+      {/* BODY */}
       <div className="flex-1 grid grid-cols-2 gap-4 p-4">
 
-        {/* 🎯 SCORE */}
+        {/* SCORE */}
         <div className="flex flex-col items-center justify-center border rounded">
 
           <div className="text-4xl font-bold">{score}</div>
 
           <div className="flex gap-3 mt-4">
-            <button onClick={()=>setScore(p=>p+1)} className="px-4 py-2 bg-green-600 text-white rounded">+1</button>
-            <button onClick={()=>setScore(p=>Math.max(0,p-1))} className="px-4 py-2 bg-red-600 text-white rounded">-1</button>
+            <button
+              onClick={()=>setScore(p=>p+1)}
+              className="px-4 py-2 bg-green-600 text-white rounded"
+            >
+              +1
+            </button>
+
+            <button
+              onClick={()=>setScore(p=>Math.max(0,p-1))}
+              className="px-4 py-2 bg-red-600 text-white rounded"
+            >
+              -1
+            </button>
           </div>
 
         </div>
 
-        {/* ⏱ STOPWATCH */}
+        {/* STOPWATCH */}
         <div className="flex flex-col items-center justify-center border rounded">
 
           <div className="font-semibold">Stopwatch</div>
+
           <div className="text-2xl mt-2">{format(time)}</div>
 
           <div className="flex gap-2 mt-3">
@@ -100,11 +114,16 @@ export default function ScoreCard() {
 
         </div>
 
-        {/* ⏳ TIMER */}
-        <div className="flex flex-col items-center justify-center border rounded col-span-2">
+        {/* TIMER */}
+        <div className={`flex flex-col items-center justify-center border rounded col-span-2 ${
+          timeUp ? "bg-red-100" : ""
+        }`}>
 
           <div className="font-semibold">Timer</div>
-          <div className="text-3xl mt-2">{format(timer)}</div>
+
+          <div className="text-3xl mt-2">
+            {format(timer)}
+          </div>
 
           {/* INPUT */}
           <div className="flex gap-2 mt-3 items-center">
@@ -112,6 +131,7 @@ export default function ScoreCard() {
             <input
               type="number"
               value={inputMin}
+              min={1}
               onChange={(e)=>setInputMin(Number(e.target.value))}
               className="w-16 border px-2 py-1 text-center"
             />
@@ -120,19 +140,46 @@ export default function ScoreCard() {
               onClick={()=>{
                 setTimer(inputMin * 60);
                 setTimerRunning(false);
+                setTimeUp(false);
               }}
               className="px-3 py-1 bg-gray-600 text-white rounded"
             >
-              Set (min)
+              Set
             </button>
 
           </div>
 
           {/* CONTROLS */}
           <div className="flex gap-2 mt-3">
-            <button onClick={()=>setTimerRunning(true)} className="px-3 py-1 bg-green-600 text-white rounded">Start</button>
-            <button onClick={()=>setTimerRunning(false)} className="px-3 py-1 bg-yellow-500 text-white rounded">Pause</button>
-            <button onClick={()=>{setTimer(inputMin*60); setTimerRunning(false)}} className="px-3 py-1 bg-gray-500 text-white rounded">Reset</button>
+
+            <button
+              onClick={()=>{
+                setTimerRunning(true);
+                setTimeUp(false);
+              }}
+              className="px-3 py-1 bg-green-600 text-white rounded"
+            >
+              Start
+            </button>
+
+            <button
+              onClick={()=>setTimerRunning(false)}
+              className="px-3 py-1 bg-yellow-500 text-white rounded"
+            >
+              Pause
+            </button>
+
+            <button
+              onClick={()=>{
+                setTimer(inputMin * 60);
+                setTimerRunning(false);
+                setTimeUp(false);
+              }}
+              className="px-3 py-1 bg-gray-500 text-white rounded"
+            >
+              Reset
+            </button>
+
           </div>
 
         </div>
