@@ -24,10 +24,9 @@ export default function EnglishPage() {
 
   const [showBoard, setShowBoard] = useState(true);
   const [showScore, setShowScore] = useState(false);
+  const [randomMode, setRandomMode] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  // ✅ NEW
   const vocabRef = useRef<any>(null);
 
   const isVocab =
@@ -113,7 +112,6 @@ export default function EnglishPage() {
 
   const nextSentence = () => {
 
-    // ✅ VOCAB MODE
     if (isVocab && vocabRef.current) {
       vocabRef.current.next();
       return;
@@ -126,7 +124,6 @@ export default function EnglishPage() {
 
   const prevSentence = () => {
 
-    // ✅ VOCAB MODE
     if (isVocab && vocabRef.current) {
       vocabRef.current.prev();
       return;
@@ -245,7 +242,8 @@ export default function EnglishPage() {
             showBoard={showBoard}
             showScore={showScore}
             scrollRef={scrollRef}
-            vocabRef={vocabRef} // ✅ NEW
+            vocabRef={vocabRef}
+            randomMode={randomMode}   // ✅ FIXED
           />
 
         </div>
@@ -265,7 +263,9 @@ export default function EnglishPage() {
           nextTopic={nextTopic}
           showScore={showScore}
           setShowScore={setShowScore}
-          isVocab={isVocab} // ✅ NEW
+          isVocab={isVocab}
+          randomMode={randomMode}        // ✅ FIXED
+          setRandomMode={setRandomMode}  // ✅ FIXED
         />
 
       </div>
