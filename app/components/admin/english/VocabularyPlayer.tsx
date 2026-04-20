@@ -1,13 +1,21 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  forwardRef,
+  useImperativeHandle
+} from "react";
 
-export default function VocabularyPlayer({ data }: any) {
+const VocabularyPlayer = forwardRef(({ data }: any, ref: any) => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const safeData = data || [];
 
   // RESET
   useEffect(() => {
@@ -22,50 +30,63 @@ export default function VocabularyPlayer({ data }: any) {
     }
   }, [currentIndex]);
 
-  // NEXT (🔥 AUTO REVEAL)
+  // ✅ NEXT FLOW FIX (Hindi → English → Next word)
   const handleNext = () => {
 
-  // अगर current reveal नहीं हुआ → पहले reveal करो
-  if (!revealedAnswers.includes(currentIndex)) {
-    setRevealedAnswers(prev => [...prev, currentIndex]);
-    return;
-  }
+    // 1️⃣ पहले English reveal
+    if (!revealedAnswers.includes(currentIndex)) {
+      setRevealedAnswers(prev => [...prev, currentIndex]);
+      return;
+    }
 
-  // अगर reveal हो चुका है → तब next word दिखाओ
-  if (currentIndex < data.length - 1) {
-    setCurrentIndex(prev => prev + 1);
-  }
+    // 2️⃣ फिर अगला word (Hindi only)
+    if (currentIndex < safeData.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    }
 
-};
+  };
 
-  const safeData = data || [];
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    }
+  };
+
+  const handleReveal = (i:number) => {
+    if (!revealedAnswers.includes(i)) {
+      setRevealedAnswers(prev => [...prev, i]);
+    }
+  };
+
+  useImperativeHandle(ref, () => ({
+    next: handleNext,
+    prev: handlePrev
+  }));
+
   const visible = safeData.slice(0, currentIndex + 1);
 
   return (
 
     <div className="flex flex-col h-full">
 
-      {/* LIST */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-1 p-2">
 
         {visible.map((item:any, i:number)=>(
 
           <div
             key={item.id}
-            className="text-2xl leading-tight flex"
+            onClick={()=>handleReveal(i)}
+            className={`cursor-pointer select-none text-2xl leading-tight flex ${
+              i === currentIndex ? "bg-yellow-100" : ""
+            }`}
           >
 
-            {/* NUMBER */}
-            <div className="w-10 shrink-0">
-              {i+1}.
-            </div>
+            <div className="w-10 shrink-0">{i+1}.</div>
 
-            {/* HINDI */}
             <div className="w-1/2">
               {item.hindi}
             </div>
 
-            {/* ANSWER */}
             <div className="w-1/2">
               {revealedAnswers.includes(i) ? item.english : ""}
             </div>
@@ -76,18 +97,8 @@ export default function VocabularyPlayer({ data }: any) {
 
       </div>
 
-      {/* CONTROLS */}
-      <div className="p-2 flex justify-center gap-2 border-t">
-
-        <button
-          onClick={handleNext}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-        >
-          Next
-        </button>
-
-      </div>
-
     </div>
   );
-}
+});
+
+export default VocabularyPlayer;
