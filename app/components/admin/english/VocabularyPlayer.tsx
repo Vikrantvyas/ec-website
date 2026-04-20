@@ -56,11 +56,19 @@ const VocabularyPlayer = forwardRef(({ data, random }: any, ref: any) => {
 
   };
 
-  // PREV
+  // ✅ FIXED PREV
   const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-    }
+
+    if (currentIndex === 0) return;
+
+    const prevIndex = currentIndex - 1;
+
+    // ❗ आगे के सारे reveal हटा दो
+    setRevealedAnswers(prev =>
+      prev.filter(i => i < prevIndex)
+    );
+
+    setCurrentIndex(prevIndex);
   };
 
   useImperativeHandle(ref, () => ({
@@ -68,7 +76,6 @@ const VocabularyPlayer = forwardRef(({ data, random }: any, ref: any) => {
     prev: handlePrev
   }));
 
-  // ✅ IMPORTANT FIX (यही गलती थी)
   const visible = list.slice(0, currentIndex + 1);
 
   return (

@@ -25,7 +25,7 @@ export default function EnglishPage() {
   const [showBoard, setShowBoard] = useState(true);
   const [showScore, setShowScore] = useState(false);
   const [randomMode, setRandomMode] = useState(false);
-
+const [showLeft, setShowLeft] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const vocabRef = useRef<any>(null);
 
@@ -243,7 +243,8 @@ export default function EnglishPage() {
             showScore={showScore}
             scrollRef={scrollRef}
             vocabRef={vocabRef}
-            randomMode={randomMode}   // ✅ FIXED
+            randomMode={randomMode} 
+            showLeft={showLeft}  // ✅ FIXED
           />
 
         </div>
@@ -265,7 +266,9 @@ export default function EnglishPage() {
           setShowScore={setShowScore}
           isVocab={isVocab}
           randomMode={randomMode}        // ✅ FIXED
-          setRandomMode={setRandomMode}  // ✅ FIXED
+          setRandomMode={setRandomMode}
+          showLeft={showLeft}
+setShowLeft={setShowLeft}  // ✅ FIXED
         />
 
       </div>

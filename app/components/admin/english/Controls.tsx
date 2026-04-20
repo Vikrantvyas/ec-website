@@ -16,13 +16,15 @@ export default function Controls({
   showScore,
   setShowScore,
   isVocab,
-  randomMode,        // ✅ NEW
-  setRandomMode      // ✅ NEW
+  randomMode,
+  setRandomMode,
+  showLeft,        // ✅ NEW
+  setShowLeft      // ✅ NEW
 }: any) {
 
   return (
 
-    <div className="flex gap-3 flex-wrap justify-center">
+    <div className="flex gap-3 flex-wrap justify-center items-center">
 
       {/* PREV */}
       <button
@@ -42,7 +44,7 @@ export default function Controls({
         Next
       </button>
 
-      {/* RESET (only sentence mode) */}
+      {/* RESET */}
       {!isVocab && (currentIndex >= sentences.length || showAll) && (
         <button
           onClick={()=>{
@@ -55,7 +57,7 @@ export default function Controls({
         </button>
       )}
 
-      {/* SHOW ALL (always visible) */}
+      {/* SHOW ALL */}
       <button
         onClick={toggleShowAll}
         className="px-4 py-2 bg-green-600 text-white rounded"
@@ -63,7 +65,7 @@ export default function Controls({
         {showAll ? "Hide All" : "Show All"}
       </button>
 
-      {/* RANDOM (only vocab) */}
+      {/* RANDOM */}
       {isVocab && (
         <button
           onClick={()=>setRandomMode((p:any)=>!p)}
@@ -73,7 +75,7 @@ export default function Controls({
         </button>
       )}
 
-      {/* BOARD TOGGLE */}
+      {/* BOARD */}
       <button
         onClick={()=>setShowBoard((p:any)=>!p)}
         className="px-4 py-2 bg-purple-600 text-white rounded"
@@ -81,7 +83,7 @@ export default function Controls({
         {showBoard ? "Hide Board" : "Show Board"}
       </button>
 
-      {/* TOPIC NAV */}
+      {/* TOPIC */}
       <button
         onClick={prevTopic}
         className="px-4 py-2 bg-orange-500 text-white rounded"
@@ -96,7 +98,7 @@ export default function Controls({
         Next Topic →
       </button>
 
-      {/* SCORE TOGGLE */}
+      {/* SCORE */}
       <button
         onClick={()=>{
           if (showScore) {
@@ -112,7 +114,38 @@ export default function Controls({
         {showScore ? "Hide Score" : "Show Score"}
       </button>
 
-    </div>
+      {/* ✅ CHECKBOX GROUP */}
+      <div className="flex gap-3 items-center border px-3 py-2 rounded bg-white">
 
+        <label className="flex items-center gap-1 text-sm">
+          <input
+            type="checkbox"
+            checked={showLeft}
+            onChange={()=>setShowLeft((p:any)=>!p)}
+          />
+          Left
+        </label>
+
+        <label className="flex items-center gap-1 text-sm">
+          <input
+            type="checkbox"
+            checked={showBoard}
+            onChange={()=>setShowBoard((p:any)=>!p)}
+          />
+          Board
+        </label>
+
+        <label className="flex items-center gap-1 text-sm">
+          <input
+            type="checkbox"
+            checked={showScore}
+            onChange={()=>setShowScore((p:any)=>!p)}
+          />
+          Score
+        </label>
+
+      </div>
+
+    </div>
   );
 }
