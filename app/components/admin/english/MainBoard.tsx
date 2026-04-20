@@ -14,101 +14,123 @@ export default function MainBoard({
   setHighlightIndex,
   showBoard,
   showScore,
+  showLeft,          // ✅ NEW
   scrollRef,
   vocabRef,
-  randomMode   // ✅ ADD THIS
+  randomMode
 }: any) {
+
+  // ✅ ACTIVE PANELS
+  const activePanels = [
+    showLeft && "left",
+    showBoard && "board",
+    showScore && "score"
+  ].filter(Boolean);
+
+  const widthClass =
+    activePanels.length === 1
+      ? "w-full"
+      : activePanels.length === 2
+      ? "w-1/2"
+      : "w-1/3";
 
   return (
 
     <div className="flex flex-1 overflow-hidden">
 
-      {/* LEFT SIDE */}
-      <div className={`${(showBoard || showScore) ? "w-1/2" : "w-full"} p-4 flex flex-col`}>
+      {/* LEFT PANEL */}
+      {showLeft && (
+        <div className={`${widthClass} p-4 flex flex-col`}>
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
-          {/* VOCAB */}
-          {isVocab ? (
-            <VocabularyPlayer
-              ref={vocabRef}
-              data={sentences}
-              random={randomMode}   // ✅ FIXED
-            />
-          ) : showBoard ? (
+            {isVocab ? (
+              <VocabularyPlayer
+                ref={vocabRef}
+                data={sentences}
+                random={randomMode}
+              />
+            ) : showBoard ? (
 
-            <div className="space-y-1">
-              {visible.map((item:any, i:number)=>(
-
-                <div
-                  key={item.id}
-                  onClick={()=>setHighlightIndex((p:any)=>p===i ? null : i)}
-                  className={`cursor-pointer select-none text-2xl leading-tight flex ${
-                    highlightIndex === i ? "bg-yellow-200" : ""
-                  }`}
-                >
-                  <div className="w-10 shrink-0">{i+1}.</div>
-                  <div className="flex-1">{item.sentence}</div>
-                </div>
-
-              ))}
-            </div>
-
-          ) : (
-
-            <div className="flex gap-4">
-
-              {/* LEFT */}
-              <div className="w-1/2 space-y-1">
-                {leftCol.map((item:any, i:number)=>(
+              <div className="space-y-1">
+                {visible.map((item:any, i:number)=>(
 
                   <div
                     key={item.id}
                     onClick={()=>setHighlightIndex((p:any)=>p===i ? null : i)}
-                    className={`cursor-pointer select-none text-2xl leading-tight ${
+                    className={`cursor-pointer select-none text-2xl leading-tight flex ${
                       highlightIndex === i ? "bg-yellow-200" : ""
                     }`}
                   >
-                    {i+1}. {item.sentence}
+                    <div className="w-10 shrink-0">{i+1}.</div>
+                    <div className="flex-1">{item.sentence}</div>
                   </div>
 
                 ))}
               </div>
 
-              {/* RIGHT */}
-              <div className="w-1/2 space-y-1">
-                {rightCol.map((item:any, i:number)=>{
+            ) : (
 
-                  const realIndex = i + 10;
+              <div className="flex gap-4">
 
-                  return (
+                {/* LEFT */}
+                <div className="w-1/2 space-y-1">
+                  {leftCol.map((item:any, i:number)=>(
+
                     <div
                       key={item.id}
-                      onClick={()=>setHighlightIndex((p:any)=>p===realIndex ? null : realIndex)}
+                      onClick={()=>setHighlightIndex((p:any)=>p===i ? null : i)}
                       className={`cursor-pointer select-none text-2xl leading-tight ${
-                        highlightIndex === realIndex ? "bg-yellow-200" : ""
+                        highlightIndex === i ? "bg-yellow-200" : ""
                       }`}
                     >
-                      {realIndex + 1}. {item.sentence}
+                      {i+1}. {item.sentence}
                     </div>
-                  );
 
-                })}
+                  ))}
+                </div>
+
+                {/* RIGHT */}
+                <div className="w-1/2 space-y-1">
+                  {rightCol.map((item:any, i:number)=>{
+
+                    const realIndex = i + 10;
+
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={()=>setHighlightIndex((p:any)=>p===realIndex ? null : realIndex)}
+                        className={`cursor-pointer select-none text-2xl leading-tight ${
+                          highlightIndex === realIndex ? "bg-yellow-200" : ""
+                        }`}
+                      >
+                        {realIndex + 1}. {item.sentence}
+                      </div>
+                    );
+
+                  })}
+                </div>
+
               </div>
 
-            </div>
+            )}
 
-          )}
+          </div>
 
         </div>
+      )}
 
-      </div>
+      {/* BOARD */}
+      {showBoard && (
+        <div className={`${widthClass} border-l flex`}>
+          <WhiteBoard />
+        </div>
+      )}
 
-      {/* RIGHT SIDE */}
-      {(showBoard || showScore) && (
-        <div className="w-1/2 border-l flex">
-          {showBoard && <WhiteBoard />}
-          {showScore && <ScoreCard />}
+      {/* SCORE */}
+      {showScore && (
+        <div className={`${widthClass} border-l flex`}>
+          <ScoreCard />
         </div>
       )}
 
