@@ -15,7 +15,9 @@ export default function Controls({
   nextTopic,
   showScore,
   setShowScore,
-  isVocab // 👈 NEW
+  isVocab,
+  randomMode,        // ✅ NEW
+  setRandomMode      // ✅ NEW
 }: any) {
 
   return (
@@ -40,8 +42,8 @@ export default function Controls({
         Next
       </button>
 
-      {/* RESET */}
-      {(currentIndex >= sentences.length || showAll) && !isVocab && (
+      {/* RESET (only sentence mode) */}
+      {!isVocab && (currentIndex >= sentences.length || showAll) && (
         <button
           onClick={()=>{
             setShowAll(false);
@@ -53,14 +55,22 @@ export default function Controls({
         </button>
       )}
 
-      {/* SHOW ALL */}
-      {!showAll && currentIndex < sentences.length && (
+      {/* SHOW ALL (always visible) */}
+      <button
+        onClick={toggleShowAll}
+        className="px-4 py-2 bg-green-600 text-white rounded"
+      >
+        {showAll ? "Hide All" : "Show All"}
+      </button>
+
+      {/* RANDOM (only vocab) */}
+      {isVocab && (
         <button
-  onClick={toggleShowAll}
-  className="px-4 py-2 bg-green-600 text-white rounded"
->
-  {showAll ? "Hide All" : "Show All"}
-</button>
+          onClick={()=>setRandomMode((p:any)=>!p)}
+          className="px-4 py-2 bg-indigo-600 text-white rounded"
+        >
+          {randomMode ? "Normal" : "Random"}
+        </button>
       )}
 
       {/* BOARD TOGGLE */}

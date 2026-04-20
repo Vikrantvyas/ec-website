@@ -1,7 +1,5 @@
 "use client";
 
-import { useRef, useEffect } from "react";
-
 import WhiteBoard from "./WhiteBoard";
 import VocabularyPlayer from "./VocabularyPlayer";
 import ScoreCard from "./ScoreCard";
@@ -17,7 +15,8 @@ export default function MainBoard({
   showBoard,
   showScore,
   scrollRef,
-  vocabRef // 👈 NEW
+  vocabRef,
+  randomMode   // ✅ ADD THIS
 }: any) {
 
   return (
@@ -31,10 +30,13 @@ export default function MainBoard({
 
           {/* VOCAB */}
           {isVocab ? (
-            <VocabularyPlayer ref={vocabRef} data={sentences} />
+            <VocabularyPlayer
+              ref={vocabRef}
+              data={sentences}
+              random={randomMode}   // ✅ FIXED
+            />
           ) : showBoard ? (
 
-            /* SINGLE COLUMN */
             <div className="space-y-1">
               {visible.map((item:any, i:number)=>(
 
@@ -45,15 +47,8 @@ export default function MainBoard({
                     highlightIndex === i ? "bg-yellow-200" : ""
                   }`}
                 >
-
-                  <div className="w-10 shrink-0">
-                    {i+1}.
-                  </div>
-
-                  <div className="flex-1">
-                    {item.sentence}
-                  </div>
-
+                  <div className="w-10 shrink-0">{i+1}.</div>
+                  <div className="flex-1">{item.sentence}</div>
                 </div>
 
               ))}
@@ -61,7 +56,6 @@ export default function MainBoard({
 
           ) : (
 
-            /* TWO COLUMN */
             <div className="flex gap-4">
 
               {/* LEFT */}
@@ -110,13 +104,11 @@ export default function MainBoard({
 
       </div>
 
-      {/* RIGHT SIDE (BOARD / SCORE) */}
+      {/* RIGHT SIDE */}
       {(showBoard || showScore) && (
         <div className="w-1/2 border-l flex">
-
           {showBoard && <WhiteBoard />}
           {showScore && <ScoreCard />}
-
         </div>
       )}
 

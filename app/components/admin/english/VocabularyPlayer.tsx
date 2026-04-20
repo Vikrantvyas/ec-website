@@ -8,20 +8,30 @@ import {
   useImperativeHandle
 } from "react";
 
-const VocabularyPlayer = forwardRef(({ data }: any, ref: any) => {
+const shuffleArray = (arr:any[]) => {
+  return [...arr].sort(() => Math.random() - 0.5);
+};
+
+const VocabularyPlayer = forwardRef(({ data, random }: any, ref: any) => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
+  const [list, setList] = useState<any[]>([]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const safeData = data || [];
 
-  // RESET
+  // RESET + RANDOM
   useEffect(() => {
+
+    const newList = random ? shuffleArray(safeData) : safeData;
+
+    setList(newList);
     setCurrentIndex(0);
     setRevealedAnswers([]);
-  }, [data]);
+
+  }, [data, random]);
 
   // AUTO SCROLL
   useEffect(() => {
@@ -30,31 +40,26 @@ const VocabularyPlayer = forwardRef(({ data }: any, ref: any) => {
     }
   }, [currentIndex]);
 
-  // ✅ NEXT FLOW FIX (Hindi → English → Next word)
+  // NEXT
   const handleNext = () => {
 
-    // 1️⃣ पहले English reveal
+    // पहले English दिखाओ
     if (!revealedAnswers.includes(currentIndex)) {
       setRevealedAnswers(prev => [...prev, currentIndex]);
       return;
     }
 
-    // 2️⃣ फिर अगला word (Hindi only)
-    if (currentIndex < safeData.length - 1) {
+    // फिर अगला Hindi
+    if (currentIndex < list.length - 1) {
       setCurrentIndex(prev => prev + 1);
     }
 
   };
 
+  // PREV
   const handlePrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
-    }
-  };
-
-  const handleReveal = (i:number) => {
-    if (!revealedAnswers.includes(i)) {
-      setRevealedAnswers(prev => [...prev, i]);
     }
   };
 
@@ -63,7 +68,8 @@ const VocabularyPlayer = forwardRef(({ data }: any, ref: any) => {
     prev: handlePrev
   }));
 
-  const visible = safeData.slice(0, currentIndex + 1);
+  // ✅ IMPORTANT FIX (यही गलती थी)
+  const visible = list.slice(0, currentIndex + 1);
 
   return (
 
@@ -75,17 +81,14 @@ const VocabularyPlayer = forwardRef(({ data }: any, ref: any) => {
 
           <div
             key={item.id}
-            onClick={()=>handleReveal(i)}
-            className={`cursor-pointer select-none text-2xl leading-tight flex ${
+            className={`text-2xl flex ${
               i === currentIndex ? "bg-yellow-100" : ""
             }`}
           >
 
-            <div className="w-10 shrink-0">{i+1}.</div>
+            <div className="w-10">{i+1}.</div>
 
-            <div className="w-1/2">
-              {item.hindi}
-            </div>
+            <div className="w-1/2">{item.hindi}</div>
 
             <div className="w-1/2">
               {revealedAnswers.includes(i) ? item.english : ""}
