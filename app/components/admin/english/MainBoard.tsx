@@ -17,7 +17,8 @@ export default function MainBoard({
   showLeft,          // ✅ NEW
   scrollRef,
   vocabRef,
-  randomMode
+  randomMode,
+  showAll   // ✅ ADD
 }: any) {
 
   // ✅ ACTIVE PANELS
@@ -46,10 +47,11 @@ export default function MainBoard({
 
             {isVocab ? (
               <VocabularyPlayer
-                ref={vocabRef}
-                data={sentences}
-                random={randomMode}
-              />
+  ref={vocabRef}
+  data={sentences}
+  random={randomMode}
+  showAll={showAll}   // ✅ ADD
+/>
             ) : showBoard ? (
 
               <div className="space-y-1">

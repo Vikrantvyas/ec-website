@@ -245,6 +245,7 @@ const [showLeft, setShowLeft] = useState(true);
             vocabRef={vocabRef}
             randomMode={randomMode} 
             showLeft={showLeft}  // ✅ FIXED
+            showAll={showAll}
           />
 
         </div>

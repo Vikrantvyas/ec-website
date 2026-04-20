@@ -12,7 +12,7 @@ const shuffleArray = (arr:any[]) => {
   return [...arr].sort(() => Math.random() - 0.5);
 };
 
-const VocabularyPlayer = forwardRef(({ data, random }: any, ref: any) => {
+const VocabularyPlayer = forwardRef(({ data, random, showAll }: any, ref: any) => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
@@ -22,15 +22,12 @@ const VocabularyPlayer = forwardRef(({ data, random }: any, ref: any) => {
 
   const safeData = data || [];
 
-  // RESET + RANDOM
+  // RESET
   useEffect(() => {
-
     const newList = random ? shuffleArray(safeData) : safeData;
-
     setList(newList);
     setCurrentIndex(0);
     setRevealedAnswers([]);
-
   }, [data, random]);
 
   // AUTO SCROLL
@@ -42,6 +39,8 @@ const VocabularyPlayer = forwardRef(({ data, random }: any, ref: any) => {
 
   // NEXT
   const handleNext = () => {
+
+    if (showAll) return; // ✅ showAll में control disable
 
     // पहले English दिखाओ
     if (!revealedAnswers.includes(currentIndex)) {
@@ -56,14 +55,15 @@ const VocabularyPlayer = forwardRef(({ data, random }: any, ref: any) => {
 
   };
 
-  // ✅ FIXED PREV
+  // PREV
   const handlePrev = () => {
+
+    if (showAll) return;
 
     if (currentIndex === 0) return;
 
     const prevIndex = currentIndex - 1;
 
-    // ❗ आगे के सारे reveal हटा दो
     setRevealedAnswers(prev =>
       prev.filter(i => i < prevIndex)
     );
@@ -76,7 +76,10 @@ const VocabularyPlayer = forwardRef(({ data, random }: any, ref: any) => {
     prev: handlePrev
   }));
 
-  const visible = list.slice(0, currentIndex + 1);
+  // ✅ SHOW ALL FIX
+  const visible = showAll
+    ? list
+    : list.slice(0, currentIndex + 1);
 
   return (
 
@@ -89,16 +92,20 @@ const VocabularyPlayer = forwardRef(({ data, random }: any, ref: any) => {
           <div
             key={item.id}
             className={`text-2xl flex ${
-              i === currentIndex ? "bg-yellow-100" : ""
+              i === currentIndex && !showAll ? "bg-yellow-100" : ""
             }`}
           >
 
             <div className="w-10">{i+1}.</div>
 
+            {/* ✅ HINDI ALWAYS */}
             <div className="w-1/2">{item.hindi}</div>
 
+            {/* ✅ ENGLISH CONTROL */}
             <div className="w-1/2">
-              {revealedAnswers.includes(i) ? item.english : ""}
+              {showAll || revealedAnswers.includes(i)
+                ? item.english
+                : ""}
             </div>
 
           </div>

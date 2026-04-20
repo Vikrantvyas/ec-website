@@ -18,19 +18,22 @@ export default function Controls({
   isVocab,
   randomMode,
   setRandomMode,
-  showLeft,        // ✅ NEW
-  setShowLeft      // ✅ NEW
+  showLeft,
+  setShowLeft
 }: any) {
+
+  const baseBtn =
+    "h-10 px-3 flex items-center justify-center rounded text-sm";
 
   return (
 
-    <div className="flex gap-3 flex-wrap justify-center items-center">
+    <div className="flex flex-wrap gap-2 justify-center items-center">
 
       {/* PREV */}
       <button
         onClick={prevSentence}
         disabled={!isVocab && currentIndex === 0}
-        className="px-4 py-2 bg-gray-200 rounded disabled:opacity-40"
+        className={`${baseBtn} bg-gray-200 disabled:opacity-40`}
       >
         Prev
       </button>
@@ -39,7 +42,7 @@ export default function Controls({
       <button
         onClick={nextSentence}
         disabled={!isVocab && currentIndex >= sentences.length}
-        className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-40"
+        className={`${baseBtn} bg-blue-600 text-white disabled:opacity-40`}
       >
         Next
       </button>
@@ -51,7 +54,7 @@ export default function Controls({
             setShowAll(false);
             setCurrentIndex(0);
           }}
-          className="px-4 py-2 bg-red-600 text-white rounded"
+          className={`${baseBtn} bg-red-600 text-white`}
         >
           Reset
         </button>
@@ -60,7 +63,7 @@ export default function Controls({
       {/* SHOW ALL */}
       <button
         onClick={toggleShowAll}
-        className="px-4 py-2 bg-green-600 text-white rounded"
+        className={`${baseBtn} bg-green-600 text-white`}
       >
         {showAll ? "Hide All" : "Show All"}
       </button>
@@ -69,55 +72,31 @@ export default function Controls({
       {isVocab && (
         <button
           onClick={()=>setRandomMode((p:any)=>!p)}
-          className="px-4 py-2 bg-indigo-600 text-white rounded"
+          className={`${baseBtn} bg-indigo-600 text-white`}
         >
           {randomMode ? "Normal" : "Random"}
         </button>
       )}
 
-      {/* BOARD */}
-      <button
-        onClick={()=>setShowBoard((p:any)=>!p)}
-        className="px-4 py-2 bg-purple-600 text-white rounded"
-      >
-        {showBoard ? "Hide Board" : "Show Board"}
-      </button>
-
       {/* TOPIC */}
       <button
         onClick={prevTopic}
-        className="px-4 py-2 bg-orange-500 text-white rounded"
+        className={`${baseBtn} bg-orange-500 text-white`}
       >
-        ← Prev Topic
+        ← Topic
       </button>
 
       <button
         onClick={nextTopic}
-        className="px-4 py-2 bg-orange-600 text-white rounded"
+        className={`${baseBtn} bg-orange-600 text-white`}
       >
-        Next Topic →
+        Topic →
       </button>
 
-      {/* SCORE */}
-      <button
-        onClick={()=>{
-          if (showScore) {
-            setShowScore(false);
-            setShowBoard(true);
-          } else {
-            setShowBoard(false);
-            setShowScore(true);
-          }
-        }}
-        className="px-4 py-2 bg-green-700 text-white rounded"
-      >
-        {showScore ? "Hide Score" : "Show Score"}
-      </button>
+      {/* PANEL CHECKBOX GROUP */}
+      <div className={`${baseBtn} border bg-white gap-3`}>
 
-      {/* ✅ CHECKBOX GROUP */}
-      <div className="flex gap-3 items-center border px-3 py-2 rounded bg-white">
-
-        <label className="flex items-center gap-1 text-sm">
+        <label className="flex items-center gap-1">
           <input
             type="checkbox"
             checked={showLeft}
@@ -126,7 +105,7 @@ export default function Controls({
           Left
         </label>
 
-        <label className="flex items-center gap-1 text-sm">
+        <label className="flex items-center gap-1">
           <input
             type="checkbox"
             checked={showBoard}
@@ -135,7 +114,7 @@ export default function Controls({
           Board
         </label>
 
-        <label className="flex items-center gap-1 text-sm">
+        <label className="flex items-center gap-1">
           <input
             type="checkbox"
             checked={showScore}
