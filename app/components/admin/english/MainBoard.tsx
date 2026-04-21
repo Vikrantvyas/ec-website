@@ -25,11 +25,11 @@ export default function MainBoard({
 }: any) {
 
   const activePanels = [
-    showLeft && "left",
-    showBoard && "board",
-    showScore && "score",
-    showGrammar && isGrammar && "grammar"
-  ].filter(Boolean);
+  showLeft && "left",
+  showBoard && "board",
+  showScore && "score",
+  showGrammar && "grammar"
+].filter(Boolean);
 
   const widthClass =
     activePanels.length === 1
@@ -127,7 +127,7 @@ export default function MainBoard({
       )}
 
       {/* ✅ GRAMMAR PANEL */}
-      {showGrammar && isGrammar && (
+      {showGrammar && (
         <div className={`${widthClass} border-l flex`}>
           <GrammarBoard />
         </div>
