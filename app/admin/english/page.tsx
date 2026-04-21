@@ -26,12 +26,14 @@ export default function EnglishPage() {
   const [showScore, setShowScore] = useState(false);
   const [randomMode, setRandomMode] = useState(false);
 const [showLeft, setShowLeft] = useState(true);
+const [showGrammar, setShowGrammar] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const vocabRef = useRef<any>(null);
 
   const isVocab =
     courses.find(c => c.id === selectedCourse)?.name === "Vocabulary";
-
+const isGrammar =
+  courses.find(c => c.id === selectedCourse)?.name === "Grammar";
   // ---------------- FETCH ----------------
 
   useEffect(() => { fetchCourses(); }, []);
@@ -232,46 +234,52 @@ const [showLeft, setShowLeft] = useState(true);
           </div>
 
           <MainBoard
-            isVocab={isVocab}
-            sentences={sentences}
-            visible={visible}
-            leftCol={leftCol}
-            rightCol={rightCol}
-            highlightIndex={highlightIndex}
-            setHighlightIndex={setHighlightIndex}
-            showBoard={showBoard}
-            showScore={showScore}
-            scrollRef={scrollRef}
-            vocabRef={vocabRef}
-            randomMode={randomMode} 
-            showLeft={showLeft}  // ✅ FIXED
-            showAll={showAll}
-          />
+  isVocab={isVocab}
+  isGrammar={isGrammar}
+  showGrammar={showGrammar}   // ✅ NEW
+  sentences={sentences}
+  visible={visible}
+  leftCol={leftCol}
+  rightCol={rightCol}
+  highlightIndex={highlightIndex}
+  setHighlightIndex={setHighlightIndex}
+  showBoard={showBoard}
+  showScore={showScore}
+  scrollRef={scrollRef}
+  vocabRef={vocabRef}
+  randomMode={randomMode} 
+  showLeft={showLeft}
+  showAll={showAll}
+/>
 
         </div>
 
-        <Controls
-          prevSentence={prevSentence}
-          nextSentence={nextSentence}
-          currentIndex={currentIndex}
-          sentences={sentences}
-          showAll={showAll}
-          toggleShowAll={toggleShowAll}
-          setShowAll={setShowAll}
-          setCurrentIndex={setCurrentIndex}
-          showBoard={showBoard}
-          setShowBoard={setShowBoard}
-          prevTopic={prevTopic}
-          nextTopic={nextTopic}
-          showScore={showScore}
-          setShowScore={setShowScore}
-          isVocab={isVocab}
-          randomMode={randomMode}        // ✅ FIXED
-          setRandomMode={setRandomMode}
-          showLeft={showLeft}
-setShowLeft={setShowLeft}  // ✅ FIXED
-        />
+       <Controls
+  prevSentence={prevSentence}
+  nextSentence={nextSentence}
+  currentIndex={currentIndex}
+  sentences={sentences}
+  showAll={showAll}
+  toggleShowAll={toggleShowAll}
+  setShowAll={setShowAll}
+  setCurrentIndex={setCurrentIndex}
+  showBoard={showBoard}
+  setShowBoard={setShowBoard}
+  prevTopic={prevTopic}
+  nextTopic={nextTopic}
+  showScore={showScore}
+  setShowScore={setShowScore}
+  isVocab={isVocab}
+  randomMode={randomMode}
+  setRandomMode={setRandomMode}
+  showLeft={showLeft}
+  setShowLeft={setShowLeft}
 
+  showGrammar={showGrammar}
+  setShowGrammar={setShowGrammar}
+
+  isGrammar={isGrammar}   // 🔥🔥 THIS WAS MISSING
+/>
       </div>
 
     </div>

@@ -3,9 +3,12 @@
 import WhiteBoard from "./WhiteBoard";
 import VocabularyPlayer from "./VocabularyPlayer";
 import ScoreCard from "./ScoreCard";
+import GrammarBoard from "./GrammarBoard";
 
 export default function MainBoard({
   isVocab,
+  isGrammar,
+  showGrammar,
   sentences,
   visible,
   leftCol,
@@ -14,18 +17,18 @@ export default function MainBoard({
   setHighlightIndex,
   showBoard,
   showScore,
-  showLeft,          // ✅ NEW
+  showLeft,
   scrollRef,
   vocabRef,
   randomMode,
-  showAll   // ✅ ADD
+  showAll
 }: any) {
 
-  // ✅ ACTIVE PANELS
   const activePanels = [
     showLeft && "left",
     showBoard && "board",
-    showScore && "score"
+    showScore && "score",
+    showGrammar && isGrammar && "grammar"
   ].filter(Boolean);
 
   const widthClass =
@@ -33,7 +36,9 @@ export default function MainBoard({
       ? "w-full"
       : activePanels.length === 2
       ? "w-1/2"
-      : "w-1/3";
+      : activePanels.length === 3
+      ? "w-1/3"
+      : "w-1/4";
 
   return (
 
@@ -47,11 +52,12 @@ export default function MainBoard({
 
             {isVocab ? (
               <VocabularyPlayer
-  ref={vocabRef}
-  data={sentences}
-  random={randomMode}
-  showAll={showAll}   // ✅ ADD
-/>
+                ref={vocabRef}
+                data={sentences}
+                random={randomMode}
+                showAll={showAll}
+              />
+
             ) : showBoard ? (
 
               <div className="space-y-1">
@@ -75,7 +81,6 @@ export default function MainBoard({
 
               <div className="flex gap-4">
 
-                {/* LEFT */}
                 <div className="w-1/2 space-y-1">
                   {leftCol.map((item:any, i:number)=>(
 
@@ -92,7 +97,6 @@ export default function MainBoard({
                   ))}
                 </div>
 
-                {/* RIGHT */}
                 <div className="w-1/2 space-y-1">
                   {rightCol.map((item:any, i:number)=>{
 
@@ -119,6 +123,13 @@ export default function MainBoard({
 
           </div>
 
+        </div>
+      )}
+
+      {/* ✅ GRAMMAR PANEL */}
+      {showGrammar && isGrammar && (
+        <div className={`${widthClass} border-l flex`}>
+          <GrammarBoard />
         </div>
       )}
 
