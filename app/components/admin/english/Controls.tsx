@@ -19,7 +19,9 @@ export default function Controls({
   randomMode,
   setRandomMode,
   showLeft,
-  setShowLeft
+  setShowLeft,
+  showGrammar,
+  setShowGrammar
 }: any) {
 
   const baseBtn =
@@ -29,7 +31,6 @@ export default function Controls({
 
     <div className="flex flex-wrap gap-2 justify-center items-center">
 
-      {/* PREV */}
       <button
         onClick={prevSentence}
         disabled={!isVocab && currentIndex === 0}
@@ -38,7 +39,6 @@ export default function Controls({
         Prev
       </button>
 
-      {/* NEXT */}
       <button
         onClick={nextSentence}
         disabled={!isVocab && currentIndex >= sentences.length}
@@ -47,7 +47,6 @@ export default function Controls({
         Next
       </button>
 
-      {/* RESET */}
       {!isVocab && (currentIndex >= sentences.length || showAll) && (
         <button
           onClick={()=>{
@@ -60,7 +59,6 @@ export default function Controls({
         </button>
       )}
 
-      {/* SHOW ALL */}
       <button
         onClick={toggleShowAll}
         className={`${baseBtn} bg-green-600 text-white`}
@@ -68,7 +66,6 @@ export default function Controls({
         {showAll ? "Hide All" : "Show All"}
       </button>
 
-      {/* RANDOM */}
       {isVocab && (
         <button
           onClick={()=>setRandomMode((p:any)=>!p)}
@@ -78,7 +75,6 @@ export default function Controls({
         </button>
       )}
 
-      {/* TOPIC */}
       <button
         onClick={prevTopic}
         className={`${baseBtn} bg-orange-500 text-white`}
@@ -93,7 +89,7 @@ export default function Controls({
         Topic →
       </button>
 
-      {/* PANEL CHECKBOX GROUP */}
+      {/* CHECKBOX GROUP */}
       <div className={`${baseBtn} border bg-white gap-3`}>
 
         <label className="flex items-center gap-1">
@@ -121,6 +117,16 @@ export default function Controls({
             onChange={()=>setShowScore((p:any)=>!p)}
           />
           Score
+        </label>
+
+        {/* 🔥 FORCE SHOW */}
+        <label className="flex items-center gap-1">
+          <input
+            type="checkbox"
+            checked={showGrammar}
+            onChange={()=>setShowGrammar((p:any)=>!p)}
+          />
+          Grammar
         </label>
 
       </div>
