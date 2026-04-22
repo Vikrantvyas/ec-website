@@ -8,59 +8,54 @@ import {
   useImperativeHandle
 } from "react";
 
-const shuffleArray = (arr:any[]) => {
+const shuffleArray = (arr) => {
   return [...arr].sort(() => Math.random() - 0.5);
 };
 
-const VocabularyPlayer = forwardRef(({ data, random, showAll }: any, ref: any) => {
+const VocabularyPlayer = forwardRef(({ data, random, showAll }, ref) => {
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
-  const [list, setList] = useState<any[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(-1);
+  const [revealedAnswers, setRevealedAnswers] = useState([]);
+  const [list, setList] = useState([]);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef(null);
 
   const safeData = data || [];
 
-  // RESET
   useEffect(() => {
     const newList = random ? shuffleArray(safeData) : safeData;
     setList(newList);
-    setCurrentIndex(0);
+    setCurrentIndex(-1);
     setRevealedAnswers([]);
   }, [data, random]);
 
-  // AUTO SCROLL
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [currentIndex]);
 
-  // NEXT
   const handleNext = () => {
+    if (showAll) return;
 
-    if (showAll) return; // ✅ showAll में control disable
-
-    // पहले English दिखाओ
-    if (!revealedAnswers.includes(currentIndex)) {
-      setRevealedAnswers(prev => [...prev, currentIndex]);
+    if (currentIndex === -1) {
+      setCurrentIndex(0);
       return;
     }
 
-    // फिर अगला Hindi
+    setRevealedAnswers(prev => {
+      if (prev.includes(currentIndex)) return prev;
+      return [...prev, currentIndex];
+    });
+
     if (currentIndex < list.length - 1) {
       setCurrentIndex(prev => prev + 1);
     }
-
   };
 
-  // PREV
   const handlePrev = () => {
-
     if (showAll) return;
-
-    if (currentIndex === 0) return;
+    if (currentIndex <= 0) return;
 
     const prevIndex = currentIndex - 1;
 
@@ -71,45 +66,44 @@ const VocabularyPlayer = forwardRef(({ data, random, showAll }: any, ref: any) =
     setCurrentIndex(prevIndex);
   };
 
+  const handleReset = () => {
+    setCurrentIndex(-1);
+    setRevealedAnswers([]);
+  };
+
   useImperativeHandle(ref, () => ({
     next: handleNext,
-    prev: handlePrev
+    prev: handlePrev,
+    reset: handleReset
   }));
 
-  // ✅ SHOW ALL FIX
-  const visible = showAll
-    ? list
-    : list.slice(0, currentIndex + 1);
+  const visible =
+    showAll
+      ? list
+      : currentIndex === -1
+      ? []
+      : list.slice(0, currentIndex + 1);
 
   return (
-
     <div className="flex flex-col h-full">
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-1 p-2">
 
-        {visible.map((item:any, i:number)=>(
-
+        {visible.map((item, i) => (
           <div
             key={item.id}
             className={`text-2xl flex ${
               i === currentIndex && !showAll ? "bg-yellow-100" : ""
             }`}
           >
-
-            <div className="w-10">{i+1}.</div>
-
-            {/* ✅ HINDI ALWAYS */}
+            <div className="w-10">{i + 1}.</div>
             <div className="w-1/2">{item.hindi}</div>
-
-            {/* ✅ ENGLISH CONTROL */}
             <div className="w-1/2">
               {showAll || revealedAnswers.includes(i)
                 ? item.english
                 : ""}
             </div>
-
           </div>
-
         ))}
 
       </div>
