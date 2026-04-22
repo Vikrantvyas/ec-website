@@ -40,14 +40,21 @@ export default function MainBoard({
       ? "w-1/3"
       : "w-1/4";
 
-  // +1 → NEXT
+  // ✅ +1 → correct + next
   const handleCorrect = () => {
     if (vocabRef?.current) {
-      vocabRef.current.next();
+      vocabRef.current.markCorrect();
     }
   };
 
-  // 🔥 RESET → BLANK LEFT
+  // ✅ PASS → wrong + next
+  const handlePass = () => {
+    if (vocabRef?.current) {
+      vocabRef.current.markWrong();
+    }
+  };
+
+  // ✅ RESET → blank
   const handleReset = () => {
     if (vocabRef?.current) {
       vocabRef.current.reset();
@@ -61,7 +68,6 @@ export default function MainBoard({
       {/* LEFT PANEL */}
       {showLeft && (
         <div className={`${widthClass} flex flex-col`}>
-
           <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
             {isVocab ? (
@@ -136,14 +142,15 @@ export default function MainBoard({
             )}
 
           </div>
-
         </div>
       )}
 
       {/* GRAMMAR */}
       {showGrammar && (
-        <div className={`${widthClass} border-l flex`}>
-          <GrammarBoard />
+        <div className={`${widthClass} border-l flex justify-center`}>
+          <div className="w-full max-w-md">
+            <GrammarBoard />
+          </div>
         </div>
       )}
 
@@ -154,13 +161,16 @@ export default function MainBoard({
         </div>
       )}
 
-      {/* SCORE */}
+      {/* SCORE ✅ FIXED */}
       {showScore && (
-        <div className={`${widthClass} border-l flex`}>
-          <ScoreCard
-            onCorrect={handleCorrect}
-            onReset={handleReset}   // 🔥 THIS FIX
-          />
+        <div className={`${widthClass} border-l flex justify-center`}>
+          <div className="w-full max-w-md">
+            <ScoreCard
+              onCorrect={handleCorrect}
+              onReset={handleReset}
+              onPass={handlePass}
+            />
+          </div>
         </div>
       )}
 

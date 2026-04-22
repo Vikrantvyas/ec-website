@@ -25,15 +25,30 @@ export default function EnglishPage() {
   const [showBoard, setShowBoard] = useState(true);
   const [showScore, setShowScore] = useState(false);
   const [randomMode, setRandomMode] = useState(false);
-const [showLeft, setShowLeft] = useState(true);
-const [showGrammar, setShowGrammar] = useState(false);
+  const [showLeft, setShowLeft] = useState(true);
+  const [showGrammar, setShowGrammar] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const vocabRef = useRef<any>(null);
 
-  const isVocab =
-    courses.find(c => c.id === selectedCourse)?.name === "Vocabulary";
-const isGrammar =
-  courses.find(c => c.id === selectedCourse)?.name === "Grammar";
+  const selectedCourseName =
+    courses.find(c => c.id === selectedCourse)?.name;
+
+  const isVocab = selectedCourseName === "Vocabulary";
+  const isGrammar = selectedCourseName === "Grammar";
+
+  // 🔥 AUTO PANEL CONTROL (IMPORTANT)
+  useEffect(() => {
+
+    if (isVocab) {
+      setShowLeft(true);
+      setShowScore(true);
+      setShowBoard(false);
+      setShowGrammar(false);
+    }
+
+  }, [isVocab]);
+
   // ---------------- FETCH ----------------
 
   useEffect(() => { fetchCourses(); }, []);
@@ -228,60 +243,60 @@ const isGrammar =
           style={{ width: "25cm", height: "12cm" }}
         >
 
-         {!showGrammar && (
-  <div className="shadow-md bg-white px-4 py-2 text-sm flex justify-between z-10">
-    <div>Day {days.find(d=>d.id===selectedDay)?.day_number}</div>
-    <div>{topics.find(t=>t.id===selectedTopic)?.topic_name}</div>
-  </div>
-)}
+          {/* 🔥 HEADER HIDE FOR VOCAB + GRAMMAR */}
+          {!(isVocab || showGrammar) && (
+            <div className="shadow-md bg-white px-4 py-2 text-sm flex justify-between z-10">
+              <div>Day {days.find(d=>d.id===selectedDay)?.day_number}</div>
+              <div>{topics.find(t=>t.id===selectedTopic)?.topic_name}</div>
+            </div>
+          )}
 
           <MainBoard
-  isVocab={isVocab}
-  isGrammar={isGrammar}
-  showGrammar={showGrammar}   // ✅ NEW
-  sentences={sentences}
-  visible={visible}
-  leftCol={leftCol}
-  rightCol={rightCol}
-  highlightIndex={highlightIndex}
-  setHighlightIndex={setHighlightIndex}
-  showBoard={showBoard}
-  showScore={showScore}
-  scrollRef={scrollRef}
-  vocabRef={vocabRef}
-  randomMode={randomMode} 
-  showLeft={showLeft}
-  showAll={showAll}
-/>
+            isVocab={isVocab}
+            isGrammar={isGrammar}
+            showGrammar={showGrammar}
+            sentences={sentences}
+            visible={visible}
+            leftCol={leftCol}
+            rightCol={rightCol}
+            highlightIndex={highlightIndex}
+            setHighlightIndex={setHighlightIndex}
+            showBoard={showBoard}
+            showScore={showScore}
+            scrollRef={scrollRef}
+            vocabRef={vocabRef}
+            randomMode={randomMode}
+            showLeft={showLeft}
+            showAll={showAll}
+          />
 
         </div>
 
-       <Controls
-  prevSentence={prevSentence}
-  nextSentence={nextSentence}
-  currentIndex={currentIndex}
-  sentences={sentences}
-  showAll={showAll}
-  toggleShowAll={toggleShowAll}
-  setShowAll={setShowAll}
-  setCurrentIndex={setCurrentIndex}
-  showBoard={showBoard}
-  setShowBoard={setShowBoard}
-  prevTopic={prevTopic}
-  nextTopic={nextTopic}
-  showScore={showScore}
-  setShowScore={setShowScore}
-  isVocab={isVocab}
-  randomMode={randomMode}
-  setRandomMode={setRandomMode}
-  showLeft={showLeft}
-  setShowLeft={setShowLeft}
+        <Controls
+          prevSentence={prevSentence}
+          nextSentence={nextSentence}
+          currentIndex={currentIndex}
+          sentences={sentences}
+          showAll={showAll}
+          toggleShowAll={toggleShowAll}
+          setShowAll={setShowAll}
+          setCurrentIndex={setCurrentIndex}
+          showBoard={showBoard}
+          setShowBoard={setShowBoard}
+          prevTopic={prevTopic}
+          nextTopic={nextTopic}
+          showScore={showScore}
+          setShowScore={setShowScore}
+          isVocab={isVocab}
+          randomMode={randomMode}
+          setRandomMode={setRandomMode}
+          showLeft={showLeft}
+          setShowLeft={setShowLeft}
+          showGrammar={showGrammar}
+          setShowGrammar={setShowGrammar}
+          isGrammar={isGrammar}
+        />
 
-  showGrammar={showGrammar}
-  setShowGrammar={setShowGrammar}
-
-  isGrammar={isGrammar}   // 🔥🔥 THIS WAS MISSING
-/>
       </div>
 
     </div>
