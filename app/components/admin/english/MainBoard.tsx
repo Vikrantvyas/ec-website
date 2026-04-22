@@ -25,11 +25,11 @@ export default function MainBoard({
 }: any) {
 
   const activePanels = [
-  showLeft && "left",
-  showBoard && "board",
-  showScore && "score",
-  showGrammar && "grammar"
-].filter(Boolean);
+    showLeft && "left",
+    showBoard && "board",
+    showScore && "score",
+    showGrammar && "grammar"
+  ].filter(Boolean);
 
   const widthClass =
     activePanels.length === 1
@@ -40,13 +40,27 @@ export default function MainBoard({
       ? "w-1/3"
       : "w-1/4";
 
+  // +1 → NEXT
+  const handleCorrect = () => {
+    if (vocabRef?.current) {
+      vocabRef.current.next();
+    }
+  };
+
+  // 🔥 RESET → BLANK LEFT
+  const handleReset = () => {
+    if (vocabRef?.current) {
+      vocabRef.current.reset();
+    }
+  };
+
   return (
 
     <div className="flex flex-1 overflow-hidden">
 
       {/* LEFT PANEL */}
       {showLeft && (
-        <div className={`${widthClass} p-4 flex flex-col`}>
+        <div className={`${widthClass} flex flex-col`}>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
@@ -60,7 +74,7 @@ export default function MainBoard({
 
             ) : showBoard ? (
 
-              <div className="space-y-1">
+              <div className="space-y-1 p-2">
                 {visible.map((item:any, i:number)=>(
 
                   <div
@@ -79,7 +93,7 @@ export default function MainBoard({
 
             ) : (
 
-              <div className="flex gap-4">
+              <div className="flex gap-4 p-2">
 
                 <div className="w-1/2 space-y-1">
                   {leftCol.map((item:any, i:number)=>(
@@ -126,7 +140,7 @@ export default function MainBoard({
         </div>
       )}
 
-      {/* ✅ GRAMMAR PANEL */}
+      {/* GRAMMAR */}
       {showGrammar && (
         <div className={`${widthClass} border-l flex`}>
           <GrammarBoard />
@@ -143,11 +157,13 @@ export default function MainBoard({
       {/* SCORE */}
       {showScore && (
         <div className={`${widthClass} border-l flex`}>
-          <ScoreCard />
+          <ScoreCard
+            onCorrect={handleCorrect}
+            onReset={handleReset}   // 🔥 THIS FIX
+          />
         </div>
       )}
 
     </div>
-
   );
 }
