@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import WhiteBoard from "./WhiteBoard";
 import VocabularyPlayer from "./VocabularyPlayer";
 import ScoreCard from "./ScoreCard";
@@ -24,6 +25,9 @@ export default function MainBoard({
   showAll
 }: any) {
 
+  const [resultData, setResultData] = useState<any[]>([]);
+  const [showResult, setShowResult] = useState(false);
+
   const activePanels = [
     showLeft && "left",
     showBoard && "board",
@@ -40,21 +44,21 @@ export default function MainBoard({
       ? "w-1/3"
       : "w-1/4";
 
-  // ✅ +1 → correct + next
+  // +1
   const handleCorrect = () => {
     if (vocabRef?.current) {
       vocabRef.current.markCorrect();
     }
   };
 
-  // ✅ PASS → wrong + next
+  // PASS
   const handlePass = () => {
     if (vocabRef?.current) {
       vocabRef.current.markWrong();
     }
   };
 
-  // ✅ RESET → blank
+  // RESET
   const handleReset = () => {
     if (vocabRef?.current) {
       vocabRef.current.reset();
@@ -70,7 +74,29 @@ export default function MainBoard({
         <div className={`${widthClass} flex flex-col`}>
           <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
-            {isVocab ? (
+            {/* ✅ RESULT VIEW */}
+            {showResult ? (
+              <div className="p-4 space-y-2">
+
+                <div className="text-xl font-bold text-center mb-3">
+                  Result
+                </div>
+
+                {resultData.map((s, i) => (
+                  <div
+                    key={i}
+                    className={`flex justify-between border p-2 rounded ${
+                      i === 0 ? "bg-yellow-200 font-bold" : ""
+                    }`}
+                  >
+                    <div>{i + 1}. {s.name}</div>
+                    <div>{s.correct}</div>
+                  </div>
+                ))}
+
+              </div>
+            ) : isVocab ? (
+
               <VocabularyPlayer
                 ref={vocabRef}
                 data={sentences}
@@ -161,7 +187,7 @@ export default function MainBoard({
         </div>
       )}
 
-      {/* SCORE ✅ FIXED */}
+      {/* SCORE */}
       {showScore && (
         <div className={`${widthClass} border-l flex justify-center`}>
           <div className="w-full max-w-md">
@@ -169,6 +195,10 @@ export default function MainBoard({
               onCorrect={handleCorrect}
               onReset={handleReset}
               onPass={handlePass}
+              onShowResult={(data:any)=>{
+                setResultData(data);
+                setShowResult(true);
+              }}
             />
           </div>
         </div>
