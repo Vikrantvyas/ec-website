@@ -228,10 +228,12 @@ const isGrammar =
           style={{ width: "25cm", height: "12cm" }}
         >
 
-          <div className="shadow-md bg-white px-4 py-2 text-sm flex justify-between z-10">
-            <div>Day {days.find(d=>d.id===selectedDay)?.day_number}</div>
-            <div>{topics.find(t=>t.id===selectedTopic)?.topic_name}</div>
-          </div>
+         {!showGrammar && (
+  <div className="shadow-md bg-white px-4 py-2 text-sm flex justify-between z-10">
+    <div>Day {days.find(d=>d.id===selectedDay)?.day_number}</div>
+    <div>{topics.find(t=>t.id===selectedTopic)?.topic_name}</div>
+  </div>
+)}
 
           <MainBoard
   isVocab={isVocab}
