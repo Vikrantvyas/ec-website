@@ -19,24 +19,29 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
   const [list, setList] = useState<any[]>([]);
+  const [marks, setMarks] = useState<{ [key: number]: string }>({}); // 🔥 NEW
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const safeData = data || [];
 
+  // RESET ON DATA CHANGE
   useEffect(() => {
     const newList = random ? shuffleArray(safeData) : safeData;
     setList(newList);
     setCurrentIndex(-1);
     setRevealedAnswers([]);
+    setMarks({}); // 🔥 reset marks
   }, [data, random]);
 
+  // AUTO SCROLL
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [currentIndex]);
 
+  // NEXT
   const handleNext = () => {
     if (showAll) return;
 
@@ -55,6 +60,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     }
   };
 
+  // PREV
   const handlePrev = () => {
     if (showAll) return;
     if (currentIndex <= 0) return;
@@ -68,15 +74,44 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     setCurrentIndex(prevIndex);
   };
 
+  // 🔥 MARK CORRECT
+  const markCorrect = () => {
+  if (currentIndex >= 0) {
+
+    // 🔥 ensure reveal
+    setRevealedAnswers(prev => {
+      if (prev.includes(currentIndex)) return prev;
+      return [...prev, currentIndex];
+    });
+
+    setMarks(prev => ({ ...prev, [currentIndex]: "correct" }));
+  }
+
+  handleNext();
+};
+
+  // 🔥 MARK WRONG / PASS
+  const markWrong = () => {
+    if (currentIndex >= 0) {
+      setMarks(prev => ({ ...prev, [currentIndex]: "wrong" }));
+    }
+    handleNext();
+  };
+
+  // RESET
   const handleReset = () => {
     setCurrentIndex(-1);
     setRevealedAnswers([]);
+    setMarks({});
   };
 
+  // EXPOSE METHODS
   useImperativeHandle(ref, () => ({
     next: handleNext,
     prev: handlePrev,
-    reset: handleReset
+    reset: handleReset,
+    markCorrect,
+    markWrong
   }));
 
   const visible =
@@ -98,16 +133,25 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
           <div
             key={item.id}
             className={`text-2xl flex ${
-              i === currentIndex && !showAll ? "bg-yellow-100" : ""
+              marks[i] === "correct"
+                ? "bg-green-200"
+                : marks[i] === "wrong"
+                ? "bg-red-200"
+                : i === currentIndex && !showAll
+                ? "bg-yellow-100"
+                : ""
             }`}
           >
             <div className="w-10">{i + 1}.</div>
+
             <div className="w-1/2">{item.hindi}</div>
+
             <div className="w-1/2">
               {showAll || revealedAnswers.includes(i)
                 ? item.english
                 : ""}
             </div>
+
           </div>
         ))}
 
