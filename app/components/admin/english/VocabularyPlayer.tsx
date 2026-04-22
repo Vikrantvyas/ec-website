@@ -8,17 +8,19 @@ import {
   useImperativeHandle
 } from "react";
 
-const shuffleArray = (arr) => {
+const shuffleArray = (arr: any[]) => {
   return [...arr].sort(() => Math.random() - 0.5);
 };
 
-const VocabularyPlayer = forwardRef(({ data, random, showAll }, ref) => {
+const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
+
+  const { data, random, showAll } = props;
 
   const [currentIndex, setCurrentIndex] = useState(-1);
-  const [revealedAnswers, setRevealedAnswers] = useState([]);
-  const [list, setList] = useState([]);
+  const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
+  const [list, setList] = useState<any[]>([]);
 
-  const scrollRef = useRef(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const safeData = data || [];
 
@@ -43,13 +45,13 @@ const VocabularyPlayer = forwardRef(({ data, random, showAll }, ref) => {
       return;
     }
 
-    setRevealedAnswers(prev => {
+    setRevealedAnswers((prev) => {
       if (prev.includes(currentIndex)) return prev;
       return [...prev, currentIndex];
     });
 
     if (currentIndex < list.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex((prev) => prev + 1);
     }
   };
 
@@ -59,8 +61,8 @@ const VocabularyPlayer = forwardRef(({ data, random, showAll }, ref) => {
 
     const prevIndex = currentIndex - 1;
 
-    setRevealedAnswers(prev =>
-      prev.filter(i => i < prevIndex)
+    setRevealedAnswers((prev) =>
+      prev.filter((i) => i < prevIndex)
     );
 
     setCurrentIndex(prevIndex);
@@ -87,9 +89,12 @@ const VocabularyPlayer = forwardRef(({ data, random, showAll }, ref) => {
   return (
     <div className="flex flex-col h-full">
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-1 p-2">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto space-y-1 p-2"
+      >
 
-        {visible.map((item, i) => (
+        {visible.map((item: any, i: number) => (
           <div
             key={item.id}
             className={`text-2xl flex ${
