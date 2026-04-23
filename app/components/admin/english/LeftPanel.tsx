@@ -5,12 +5,28 @@ export default function LeftPanel({
   days,
   topics,
   selectedCourse,
-  selectedDay,
-  selectedTopic,
+  selectedDays,
+  selectedTopics,
   setSelectedCourse,
-  setSelectedDay,
-  setSelectedTopic
+  setSelectedDays,
+  setSelectedTopics
 }: any) {
+
+  const toggleDay = (id:string) => {
+    setSelectedDays((prev:string[]) =>
+      prev.includes(id)
+        ? prev.filter(d => d !== id)
+        : [...prev, id]
+    );
+  };
+
+  const toggleTopic = (id:string) => {
+    setSelectedTopics((prev:string[]) =>
+      prev.includes(id)
+        ? prev.filter(t => t !== id)
+        : [...prev, id]
+    );
+  };
 
   return (
 
@@ -42,63 +58,79 @@ export default function LeftPanel({
         {days.map((d:any)=>{
 
           const dayTopics = topics.filter((t:any)=>t.day_id === d.id);
-          const isExpanded = selectedDay === d.id;
+          const isSelected = selectedDays.includes(d.id);
           const hasTopics = dayTopics.length > 0;
 
           return (
 
-            <div key={d.id}>
+            <div key={d.id} className="mb-2">
 
-              {/* DAY BUTTON */}
-              <button
-                onClick={()=>setSelectedDay(isExpanded ? "" : d.id)}
-                className={`w-full flex justify-between items-center px-2 py-2 rounded ${
-                  isExpanded ? "bg-blue-600 text-white" : "bg-gray-100"
-                }`}
-              >
+              {/* DAY CHECKBOX */}
+              <label
+  className={`w-full flex justify-between items-center px-3 py-2 rounded cursor-pointer border ${
+    isSelected
+      ? "bg-blue-600 text-white border-blue-700"
+      : "bg-gray-200 border-gray-300"
+  }`}
+>
 
-                <span>Day {d.day_number}</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={()=>toggleDay(d.id)}
+                  />
+                  <div className="flex items-center gap-2">
+  <span>Day {d.day_number}</span>
 
-                {/* + / - ICON */}
-                {hasTopics && (
-                  <span className="text-lg font-bold">
-                    {isExpanded ? "−" : "+"}
-                  </span>
-                )}
+  {hasTopics && (
+    <span className="font-bold text-lg">
+      +
+    </span>
+  )}
+</div>
+                </div>
 
-              </button>
+              </label>
 
               {/* TOPICS */}
-              {isExpanded && hasTopics && (
+              {isSelected && hasTopics && (
 
-                <div className="ml-3 mt-1 space-y-1">
+                <div className="ml-4 mt-1 space-y-1">
 
                   {dayTopics.map((t:any)=>{
 
                     const count = t.sentences?.[0]?.count || 0;
+                    const isTopicSelected = selectedTopics.includes(t.id);
 
                     return (
 
-                      <button
+                      <label
                         key={t.id}
-                        onClick={()=>setSelectedTopic(t.id)}
-                        className={`w-full text-left px-2 py-1 rounded text-sm ${
-                          selectedTopic === t.id
+                        className={`flex justify-between items-center px-2 py-1 rounded text-sm cursor-pointer ${
+                          isTopicSelected
                             ? "bg-green-600 text-white"
                             : "bg-gray-100"
                         }`}
                       >
 
-                        {t.topic_name}
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={isTopicSelected}
+                            onChange={()=>toggleTopic(t.id)}
+                          />
+                          <span>{t.topic_name}</span>
+                        </div>
 
                         {/* COUNT */}
                         {count > 0 && (
-                          <span className="ml-2 text-xs text-gray-500">
+                          <span className="text-xs">
                             ({count})
                           </span>
                         )}
 
-                      </button>
+                      </label>
 
                     );
 
@@ -107,7 +139,7 @@ export default function LeftPanel({
                 </div>
 
               )}
-
+<div className="border-b my-2"></div>
             </div>
 
           );

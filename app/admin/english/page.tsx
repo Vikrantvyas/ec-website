@@ -15,8 +15,8 @@ export default function EnglishPage() {
   const [sentences, setSentences] = useState<any[]>([]);
 
   const [selectedCourse, setSelectedCourse] = useState("");
-  const [selectedDay, setSelectedDay] = useState("");
-  const [selectedTopic, setSelectedTopic] = useState("");
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAll, setShowAll] = useState(false);
@@ -60,8 +60,13 @@ export default function EnglishPage() {
     }
   }, [selectedCourse]);
 
-  useEffect(() => { if (selectedDay) fetchTopics(); }, [selectedDay]);
-  useEffect(() => { if (selectedTopic) fetchSentences(); }, [selectedTopic]);
+useEffect(() => {
+  fetchTopics();
+}, [selectedDays]);
+
+useEffect(() => {
+  fetchSentences();
+}, [selectedTopics, selectedDays]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -92,39 +97,42 @@ export default function EnglishPage() {
 
   const fetchSentences = async () => {
 
-    if (!selectedTopic) return;
+  let topicIds = selectedTopics;
 
-    if (isVocab) {
+  if (topicIds.length === 0 && selectedDays.length > 0) {
+    topicIds = topics
+      .filter(t => selectedDays.includes(t.day_id))
+      .map(t => t.id);
+  }
 
-      const { data } = await supabase
-        .from("vocabulary")
-        .select("*")
-        .eq("topic_id", selectedTopic)
-        .order("order_no");
+  if (topicIds.length === 0) return;
 
-      if (data) {
-        setSentences(data);
-        setCurrentIndex(0);
-        setShowAll(false);
-      }
+  if (isVocab) {
+    const { data } = await supabase
+      .from("vocabulary")
+      .select("*")
+      .in("topic_id", topicIds)
+      .order("order_no");
 
-    } else {
-
-      const { data } = await supabase
-        .from("sentences")
-        .select("*")
-        .eq("topic_id", selectedTopic)
-        .order("order_no");
-
-      if (data) {
-        setSentences(data);
-        setCurrentIndex(0);
-        setShowAll(false);
-      }
-
+    if (data) {
+      setSentences(data);
+      setCurrentIndex(0);
+      setShowAll(false);
     }
-  };
+  } else {
+    const { data } = await supabase
+      .from("sentences")
+      .select("*")
+      .in("topic_id", topicIds)
+      .order("order_no");
 
+    if (data) {
+      setSentences(data);
+      setCurrentIndex(0);
+      setShowAll(false);
+    }
+  }
+};
   // ---------------- NAV ----------------
 
   const nextSentence = () => {
@@ -151,53 +159,9 @@ export default function EnglishPage() {
     }
   };
 
-  const nextTopic = () => {
+  
 
-    const dayTopics = topics.filter(t => t.day_id === selectedDay);
-    const idx = dayTopics.findIndex(t => t.id === selectedTopic);
-
-    if (idx < dayTopics.length - 1) {
-      setSelectedTopic(dayTopics[idx + 1].id);
-    } else {
-      const dayIdx = days.findIndex(d => d.id === selectedDay);
-
-      if (dayIdx < days.length - 1) {
-        const nextDay = days[dayIdx + 1].id;
-        setSelectedDay(nextDay);
-
-        setTimeout(() => {
-          const nextDayTopics = topics.filter(t => t.day_id === nextDay);
-          if (nextDayTopics.length > 0) {
-            setSelectedTopic(nextDayTopics[0].id);
-          }
-        }, 200);
-      }
-    }
-  };
-
-  const prevTopic = () => {
-
-    const dayTopics = topics.filter(t => t.day_id === selectedDay);
-    const idx = dayTopics.findIndex(t => t.id === selectedTopic);
-
-    if (idx > 0) {
-      setSelectedTopic(dayTopics[idx - 1].id);
-    } else {
-      const dayIdx = days.findIndex(d => d.id === selectedDay);
-
-      if (dayIdx > 0) {
-        const prevDay = days[dayIdx - 1].id;
-        setSelectedDay(prevDay);
-
-        setTimeout(() => {
-          const prevTopics = topics.filter(t => t.day_id === prevDay);
-          if (prevTopics.length > 0) {
-            setSelectedTopic(prevTopics[prevTopics.length - 1].id);
-          }
-        }, 200);
-      }
-    }
-  };
+  
 
   const toggleShowAll = () => {
     if (showAll) {
@@ -224,17 +188,17 @@ export default function EnglishPage() {
 
     <div className="english-page flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden">
 
-      <LeftPanel
-        courses={courses}
-        days={days}
-        topics={topics}
-        selectedCourse={selectedCourse}
-        selectedDay={selectedDay}
-        selectedTopic={selectedTopic}
-        setSelectedCourse={setSelectedCourse}
-        setSelectedDay={setSelectedDay}
-        setSelectedTopic={setSelectedTopic}
-      />
+   <LeftPanel
+  courses={courses}
+  days={days}
+  topics={topics}
+  selectedCourse={selectedCourse}
+  selectedDays={selectedDays}
+  selectedTopics={selectedTopics}
+  setSelectedCourse={setSelectedCourse}
+  setSelectedDays={setSelectedDays}
+  setSelectedTopics={setSelectedTopics}
+/>
 
       <div className="flex-1 flex flex-col items-center pt-4 gap-2">
 
@@ -246,8 +210,21 @@ export default function EnglishPage() {
           {/* 🔥 HEADER HIDE FOR VOCAB + GRAMMAR */}
           {!(isVocab || showGrammar) && (
             <div className="shadow-md bg-white px-4 py-2 text-sm flex justify-between z-10">
-              <div>Day {days.find(d=>d.id===selectedDay)?.day_number}</div>
-              <div>{topics.find(t=>t.id===selectedTopic)?.topic_name}</div>
+              <div>
+  Days: {selectedDays.map(id => {
+    const d = days.find(x => x.id === id);
+    return d?.day_number;
+  }).join(", ")}
+</div>
+
+<div>
+  Topics: {selectedTopics.length > 0
+    ? selectedTopics.map(id => {
+        const t = topics.find(x => x.id === id);
+        return t?.topic_name;
+      }).join(", ")
+    : "All Topics"}
+</div>
             </div>
           )}
 
@@ -283,8 +260,6 @@ export default function EnglishPage() {
           setCurrentIndex={setCurrentIndex}
           showBoard={showBoard}
           setShowBoard={setShowBoard}
-          prevTopic={prevTopic}
-          nextTopic={nextTopic}
           showScore={showScore}
           setShowScore={setShowScore}
           isVocab={isVocab}
