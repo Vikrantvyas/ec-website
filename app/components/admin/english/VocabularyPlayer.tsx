@@ -132,7 +132,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         {visible.map((item: any, i: number) => (
           <div
             key={item.id}
-            className={`text-2xl flex ${
+            className={`text-xl flex ${
               marks[i] === "correct"
                 ? "bg-green-200"
                 : marks[i] === "wrong"
