@@ -119,14 +119,36 @@ export default function ScoreCard({
   };
 
   const handlePass = () => {
-    if (activeIndex === null) return;
-    onPass?.();
-  };
+  if (activeIndex === null) return;
+
+  setTotal(p => p + 1);
+
+  setStudents(prev => {
+    const copy = [...prev];
+    copy[activeIndex].total += 1;
+    return copy;
+  });
+
+  onPass?.();
+};
 
   const handleMinus = () => {
-    if (activeIndex === null) return;
-    onPass?.();
-  };
+  if (activeIndex === null) return;
+
+  setScore(p => p - 1);
+  setTotal(p => p + 1);
+
+  setStudents(prev => {
+    const copy = [...prev];
+    if (copy[activeIndex].correct > 0) {
+      copy[activeIndex].correct -= 1;
+    }
+    copy[activeIndex].total += 1;
+    return copy;
+  });
+
+  onPass?.();
+};
 
   const resetAll = () => {
     setScore(0);
@@ -253,42 +275,43 @@ export default function ScoreCard({
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
 
         {students.map((s, i) => (
-          <div
-            key={i}
-            className={`flex items-center justify-between border p-2 rounded ${
-              i === activeIndex ? "bg-yellow-100" : ""
-            }`}
-          >
-            <div>{s.name}</div>
+  <div
+    key={i}
+    className={`flex items-center justify-between border p-2 rounded ${
+      i === activeIndex ? "bg-yellow-100" : ""
+    }`}
+  >
+    <div>{s.name}</div>
 
-            <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2">
 
-             <button
-  onClick={()=>{
-    setStudents(prev=>{
-      const copy=[...prev];
-      if(copy[i].correct>0) {
-        copy[i].correct -= 1;
-        if(copy[i].total > 0) copy[i].total -= 1;
-      }
-      return copy;
-    });
-  }}
-  className="bg-red-500 text-white px-2 rounded"
->
-  -
-</button>
+      {/* MINUS (only correct -1) */}
+      <button
+        onClick={()=>{
+          setStudents(prev=>{
+            const copy=[...prev];
+            if(copy[i].correct > 0){
+              copy[i].correct -= 1;
+            }
+            return copy;
+          });
+        }}
+        className="bg-red-500 text-white px-2 rounded"
+      >
+        -
+      </button>
 
-<div className="font-bold w-14 text-center">
-  {s.correct}/{s.total}
-</div>
+      {/* DISPLAY */}
+      <div className="font-bold w-16 text-center">
+        {s.correct}/{s.total}
+      </div>
 
-<button
+      {/* PLUS (correct +1, total +1) */}
+      <button
   onClick={()=>{
     setStudents(prev=>{
       const copy=[...prev];
       copy[i].correct += 1;
-      copy[i].total += 1;
       return copy;
     });
   }}
@@ -297,9 +320,9 @@ export default function ScoreCard({
   +
 </button>
 
-            </div>
-          </div>
-        ))}
+    </div>
+  </div>
+))}
 
       </div>
 
