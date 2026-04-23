@@ -44,29 +44,30 @@ export default function MainBoard({
       ? "w-1/3"
       : "w-1/4";
 
-  // +1
   const handleCorrect = () => {
-    if (vocabRef?.current) {
-      vocabRef.current.markCorrect();
-    }
+    vocabRef?.current?.markCorrect();
   };
 
-  // PASS
   const handlePass = () => {
-    if (vocabRef?.current) {
-      vocabRef.current.markWrong();
-    }
+    vocabRef?.current?.markWrong();
   };
 
-  // RESET
   const handleReset = () => {
-    if (vocabRef?.current) {
-      vocabRef.current.reset();
-    }
+    vocabRef?.current?.reset();
   };
+
+  // 🔹 GROUPING LOGIC
+  const groupedResult = resultData.reduce((acc: any, s: any) => {
+    if (!acc[s.correct]) acc[s.correct] = [];
+    acc[s.correct].push(s.name);
+    return acc;
+  }, {});
+
+  const sortedScores = Object.keys(groupedResult)
+    .map(Number)
+    .sort((a, b) => b - a);
 
   return (
-
     <div className="flex flex-1 overflow-hidden">
 
       {/* LEFT PANEL */}
@@ -74,28 +75,47 @@ export default function MainBoard({
         <div className={`${widthClass} flex flex-col`}>
           <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
-            {/* ✅ RESULT VIEW */}
+            {/* RESULT VIEW */}
             {showResult ? (
-              <div className="p-4 space-y-2">
+              <div className="p-4 space-y-3">
 
-                <div className="text-xl font-bold text-center mb-3">
-                  Result
-                </div>
+  {/* HEADER */}
+  <div className="flex justify-between items-center mb-3">
+    <div className="text-xl font-bold">
+      Result
+    </div>
 
-                {resultData.map((s, i) => (
-                  <div
-                    key={i}
-                    className={`flex justify-between border p-2 rounded ${
-                      i === 0 ? "bg-yellow-200 font-bold" : ""
-                    }`}
-                  >
-                    <div>{i + 1}. {s.name}</div>
-                    <div>{s.correct}</div>
-                  </div>
-                ))}
+    <button
+      onClick={() => setShowResult(false)}
+      className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+    >
+      Back
+    </button>
+  </div>
 
-              </div>
-            ) : isVocab ? (
+  {/* GROUPED RESULT */}
+  {sortedScores.map((score, i) => (
+    <div
+      key={i}
+      className={`flex justify-between border p-2 rounded ${
+        i === 0 ? "bg-yellow-200 font-bold" : ""
+      }`}
+    >
+      <div>
+        {i + 1}. {groupedResult[score].join(" | ")}
+
+      </div>
+
+      <div className="font-bold">
+        {score}
+      </div>
+    </div>
+  ))}
+
+</div>
+              
+
+                         ) : isVocab ? (
 
               <VocabularyPlayer
                 ref={vocabRef}
@@ -108,7 +128,6 @@ export default function MainBoard({
 
               <div className="space-y-1 p-2">
                 {visible.map((item:any, i:number)=>(
-
                   <div
                     key={item.id}
                     onClick={()=>setHighlightIndex((p:any)=>p===i ? null : i)}
@@ -119,7 +138,6 @@ export default function MainBoard({
                     <div className="w-10 shrink-0">{i+1}.</div>
                     <div className="flex-1">{item.sentence}</div>
                   </div>
-
                 ))}
               </div>
 
@@ -129,7 +147,6 @@ export default function MainBoard({
 
                 <div className="w-1/2 space-y-1">
                   {leftCol.map((item:any, i:number)=>(
-
                     <div
                       key={item.id}
                       onClick={()=>setHighlightIndex((p:any)=>p===i ? null : i)}
@@ -139,13 +156,11 @@ export default function MainBoard({
                     >
                       {i+1}. {item.sentence}
                     </div>
-
                   ))}
                 </div>
 
                 <div className="w-1/2 space-y-1">
                   {rightCol.map((item:any, i:number)=>{
-
                     const realIndex = i + 10;
 
                     return (
@@ -159,7 +174,6 @@ export default function MainBoard({
                         {realIndex + 1}. {item.sentence}
                       </div>
                     );
-
                   })}
                 </div>
 
