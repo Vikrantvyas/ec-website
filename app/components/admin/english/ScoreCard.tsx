@@ -188,7 +188,9 @@ export default function ScoreCard({
 
       {/* HEADER */}
       <div className="flex justify-between items-center p-2 border-b">
-        <div className="font-semibold">Score Board</div>
+        <div className="font-semibold">
+  Score Board of {students.length}
+</div>
 
         <button
           onClick={resetAll}
