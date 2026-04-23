@@ -30,36 +30,42 @@ export default function ScoreCard({
 
   // STOPWATCH
   useEffect(() => {
-    let interval:any;
-    if (running) {
-      interval = setInterval(() => setTime(p => p + 1), 1000);
-    }
-    return () => clearInterval(interval);
-  }, [running]);
+  let interval:any;
+  if (running) {
+    interval = setInterval(() => setTime(p => p + 1), 1000);
+  }
+  return () => clearInterval(interval);
+}, [running]);
 
-  // TIMER
-  useEffect(() => {
-    let interval:any;
+// TIMER
+useEffect(() => {
+  let interval:any;
 
-    if (timerRunning && timer > 0) {
-      interval = setInterval(() => setTimer(p => p - 1), 1000);
-    }
+  if (timerRunning && timer > 0) {
+    interval = setInterval(() => setTimer(p => p - 1), 1000);
+  }
 
-    if (timer === 0 && timerRunning) {
-      setTimerRunning(false);
-      setTimeUp(true);
-      setRunning(false);
-      audioRef.current?.play().catch(()=>{});
-    }
+  if (timer === 0 && timerRunning) {
+    setTimerRunning(false);
+    setTimeUp(true);
+    setRunning(false);
+    audioRef.current?.play().catch(()=>{});
+  }
 
-    return () => clearInterval(interval);
-  }, [timerRunning, timer]);
+  return () => clearInterval(interval);
+}, [timerRunning, timer]);
 
-  const format = (t:number) => {
-    const m = Math.floor(t / 60);
-    const s = t % 60;
-    return `${m}:${s < 10 ? "0" : ""}${s}`;
-  };
+// ✅ LIVE TIMER UPDATE
+useEffect(() => {
+  if (!timerRunning) {
+    setTimer(inputMin * 60);
+  }
+}, [inputMin, timerRunning]);
+const format = (t:number) => {
+  const m = Math.floor(t / 60);
+  const s = t % 60;
+  return `${m}:${s < 10 ? "0" : ""}${s}`;
+};
 
   // ADD
   const addStudent = () => {
@@ -82,8 +88,8 @@ export default function ScoreCard({
     setScore(0);
     setTotal(0);
     setActiveIndex(0);
-
-    setTimer(inputMin * 60);
+setTimer(inputMin * 60);
+    
     setTimerRunning(true);
     setTimeUp(false);
 
@@ -134,7 +140,7 @@ export default function ScoreCard({
     setTime(0);
     setRunning(false);
 
-    setTimer(60);
+    setTimer(inputMin * 60);
     setTimerRunning(false);
     setTimeUp(false);
 
@@ -196,12 +202,13 @@ export default function ScoreCard({
           <div className="text-xs text-gray-500 flex justify-center gap-1 items-center">
             Timer
             <input
-              disabled={started}
+              disabled={false}
               type="number"
               value={inputMin}
               onChange={(e)=>setInputMin(Number(e.target.value))}
               className="w-10 border text-xs text-center"
             />
+            <span>min</span>
           </div>
 
           <div className="text-3xl font-bold">{format(timer)}</div>
@@ -253,16 +260,49 @@ export default function ScoreCard({
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
 
         {students.map((s, i) => (
-          <div
-            key={i}
-            className={`flex justify-between border p-2 rounded ${
-              i === activeIndex ? "bg-yellow-100" : ""
-            }`}
-          >
-            <div>{s.name}</div>
-            <div className="font-bold">{s.correct}</div>
-          </div>
-        ))}
+  <div
+    key={i}
+    className={`flex items-center justify-between border p-2 rounded ${
+      i === activeIndex ? "bg-yellow-100" : ""
+    }`}
+  >
+    <div>{s.name}</div>
+
+    <div className="flex items-center gap-2">
+
+      <button
+        onClick={()=>{
+          setStudents(prev=>{
+            const copy=[...prev];
+            if(copy[i].correct>0) copy[i].correct-=1;
+            return copy;
+          });
+        }}
+        className="bg-red-500 text-white px-2 rounded"
+      >
+        -
+      </button>
+
+      <div className="font-bold w-14 text-center">
+        {s.correct}/{s.total}
+      </div>
+
+      <button
+        onClick={()=>{
+          setStudents(prev=>{
+            const copy=[...prev];
+            copy[i].correct+=1;
+            return copy;
+          });
+        }}
+        className="bg-green-600 text-white px-2 rounded"
+      >
+        +
+      </button>
+
+    </div>
+  </div>
+))}
 
       </div>
 
