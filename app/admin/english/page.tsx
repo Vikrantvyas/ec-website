@@ -67,7 +67,16 @@ useEffect(() => {
 useEffect(() => {
   fetchSentences();
 }, [selectedTopics, selectedDays]);
+useEffect(() => {
+  const filteredTopics = selectedTopics.filter(topicId => {
+    const topic = topics.find(t => t.id === topicId);
+    return topic && selectedDays.includes(topic.day_id);
+  });
 
+  if (filteredTopics.length !== selectedTopics.length) {
+    setSelectedTopics(filteredTopics);
+  }
+}, [selectedDays, topics]);
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = showAll
@@ -88,12 +97,12 @@ useEffect(() => {
   };
 
   const fetchTopics = async () => {
-    const { data } = await supabase
-      .from("topics")
-      .select("*, sentences(count)")
-      .order("order_no");
-    if (data) setTopics(data);
-  };
+  const { data } = await supabase
+    .from("topics")
+    .select("*, sentences(count)")
+    .order("order_no");
+  if (data) setTopics(data);
+};
 
   const fetchSentences = async () => {
 
@@ -112,13 +121,28 @@ useEffect(() => {
       .from("vocabulary")
       .select("*")
       .in("topic_id", topicIds)
-      .order("order_no");
+      
+.order("topic_id")
+.order("order_no");
 
     if (data) {
-      setSentences(data);
-      setCurrentIndex(0);
-      setShowAll(false);
+
+  // 🔥 manual sort by selectedTopics order
+  const sorted = data.sort((a: any, b: any) => {
+    const indexA = selectedTopics.indexOf(a.topic_id);
+    const indexB = selectedTopics.indexOf(b.topic_id);
+
+    if (indexA === indexB) {
+      return a.order_no - b.order_no;
     }
+
+    return indexA - indexB;
+  });
+
+  setSentences(sorted);
+  setCurrentIndex(0);
+  setShowAll(false);
+}
   } else {
     const { data } = await supabase
       .from("sentences")
@@ -127,10 +151,23 @@ useEffect(() => {
       .order("order_no");
 
     if (data) {
-      setSentences(data);
-      setCurrentIndex(0);
-      setShowAll(false);
+
+  // 🔥 manual sort by selectedTopics order
+  const sorted = data.sort((a: any, b: any) => {
+    const indexA = selectedTopics.indexOf(a.topic_id);
+    const indexB = selectedTopics.indexOf(b.topic_id);
+
+    if (indexA === indexB) {
+      return a.order_no - b.order_no;
     }
+
+    return indexA - indexB;
+  });
+
+  setSentences(sorted);
+  setCurrentIndex(0);
+  setShowAll(false);
+}
   }
 };
   // ---------------- NAV ----------------
