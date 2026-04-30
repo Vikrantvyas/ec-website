@@ -22,7 +22,14 @@ export default function MainBoard({
   scrollRef,
   vocabRef,
   randomMode,
-  showAll
+  showAll,
+
+  // 🔥 NEW PROPS
+  selectedDays,
+  selectedTopics,
+  topics,
+  days
+
 }: any) {
 
   const [resultData, setResultData] = useState<any[]>([]);
@@ -73,49 +80,65 @@ export default function MainBoard({
       {/* LEFT PANEL */}
       {showLeft && (
         <div className={`${widthClass} flex flex-col`}>
+
+          {/* 🔥 TOP HEADER */}
+          <div className="bg-blue-200 font-bold px-3 py-2 text-sm border-b flex flex-wrap gap-2">
+  
+  <span className="bg-yellow-300 px-2 rounded">
+    Day {selectedDays?.map((id:any) => {
+      const d = days?.find((x:any) => x.id === id);
+      return d?.day_number;
+    }).join(", ")}
+  </span>
+
+  <span className="bg-green-300 px-2 rounded">
+  {selectedTopics?.length > 0
+    ? selectedTopics.map((id:any) => {
+        const t = topics?.find((x:any) => x.id === id);
+        return t?.topic_name;
+      }).join(", ")
+    : "All Topics"}
+</span>
+
+</div>
+
           <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
             {/* RESULT VIEW */}
             {showResult ? (
               <div className="p-4 space-y-3">
 
-  {/* HEADER */}
-  <div className="flex justify-between items-center mb-3">
-    <div className="text-xl font-bold">
-      Result
-    </div>
+                <div className="flex justify-between items-center mb-3">
+                  <div className="text-xl font-bold">Result</div>
 
-    <button
-      onClick={() => setShowResult(false)}
-      className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-    >
-      Back
-    </button>
-  </div>
+                  <button
+                    onClick={() => setShowResult(false)}
+                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                  >
+                    Back
+                  </button>
+                </div>
 
-  {/* GROUPED RESULT */}
-  {sortedScores.map((score, i) => (
-    <div
-      key={i}
-      className={`flex justify-between border p-2 rounded ${
-        i === 0 ? "bg-yellow-200 font-bold" : ""
-      }`}
-    >
-      <div>
-        {i + 1}. {groupedResult[score].join(" | ")}
+                {sortedScores.map((score, i) => (
+                  <div
+                    key={i}
+                    className={`flex justify-between border p-2 rounded ${
+                      i === 0 ? "bg-yellow-200 font-bold" : ""
+                    }`}
+                  >
+                    <div>
+                      {i + 1}. {groupedResult[score].join(" | ")}
+                    </div>
 
-      </div>
+                    <div className="font-bold">
+                      {score}
+                    </div>
+                  </div>
+                ))}
 
-      <div className="font-bold">
-        {score}
-      </div>
-    </div>
-  ))}
+              </div>
 
-</div>
-              
-
-                         ) : isVocab ? (
+            ) : isVocab ? (
 
               <VocabularyPlayer
                 ref={vocabRef}
