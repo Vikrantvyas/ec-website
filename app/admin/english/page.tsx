@@ -266,24 +266,29 @@ useEffect(() => {
           )}
 
           <MainBoard
-            isVocab={isVocab}
-            isGrammar={isGrammar}
-            showGrammar={showGrammar}
-            sentences={sentences}
-            visible={visible}
-            leftCol={leftCol}
-            rightCol={rightCol}
-            highlightIndex={highlightIndex}
-            setHighlightIndex={setHighlightIndex}
-            showBoard={showBoard}
-            showScore={showScore}
-            scrollRef={scrollRef}
-            vocabRef={vocabRef}
-            randomMode={randomMode}
-            showLeft={showLeft}
-            showAll={showAll}
-          />
+  isVocab={isVocab}
+  isGrammar={isGrammar}
+  showGrammar={showGrammar}
+  sentences={sentences}
+  visible={visible}
+  leftCol={leftCol}
+  rightCol={rightCol}
+  highlightIndex={highlightIndex}
+  setHighlightIndex={setHighlightIndex}
+  showBoard={showBoard}
+  showScore={showScore}
+  scrollRef={scrollRef}
+  vocabRef={vocabRef}
+  randomMode={randomMode}
+  showLeft={showLeft}
+  showAll={showAll}
 
+  // 🔥 NEW
+  selectedDays={selectedDays}
+  selectedTopics={selectedTopics}
+  topics={topics}
+  days={days}
+/>
         </div>
 
         <Controls
