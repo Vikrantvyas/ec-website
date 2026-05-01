@@ -27,8 +27,8 @@ function SortableItem({ s, children }: any) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {children}
+    <div ref={setNodeRef} style={style}>
+      {children({ attributes, listeners })}
     </div>
   );
 }
@@ -231,10 +231,16 @@ const isVocab =
     fetchSentences();
   };
 
-  const deleteSentence = async (id:string) => {
+  const deleteSentence = async (id: string) => {
+
+  if (isVocab) {
+    await supabase.from("vocabulary").delete().eq("id", id);
+  } else {
     await supabase.from("sentences").delete().eq("id", id);
-    fetchSentences();
-  };
+  }
+
+  fetchSentences();
+};
 
   const startEdit = (s:any) => {
     setEditId(s.id);
@@ -243,6 +249,21 @@ const isVocab =
   };
 
   const saveEdit = async () => {
+
+  if (isVocab) {
+
+    const parts = editText.split("-");
+
+    await supabase.from("vocabulary")
+      .update({
+        hindi: parts[0]?.trim() || "",
+        english: parts[1]?.trim() || "",
+        order_no: Number(editOrder)
+      })
+      .eq("id", editId);
+
+  } else {
+
     await supabase.from("sentences")
       .update({
         sentence: editText,
@@ -250,9 +271,11 @@ const isVocab =
       })
       .eq("id", editId);
 
-    setEditId(null);
-    fetchSentences();
-  };
+  }
+
+  setEditId(null);
+  fetchSentences();
+};
 
   const handleDragEnd = (event:any) => {
     const { active, over } = event;
@@ -265,14 +288,23 @@ const isVocab =
   };
 
   const saveOrder = async () => {
-    for (let i = 0; i < sentences.length; i++) {
+
+  for (let i = 0; i < sentences.length; i++) {
+
+    if (isVocab) {
+      await supabase.from("vocabulary")
+        .update({ order_no: i + 1 })
+        .eq("id", sentences[i].id);
+    } else {
       await supabase.from("sentences")
         .update({ order_no: i + 1 })
         .eq("id", sentences[i].id);
     }
-    fetchSentences();
-  };
 
+  }
+
+  fetchSentences();
+};
   return (
 
     <div className="h-full overflow-hidden">
@@ -356,45 +388,43 @@ const isVocab =
       {/* LIST */}
       <div className="p-3 overflow-y-auto h-[calc(100vh-180px)]">
 
-        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={sentences.map(s=>s.id)} strategy={verticalListSortingStrategy}>
+  <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <SortableContext items={sentences.map(s => s.id)} strategy={verticalListSortingStrategy}>
 
-            <div className="space-y-2">
+      <div className="space-y-2">
 
-              {sentences.map(s=>(
+        {sentences.map(s => (
+          <SortableItem key={s.id} s={s}>
+            {({ attributes, listeners }: any) => (
+              <div className="flex items-center gap-2 border p-2 rounded bg-white">
 
-                <SortableItem key={s.id} s={s}>
+                {editId === s.id ? (
+                  <>
+                    <input value={editOrder} onChange={(e)=>setEditOrder(e.target.value)} className="w-16 border px-2 py-1 rounded" />
+                    <input value={editText} onChange={(e)=>setEditText(e.target.value)} className="flex-1 border px-2 py-1 rounded" />
+                    <button onClick={saveEdit}>Save</button>
+                  </>
+                ) : (
+                  <>
+                    <div className="cursor-move" {...attributes} {...listeners}>☰</div>
+                    <div className="w-10">{s.order_no}</div>
+                    <div className="flex-1">{s.sentence}</div>
+                    <button onClick={()=>startEdit(s)}>Edit</button>
+                    <button onClick={()=>deleteSentence(s.id)}>Delete</button>
+                  </>
+                )}
 
-                  <div className="flex items-center gap-2 border p-2 rounded bg-white">
-
-                    {editId === s.id ? (
-                      <>
-                        <input value={editOrder} onChange={(e)=>setEditOrder(e.target.value)} className="w-16 border px-2 py-1 rounded" />
-                        <input value={editText} onChange={(e)=>setEditText(e.target.value)} className="flex-1 border px-2 py-1 rounded" />
-                        <button onClick={saveEdit}>Save</button>
-                      </>
-                    ) : (
-                      <>
-                        <div className="cursor-move">☰</div>
-                        <div className="w-10">{s.order_no}</div>
-                        <div className="flex-1">{s.sentence}</div>
-                        <button onClick={()=>startEdit(s)}>Edit</button>
-                        <button onClick={()=>deleteSentence(s.id)}>Delete</button>
-                      </>
-                    )}
-
-                  </div>
-
-                </SortableItem>
-
-              ))}
-
-            </div>
-
-          </SortableContext>
-        </DndContext>
+              </div>
+            )}
+          </SortableItem>
+        ))}
 
       </div>
+
+    </SortableContext>
+  </DndContext>
+
+</div>
 
     </div>
   );
