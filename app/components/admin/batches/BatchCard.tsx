@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useState, useRef, useEffect } from "react";
+import AddStudentsModal from "@/app/components/admin/common/AddStudentsModal";
 
 type BatchCardProps = {
   id: string;
@@ -11,6 +12,7 @@ type BatchCardProps = {
   teacher?: string;
   courses?: string[] | null;
   students?: number;
+  onReload?: () => void; // optional
 };
 
 export default function BatchCard({
@@ -18,12 +20,14 @@ export default function BatchCard({
   name,
   teacher,
   courses,
-  students = 0
+  students = 0,
+  onReload
 }: BatchCardProps) {
 
   const router = useRouter();
 
   const [openMenu, setOpenMenu] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,10 +55,6 @@ export default function BatchCard({
 
   const showCircles = Math.min(students, 4);
 
-  function openAddStudents() {
-    router.push(`/admin/batches/add-students?batch=${id}`);
-  }
-
   function openAttendance() {
     router.push(`/admin/attendance?batch=${id}`);
   }
@@ -79,7 +79,7 @@ export default function BatchCard({
 
     <div className="bg-white border rounded-md p-2.5 shadow-sm hover:shadow-md transition max-w-[160px]">
 
-      {/* ✅ HEADER (TITLE + 3 DOTS) */}
+      {/* HEADER */}
       <div className="flex justify-between items-start">
 
         <h3 className="text-xs font-semibold leading-tight">
@@ -122,7 +122,6 @@ export default function BatchCard({
       </div>
 
       <div className="flex items-center mt-2">
-
         <div className="flex items-center">
           {Array.from({ length: showCircles }).map((_, i) => (
             <div
@@ -137,13 +136,12 @@ export default function BatchCard({
         <span className="text-xs text-gray-600 ml-2">
           {students}
         </span>
-
       </div>
 
       <div className="flex gap-3 mt-2 text-[11px]">
 
         <button
-          onClick={openAddStudents}
+          onClick={() => setShowAddModal(true)}
           className="text-gray-600 hover:text-black"
         >
           Add Student
@@ -157,6 +155,15 @@ export default function BatchCard({
         </button>
 
       </div>
+
+      {/* ✅ ADD / REMOVE MODAL */}
+      {showAddModal && (
+        <AddStudentsModal
+          batchId={id}
+          onClose={() => setShowAddModal(false)}
+          onSuccess={onReload || (() => location.reload())}
+        />
+      )}
 
     </div>
 
