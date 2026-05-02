@@ -67,8 +67,8 @@ export default function ReportsPage() {
 
     const receiptDate = r.date ? new Date(r.date) : null;
 
-    const fromMatch = fromDate ? receiptDate >= new Date(fromDate) : true;
-    const toMatch = toDate ? receiptDate <= new Date(toDate) : true;
+const fromMatch = fromDate ? (receiptDate && receiptDate >= new Date(fromDate)) : true;
+const toMatch = toDate ? (receiptDate && receiptDate <= new Date(toDate)) : true;
 
     return nameMatch && fromMatch && toMatch;
   });
