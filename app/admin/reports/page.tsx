@@ -7,22 +7,77 @@ import { supabase } from "@/lib/supabaseClient";
 export default function ReportsPage() {
 
   const [receipts, setReceipts] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [editRow, setEditRow] = useState<any>(null);
 
-  const fetchReceipts = async () => {
-    const { data, error } = await supabase
-      .from("receipts")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const [sortField, setSortField] = useState<string>("date");
+  const [sortAsc, setSortAsc] = useState<boolean>(false);
 
-    if (!error) {
-      setReceipts(data || []);
+  const fetchReceipts = async () => {
+
+    const { count } = await supabase
+      .from("receipts")
+      .select("*", { count: "exact", head: true });
+
+    setTotalCount(count || 0);
+
+    let allData: any[] = [];
+    let from = 0;
+    let to = 999;
+
+    while (true) {
+      const { data, error } = await supabase
+        .from("receipts")
+        .select("*")
+        .order("date", { ascending: false })
+        .range(from, to);
+
+      if (error || !data || data.length === 0) break;
+
+      allData = [...allData, ...data];
+
+      if (data.length < 1000) break;
+
+      from += 1000;
+      to += 1000;
     }
+
+    setReceipts(allData);
   };
 
   useEffect(() => {
     fetchReceipts();
   }, []);
+
+  const handleSort = (field: string) => {
+    if (sortField === field) setSortAsc(!sortAsc);
+    else {
+      setSortField(field);
+      setSortAsc(true);
+    }
+  };
+
+  const sortedData = [...receipts].sort((a: any, b: any) => {
+    let valA = a[sortField];
+    let valB = b[sortField];
+
+    if (!valA) return 1;
+    if (!valB) return -1;
+
+    if (["date", "due_date"].includes(sortField)) {
+      const d1 = new Date(valA).getTime();
+      const d2 = new Date(valB).getTime();
+      return sortAsc ? d1 - d2 : d2 - d1;
+    }
+
+    if (!isNaN(valA) && !isNaN(valB)) {
+      return sortAsc ? Number(valA) - Number(valB) : Number(valB) - Number(valA);
+    }
+
+    return sortAsc
+      ? valA.toString().localeCompare(valB.toString())
+      : valB.toString().localeCompare(valA.toString());
+  });
 
   const formatDate = (date: string) => {
     if (!date) return "";
@@ -39,11 +94,7 @@ export default function ReportsPage() {
   };
 
   const handleUpdate = async () => {
-    await supabase
-      .from("receipts")
-      .update(editRow)
-      .eq("id", editRow.id);
-
+    await supabase.from("receipts").update(editRow).eq("id", editRow.id);
     setEditRow(null);
     fetchReceipts();
   };
@@ -55,7 +106,7 @@ export default function ReportsPage() {
       <div className="p-4">
 
         <h1 className="text-xl font-semibold mb-4">
-          All Receipts
+          All Receipts ({totalCount})
         </h1>
 
         <div className="border rounded-lg bg-white overflow-auto">
@@ -64,164 +115,98 @@ export default function ReportsPage() {
 
             <thead className="bg-gray-100">
               <tr>
-                <th className="px-2 py-2 text-left">Date</th>
-                <th className="px-2 py-2 text-left">Student</th>
-                <th className="px-2 py-2 text-right">Amount</th>
-                <th className="px-2 py-2 text-left">R. No.</th>
-                <th className="px-2 py-2 text-left">Account</th>
-                <th className="px-2 py-2 text-left">Mode</th>
-                <th className="px-2 py-2 text-right">Total Fee</th>
-                <th className="px-2 py-2 text-right">Discount</th>
-                <th className="px-2 py-2 text-right">Due</th>
-                <th className="px-2 py-2 text-left">Due Date</th>
-                <th className="px-2 py-2 text-center">Actions</th>
+                <th onClick={()=>handleSort("date")} className="px-2 py-2 cursor-pointer w-[110px]">Date</th>
+                <th onClick={()=>handleSort("student_name")} className="px-2 py-2 cursor-pointer w-[160px]">Student</th>
+                <th onClick={()=>handleSort("amount")} className="px-2 py-2 cursor-pointer text-right w-[100px]">Amount</th>
+                <th onClick={()=>handleSort("receipt_no")} className="px-2 py-2 cursor-pointer w-[110px]">R. No.</th>
+                <th onClick={()=>handleSort("account")} className="px-2 py-2 cursor-pointer w-[120px]">Account</th>
+                <th onClick={()=>handleSort("mode")} className="px-2 py-2 cursor-pointer w-[110px]">Mode</th>
+                <th className="px-2 py-2 text-right w-[110px]">Total Fee</th>
+                <th className="px-2 py-2 text-right w-[100px]">Discount</th>
+                <th className="px-2 py-2 text-right w-[100px]">Due</th>
+                <th className="px-2 py-2 w-[120px]">Due Date</th>
+                <th className="px-2 py-2 text-center w-[150px]">Actions</th>
               </tr>
             </thead>
 
             <tbody>
 
-              {receipts.map((r:any)=>(
-                <tr key={r.id} className="border-t">
+              {sortedData.map((r:any, index:number)=>(
+                <tr key={r.id + "-" + index} className="border-t">
 
-                  {/* DATE */}
                   <td className="px-2 py-1">
                     {editRow?.id === r.id ? (
-                      <input
-                        type="date"
-                        value={editRow.date || ""}
+                      <input type="date" value={editRow.date || ""}
                         onChange={(e)=>setEditRow({...editRow, date:e.target.value})}
-                        className="border px-1"
-                      />
+                        className="border px-1 w-[110px]" />
                     ) : formatDate(r.date)}
                   </td>
 
-                  {/* STUDENT */}
                   <td className="px-2 py-1">
                     {editRow?.id === r.id ? (
-                      <input
-                        value={editRow.student_name || ""}
+                      <input value={editRow.student_name || ""}
                         onChange={(e)=>setEditRow({...editRow, student_name:e.target.value})}
-                        className="border px-1"
-                      />
+                        className="border px-1 w-[150px]" />
                     ) : r.student_name}
                   </td>
 
-                  {/* AMOUNT */}
                   <td className="px-2 py-1 text-right">
                     {editRow?.id === r.id ? (
-                      <input
-                        type="number"
-                        value={editRow.amount || ""}
-                        onChange={(e)=>setEditRow({...editRow, amount:e.target.value})}
-                        className="border px-1 w-20 text-right"
-                      />
+                      <input type="number" value={editRow.amount || ""}
+                        onChange={(e)=>setEditRow({...editRow, amount:Number(e.target.value)})}
+                        className="border px-1 w-[90px] text-right" />
                     ) : Number(r.amount).toFixed(2)}
                   </td>
 
-                  {/* RECEIPT NO */}
+                  {/* 🔥 WIDTH HALF FIX */}
                   <td className="px-2 py-1">
                     {editRow?.id === r.id ? (
-                      <input
-                        value={editRow.receipt_no || ""}
+                      <input value={editRow.receipt_no || ""}
                         onChange={(e)=>setEditRow({...editRow, receipt_no:e.target.value})}
-                        className="border px-1"
-                      />
+                        className="border px-1 w-[80px]" />
                     ) : r.receipt_no}
                   </td>
 
-                  {/* ACCOUNT */}
                   <td className="px-2 py-1">
                     {editRow?.id === r.id ? (
-                      <input
-                        value={editRow.account || ""}
+                      <input value={editRow.account || ""}
                         onChange={(e)=>setEditRow({...editRow, account:e.target.value})}
-                        className="border px-1"
-                      />
+                        className="border px-1 w-[90px]" />
                     ) : r.account}
                   </td>
 
-                  {/* MODE */}
                   <td className="px-2 py-1">
                     {editRow?.id === r.id ? (
-                      <input
-                        value={editRow.mode || ""}
+                      <input value={editRow.mode || ""}
                         onChange={(e)=>setEditRow({...editRow, mode:e.target.value})}
-                        className="border px-1"
-                      />
+                        className="border px-1 w-[80px]" />
                     ) : r.mode}
                   </td>
 
-                  {/* TOTAL FEE */}
-                  <td className="px-2 py-1 text-right">
-                    {editRow?.id === r.id ? (
-                      <input
-                        type="number"
-                        value={editRow.total_fee || ""}
-                        onChange={(e)=>setEditRow({...editRow, total_fee:e.target.value})}
-                        className="border px-1 w-20 text-right"
-                      />
-                    ) : Number(r.total_fee).toFixed(2)}
-                  </td>
+                  <td className="px-2 py-1 text-right">{Number(r.total_fee).toFixed(2)}</td>
+                  <td className="px-2 py-1 text-right">{Number(r.discount).toFixed(2)}</td>
+                  <td className="px-2 py-1 text-right">{Number(r.due).toFixed(2)}</td>
 
-                  {/* DISCOUNT */}
-                  <td className="px-2 py-1 text-right">
-                    {editRow?.id === r.id ? (
-                      <input
-                        type="number"
-                        value={editRow.discount || ""}
-                        onChange={(e)=>setEditRow({...editRow, discount:e.target.value})}
-                        className="border px-1 w-20 text-right"
-                      />
-                    ) : Number(r.discount).toFixed(2)}
-                  </td>
-
-                  {/* DUE */}
-                  <td className="px-2 py-1 text-right">
-                    {editRow?.id === r.id ? (
-                      <input
-                        type="number"
-                        value={editRow.due || ""}
-                        onChange={(e)=>setEditRow({...editRow, due:e.target.value})}
-                        className="border px-1 w-20 text-right"
-                      />
-                    ) : Number(r.due).toFixed(2)}
-                  </td>
-
-                  {/* DUE DATE */}
                   <td className="px-2 py-1">
                     {editRow?.id === r.id ? (
-                      <input
-                        type="date"
-                        value={editRow.due_date || ""}
+                      <input type="date" value={editRow.due_date || ""}
                         onChange={(e)=>setEditRow({...editRow, due_date:e.target.value})}
-                        className="border px-1"
-                      />
+                        className="border px-1 w-[120px]" />
                     ) : (Number(r.due) === 0 ? "" : formatDate(r.due_date))}
                   </td>
 
-                  {/* ACTIONS */}
-                  <td className="px-2 py-1 text-center">
-
+                  <td className="px-2 py-1 text-center whitespace-nowrap">
                     {editRow?.id === r.id ? (
                       <>
-                        <button onClick={handleUpdate} className="text-green-600 mr-2">
-                          Save
-                        </button>
-                        <button onClick={()=>setEditRow(null)} className="text-gray-600">
-                          Cancel
-                        </button>
+                        <button onClick={handleUpdate} className="text-green-600 mr-2">Save</button>
+                        <button onClick={()=>setEditRow(null)} className="text-gray-600">Cancel</button>
                       </>
                     ) : (
                       <>
-                        <button onClick={()=>handleEditClick(r)} className="text-blue-600 mr-2">
-                          Edit
-                        </button>
-                        <button onClick={()=>handleDelete(r.id)} className="text-red-600">
-                          Delete
-                        </button>
+                        <button onClick={()=>handleEditClick(r)} className="text-blue-600 mr-2">Edit</button>
+                        <button onClick={()=>handleDelete(r.id)} className="text-red-600">Delete</button>
                       </>
                     )}
-
                   </td>
 
                 </tr>
