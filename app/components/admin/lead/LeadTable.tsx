@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
+import { supabase } from "@/lib/supabaseClient";
 export default function LeadTable({
 leads,
 receipts,
@@ -37,13 +37,30 @@ department:"",
 course:"",
 branch:""
 });
-
+const [branchList,setBranchList] = useState<any[]>([]);
 /* RESET PAGE */
 
 useEffect(()=>{
 setPage(1);
 },[search,filters]);
+useEffect(()=>{
 
+const loadBranches = async ()=>{
+
+const { data } = await supabase
+.from("branches")
+.select("id,name")
+.eq("status","Active");
+
+if(data){
+setBranchList(data);
+}
+
+};
+
+loadBranches();
+
+},[]);
 /* RECEIPT MAP */
 
 const receiptMap:any = {};
@@ -91,7 +108,7 @@ filtered = filtered.filter(l=>l.course === filters.course);
 }
 
 if(filters.branch){
-filtered = filtered.filter(l=>l.branch === filters.branch);
+filtered = filtered.filter(l=>l.branch_id === filters.branch);
 }
 
 /* SORT */
@@ -247,8 +264,8 @@ value={filters.branch}
 onChange={(e)=>setFilters({...filters,branch:e.target.value})}
 >
 <option value="">All</option>
-{[...new Set(uniqueLeads.map(l => l.branch))].map((d, index) => (
-  <option key={d + index}>{d}</option>
+{branchList.map((b:any)=>(
+<option key={b.id} value={b.id}>{b.name}</option>
 ))}
 </select>
 
@@ -377,7 +394,13 @@ cursor-pointer
 "
 >
 
-{columns.branch && <td className="px-4 py-3.5">{lead.branch}</td>}
+{columns.branch && (
+<td className="px-4 py-3.5">
+{
+  branchList.find((b:any)=>b.id === lead.branch_id)?.name || "-"
+}
+</td>
+)}
 
 {columns.date && (
 <td className="px-4 py-3.5">
