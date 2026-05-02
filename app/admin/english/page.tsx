@@ -170,6 +170,9 @@ useEffect(() => {
 }
   }
 };
+const refreshData = async () => {
+  await fetchSentences();
+};
   // ---------------- NAV ----------------
 
   const nextSentence = () => {
@@ -235,6 +238,7 @@ useEffect(() => {
   setSelectedCourse={setSelectedCourse}
   setSelectedDays={setSelectedDays}
   setSelectedTopics={setSelectedTopics}
+  refreshData={refreshData}
 />
 
       <div className="flex-1 flex flex-col items-center pt-4 gap-2">
