@@ -19,6 +19,20 @@ export default function LeadOverview({ lead, lastFU, isEdit, setFormData }: Prop
   return (
     <div className="space-y-3 text-sm">
 
+      {/* 🔴 STUDENT NAME */}
+      <div className="bg-white p-3 rounded shadow space-y-1">
+        <p>
+          <b>Student Name:</b>{" "}
+          {isEdit ? (
+            <input
+              value={lead.student_name || ""}
+              onChange={(e) => handleChange("student_name", e.target.value)}
+              className="border px-1"
+            />
+          ) : lead.student_name}
+        </p>
+      </div>
+
       {/* 1️⃣ ENQUIRY */}
       <div className="bg-white p-3 rounded shadow space-y-1">
         <p>
