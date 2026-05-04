@@ -22,6 +22,7 @@ export default function ScoreCard({
   const [timer, setTimer] = useState(60);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timeUp, setTimeUp] = useState(false);
+  const [showTimeUp, setShowTimeUp] = useState(false);
   const [inputMin, setInputMin] = useState(1);
 
   const [started, setStarted] = useState(false);
@@ -46,11 +47,17 @@ export default function ScoreCard({
     }
 
     if (timer === 0 && timerRunning) {
-      setTimerRunning(false);
-      setTimeUp(true);
-      setRunning(false);
-      audioRef.current?.play().catch(()=>{});
-    }
+  setTimerRunning(false);
+  setTimeUp(true);
+  setShowTimeUp(true);
+  setRunning(false);
+  audioRef.current?.play().catch(()=>{});
+
+  // 🔥 auto stop after 4 sec
+  setTimeout(() => {
+    setShowTimeUp(false);
+  }, 4000);
+}
 
     return () => clearInterval(interval);
   }, [timerRunning, timer]);
@@ -216,7 +223,9 @@ export default function ScoreCard({
         </div>
 
         {/* TIMER (ALWAYS ENABLED INPUT) */}
-        <div className="border rounded p-2 text-center">
+        <div className={`border rounded p-2 text-center ${
+  showTimeUp ? "bg-red-500 text-white animate-pulse" : ""
+}`}>
           <div className="text-xs text-gray-500 flex justify-center gap-1 items-center">
             Timer
             <input
@@ -228,7 +237,11 @@ export default function ScoreCard({
             <span>min</span>
           </div>
 
-          <div className="text-3xl font-bold">{format(timer)}</div>
+          <div className={`text-3xl font-bold ${
+  timer <= 10 && timerRunning ? "text-red-600 animate-pulse" : ""
+}`}>
+  {format(timer)}
+</div>
 
           <div className="flex gap-1 mt-2">
             <button className="flex-1 bg-green-600 text-white rounded h-8" onClick={()=>setTimerRunning(true)}>▶</button>
