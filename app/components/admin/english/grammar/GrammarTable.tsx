@@ -58,9 +58,9 @@ export default function GrammarTable({ data }: { data: Group[] }) {
 
   return (
 
-    <div className="w-full overflow-auto">
+    <div className="w-full h-full">
 
-      <table className="w-full border border-gray-400 text-sm">
+      <table className="w-full table-fixed border border-gray-400 text-sm">
 
         {/* HEADER */}
         <thead className="bg-gray-300 text-center">
@@ -72,7 +72,7 @@ export default function GrammarTable({ data }: { data: Group[] }) {
                 onDragStart={() => setDragIndex(i)}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => handleDrop(i)}
-                className="border p-2 cursor-move"
+                className="border p-2"
               >
                 {headerMap[col]}
               </th>
@@ -108,7 +108,7 @@ export default function GrammarTable({ data }: { data: Group[] }) {
                       <td
                         key="hindi"
                         rowSpan={group.rows.length}
-                        className="border p-2 text-left align-top"
+                        className="border p-2 text-left align-top whitespace-nowrap"
                       >
                         {group.hindi}
                       </td>
@@ -118,7 +118,7 @@ export default function GrammarTable({ data }: { data: Group[] }) {
                   if (col === "index" || col === "hindi") return null;
 
                   return (
-                    <td key={col} className="border p-2">
+                    <td key={col} className="border p-2 break-words">
                       {(row as any)[col]}
                     </td>
                   );
