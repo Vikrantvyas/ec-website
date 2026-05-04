@@ -210,12 +210,12 @@ export default function MainBoard({
 
       {/* GRAMMAR */}
       {showGrammar && (
-        <div className={`${widthClass} border-l flex justify-center`}>
-          <div className="w-full max-w-md">
-            <GrammarBoard />
-          </div>
-        </div>
-      )}
+  <div className={`${widthClass} border-l flex`}>
+    <div className="w-full">
+      <GrammarBoard />
+    </div>
+  </div>
+)}
 
       {/* BOARD */}
       {showBoard && (
@@ -227,7 +227,7 @@ export default function MainBoard({
       {/* SCORE */}
       {showScore && (
         <div className={`${widthClass} border-l flex justify-center`}>
-          <div className="w-full max-w-md">
+          <div className="w-full">
             <ScoreCard
               onCorrect={handleCorrect}
               onReset={handleReset}
