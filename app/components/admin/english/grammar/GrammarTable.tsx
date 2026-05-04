@@ -17,7 +17,7 @@ export default function GrammarTable({ data }: { data: Group[] }) {
   const [tableData, setTableData] = useState<Group[]>(data);
 
   const [columns, setColumns] = useState([
-    "index","hindi","wh","hv1","subject","hv2","verb","object"
+    "index","hindi","subject","hv1","verb","object"
   ]);
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -26,7 +26,6 @@ export default function GrammarTable({ data }: { data: Group[] }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [mergedCells, setMergedCells] = useState<any>({});
 
-  // 🔴 UNDO REDO STACK
   const [history, setHistory] = useState<any[]>([]);
   const [redoStack, setRedoStack] = useState<any[]>([]);
 
@@ -44,11 +43,7 @@ export default function GrammarTable({ data }: { data: Group[] }) {
 
     const last = history[history.length - 1];
 
-    setRedoStack(prev => [...prev, {
-      tableData,
-      columns,
-      mergedCells
-    }]);
+    setRedoStack(prev => [...prev, { tableData, columns, mergedCells }]);
 
     setTableData(last.tableData);
     setColumns(last.columns);
@@ -62,11 +57,7 @@ export default function GrammarTable({ data }: { data: Group[] }) {
 
     const last = redoStack[redoStack.length - 1];
 
-    setHistory(prev => [...prev, {
-      tableData,
-      columns,
-      mergedCells
-    }]);
+    setHistory(prev => [...prev, { tableData, columns, mergedCells }]);
 
     setTableData(last.tableData);
     setColumns(last.columns);
@@ -75,16 +66,13 @@ export default function GrammarTable({ data }: { data: Group[] }) {
     setRedoStack(prev => prev.slice(0,-1));
   };
 
-  // 🔴 KEYBOARD LISTENER
   useEffect(()=>{
     const handleKey = (e:any)=>{
       if(e.ctrlKey && e.key === "z"){
-        e.preventDefault();
-        undo();
+        e.preventDefault(); undo();
       }
       if(e.ctrlKey && e.key === "y"){
-        e.preventDefault();
-        redo();
+        e.preventDefault(); redo();
       }
     };
 
@@ -214,10 +202,8 @@ export default function GrammarTable({ data }: { data: Group[] }) {
   const headerMap: any = {
     index: "#",
     hindi: "Hindi",
-    wh: "WH",
-    hv1: "H.V.",
     subject: "Subject",
-    hv2: "H.V.",
+    hv1: "H.V.",
     verb: "Verb",
     object: "Object"
   };
@@ -226,7 +212,30 @@ export default function GrammarTable({ data }: { data: Group[] }) {
 
     <div className="w-full h-full" onClick={()=>setMenu(null)}>
 
-      <table className="w-full table-fixed border border-gray-400 text-sm">
+      <table className="w-full table-fixed border border-gray-400 text-base">
+
+        {/* ✅ PERFECT WIDTH CONTROL */}
+        <colgroup>
+  {columns.map((col) => {
+
+    // fixed small columns
+    if (col === "index") {
+      return <col key={col} style={{ width: "40px" }} />;
+    }
+
+    if (col === "subject" || col === "hv1" || col === "verb") {
+      return <col key={col} style={{ width: "8%" }} />;
+    }
+
+    // flexible columns (Hindi + Object share remaining)
+    if (col === "hindi" || col === "object") {
+      return <col key={col} />;
+    }
+
+    // new dynamic columns → small
+    return <col key={col} style={{ width: "8%" }} />;
+  })}
+</colgroup>
 
         <thead className="bg-gray-300 text-center">
           <tr>
@@ -299,7 +308,7 @@ export default function GrammarTable({ data }: { data: Group[] }) {
                       <input
                         value={row[col] || ""}
                         onChange={(e)=>handleCellChange(gIndex,rIndex,col,e.target.value)}
-                        className="w-full outline-none text-center"
+                        className="w-full outline-none text-center text-base"
                       />
                     </td>
                   );
@@ -317,16 +326,12 @@ export default function GrammarTable({ data }: { data: Group[] }) {
       </table>
 
       {menu && (
-        <div
-          className="fixed bg-white border shadow-lg text-sm z-50"
-          style={{ top: menu.y, left: menu.x }}
-        >
+        <div className="fixed bg-white border shadow-lg text-sm z-50" style={{ top: menu.y, left: menu.x }}>
           {menu.cell && (
             <div className="px-3 py-2 hover:bg-gray-100 cursor-pointer" onClick={handleMerge}>
               🔗 Merge Cells
             </div>
           )}
-
           {menu.colIndex !== undefined && (
             <>
               <div className="px-3 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => handleAddColumn(menu.colIndex)}>➕ Add Column</div>
