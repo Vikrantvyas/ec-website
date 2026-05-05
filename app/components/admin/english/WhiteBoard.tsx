@@ -276,9 +276,9 @@ export default function WhiteBoard() {
                 className="outline-none bg-transparent resize-none"
                 style={{
                   textDecoration: item.underline?"underline":"none",
-                  minWidth: "400px",
-                  maxWidth: "90%",
-                  minHeight: "120px",
+                  minWidth: "700px",
+maxWidth: "95%",
+                  minHeight: "320px",
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word"
                 }}
