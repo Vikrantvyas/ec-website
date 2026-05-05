@@ -19,6 +19,7 @@ export default function WhiteBoard() {
   const historyRef = useRef<any[]>([]);
   const redoRef = useRef<any[]>([]);
   const clipboardRef = useRef<any>(null);
+  const textareaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
   // ---------------- HISTORY ----------------
   const saveHistory = (newItems:any[]) => {
@@ -153,17 +154,7 @@ export default function WhiteBoard() {
   };
 
   // ---------------- STYLE APPLY ----------------
-  useEffect(()=>{
-    if(!selectedId) return;
 
-    setItems(prev =>
-      prev.map(i =>
-        i.id === selectedId
-          ? { ...i, color, underline, fontSize }
-          : i
-      )
-    );
-  },[color, underline, fontSize]);
 
   // ---------------- SHORTCUTS ----------------
   useEffect(()=>{
@@ -206,12 +197,57 @@ export default function WhiteBoard() {
         <button onClick={cut} className="px-2 py-1 bg-gray-200 text-xs rounded">Cut</button>
         <button onClick={paste} className="px-2 py-1 bg-gray-200 text-xs rounded">Paste</button>
 
-        <select value={color} onChange={(e)=>setColor(e.target.value)} className="text-xs border px-1">
-          <option value="black">Black</option>
-          <option value="red">Red</option>
-          <option value="blue">Blue</option>
-          <option value="green">Green</option>
-        </select>
+        <div className="flex gap-2 items-center">
+
+  {["black","red","blue","green","purple","orange"].map(c => (
+    <div
+      key={c}
+      onMouseDown={(e)=>{
+        e.preventDefault();
+
+        setColor(c);
+
+        if (editingId) {
+
+          const current = items.find(i => i.id === editingId);
+          if (!current) return;
+
+          // 🔥 TEXT WIDTH CALCULATION (PERFECT)
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+
+          if (!ctx) return;
+
+          ctx.font = `${fontSize}px Arial`;
+
+          const textWidth = ctx.measureText(current.text || "").width;
+
+          const id = Date.now().toString();
+
+          const newItem = {
+            id,
+            text: "",
+            x: current.x + textWidth + 15,
+            y: current.y,
+            color: c,
+            underline,
+            fontSize
+          };
+
+          setItems(prev => [...prev, newItem]);
+
+          setEditingId(id);
+          setSelectedId(id);
+        }
+      }}
+      className={`w-7 h-7 rounded-full cursor-pointer border-2 border-gray-500 ${
+        color === c ? "ring-2 ring-black scale-110" : ""
+      }`}
+      style={{ backgroundColor: c }}
+    />
+  ))}
+
+</div>
 
         <button
           onClick={()=>setUnderline(prev=>!prev)}
@@ -269,6 +305,8 @@ export default function WhiteBoard() {
             {editingId === item.id ? (
 
               <textarea
+  ref={(el) => { if (el) textareaRefs.current[item.id] = el; }}
+             
                 autoFocus
                 value={item.text}
                 onChange={(e)=>updateText(item.id,e.target.value)}
