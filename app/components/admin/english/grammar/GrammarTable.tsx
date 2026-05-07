@@ -16,19 +16,29 @@ export default function GrammarTable({ data }: { data: Group[] }) {
 
   const [tableData, setTableData] = useState<Group[]>(data);
 
-  const [columns, setColumns] = useState([
-    "index","hindi","subject","hv1","verb","object"
-  ]);
+  const [columns, setColumns] = useState<string[]>([]);
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [menu, setMenu] = useState<any>(null);
 
   const [selected, setSelected] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const [mergedCells, setMergedCells] = useState<any>({});
 
   const [history, setHistory] = useState<any[]>([]);
   const [redoStack, setRedoStack] = useState<any[]>([]);
+useEffect(() => {
+  if (columns.length > 0) return;
 
+  if (!tableData || tableData.length === 0) return;
+
+  const baseCols = ["index", "hindi"];
+
+  const firstRow = tableData[0]?.rows[0] || {};
+  const dynamicCols = Object.keys(firstRow);
+
+  setColumns([...baseCols, ...dynamicCols]);
+}, [tableData]);
   const saveHistory = () => {
     setHistory(prev => [...prev, {
       tableData: JSON.parse(JSON.stringify(tableData)),
@@ -166,38 +176,120 @@ export default function GrammarTable({ data }: { data: Group[] }) {
     updated[g].rows[r][c] = value;
     setTableData(updated);
   };
+const handleAddRow = (gIndex:number)=>{
+  saveHistory();
 
-  const handleCellClick = (g:number,r:number,c:string)=>{
-    const key = `${g}-${r}-${c}`;
-    setSelected(prev =>
-      prev.includes(key)
-        ? prev.filter(x=>x!==key)
-        : [...prev,key]
-    );
-  };
+  const newData = [...tableData];
+
+  const newRow: any = {};
+  columns.forEach(col=>{
+    if(col !== "index" && col !== "hindi"){
+      newRow[col] = "";
+    }
+  });
+
+  newData[gIndex].rows.push(newRow);
+  setTableData(newData);
+};
+
+const handleDeleteRow = (gIndex:number, rIndex:number)=>{
+  saveHistory();
+
+  const newData = [...tableData];
+  if(newData[gIndex].rows.length === 1) return;
+
+  newData[gIndex].rows.splice(rIndex,1);
+  setTableData(newData);
+};
+  const handleCellClick = (e:any, g:number, r:number, c:string)=>{
+  if(!e.shiftKey){
+    setSelected([]);
+    return;
+  }
+
+  const key = `${g}-${r}-${c}`;
+
+  if(selected.length === 0){
+    setSelected([key]);
+    return;
+  }
+
+  const [sg, sr, sc] = selected[0].split("-");
+
+  // same group only
+  if(Number(sg) !== g){
+    setSelected([key]);
+    return;
+  }
+
+  const startRow = Number(sr);
+  const endRow = r;
+
+  const startCol = columns.indexOf(sc);
+  const endCol = columns.indexOf(c);
+
+  const minRow = Math.min(startRow, endRow);
+  const maxRow = Math.max(startRow, endRow);
+
+  const minCol = Math.min(startCol, endCol);
+  const maxCol = Math.max(startCol, endCol);
+
+  const newSelection: string[] = [];
+
+  for(let rowIndex = minRow; rowIndex <= maxRow; rowIndex++){
+    for(let colIndex = minCol; colIndex <= maxCol; colIndex++){
+
+      const colName = columns[colIndex];
+
+      if(colName === "index" || colName === "hindi") continue;
+
+      newSelection.push(`${g}-${rowIndex}-${colName}`);
+    }
+  }
+
+  setSelected(newSelection);
+};
+  
+  
 
   const handleMerge = ()=>{
-    if(selected.length < 2) return;
-    saveHistory();
+  if(selected.length < 2) return;
+  saveHistory();
 
-    const base = selected[0];
-    const rows = selected.map(s=>Number(s.split("-")[1]));
-    const cols = selected.map(s=>s.split("-")[2]);
+  const sorted = [...selected];
 
-    const rowSpan = Math.max(...rows) - Math.min(...rows) + 1;
-    const colSpan = new Set(cols).size;
+  const rows = sorted.map(s=>Number(s.split("-")[1]));
+  const cols = sorted.map(s=>s.split("-")[2]);
 
-    const newMerged = {...mergedCells};
-    newMerged[base] = { rowSpan, colSpan };
+  const uniqueCols = [...new Set(cols)];
+  const uniqueRows = [...new Set(rows)];
 
-    selected.slice(1).forEach(s=>{
-      newMerged[s] = { hidden:true };
-    });
+  const rowSpan = uniqueRows.length;
+  const colSpan = uniqueCols.length;
 
-    setMergedCells(newMerged);
-    setSelected([]);
-    setMenu(null);
-  };
+  const base = sorted.sort((a,b)=>{
+  const [ga, ra, ca] = a.split("-");
+  const [gb, rb, cb] = b.split("-");
+
+  if(Number(ra) !== Number(rb)){
+    return Number(ra) - Number(rb);
+  }
+
+  return columns.indexOf(ca) - columns.indexOf(cb);
+})[0];
+
+  const newMerged = {...mergedCells};
+
+  newMerged[base] = { rowSpan, colSpan };
+
+  sorted.slice(1).forEach(s=>{
+    newMerged[s] = { hidden:true };
+  });
+
+  setMergedCells(newMerged);
+  setSelected([]);
+  setMenu(null);
+};
 
   const headerMap: any = {
     index: "#",
@@ -212,30 +304,10 @@ export default function GrammarTable({ data }: { data: Group[] }) {
 
     <div className="w-full h-full" onClick={()=>setMenu(null)}>
 
-      <table className="w-full table-fixed border border-gray-400 text-base">
+      <table className="border border-gray-400 text-sm w-max">
 
         {/* ✅ PERFECT WIDTH CONTROL */}
-        <colgroup>
-  {columns.map((col) => {
-
-    // fixed small columns
-    if (col === "index") {
-      return <col key={col} style={{ width: "40px" }} />;
-    }
-
-    if (col === "subject" || col === "hv1" || col === "verb") {
-      return <col key={col} style={{ width: "8%" }} />;
-    }
-
-    // flexible columns (Hindi + Object share remaining)
-    if (col === "hindi" || col === "object") {
-      return <col key={col} />;
-    }
-
-    // new dynamic columns → small
-    return <col key={col} style={{ width: "8%" }} />;
-  })}
-</colgroup>
+        
 
         <thead className="bg-gray-300 text-center">
           <tr>
@@ -264,13 +336,14 @@ export default function GrammarTable({ data }: { data: Group[] }) {
 
             group.rows.map((row, rIndex) => (
 
-              <tr key={`${gIndex}-${rIndex}`} className="text-center">
+              <tr key={`${gIndex}-${rIndex}`} className="text-center relative group">
 
                 {columns.map((col) => {
 
                   if (col === "index" && rIndex === 0) {
                     return (
                       <td key="index" rowSpan={group.rows.length} className="border p-2 font-semibold align-top">
+                        
                         {gIndex + 1}.
                       </td>
                     );
@@ -289,32 +362,53 @@ export default function GrammarTable({ data }: { data: Group[] }) {
                   const key = `${gIndex}-${rIndex}-${col}`;
                   const merge = mergedCells[key];
 
-                  if(merge?.hidden) return null;
+                  if(merge?.hidden){
+  return null;
+}
 
                   return (
                     <td
                       key={col}
                       rowSpan={merge?.rowSpan || 1}
                       colSpan={merge?.colSpan || 1}
-                      onClick={()=>handleCellClick(gIndex,rIndex,col)}
+                      onClick={(e)=>handleCellClick(e,gIndex,rIndex,col)}
+                      onMouseDown={(e)=>{
+  if(e.shiftKey){
+    setIsDragging(true);
+    handleCellClick(e, gIndex, rIndex, col); // start selection
+  }
+}}
+
+onMouseEnter={(e)=>{
+  if(isDragging && e.shiftKey){
+    handleCellClick(e, gIndex, rIndex, col);
+  }
+}}
+
+onMouseUp={()=>setIsDragging(false)}
                       onContextMenu={(e)=>{
                         e.preventDefault();
                         setMenu({ x:e.clientX, y:e.clientY, cell:true });
                       }}
-                      className={`border p-1 ${
+                      className={`border p-1 whitespace-nowrap ${
                         selected.includes(key) ? "bg-yellow-200" : ""
                       }`}
                     >
-                      <input
-                        value={row[col] || ""}
-                        onChange={(e)=>handleCellChange(gIndex,rIndex,col,e.target.value)}
-                        className="w-full outline-none text-center text-base"
-                      />
+                     <input
+  value={row[col] || ""}
+  onChange={(e)=>handleCellChange(gIndex,rIndex,col,e.target.value)}
+  onMouseDown={(e)=>e.stopPropagation()}
+  style={{ width: (row[col]?.length || 1) + "ch" }}
+  className="outline-none text-center"
+/>
                     </td>
                   );
 
                 })}
-
+<td className="border p-1 opacity-0 group-hover:opacity-100">
+  <button onClick={()=>handleAddRow(gIndex)} className="text-green-600 mr-1">＋</button>
+  <button onClick={()=>handleDeleteRow(gIndex, rIndex)} className="text-red-600">－</button>
+</td>
               </tr>
 
             ))
