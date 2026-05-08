@@ -58,9 +58,10 @@ export default function AttendanceSidebar({
 
     // ✅ FIX 1: CORRECT STUDENT COUNT
     const { data: batchStudents } = await supabase
-      .from("batch_students")
-      .select("batch_id")
-      .in("batch_id", batchIds);
+     .from("batch_students")
+.select("batch_id")
+.in("batch_id", batchIds)
+.eq("is_active", true);
 
     const countMap: any = {};
     (batchStudents || []).forEach((b: any) => {

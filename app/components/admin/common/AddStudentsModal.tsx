@@ -138,12 +138,22 @@ export default function AddStudentsModal({
   async function applyChanges() {
 
     if (removeIds.length > 0) {
-      await supabase
-        .from("batch_students")
-        .delete()
-        .in("lead_id", removeIds)
-        .eq("batch_id", batchId);
-    }
+
+  const { error } = await supabase
+    .from("batch_students")
+    .update({
+      is_active: false
+    })
+    .in("lead_id", removeIds)
+    .eq("batch_id", batchId);
+
+  if (error) {
+    alert("Error removing students");
+    console.error(error);
+    return;
+  }
+
+}
 
     if (selected.length > 0) {
 

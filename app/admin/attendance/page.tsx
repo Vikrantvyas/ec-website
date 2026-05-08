@@ -164,8 +164,9 @@ export default function AttendancePage() {
 
       const { data: batchStudents } = await supabase
         .from("batch_students")
-        .select("lead_id")
-        .eq("batch_id", batch.id);
+.select("lead_id")
+.eq("batch_id", batch.id)
+.eq("is_active", true);
 
       const leadIds = batchStudents?.map(b => b.lead_id) || [];
 
@@ -253,9 +254,10 @@ const leads = (leadsRaw || []).map(l => ({
 
   async function loadStudents(batchId: string) {
     const { data: batchStudents } = await supabase
-      .from("batch_students")
-      .select("lead_id")
-      .eq("batch_id", batchId);
+    .from("batch_students")
+.select("lead_id")
+.eq("batch_id", batchId)
+.eq("is_active", true);
 
     const leadIds = batchStudents?.map(b => b.lead_id) || [];
 
