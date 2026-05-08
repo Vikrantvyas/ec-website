@@ -166,10 +166,38 @@ export default function AddStudentsModal({
   // ✅ FINAL WORKING CREATE
   async function createQuickLead() {
 
-    if (!newStudent.name || !newStudent.mobile) {
-      alert("Name & Mobile required");
-      return;
-    }
+    // ✅ DUPLICATE NAME CHECK
+const { data: existingLead } = await supabase
+  .from("leads")
+  .select("id")
+  .ilike("student_name", newStudent.name.trim())
+  .limit(1)
+  .maybeSingle();
+
+if (existingLead) {
+  alert("Student name already exists");
+  return;
+}
+
+// ✅ MOBILE NUMBER WARNING
+const { data: existingMobile } = await supabase
+  .from("leads")
+  .select("student_name")
+  .eq("mobile_number", newStudent.mobile)
+  .limit(1)
+  .maybeSingle();
+
+if (existingMobile) {
+
+  const confirmSave = confirm(
+    `This mobile number already exists with "${existingMobile.student_name}". Do you still want to save?`
+  );
+
+  if (!confirmSave) {
+    return;
+  }
+
+}
 
     const { data: batchData } = await supabase
       .from("batches")
