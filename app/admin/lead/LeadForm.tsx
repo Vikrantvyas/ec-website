@@ -76,9 +76,46 @@ export default function LeadForm() {
 
     setLoading(true);
 
-    try {
+try {
 
-      const mainPayload = buildLeadPayload(formData);
+  // ✅ DUPLICATE NAME CHECK
+  const { data: existingLead } = await supabase
+    .from("leads")
+    .select("id")
+    .ilike("student_name", formData.studentName.trim())
+    .limit(1)
+    .maybeSingle();
+
+  if (existingLead) {
+  alert("Student name already exists");
+  setLoading(false);
+  studentRef.current?.focus();
+  return;
+}
+
+// ✅ MOBILE NUMBER WARNING CHECK
+const { data: existingMobile } = await supabase
+  .from("leads")
+  .select("student_name")
+  .eq("mobile_number", formData.mobileNumber)
+  .limit(1)
+  .maybeSingle();
+
+if (existingMobile) {
+
+  const confirmSave = confirm(
+    `This mobile number already exists with "${existingMobile.student_name}". Do you still want to save?`
+  );
+
+  if (!confirmSave) {
+    setLoading(false);
+    mobileRef.current?.focus();
+    return;
+  }
+
+}
+
+  const mainPayload = buildLeadPayload(formData);
 
       const { error: mainError } = await supabase
         .from("leads")
