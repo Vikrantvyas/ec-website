@@ -146,12 +146,28 @@ export default function AddStudentsModal({
     }
 
     if (selected.length > 0) {
-      const rows = selected.map((s)=>({
-        batch_id: batchId,
-        lead_id: s.id
-      }));
-      await supabase.from("batch_students").insert(rows);
+
+  const rows = selected.map((s)=>({
+    batch_id: batchId,
+    lead_id: s.id
+  }));
+
+  const { error } = await supabase
+    .from("batch_students")
+    .insert(rows);
+
+  if (error) {
+
+    // ✅ Ignore duplicate constraint error
+    if (error.code !== "23505") {
+      alert("Error adding students");
+      console.error(error);
+      return;
     }
+
+  }
+
+}
 
     if (onSuccess) await onSuccess();
 
