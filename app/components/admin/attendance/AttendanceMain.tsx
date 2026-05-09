@@ -14,6 +14,7 @@ type Student = {
   due?: number;
   last10: string[];
   paid?: number;
+  is_active?: boolean;
 };
 
 export default function AttendanceMain({
