@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import PermissionGuard from "@/app/components/admin/PermissionGuard";
 import { supabase } from "@/lib/supabaseClient";
-
+import AttendanceReport from "@/app/admin/reports/AttendanceReport";
 export default function ReportsPage() {
 
   const [receipts, setReceipts] = useState<any[]>([]);
@@ -16,6 +16,7 @@ export default function ReportsPage() {
 
   const [sortField, setSortField] = useState<string>("date");
   const [sortAsc, setSortAsc] = useState<boolean>(false);
+const [reportType, setReportType] = useState("receipts");
 
   const fetchReceipts = async () => {
 
@@ -126,44 +127,82 @@ const toMatch = toDate ? (receiptDate && receiptDate <= new Date(toDate)) : true
 
       <div className="p-4">
 
-        <h1 className="text-xl font-semibold mb-4">
-          All Receipts ({totalCount})
-        </h1>
+        <div className="flex items-center justify-between mb-4">
 
-        {/* FILTER BAR */}
-        <div className="flex gap-2 mb-4 flex-wrap">
+  <h1 className="text-xl font-semibold">
+    {reportType === "receipts"
+      ? `All Receipts (${totalCount})`
+      : "Attendance Report"}
+  </h1>
 
-          <input
-            placeholder="Search student..."
-            value={search}
-            onChange={(e)=>setSearch(e.target.value)}
-            className="border px-2 py-1 w-[200px]"
-          />
+  <div className="flex gap-2">
 
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e)=>setFromDate(e.target.value)}
-            className="border px-2 py-1"
-          />
+    <button
+      onClick={() => setReportType("receipts")}
+      className={`px-3 py-1 rounded border text-sm ${
+        reportType === "receipts"
+          ? "bg-blue-600 text-white"
+          : "bg-white"
+      }`}
+    >
+      Receipts
+    </button>
 
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e)=>setToDate(e.target.value)}
-            className="border px-2 py-1"
-          />
+    <button
+      onClick={() => setReportType("attendance")}
+      className={`px-3 py-1 rounded border text-sm ${
+        reportType === "attendance"
+          ? "bg-green-600 text-white"
+          : "bg-white"
+      }`}
+    >
+      Attendance
+    </button>
 
-          <button
-            onClick={()=>{setSearch("");setFromDate("");setToDate("");}}
-            className="bg-gray-200 px-3 py-1"
-          >
-            Reset
-          </button>
+  </div>
 
-        </div>
+</div>
 
-        <div className="border rounded-lg bg-white overflow-auto">
+        {reportType === "receipts" && (
+
+  <div className="flex gap-2 mb-4 flex-wrap">
+
+    <input
+      placeholder="Search student..."
+      value={search}
+      onChange={(e)=>setSearch(e.target.value)}
+      className="border px-2 py-1 w-[200px]"
+    />
+
+    <input
+      type="date"
+      value={fromDate}
+      onChange={(e)=>setFromDate(e.target.value)}
+      className="border px-2 py-1"
+    />
+
+    <input
+      type="date"
+      value={toDate}
+      onChange={(e)=>setToDate(e.target.value)}
+      className="border px-2 py-1"
+    />
+
+    <button
+      onClick={()=>{setSearch("");setFromDate("");setToDate("");}}
+      className="bg-gray-200 px-3 py-1"
+    >
+      Reset
+    </button>
+
+  </div>
+
+)}
+{reportType === "attendance" && (
+  <AttendanceReport />
+)}
+        {reportType === "receipts" && (
+<div className="border rounded-lg bg-white overflow-auto">
 
           <table className="w-full text-sm">
 
@@ -278,7 +317,8 @@ const toMatch = toDate ? (receiptDate && receiptDate <= new Date(toDate)) : true
 
           </table>
 
-        </div>
+                </div>
+)}
 
       </div>
 
