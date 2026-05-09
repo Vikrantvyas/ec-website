@@ -40,6 +40,7 @@ attendanceDate
   const [showHistory, setShowHistory] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [studentFilter, setStudentFilter] = useState("active");
 
   function formatDate(date?: string) {
     if (!date) return "";
@@ -62,7 +63,44 @@ attendanceDate
   )}
 </div>
 
-          <div className="text-sm mt-1">
+          
+<div className="flex gap-2 mt-2 text-xs">
+
+  <button
+    onClick={() => setStudentFilter("active")}
+    className={`px-2 py-0.5 rounded border ${
+      studentFilter === "active"
+        ? "bg-green-600 text-white"
+        : "bg-white"
+    }`}
+  >
+    Active
+  </button>
+
+  <button
+    onClick={() => setStudentFilter("inactive")}
+    className={`px-2 py-0.5 rounded border ${
+      studentFilter === "inactive"
+        ? "bg-red-600 text-white"
+        : "bg-white"
+    }`}
+  >
+    Inactive
+  </button>
+
+  <button
+    onClick={() => setStudentFilter("all")}
+    className={`px-2 py-0.5 rounded border ${
+      studentFilter === "all"
+        ? "bg-blue-600 text-white"
+        : "bg-white"
+    }`}
+  >
+    All
+  </button>
+
+</div>
+<div className="text-sm mt-1">
   <span className="text-green-600 font-medium">
     {presentCount}
   </span>
@@ -79,7 +117,6 @@ attendanceDate
     {totalStudents}
   </span>
 </div>
-
           <div className="text-blue-600 text-xs mt-1 flex gap-2">
             <span onClick={() => setShowHistory(true)} className="underline cursor-pointer">
               Attendance History
@@ -110,7 +147,20 @@ attendanceDate
 
       <div className="flex-1 overflow-y-auto p-2 bg-gray-50">
 
-        {studentsData.map((student: Student, index: number) => {
+        {studentsData
+.filter((student: Student) => {
+
+  if (studentFilter === "active") {
+    return student.is_active === true;
+  }
+
+  if (studentFilter === "inactive") {
+    return student.is_active === false;
+  }
+
+  return true;
+})
+.map((student: Student, index: number) => {
 
           const status = attendanceState[student.id] || "P";
           const isPresent = status === "P";

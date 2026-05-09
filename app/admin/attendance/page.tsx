@@ -33,6 +33,7 @@ type Student = {
   batchName?: string;
   last10: string[];
   paid?: number;
+  is_active?: boolean;
 };
 
 export default function AttendancePage() {
@@ -170,6 +171,7 @@ const [attendanceDate, setAttendanceDate] = useState("");
 
       const leadIds = batchStudents?.map(b => b.lead_id) || [];
 
+
       if (leadIds.length === 0) {
         unpaidMap[batch.id] = 0;
         continue;
@@ -267,12 +269,15 @@ const leads = (leadsRaw || []).map(l => ({
   async function loadStudents(batchId: string) {
     const { data: batchStudents } = await supabase
     .from("batch_students")
-.select("lead_id")
-.eq("batch_id", batchId)
-.eq("is_active", true);
+.select("lead_id,is_active")
+.eq("batch_id", batchId);
 
     const leadIds = batchStudents?.map(b => b.lead_id) || [];
+const activeMap: Record<string, boolean> = {};
 
+batchStudents?.forEach((b:any) => {
+  activeMap[b.lead_id] = b.is_active;
+});
     if (leadIds.length === 0) {
       setStudentsData([]);
       return;
@@ -346,7 +351,8 @@ const leads = (leadsRaw || []).map(l => ({
         due: Math.max(finalFee - paid, 0),
         batchName: latest?.batch || "",
         last10,
-        paid
+        paid,
+is_active: activeMap[lead.id]
       });
     }
 
