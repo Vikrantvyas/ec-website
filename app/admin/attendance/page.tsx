@@ -52,7 +52,7 @@ export default function AttendancePage() {
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
-
+const [attendanceDate, setAttendanceDate] = useState("");
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -235,23 +235,35 @@ const leads = (leadsRaw || []).map(l => ({
   }
 
   async function loadTodayAttendance(batchId: string) {
-    const today = new Date().toISOString().split("T")[0];
 
-    const { data } = await supabase
-      .from("attendance")
-      .select("lead_id,status")
-      .eq("batch_id", batchId)
-      .eq("attendance_date", today);
+  const { data: latestAttendance } = await supabase
+    .from("attendance")
+    .select("attendance_date")
+    .eq("batch_id", batchId)
+    .order("attendance_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-    const map: Record<string, string> = {};
+  const targetDate =
+    latestAttendance?.attendance_date ||
+    new Date().toISOString().split("T")[0];
 
-    (data || []).forEach(r => {
-      map[r.lead_id] = r.status;
-    });
+  setAttendanceDate(targetDate);
 
-    setAttendanceState(map);
-  }
+  const { data } = await supabase
+    .from("attendance")
+    .select("lead_id,status")
+    .eq("batch_id", batchId)
+    .eq("attendance_date", targetDate);
 
+  const map: Record<string, string> = {};
+
+  (data || []).forEach(r => {
+    map[r.lead_id] = r.status;
+  });
+
+  setAttendanceState(map);
+}
   async function loadStudents(batchId: string) {
     const { data: batchStudents } = await supabase
     .from("batch_students")
@@ -411,6 +423,7 @@ const leads = (leadsRaw || []).map(l => ({
                 submitAttendance={submitAttendance}
                 selectedBatchId={selectedBatch}
                 reloadStudents={reloadAllData}
+                attendanceDate={attendanceDate}
               />
             </div>
           ) : (
@@ -463,6 +476,7 @@ const leads = (leadsRaw || []).map(l => ({
                   submitAttendance={submitAttendance}
                   selectedBatchId={selectedBatch}
                   reloadStudents={reloadAllData}
+                  attendanceDate={attendanceDate}
                 />
               )
             }

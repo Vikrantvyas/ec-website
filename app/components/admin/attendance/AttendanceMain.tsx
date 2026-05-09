@@ -31,7 +31,8 @@ export default function AttendanceMain({
   selectedBatchId,
   reloadStudents,
   branches,
-  selectedBranch
+  selectedBranch,
+attendanceDate
 }: any) {
 
   const router = useRouter();
@@ -51,13 +52,33 @@ export default function AttendanceMain({
 
       <div className="px-3 py-2 bg-white shadow-sm flex justify-between items-end">
         <div>
-          <div className="font-semibold text-sm">{selectedBatchName}</div>
+          <div className="font-semibold text-sm">
+  {selectedBatchName}
+
+  {attendanceDate && (
+    <span className="text-gray-500 font-normal ml-2">
+      ({new Date(attendanceDate).toLocaleDateString("en-GB")})
+    </span>
+  )}
+</div>
 
           <div className="text-sm mt-1">
-            Total: {totalStudents}
-            <span className="text-green-600 ml-2">P: {presentCount}</span>
-            <span className="text-red-600 ml-2">A: {absentCount}</span>
-          </div>
+  <span className="text-green-600 font-medium">
+    {presentCount}
+  </span>
+
+  <span className="mx-1"> + </span>
+
+  <span className = "text-red-600 font-medium">
+    {absentCount}
+  </span>
+
+  <span className = "mx-1"> = </span>
+
+  <span>
+    {totalStudents}
+  </span>
+</div>
 
           <div className="text-blue-600 text-xs mt-1 flex gap-2">
             <span onClick={() => setShowHistory(true)} className="underline cursor-pointer">
