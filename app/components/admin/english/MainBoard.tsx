@@ -93,10 +93,13 @@ const widthClass = isVertical
 
         {/* BOTTOM */}
         <div className="h-[30%] min-h-0 overflow-hidden">
-          <div className="w-full h-full overflow-y-auto">
+          <div className="w-full h-full overflow-hidden flex flex-col justify-end">
 
             {/* LEFT PANEL CONTENT COPY */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto">
+            <div
+  ref={scrollRef}
+  className="flex-1 overflow-hidden"
+>
 
               {showResult ? (
                 <div className="p-4 space-y-3">
