@@ -87,12 +87,12 @@ const widthClass = isVertical
       <div className="flex flex-col w-full h-full overflow-hidden min-h-0">
 
         {/* TOP */}
-        <div className="h-[65%] min-h-0 border-b overflow-auto">
+        <div className="h-[70%] min-h-0 border-b overflow-auto">
           <GrammarBoard />
         </div>
 
         {/* BOTTOM */}
-        <div className="h-[35%] min-h-0 overflow-hidden">
+        <div className="h-[30%] min-h-0 overflow-hidden">
           <div className="w-full h-full overflow-y-auto">
 
             {/* LEFT PANEL CONTENT COPY */}
