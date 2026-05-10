@@ -84,16 +84,16 @@ const widthClass = isVertical
     {/* SPECIAL CASE: TOP-BOTTOM */}
     {isVertical && showGrammar && showLeft ? (
 
-      <div className="flex flex-col w-full h-full">
+      <div className="flex flex-col w-full h-full overflow-hidden min-h-0">
 
         {/* TOP */}
-        <div className="h-1/2 border-b overflow-auto">
+        <div className="h-[65%] min-h-0 border-b overflow-auto">
           <GrammarBoard />
         </div>
 
         {/* BOTTOM */}
-        <div className="h-1/2 overflow-auto">
-          <div className="w-full h-full">
+        <div className="h-[35%] min-h-0 overflow-hidden">
+          <div className="w-full h-full overflow-y-auto">
 
             {/* LEFT PANEL CONTENT COPY */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto">
