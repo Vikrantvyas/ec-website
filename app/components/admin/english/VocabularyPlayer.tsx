@@ -148,7 +148,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
   {item.hindi}
 </div>
 
-            <div className="w-1/2 text-[26px] leading-[1.35] font-normal">
+            <div className="w-1/2 text-[22px] leading-[1.35] font-normal">
               {showAll || revealedAnswers.includes(i)
                 ? item.english
                 : ""}
