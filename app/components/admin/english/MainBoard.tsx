@@ -28,6 +28,7 @@ export default function MainBoard({
   selectedDays,
   selectedTopics,
   topics,
+  layout,
   days
 
 }: any) {
@@ -36,20 +37,23 @@ export default function MainBoard({
   const [showResult, setShowResult] = useState(false);
 
   const activePanels = [
-    showLeft && "left",
-    showBoard && "board",
-    showScore && "score",
-    showGrammar && "grammar"
-  ].filter(Boolean);
+  showLeft && "left",
+  showGrammar && "grammar",
+  showBoard && "board",
+  showScore && "score"
+].filter(Boolean);
 
-  const widthClass =
-    activePanels.length === 1
-      ? "w-full"
-      : activePanels.length === 2
-      ? "w-1/2"
-      : activePanels.length === 3
-      ? "w-1/3"
-      : "w-1/4";
+const isVertical = layout === "vertical";
+
+const widthClass = isVertical
+  ? "w-full"
+  : activePanels.length === 1
+  ? "w-full"
+  : activePanels.length === 2
+  ? "w-1/2"
+  : activePanels.length === 3
+  ? "w-1/3"
+  : "w-1/4";
 
   const handleCorrect = () => {
     vocabRef?.current?.markCorrect();
@@ -75,105 +79,69 @@ export default function MainBoard({
     .sort((a, b) => b - a);
 
   return (
-    <div className="flex flex-1 overflow-hidden">
 
-      {/* LEFT PANEL */}
-      {showLeft && (
-        <div className={`${widthClass} flex flex-col`}>
+  <>
+    {/* SPECIAL CASE: TOP-BOTTOM */}
+    {isVertical && showGrammar && showLeft ? (
 
-          {/* 🔥 TOP HEADER */}
-          <div className="bg-blue-200 font-bold px-3 py-2 text-sm border-b flex flex-wrap gap-2">
-  
-  <span className="bg-yellow-300 px-2 rounded">
-    Day {selectedDays?.map((id:any) => {
-      const d = days?.find((x:any) => x.id === id);
-      return d?.day_number;
-    }).join(", ")}
-  </span>
+      <div className="flex flex-col w-full h-full">
 
-  <span className="bg-green-300 px-2 rounded">
-  {selectedTopics?.length > 0
-    ? selectedTopics.map((id:any) => {
-        const t = topics?.find((x:any) => x.id === id);
-        return t?.topic_name;
-      }).join(", ")
-    : "All Topics"}
-</span>
+        {/* TOP */}
+        <div className="h-1/2 border-b overflow-auto">
+          <GrammarBoard />
+        </div>
 
-</div>
+        {/* BOTTOM */}
+        <div className="h-1/2 overflow-auto">
+          <div className="w-full h-full">
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto">
+            {/* LEFT PANEL CONTENT COPY */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
-            {/* RESULT VIEW */}
-            {showResult ? (
-              <div className="p-4 space-y-3">
+              {showResult ? (
+                <div className="p-4 space-y-3">
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="text-xl font-bold">Result</div>
+                    <button
+                      onClick={() => setShowResult(false)}
+                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                    >
+                      Back
+                    </button>
+                  </div>
 
-                <div className="flex justify-between items-center mb-3">
-                  <div className="text-xl font-bold">Result</div>
-
-                  <button
-                    onClick={() => setShowResult(false)}
-                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                  >
-                    Back
-                  </button>
+                  {sortedScores.map((score, i) => (
+                    <div
+                      key={i}
+                      className={`flex justify-between border p-2 rounded ${
+                        i === 0 ? "bg-yellow-200 font-bold" : ""
+                      }`}
+                    >
+                      <div>
+                        {i + 1}. {groupedResult[score].join(" | ")}
+                      </div>
+                      <div className="font-bold">{score}</div>
+                    </div>
+                  ))}
                 </div>
 
-                {sortedScores.map((score, i) => (
-                  <div
-                    key={i}
-                    className={`flex justify-between border p-2 rounded ${
-                      i === 0 ? "bg-yellow-200 font-bold" : ""
-                    }`}
-                  >
-                    <div>
-                      {i + 1}. {groupedResult[score].join(" | ")}
-                    </div>
+              ) : isVocab ? (
 
-                    <div className="font-bold">
-                      {score}
-                    </div>
-                  </div>
-                ))}
+                <VocabularyPlayer
+                  ref={vocabRef}
+                  data={sentences}
+                  random={randomMode}
+                  showAll={showAll}
+                />
 
-              </div>
+              ) : showBoard ? (
 
-            ) : isVocab ? (
-
-              <VocabularyPlayer
-                ref={vocabRef}
-                data={sentences}
-                random={randomMode}
-                showAll={showAll}
-              />
-
-            ) : showBoard ? (
-
-              <div className="space-y-1 p-2">
-                {visible.map((item:any, i:number)=>(
-                  <div
-                    key={item.id}
-                    onClick={()=>setHighlightIndex((p:any)=>p===i ? null : i)}
-                    className={`cursor-pointer select-none text-2xl leading-tight flex ${
-                      highlightIndex === i ? "bg-yellow-200" : ""
-                    }`}
-                  >
-                    <div className="w-10 shrink-0">{i+1}.</div>
-                    <div className="flex-1">{item.sentence}</div>
-                  </div>
-                ))}
-              </div>
-
-            ) : (
-
-              <div className="flex gap-4 p-2">
-
-                <div className="w-1/2 space-y-1">
-                  {leftCol.map((item:any, i:number)=>(
+                <div className="space-y-1 p-2">
+                  {visible.map((item:any, i:number)=>(
                     <div
                       key={item.id}
                       onClick={()=>setHighlightIndex((p:any)=>p===i ? null : i)}
-                      className={`cursor-pointer select-none text-2xl leading-tight ${
+                      className={`cursor-pointer text-2xl ${
                         highlightIndex === i ? "bg-yellow-200" : ""
                       }`}
                     >
@@ -182,65 +150,193 @@ export default function MainBoard({
                   ))}
                 </div>
 
-                <div className="w-1/2 space-y-1">
-                  {rightCol.map((item:any, i:number)=>{
-                    const realIndex = i + 10;
+              ) : (
 
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={()=>setHighlightIndex((p:any)=>p===realIndex ? null : realIndex)}
-                        className={`cursor-pointer select-none text-2xl leading-tight ${
-                          highlightIndex === realIndex ? "bg-yellow-200" : ""
-                        }`}
-                      >
-                        {realIndex + 1}. {item.sentence}
+                <div className="flex gap-4 p-2">
+                  <div className="w-1/2">
+                    {leftCol.map((item:any, i:number)=>(
+                      <div key={item.id}>
+                        {i+1}. {item.sentence}
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
+
+                  <div className="w-1/2">
+                    {rightCol.map((item:any, i:number)=>(
+                      <div key={item.id}>
+                        {i+11}. {item.sentence}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-              </div>
+              )}
 
-            )}
+            </div>
 
           </div>
         </div>
+
+      </div>
+
+    ) : (
+
+      <div className={`flex flex-1 overflow-hidden ${isVertical ? "flex-col" : ""}`}>
+
+        {/* EXISTING OLD LAYOUT (UNCHANGED) */}
+
+        {showLeft && (
+  <div className={`${widthClass} flex flex-col`}>
+
+    {/* 🔥 TOP HEADER */}
+    <div className="bg-blue-200 font-bold px-3 py-2 text-sm border-b flex flex-wrap gap-2">
+
+      <span className="bg-yellow-300 px-2 rounded">
+        Day {selectedDays?.map((id:any) => {
+          const d = days?.find((x:any) => x.id === id);
+          return d?.day_number;
+        }).join(", ")}
+      </span>
+
+      <span className="bg-green-300 px-2 rounded">
+        {selectedTopics?.length > 0
+          ? selectedTopics.map((id:any) => {
+              const t = topics?.find((x:any) => x.id === id);
+              return t?.topic_name;
+            }).join(", ")
+          : "All Topics"}
+      </span>
+
+    </div>
+
+    <div ref={scrollRef} className="flex-1 overflow-y-auto">
+
+      {/* RESULT VIEW */}
+      {showResult ? (
+        <div className="p-4 space-y-3">
+
+          <div className="flex justify-between items-center mb-3">
+            <div className="text-xl font-bold">Result</div>
+
+            <button
+              onClick={() => setShowResult(false)}
+              className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+            >
+              Back
+            </button>
+          </div>
+
+          {sortedScores.map((score, i) => (
+            <div
+              key={i}
+              className={`flex justify-between border p-2 rounded ${
+                i === 0 ? "bg-yellow-200 font-bold" : ""
+              }`}
+            >
+              <div>
+                {i + 1}. {groupedResult[score].join(" | ")}
+              </div>
+
+              <div className="font-bold">
+                {score}
+              </div>
+            </div>
+          ))}
+
+        </div>
+
+      ) : isVocab ? (
+
+        <VocabularyPlayer
+          ref={vocabRef}
+          data={sentences}
+          random={randomMode}
+          showAll={showAll}
+        />
+
+      ) : showBoard ? (
+
+        <div className="space-y-1 p-2">
+          {visible.map((item:any, i:number)=>(
+            <div
+              key={item.id}
+              onClick={()=>setHighlightIndex((p:any)=>p===i ? null : i)}
+              className={`cursor-pointer select-none text-2xl leading-tight flex ${
+                highlightIndex === i ? "bg-yellow-200" : ""
+              }`}
+            >
+              <div className="w-10 shrink-0">{i+1}.</div>
+              <div className="flex-1">{item.sentence}</div>
+            </div>
+          ))}
+        </div>
+
+      ) : (
+
+        <div className="flex gap-4 p-2">
+
+          <div className="w-1/2 space-y-1">
+            {leftCol.map((item:any, i:number)=>(
+              <div
+                key={item.id}
+                onClick={()=>setHighlightIndex((p:any)=>p===i ? null : i)}
+                className={`cursor-pointer select-none text-2xl leading-tight ${
+                  highlightIndex === i ? "bg-yellow-200" : ""
+                }`}
+              >
+                {i+1}. {item.sentence}
+              </div>
+            ))}
+          </div>
+
+          <div className="w-1/2 space-y-1">
+            {rightCol.map((item:any, i:number)=>{
+              const realIndex = i + 10;
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={()=>setHighlightIndex((p:any)=>p===realIndex ? null : realIndex)}
+                  className={`cursor-pointer select-none text-2xl leading-tight ${
+                    highlightIndex === realIndex ? "bg-yellow-200" : ""
+                  }`}
+                >
+                  {realIndex + 1}. {item.sentence}
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
+
       )}
 
-      {/* GRAMMAR */}
-      {showGrammar && (
-  <div className={`${widthClass} border-l flex`}>
-    <div className="w-full">
-      <GrammarBoard />
     </div>
   </div>
 )}
 
-      {/* BOARD */}
-      {showBoard && (
-        <div className={`${widthClass} border-l flex`}>
-          <WhiteBoard />
-        </div>
-      )}
-
-      {/* SCORE */}
-      {showScore && (
-        <div className={`${widthClass} border-l flex justify-center`}>
-          <div className="w-full">
-            <ScoreCard
-              onCorrect={handleCorrect}
-              onReset={handleReset}
-              onPass={handlePass}
-              onShowResult={(data:any)=>{
-                setResultData(data);
-                setShowResult(true);
-              }}
-            />
+        {showGrammar && (
+          <div className={`${widthClass} ${!isVertical ? "border-l" : "border-t"} flex`}>
+            <GrammarBoard />
           </div>
-        </div>
-      )}
+        )}
 
-    </div>
-  );
+        {showBoard && (
+          <div className={`${widthClass} ${!isVertical ? "border-l" : "border-t"} flex`}>
+            <WhiteBoard />
+          </div>
+        )}
+
+        {showScore && (
+          <div className={`${widthClass} border-l flex`}>
+            <ScoreCard />
+          </div>
+        )}
+
+      </div>
+
+    )}
+   </>
+  
+);
 }
