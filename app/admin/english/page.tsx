@@ -27,7 +27,7 @@ const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [randomMode, setRandomMode] = useState(false);
   const [showLeft, setShowLeft] = useState(true);
   const [showGrammar, setShowGrammar] = useState(false);
-
+const [layout, setLayout] = useState<"horizontal" | "vertical">("horizontal");
   const scrollRef = useRef<HTMLDivElement>(null);
   const vocabRef = useRef<any>(null);
 
@@ -286,6 +286,7 @@ const refreshData = async () => {
   randomMode={randomMode}
   showLeft={showLeft}
   showAll={showAll}
+  layout={layout}
 
   // 🔥 NEW
   selectedDays={selectedDays}
@@ -316,6 +317,8 @@ const refreshData = async () => {
           showGrammar={showGrammar}
           setShowGrammar={setShowGrammar}
           isGrammar={isGrammar}
+          layout={layout}
+setLayout={setLayout}
         />
 
       </div>

@@ -21,7 +21,9 @@ export default function Controls({
   showLeft,
   setShowLeft,
   showGrammar,
-  setShowGrammar
+  setShowGrammar,
+  layout,
+setLayout
 }: any) {
 
   const baseBtn =
@@ -130,7 +132,30 @@ export default function Controls({
         </label>
 
       </div>
+<div className={`${baseBtn} border bg-white gap-3`}>
 
+  <label className="flex items-center gap-1">
+    <input
+      type="radio"
+      name="layout"
+      checked={layout === "horizontal"}
+      onChange={()=>setLayout("horizontal")}
+    />
+    Left-Right
+  </label>
+
+  <label className="flex items-center gap-1">
+    <input
+      type="radio"
+      name="layout"
+      checked={layout === "vertical"}
+      onChange={()=>setLayout("vertical")}
+    />
+    Up-Down
+  </label>
+
+</div>
     </div>
+    
   );
 }
