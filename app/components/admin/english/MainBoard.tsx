@@ -369,7 +369,15 @@ const widthClass = isVertical
 
         {showScore && (
           <div className={`${widthClass} border-l flex`}>
-            <ScoreCard />
+            <ScoreCard
+  onCorrect={handleCorrect}
+  onPass={handlePass}
+  onReset={handleReset}
+  onShowResult={(data:any)=>{
+    setResultData(data);
+    setShowResult(true);
+  }}
+/>
           </div>
         )}
 
