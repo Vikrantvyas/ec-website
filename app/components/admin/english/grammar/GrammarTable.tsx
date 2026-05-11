@@ -27,6 +27,7 @@ export default function GrammarTable({ data }: { data: Group[] }) {
 
   const [history, setHistory] = useState<any[]>([]);
   const [redoStack, setRedoStack] = useState<any[]>([]);
+  const [visibleCells, setVisibleCells] = useState(0);
 useEffect(() => {
   if (columns.length > 0) return;
 
@@ -290,7 +291,74 @@ const handleDeleteRow = (gIndex:number, rIndex:number)=>{
   setSelected([]);
   setMenu(null);
 };
+const revealPrevCell = () => {
+  setVisibleCells(prev => {
+    if(prev <= 0){
+      return 0;
+    }
 
+    return prev - 1;
+  });
+};
+
+const revealNextCell = () => {
+
+  setVisibleCells(prev => {
+
+    const totalRows = tableData.reduce(
+      (acc, group) => acc + group.rows.length,
+      0
+    );
+
+    const totalCells =
+      totalRows * columns.length;
+
+    if(prev >= totalCells){
+      return prev;
+    }
+
+    return prev + 1;
+  });
+
+};
+
+useEffect(() => {
+
+  const handleKey = (e:any) => {
+
+    if(e.key === "ArrowRight"){
+      revealNextCell();
+    }
+
+    if(e.key === "ArrowLeft"){
+      revealPrevCell();
+    }
+
+    if(e.key === "ArrowDown"){
+
+      const totalRows = tableData.reduce(
+        (acc, group) => acc + group.rows.length,
+        0
+      );
+
+      const totalCells =
+        totalRows * columns.length;
+
+      setVisibleCells(totalCells);
+    }
+
+    if(e.key === "ArrowUp"){
+      setVisibleCells(0);
+    }
+
+  };
+
+  window.addEventListener("keydown", handleKey);
+
+  return () =>
+    window.removeEventListener("keydown", handleKey);
+
+}, [columns, tableData]);
   const headerMap: any = {
     index: "#",
     hindi: "Hindi",
@@ -341,31 +409,95 @@ const handleDeleteRow = (gIndex:number, rIndex:number)=>{
                 {columns.map((col) => {
 
                   if (col === "index" && rIndex === 0) {
-                    return (
-                      <td key="index" rowSpan={group.rows.length} className="border p-2 font-semibold align-top">
-                        
-                        {gIndex + 1}.
-                      </td>
-                    );
-                  }
 
+  const rowOffset = tableData
+    .slice(0, gIndex)
+    .reduce((acc, group) => acc + group.rows.length, 0);
+
+  const revealOrder =
+    (rowOffset + rIndex) * columns.length + 0;
+
+  if(revealOrder >= visibleCells){
+    return (
+      <td
+        key="index"
+        rowSpan={group.rows.length}
+        className="border p-2"
+      >
+      </td>
+    );
+  }
+
+  
+
+  return (
+    <td
+      key="index"
+      rowSpan={group.rows.length}
+      className="border p-2 font-semibold align-top"
+    >
+      {gIndex + 1}.
+    </td>
+  );
+}
                   if (col === "hindi" && rIndex === 0) {
-                    return (
-                      <td key="hindi" rowSpan={group.rows.length} className="border p-2 text-left align-top whitespace-nowrap">
-                        {group.hindi}
-                      </td>
-                    );
-                  }
 
-                  if (col === "index" || col === "hindi") return null;
+  const rowOffset = tableData
+    .slice(0, gIndex)
+    .reduce((acc, group) => acc + group.rows.length, 0);
 
-                  const key = `${gIndex}-${rIndex}-${col}`;
-                  const merge = mergedCells[key];
+  const revealOrder =
+    (rowOffset + rIndex) * columns.length + 1;
 
-                  if(merge?.hidden){
+  if(revealOrder >= visibleCells){
+    return (
+      <td
+        key="hindi"
+        rowSpan={group.rows.length}
+        className="border p-2"
+      >
+      </td>
+    );
+  }
+    return (
+    <td
+      key="hindi"
+      rowSpan={group.rows.length}
+      className="border p-2 text-left align-top whitespace-nowrap"
+    >
+      {group.hindi}
+    </td>
+  );
+}
+if (col === "index" || col === "hindi") return null;
+
+const rowOffset = tableData
+  .slice(0, gIndex)
+  .reduce((acc, group) => acc + group.rows.length, 0);
+
+const key = `${gIndex}-${rIndex}-${col}`;
+
+const cellOrder =
+  (rowOffset + rIndex) * columns.length +
+  columns.indexOf(col);
+
+const isVisible = cellOrder < visibleCells;
+
+const merge = mergedCells[key];
+
+if(merge?.hidden){
   return null;
 }
 
+if(!isVisible){
+  return (
+    <td
+      key={col}
+      className="border p-1 bg-gray-100"
+    >
+    </td>
+  );
+}
                   return (
                     <td
                       key={col}
@@ -394,6 +526,7 @@ onMouseUp={()=>setIsDragging(false)}
                         selected.includes(key) ? "bg-yellow-200" : ""
                       }`}
                     >
+                      
                      <input
   value={row[col] || ""}
   onChange={(e)=>handleCellChange(gIndex,rIndex,col,e.target.value)}
