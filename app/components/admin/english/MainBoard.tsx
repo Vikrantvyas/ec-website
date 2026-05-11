@@ -35,6 +35,7 @@ export default function MainBoard({
 
   const [resultData, setResultData] = useState<any[]>([]);
   const [showResult, setShowResult] = useState(false);
+  const [activeControl, setActiveControl] = useState("left");
 
   const activePanels = [
   showLeft && "left",
@@ -82,105 +83,127 @@ const widthClass = isVertical
 
   <>
     {/* SPECIAL CASE: TOP-BOTTOM */}
-    {isVertical && showGrammar && showLeft ? (
+{isVertical && showGrammar && showLeft ? (
 
-      <div className="flex flex-col w-full h-full overflow-hidden min-h-0">
+  <div className="flex flex-col w-full h-full overflow-hidden min-h-0">
 
-        {/* TOP */}
-        <div className="h-[70%] min-h-0 border-b overflow-auto">
-          <GrammarBoard />
-        </div>
+    {/* TOP */}
+    <div
+      onClick={()=>setActiveControl("grammar")}
+      className={`h-[70%] min-h-0 border-b overflow-auto ${
+        activeControl === "grammar"
+          ? "border-t-[8px] border-yellow-400"
+          : ""
+      }`}
+    >
+      <GrammarBoard />
+    </div>
 
-        {/* BOTTOM */}
-        <div className="h-[30%] min-h-0 overflow-hidden">
-          <div className="w-full h-full overflow-hidden flex flex-col justify-end">
+    {/* BOTTOM */}
+    <div
+      onClick={()=>setActiveControl("left")}
+      className={`h-[30%] min-h-0 overflow-hidden ${
+        activeControl === "left"
+          ? "ring-4 ring-yellow-400"
+          : ""
+      }`}
+    >
+      <div className="w-full h-full overflow-hidden flex flex-col justify-end">
 
-            {/* LEFT PANEL CONTENT COPY */}
-            <div
-  ref={scrollRef}
-  className="flex-1 overflow-hidden"
->
+        {/* LEFT PANEL CONTENT COPY */}
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-hidden"
+        >
 
-              {showResult ? (
-                <div className="p-4 space-y-3">
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="text-xl font-bold">Result</div>
-                    <button
-                      onClick={() => setShowResult(false)}
-                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                    >
-                      Back
-                    </button>
+          {showResult ? (
+            <div className="p-4 space-y-3">
+
+              <div className="flex justify-between items-center mb-3">
+                <div className="text-xl font-bold">Result</div>
+
+                <button
+                  onClick={() => setShowResult(false)}
+                  className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                >
+                  Back
+                </button>
+              </div>
+
+              {sortedScores.map((score, i) => (
+                <div
+                  key={i}
+                  className={`flex justify-between border p-2 rounded ${
+                    i === 0 ? "bg-yellow-200 font-bold" : ""
+                  }`}
+                >
+                  <div>
+                    {i + 1}. {groupedResult[score].join(" | ")}
                   </div>
 
-                  {sortedScores.map((score, i) => (
-                    <div
-                      key={i}
-                      className={`flex justify-between border p-2 rounded ${
-                        i === 0 ? "bg-yellow-200 font-bold" : ""
-                      }`}
-                    >
-                      <div>
-                        {i + 1}. {groupedResult[score].join(" | ")}
-                      </div>
-                      <div className="font-bold">{score}</div>
-                    </div>
-                  ))}
+                  <div className="font-bold">{score}</div>
                 </div>
-
-              ) : isVocab ? (
-
-                <VocabularyPlayer
-                  ref={vocabRef}
-                  data={sentences}
-                  random={randomMode}
-                  showAll={showAll}
-                />
-
-              ) : showBoard ? (
-
-                <div className="space-y-1 p-2">
-                  {visible.map((item:any, i:number)=>(
-                    <div
-                      key={item.id}
-                      onClick={()=>setHighlightIndex((p:any)=>p===i ? null : i)}
-                      className={`cursor-pointer text-2xl ${
-                        highlightIndex === i ? "bg-yellow-200" : ""
-                      }`}
-                    >
-                      {i+1}. {item.sentence}
-                    </div>
-                  ))}
-                </div>
-
-              ) : (
-
-                <div className="flex gap-4 p-2">
-                  <div className="w-1/2">
-                    {leftCol.map((item:any, i:number)=>(
-                      <div key={item.id}>
-                        {i+1}. {item.sentence}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="w-1/2">
-                    {rightCol.map((item:any, i:number)=>(
-                      <div key={item.id}>
-                        {i+11}. {item.sentence}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              )}
+              ))}
 
             </div>
 
-          </div>
+          ) : isVocab ? (
+
+            <VocabularyPlayer
+              ref={vocabRef}
+              data={sentences}
+              random={randomMode}
+              showAll={showAll}
+            />
+
+          ) : showBoard ? (
+
+            <div className="space-y-1 p-2">
+              {visible.map((item:any, i:number)=>(
+                <div
+                  key={item.id}
+                  onClick={()=>setHighlightIndex((p:any)=>p===i ? null : i)}
+                  className={`cursor-pointer text-2xl ${
+                    highlightIndex === i ? "bg-yellow-200" : ""
+                  }`}
+                >
+                  {i+1}. {item.sentence}
+                </div>
+              ))}
+            </div>
+
+          ) : (
+
+            <div className="flex gap-4 p-2">
+
+              <div className="w-1/2">
+                {leftCol.map((item:any, i:number)=>(
+                  <div key={item.id}>
+                    {i+1}. {item.sentence}
+                  </div>
+                ))}
+              </div>
+
+              <div className="w-1/2">
+                {rightCol.map((item:any, i:number)=>(
+                  <div key={item.id}>
+                    {i+11}. {item.sentence}
+                  </div>
+                ))}
+              </div>
+
+            </div>
+
+          )}
+
         </div>
 
       </div>
+    </div>
+
+  </div>
+
+ 
 
     ) : (
 
@@ -189,7 +212,14 @@ const widthClass = isVertical
         {/* EXISTING OLD LAYOUT (UNCHANGED) */}
 
         {showLeft && (
-  <div className={`${widthClass} flex flex-col`}>
+  <div
+    onClick={()=>setActiveControl("left")}
+    className={`${widthClass} flex flex-col ${
+      activeControl === "left"
+       ? "border-b-[8px] border-yellow-400"
+        : ""
+    }`}
+  >
 
     {/* 🔥 TOP HEADER */}
     <div className="bg-blue-200 font-bold px-3 py-2 text-sm border-b flex flex-wrap gap-2">
@@ -319,10 +349,17 @@ const widthClass = isVertical
 )}
 
         {showGrammar && (
-          <div className={`${widthClass} ${!isVertical ? "border-l" : "border-t"} flex`}>
-            <GrammarBoard />
-          </div>
-        )}
+  <div
+    onClick={()=>setActiveControl("grammar")}
+    className={`${widthClass} ${
+      activeControl === "grammar"
+        ? "border-b-[8px] border-yellow-400"
+        : ""
+    } ${!isVertical ? "border-l" : "border-t"} flex`}
+  >
+    <GrammarBoard />
+  </div>
+)}
 
         {showBoard && (
           <div className={`${widthClass} ${!isVertical ? "border-l" : "border-t"} flex`}>
