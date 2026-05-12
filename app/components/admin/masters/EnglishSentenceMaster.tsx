@@ -168,7 +168,9 @@ const isVocab =
 
     if (isVocab) {
 
-  const parts = text.split("-");
+  const parts = text.includes("*")
+  ? text.split("*")
+  : [text, ""];
 
   await supabase.from("vocabulary").insert([{
     topic_id: selectedTopic,
@@ -204,7 +206,9 @@ const isVocab =
     if (isVocab) {
 
   const data = lines.map((line, i) => {
-    const parts = line.split("-");
+    const parts = line.includes("*")
+  ? line.split("*")
+  : [line, ""];
 
     return {
       topic_id: selectedTopic,
@@ -252,7 +256,9 @@ const isVocab =
 
   if (isVocab) {
 
-    const parts = editText.split("-");
+    const parts = editText.includes("*")
+  ? editText.split("*")
+  : [editText, ""];
 
     await supabase.from("vocabulary")
       .update({
@@ -351,7 +357,7 @@ const isVocab =
           </>
         )}
 
-        <input value={text} onChange={(e)=>setText(e.target.value)} placeholder="Sentence"
+        <input value={text} onChange={(e)=>setText(e.target.value)} placeholder="Hindi * English"
           className="border px-2 py-1 rounded flex-1 min-w-[300px]" />
 
         <input value={orderNo} onChange={(e)=>setOrderNo(e.target.value)}
