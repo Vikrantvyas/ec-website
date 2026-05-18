@@ -60,7 +60,7 @@ export default function useLeadForm() {
     nextFollowDate: nextFollowDate,
     nextFollowTime: nextFollowTime,
 
-    counsellor: "Simran Salvi",
+    counsellor: "Sonali Sharma",
 
     remark: ""
   };
