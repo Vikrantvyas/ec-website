@@ -113,8 +113,6 @@ if (existingMobile) {
     return;
   }
 
-}
-
   const mainPayload = buildLeadPayload(formData);
 
       const { error: mainError } = await supabase
