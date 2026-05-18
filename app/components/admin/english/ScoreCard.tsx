@@ -76,16 +76,21 @@ export default function ScoreCard({
   };
 
   const addStudent = () => {
-    if (!name.trim()) return;
+  if (!name.trim()) return;
 
-    setStudents(prev => [
-      { name, correct: 0, total: 0 },
-      ...prev
-    ]);
+  setStudents(prev => [
+    { name, correct: 0, total: 0 },
+    ...prev
+  ]);
 
-    setActiveIndex(0);
-    setName("");
-  };
+  setActiveIndex(0);
+  setName("");
+
+  // 🔥 hide previous sentences
+  onReset?.();
+
+  
+};
 
   const startGame = () => {
     if (students.length === 0) return;
