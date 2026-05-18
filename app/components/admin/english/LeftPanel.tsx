@@ -169,7 +169,7 @@ useEffect(() => {
 }, [showPopup, editText]);
   return (
 
-    <div className="w-60 bg-white border-r flex flex-col relative">
+    <div className="w-72 bg-white border-r flex flex-col relative">
 
       {/* COURSE SELECT */}
       <div className="p-3 border-b">
