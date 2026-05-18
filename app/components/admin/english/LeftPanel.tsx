@@ -220,7 +220,15 @@ useEffect(() => {
                     onChange={()=>toggleDay(d.id)}
                   />
                   <div className="flex items-center gap-2">
-                    <span>Day {d.day_number}</span>
+                    <span>
+
+  {String(d.day_number).padStart(2, "0")}
+
+  {d.title
+    ? ` · ${d.title}`
+    : ""}
+
+</span>
 
                     {hasTopics && (
                       <span className="font-bold text-lg">+</span>

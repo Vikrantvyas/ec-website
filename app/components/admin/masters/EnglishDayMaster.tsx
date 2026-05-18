@@ -44,6 +44,7 @@ export default function EnglishDayMaster() {
 
   const [editId, setEditId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [editTitle, setEditTitle] = useState("");
 
   useEffect(() => { fetchCourses(); }, []);
   useEffect(() => { if (selectedCourse) fetchDays(); }, [selectedCourse]);
@@ -94,11 +95,15 @@ export default function EnglishDayMaster() {
   const startEdit = (d:any) => {
     setEditId(d.id);
     setEditValue(String(d.day_number));
+setEditTitle(d.title || "");
   };
 
   const saveEdit = async () => {
     await supabase.from("days")
-      .update({ day_number: Number(editValue) })
+      .update({
+  day_number: Number(editValue),
+  title: editTitle
+})
       .eq("id", editId);
 
     setEditId(null);
@@ -186,11 +191,25 @@ export default function EnglishDayMaster() {
                             onChange={(e)=>setEditValue(e.target.value)}
                             className="border px-2 py-1 rounded w-20"
                           />
+                          <input
+  value={editTitle}
+  onChange={(e)=>setEditTitle(e.target.value)}
+  placeholder="Title"
+  className="border px-2 py-1 rounded flex-1"
+/>
                           <button onClick={saveEdit}>Save</button>
                         </>
                       ) : (
                         <>
-                          <div className="flex-1">Day {d.day_number}</div>
+                          <div className="flex-1">
+
+  {String(d.day_number).padStart(2, "0")}
+
+  {d.title
+    ? ` · ${d.title}`
+    : ""}
+
+</div>
                           <button onClick={()=>startEdit(d)}>Edit</button>
                           <button onClick={()=>deleteDay(d.id)}>Delete</button>
                         </>

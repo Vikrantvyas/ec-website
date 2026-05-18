@@ -1,5 +1,3 @@
-"use client";
-
 import {
   useState,
   useEffect,
@@ -19,7 +17,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
   const [list, setList] = useState<any[]>([]);
-  const [marks, setMarks] = useState<{ [key: number]: string }>({}); // 🔥 NEW
+  const [marks, setMarks] = useState<{ [key: number]: string }>({});
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -27,22 +25,31 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
   // RESET ON DATA CHANGE
   useEffect(() => {
-    const newList = random ? shuffleArray(safeData) : safeData;
+
+    const newList = random
+      ? shuffleArray(safeData)
+      : safeData;
+
     setList(newList);
     setCurrentIndex(-1);
     setRevealedAnswers([]);
-    setMarks({}); // 🔥 reset marks
+    setMarks({});
+
   }, [data, random]);
 
   // AUTO SCROLL
   useEffect(() => {
+
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTop =
+        scrollRef.current.scrollHeight;
     }
+
   }, [currentIndex]);
 
   // NEXT
   const handleNext = () => {
+
     if (showAll) return;
 
     if (currentIndex === -1) {
@@ -51,18 +58,24 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     }
 
     setRevealedAnswers((prev) => {
+
       if (prev.includes(currentIndex)) return prev;
+
       return [...prev, currentIndex];
+
     });
 
     if (currentIndex < list.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     }
+
   };
 
   // PREV
   const handlePrev = () => {
+
     if (showAll) return;
+
     if (currentIndex <= 0) return;
 
     const prevIndex = currentIndex - 1;
@@ -72,37 +85,56 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     );
 
     setCurrentIndex(prevIndex);
+
   };
 
-  // 🔥 MARK CORRECT
+  // MARK CORRECT
   const markCorrect = () => {
-  if (currentIndex >= 0) {
 
-    // 🔥 ensure reveal
-    setRevealedAnswers(prev => {
-      if (prev.includes(currentIndex)) return prev;
-      return [...prev, currentIndex];
-    });
-
-    setMarks(prev => ({ ...prev, [currentIndex]: "correct" }));
-  }
-
-  handleNext();
-};
-
-  // 🔥 MARK WRONG / PASS
-  const markWrong = () => {
     if (currentIndex >= 0) {
-      setMarks(prev => ({ ...prev, [currentIndex]: "wrong" }));
+
+      setRevealedAnswers((prev) => {
+
+        if (prev.includes(currentIndex)) return prev;
+
+        return [...prev, currentIndex];
+
+      });
+
+      setMarks((prev) => ({
+        ...prev,
+        [currentIndex]: "correct"
+      }));
+
     }
+
     handleNext();
+
+  };
+
+  // MARK WRONG / PASS
+  const markWrong = () => {
+
+    if (currentIndex >= 0) {
+
+      setMarks((prev) => ({
+        ...prev,
+        [currentIndex]: "wrong"
+      }));
+
+    }
+
+    handleNext();
+
   };
 
   // RESET
   const handleReset = () => {
+
     setCurrentIndex(-1);
     setRevealedAnswers([]);
     setMarks({});
+
   };
 
   // EXPOSE METHODS
@@ -122,6 +154,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
       : list.slice(0, currentIndex + 1);
 
   return (
+
     <div className="flex flex-col h-full">
 
       <div
@@ -130,6 +163,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
       >
 
         {visible.map((item: any, i: number) => (
+
           <div
             key={item.id}
             className={`text-xl flex ${
@@ -142,25 +176,33 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                 : ""
             }`}
           >
-            <div className="w-10">{i + 1}.</div>
+
+            <div className="w-10">
+              {i + 1}.
+            </div>
 
             <div className="w-1/2 text-lg leading-snug">
-  {item.hindi}
-</div>
+              {item.hindi}
+            </div>
 
             <div className="w-1/2 text-[18px] leading-[1.35] font-normal">
+
               {showAll || revealedAnswers.includes(i)
                 ? item.english
                 : ""}
+
             </div>
 
           </div>
+
         ))}
 
       </div>
 
     </div>
+
   );
+
 });
 
 export default VocabularyPlayer;

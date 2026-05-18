@@ -1,0 +1,95 @@
+[33mb4216d3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m EnglishSentenceMaster: added flexible * separator support
+[33m8c0b300[m Add sequential grammar cell reveal system
+[33m458e91b[m Fix ScoreCard controls and active panel system
+[33m06cfe50[m Add active panel system and fix grammar layouts
+[33m4bb2971[m Improve vertical sentence window behavior
+[33m1f62e7a[m Fix vertical layout fixed height and scrolling
+[33m5bcef35[m Fix vertical layout fixed height and scrolling
+[33m8f47ca4[m Fix MainBoard left-right and vertical layout
+[33m9792c81[m Fix MainBoard left-right and vertical layout
+[33m9bfbb10[m Fix MainBoard left-right and vertical layout
+[33m795f3b5[m Added attendance report branch filter and holiday view
+[33m4694b02[m Added attendance report system
+[33mef5a80a[m Added active inactive student filters
+[33mad0fcb6[m Added active inactive student filters
+[33md8b2716[m Improved attendance header and latest date display
+[33md17f0f6[m Added inactive batch student support
+[33mc692816[m Fixed batch student duplicate protection
+[33me45aaef[m Added duplicate checks in attendance quick lead form
+[33m6ce8e02[m Added duplicate lead checks
+[33mff118e3[m GrammarTable: column auto width + dynamic columns + basic merge + row/column controls
+[33m5016d6b[m WhiteBoard stable version with textarea (perfect cursor, smooth typing)
+[33mb8d2410[m WhiteBoard: textarea size improved (height + width), stable version
+[33ma896aea[m UI: timer visual alert + auto stop blinking (3s)
+[33mb62af16[m Grammar board improvements: dynamic width, default sentences, editable table, merge, undo/redo, font size update
+[33m6693b6a[m Added editable grammar table with column management, merge cells, and undo/redo support
+[33mb65a7d8[m Fixed GrammarBoard full width layout and removed max-width restriction
+[33m2d3966d[m Fixed branch filter using branch_id and showing branch name from branches table
+[33m4e11539[m Added student_name edit in LeadOverview
+[33mc4e1116[m Fix: date filter null error
+[33m0460ed1[m Reports page: search + date filter + sorting + edit/delete full working
+[33m2cd3537[m Reports page UI fix: edit input width + action buttons visibility fixed
+[33med8e559[m Receipts edit and delete functionality added
+[33m6bb1628[m Edit popup improved + keyboard shortcuts (ESC cancel, Ctrl+S save) + auto refresh after save
+[33m894abb5[m Fix: Edit/Delete buttons + DND handle fix
+[33m47420de[m add students in batch card
+[33m076821a[m BatchCard: added clean 3-dot menu (edit/delete) right aligned
+[33mdcbc58a[m UI: header improved (Day + Topics highlight, clean layout)
+[33m7c0f793[m Fix: topic order + day/topic selection bug resolved
+[33mb9aac0c[m added checkbox in days
+[33mb016d75[m Update: Result UI improved (grouping + numbering + back button), ScoreBoard shows total students
+[33m7119a23[m Fix: Attempt logic (0 button), manual + corrected, scoring system stable
+[33m5c36682[m Fix: Timer input always enabled + student total count corrected
+[33mff64129[m Score UI update + manual adjust + timer changes (WIP)
+[33meb6cd17[m Result system added + score fix + stable flow
+[33m2d8e55f[m ScoreBoard UI improved + layout fix + centered panel
+[33m217b645[m Fix forwardRef typing issue for deployment
+[33m224d43e[m ScoreCard + VocabularyPlayer sync: auto next + full reset (new student mode)
+[33m009cb3f[m Hide header in Grammar mode + UI cleanup
+[33m1a05781[m Grammar table with draggable columns implemented
+[33m103340a[m Grammar checkbox + panel base setup
+[33mee00b7c[m Vocabulary: fixed Hindi-English flow, showAll corrected, prev/next sync resolved
+[33m948eb05[m UI: added dynamic panel checkboxes (Left/Board/Score) with responsive layout
+[33md5617f0[m Vocabulary: fixed sequential display (Hindi-English flow), random mode corrected
+[33mdcec3db[m Vocabulary: unified controls, fixed show all behavior, improved reveal flow
+[33m5d53467[m ScoreCard upgrade: stopwatch, timer with input, buzzer, organized UI
+[33m59adcd4[m Add ScoreCard with toggle + fix width alignment with WhiteBoard
+[33mfa6ccf9[m Fix: VocabularyPlayer always visible on hide board
+[33ma7bc9ca[m Vocabulary player auto reveal fix
+[33mb09bfa2[m English page fix: sentence highlight toggle + whiteboard ON/OFF consistent behavior
+[33m7141cae[m whiteboard edited
+[33m7612c8b[m English page UI fix: left panel sticky course + scrollable days/topics
+[33mca3a87a[m English Module Complete: Course, Day, Topic, Sentence master with drag, bulk, sticky UI
+[33m24b860b[m Fix: show all scroll top + topic navigation + lock outer scroll
+[33m8fae331[m corrected entlish teaching page
+[33mdce8c2e[m English Teaching System: Course-Day-Topic-Sentence + Whiteboard + ShowAll + Smart Controls
+[33m01b740c[m Fix LeadFees props issue
+[33m535f9d7[m LeadFees editable ledger + live due calculation + due date fix
+[33m60d92f7[m English page edited & Fee edited
+[33m4ad579f[m Inline calling form fixed: full width + correct placement below header
+[33m413d2ce[m Fixed Lead type for general tab fields
+[33m59186f0[m LeadCard UI improved: compact mobile + action links aligned in single row
+[33md62dff6[m Tabs & Branch scroll improved: no scrollbar + smooth horizontal scroll
+[33m53ca40c[m call, whatsapp, feedback buttons and admin login to login only
+[33ma479af3[m update: overview UI improved with recent call layout and separator
+[33m1657aa8[m fix: enable lead delete with supabase RLS + success message + page reload
+[33mf5d4233[m whatsapp msg changed
+[33m5393ffb[m StepForm: WhatsApp redirect + demo link + UI fixes
+[33m4bc533b[m faq's corrected
+[33m270a242[m FAQ accordion with answers added
+[33mf854c50[m new text in url
+[33m0c4eedb[m same image
+[33mac982cf[m new text in url
+[33m220174e[m new text and photo in url
+[33m5bc7113[m main board photo for url
+[33mf05cfd9[m Landing wrapper added (server + client split) with metadata for WhatsApp preview
+[33m73976ff[m image for url
+[33m343c6c8[m Landing: StepForm control, visitor system, CTA buttons, cancel button added, mobile fix
+[33mec500d1[m Fix: Attendance null error + AddStudentsModal safe handling
+[33m0a7c39f[m english online page updated
+[33m819ec73[m gender & education improved in step form
+[33m66e53f6[m Step Form corrected
+[33m7ae025b[m Step Form corrected
+[33m79e60e2[m step form corrected
+[33m83d81a9[m step form corrected
+[33m0f1c4f7[m english online image and faq's added
