@@ -167,7 +167,7 @@ const widthClass = isVertical
                     highlightIndex === i ? "bg-yellow-200" : ""
                   }`}
                 >
-                  {i+1}. {item.sentence}
+                  {i+1}. {item.sentence?.replace(/^\d+\.\s*/, "")}
                 </div>
               ))}
             </div>
@@ -299,7 +299,9 @@ const widthClass = isVertical
               }`}
             >
               <div className="w-10 shrink-0">{i+1}.</div>
-              <div className="flex-1">{item.sentence}</div>
+              <div className="flex-1">
+  {item.sentence?.replace(/^\d+\.\s*/, "")}
+</div>
             </div>
           ))}
         </div>
@@ -317,7 +319,7 @@ const widthClass = isVertical
                   highlightIndex === i ? "bg-yellow-200" : ""
                 }`}
               >
-                {i+1}. {item.sentence}
+                {i+1}. {item.sentence?.replace(/^\d+\.\s*/, "")}
               </div>
             ))}
           </div>
@@ -334,7 +336,7 @@ const widthClass = isVertical
                     highlightIndex === realIndex ? "bg-yellow-200" : ""
                   }`}
                 >
-                  {realIndex + 1}. {item.sentence}
+                  {realIndex + 1}. {item.sentence?.replace(/^\d+\.\s*/, "")}
                 </div>
               );
             })}
