@@ -112,7 +112,7 @@ if (existingMobile) {
     mobileRef.current?.focus();
     return;
   }
-
+ }
   const mainPayload = buildLeadPayload(formData);
 
       const { error: mainError } = await supabase
