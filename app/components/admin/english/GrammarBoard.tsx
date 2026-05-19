@@ -58,6 +58,33 @@ export default function GrammarBoard() {
           { subject: "There", hv1: "is", verb: "", object: "a ground in my colony" }
         ]
       }
+      ],
+
+    daily: [
+      {
+        id: 1,
+        hindi: "मैं सुबह उठता हूँ",
+        rows: [
+          {
+            subject: "I",
+            hv1: "",
+            verb: "wake up",
+            object: "in the morning"
+          }
+        ]
+      },
+      {
+        id: 2,
+        hindi: "मैं दांत साफ करता हूँ",
+        rows: [
+          {
+            subject: "I",
+            hv1: "",
+            verb: "brush",
+            object: "my teeth"
+          }
+        ]
+      }
     ]
 
   };
@@ -68,19 +95,24 @@ export default function GrammarBoard() {
   return (
     <div className="w-full h-full p-4 overflow-auto flex flex-col gap-3">
 
-      <select
-        value={selectedTable}
-        onChange={(e)=>setSelectedTable(e.target.value)}
-        className="border p-2 w-60"
-      >
-        <option value="basic">
-          Basic Structures
-        </option>
-      </select>
-
+     
       <GrammarTable
-        data={grammarSets[selectedTable]}
-      />
+  data={grammarSets[selectedTable]}
+  tableSelector={
+    <select
+      value={selectedTable}
+      onChange={(e)=>setSelectedTable(e.target.value)}
+      className="w-full bg-transparent outline-none text-center font-semibold"
+    >
+      <option value="basic">
+        Basic Structures
+      </option>
+      <option value="daily">
+  Daily Routine
+</option>
+    </select>
+  }
+/>
 
     </div>
   );

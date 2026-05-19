@@ -12,10 +12,19 @@ type Group = {
   rows: Row[];
 };
 
-export default function GrammarTable({ data }: { data: Group[] }) {
+export default function GrammarTable({
+  data,
+  tableSelector
+}: {
+  data: Group[],
+  tableSelector?: any
+}) {
 
   const [tableData, setTableData] = useState<Group[]>(data);
-
+useEffect(() => {
+  setTableData(data);
+  setVisibleCells(0);
+}, [data]);
   const [columns, setColumns] = useState<string[]>([]);
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -361,7 +370,7 @@ useEffect(() => {
 }, [columns, tableData]);
   const headerMap: any = {
     index: "#",
-    hindi: "Hindi",
+    hindi: tableSelector || "Hindi",
     subject: "Subject",
     hv1: "H.V.",
     verb: "Verb",
