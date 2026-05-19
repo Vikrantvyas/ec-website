@@ -14,9 +14,11 @@ type Group = {
 
 export default function GrammarTable({
   data,
+  headers,
   tableSelector
 }: {
   data: Group[],
+  headers?: string[],
   tableSelector?: any
 }) {
 
@@ -38,6 +40,40 @@ useEffect(() => {
   const [redoStack, setRedoStack] = useState<any[]>([]);
   const [visibleCells, setVisibleCells] = useState(0);
 useEffect(() => {
+
+  if(headers && headers.length > 0){
+
+    const dynamicCols =
+      headers
+        .filter(
+          (h:string)=>
+            h.toLowerCase() !== "hindi"
+        )
+        .map((h:string)=>{
+
+          const key =
+            h.toLowerCase();
+
+          if(key === "hv"){
+
+            return "hv1";
+
+          }
+
+          return key;
+
+        });
+
+    setColumns([
+      "index",
+      "hindi",
+      ...dynamicCols
+    ]);
+
+    return;
+
+  }
+
   if (columns.length > 0) return;
 
   if (!tableData || tableData.length === 0) return;
@@ -48,7 +84,8 @@ useEffect(() => {
   const dynamicCols = Object.keys(firstRow);
 
   setColumns([...baseCols, ...dynamicCols]);
-}, [tableData]);
+
+}, [tableData, headers]);
   const saveHistory = () => {
     setHistory(prev => [...prev, {
       tableData: JSON.parse(JSON.stringify(tableData)),
@@ -369,13 +406,20 @@ useEffect(() => {
 
 }, [columns, tableData]);
   const headerMap: any = {
-    index: "#",
-    hindi: tableSelector || "Hindi",
-    subject: "Subject",
-    hv1: "H.V.",
-    verb: "Verb",
-    object: "Object"
-  };
+  index: "#",
+  hindi: tableSelector || "Hindi"
+};
+
+headers?.forEach((h:string)=>{
+
+  const key =
+    h.toLowerCase() === "hv"
+      ? "hv1"
+      : h.toLowerCase();
+
+  headerMap[key] = h;
+
+});
 
   return (
 
@@ -386,7 +430,7 @@ useEffect(() => {
         {/* ✅ PERFECT WIDTH CONTROL */}
         
 
-        <thead className="bg-gray-300 text-center">
+        <thead className="bg-gray-300 text-center align-middle">
           <tr>
             {columns.map((col, i) => (
               <th
@@ -401,7 +445,11 @@ useEffect(() => {
                 }}
                 className="border p-2"
               >
-                {headerMap[col] || col}
+                <div className="flex items-center justify-center px-1">
+  {col === "hindi"
+    ? tableSelector || "Hindi"
+    : headerMap[col] || col}
+</div>
               </th>
             ))}
           </tr>
@@ -431,7 +479,7 @@ useEffect(() => {
       <td
         key="index"
         rowSpan={group.rows.length}
-        className="border p-2"
+        className="border p-2 whitespace-nowrap leading-normal align-middle h-[44px]"
       >
       </td>
     );
@@ -463,7 +511,9 @@ useEffect(() => {
       <td
         key="hindi"
         rowSpan={group.rows.length}
-        className="border p-2"
+        className={`border p-2 whitespace-nowrap leading-[1.4] align-middle ${
+  col === "wh" ? "min-w-[60px]" : ""
+}`}
       >
       </td>
     );
