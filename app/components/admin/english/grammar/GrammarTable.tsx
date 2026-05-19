@@ -512,7 +512,9 @@ headers?.forEach((h:string)=>{
         key="hindi"
         rowSpan={group.rows.length}
         className={`border p-2 whitespace-nowrap leading-[1.4] align-middle ${
-  col === "wh" ? "min-w-[60px]" : ""
+  col.toLowerCase() === "wh"
+  ? "min-w-[60px]"
+  : ""
 }`}
       >
       </td>
