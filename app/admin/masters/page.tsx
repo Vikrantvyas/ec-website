@@ -28,7 +28,7 @@ import FeeMaster from "@/app/components/admin/masters/FeeMaster";
 
 /* 🔥 ENGLISH MODULE */
 import EnglishSentenceMaster from "@/app/components/admin/masters/EnglishSentenceMaster";
-
+import GrammarTableMaster from "@/app/components/admin/masters/GrammarTableMaster";
 export default function MastersPage() {
 
   const searchParams = useSearchParams();
@@ -56,7 +56,8 @@ export default function MastersPage() {
   { label:"English Courses", value:"english_courses" },
   { label:"Days", value:"english_days" },
   { label:"Topics", value:"english_topics" },
-  { label:"Sentences", value:"english_sentences" } // existing safe
+{ label:"Sentences", value:"english_sentences" }, // existing safe
+{ label:"Grammar Tables", value:"grammar_tables" }
 ];
 
   const staffMasters = [
@@ -183,6 +184,7 @@ export default function MastersPage() {
 {selectedMaster === "english_days" && <EnglishDayMaster />}
 {selectedMaster === "english_topics" && <EnglishTopicMaster />}
 {selectedMaster === "english_sentences" && <EnglishSentenceMaster />}
+{selectedMaster === "grammar_tables" && <GrammarTableMaster />}
 
           </div>
 
