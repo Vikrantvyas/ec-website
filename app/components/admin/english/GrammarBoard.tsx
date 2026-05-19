@@ -1,119 +1,177 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import GrammarTable from "./grammar/GrammarTable";
 
+import { supabase } from "@/lib/supabaseClient";
+
 export default function GrammarBoard() {
 
-  const grammarSets:any = {
+  const [tables, setTables] = useState<any[]>([]);
 
-    basic: [
-      {
-        id: 1,
-        hindi: "मैं क्रिकेट खेल सकता हूँ",
-        rows: [
-          { subject: "I", hv1: "can", verb: "play", object: "cricket" }
-        ]
-      },
-      {
-        id: 2,
-        hindi: "मुझे क्रिकेट खेलना चाहिए",
-        rows: [
-          { subject: "I", hv1: "should", verb: "play", object: "cricket" }
-        ]
-      },
-      {
-        id: 3,
-        hindi: "मैं क्रिकेट खेलता हूँ",
-        rows: [
-          { subject: "I", hv1: "", verb: "play", object: "cricket" }
-        ]
-      },
-      {
-        id: 4,
-        hindi: "मेरे पास बैट है",
-        rows: [
-          { subject: "I", hv1: "have", verb: "", object: "a bat" }
-        ]
-      },
-      {
-        id: 5,
-        hindi: "मैं खिलाड़ी हूँ",
-        rows: [
-          { subject: "I", hv1: "am", verb: "", object: "a player" }
-        ]
-      },
-      {
-        id: 6,
-        hindi: "मैं क्रिकेट खेल रहा हूँ",
-        rows: [
-          { subject: "I", hv1: "am", verb: "playing", object: "cricket" }
-        ]
-      },
-      {
-        id: 7,
-        hindi: "मेरी कॉलोनी में एक मैदान है",
-        rows: [
-          { subject: "There", hv1: "is", verb: "", object: "a ground in my colony" }
-        ]
-      }
-      ],
+  const [selectedTableId, setSelectedTableId] =
+    useState("");
 
-    daily: [
-      {
-        id: 1,
-        hindi: "मैं सुबह उठता हूँ",
-        rows: [
-          {
-            subject: "I",
-            hv1: "",
-            verb: "wake up",
-            object: "in the morning"
-          }
-        ]
-      },
-      {
-        id: 2,
-        hindi: "मैं दांत साफ करता हूँ",
-        rows: [
-          {
-            subject: "I",
-            hv1: "",
-            verb: "brush",
-            object: "my teeth"
-          }
-        ]
+  const [tableData, setTableData] =
+    useState<any[]>([]);
+const [tableHeaders, setTableHeaders] =
+  useState<any[]>([]);
+  useEffect(()=>{
+
+    loadTables();
+
+  },[]);
+
+  const loadTables = async()=>{
+
+    const { data } = await supabase
+      .from("grammar_tables")
+      .select("*")
+      .order("created_at");
+
+    if(data){
+
+      setTables(data);
+
+      if(data.length > 0){
+
+        setSelectedTableId(data[0].id);
+
+        loadTableData(data[0].id);
+
       }
-    ]
+
+    }
 
   };
 
-  const [selectedTable, setSelectedTable] =
-    useState("basic");
+  const loadTableData = async(tableId:string)=>{
+
+    const { data:headers } = await supabase
+      .from("grammar_headers")
+      .select("*")
+      .eq("table_id", tableId)
+      .order("column_order");
+
+    const { data:cells } = await supabase
+      .from("grammar_cells")
+      .select("*")
+      .eq("table_id", tableId);
+
+    if(!headers || !cells){
+
+      return;
+
+    }
+setTableHeaders(headers);
+    const grouped:any = {};
+
+    cells.forEach((cell:any)=>{
+
+      if(!grouped[cell.row_no]){
+
+        grouped[cell.row_no] = {
+          id: cell.row_no,
+          hindi: "",
+          rows:[{}]
+        };
+
+      }
+
+      const header = headers.find(
+        (h:any)=>h.id === cell.header_id
+      );
+
+      if(!header) return;
+
+      const key =
+        header.header_name.toLowerCase();
+let finalKey = key;
+
+if(key === "hv"){
+
+  finalKey = "hv1";
+
+}
+      if(key === "hindi"){
+
+        grouped[cell.row_no].hindi =
+          cell.cell_value;
+
+      } else {
+
+       grouped[cell.row_no]
+  .rows[0][finalKey] =
+    cell.cell_value;
+
+      }
+
+    });
+console.log("HEADERS", headers);
+
+console.log("CELLS", cells);
+
+console.log("GROUPED", grouped);
+    setTableData(
+      Object.values(grouped)
+    );
+
+  };
 
   return (
+
     <div className="w-full h-full p-4 overflow-auto flex flex-col gap-3">
 
-     
       <GrammarTable
-  data={grammarSets[selectedTable]}
-  tableSelector={
-    <select
-      value={selectedTable}
-      onChange={(e)=>setSelectedTable(e.target.value)}
-      className="w-full bg-transparent outline-none text-center font-semibold"
-    >
-      <option value="basic">
-        Basic Structures
-      </option>
-      <option value="daily">
-  Daily Routine
-</option>
-    </select>
+
+  data={tableData}
+
+  headers={
+    tableHeaders.map(
+      (h:any)=>h.header_name
+    )
   }
-/>
+
+        tableSelector={
+
+          <select
+
+            value={selectedTableId}
+
+            onChange={(e)=>{
+
+              setSelectedTableId(
+                e.target.value
+              );
+
+              loadTableData(
+                e.target.value
+              );
+
+            }}
+
+            className="w-full bg-transparent outline-none text-center font-semibold"
+          >
+
+            {tables.map((table)=>(
+
+              <option
+                key={table.id}
+                value={table.id}
+              >
+                {table.name}
+              </option>
+
+            ))}
+
+          </select>
+
+        }
+
+      />
 
     </div>
   );
+
 }

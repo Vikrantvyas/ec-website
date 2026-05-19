@@ -47,6 +47,35 @@ const [selectedTable, setSelectedTable] =
 const [selectedHeaders, setSelectedHeaders] =
   useState<any[]>([]);
   const [cellData, setCellData] = useState<any>({});
+  const [editingTableId, setEditingTableId] =
+  useState<string | null>(null);
+  const editTable = async(table:any)=>{
+
+  setEditingTableId(table.id);
+
+  setTableName(table.name);
+
+  setTotalRows(table.total_rows);
+
+  updateColumns(table.total_columns);
+
+  const { data } = await supabase
+    .from("grammar_headers")
+    .select("*")
+    .eq("table_id", table.id)
+    .order("column_order");
+
+  if(data){
+
+    setHeaders(
+      data.map(
+        (item:any)=>item.header_name
+      )
+    );
+
+  }
+
+};
 useEffect(()=>{
 
   loadTables();
@@ -196,18 +225,43 @@ if(cells){
 
     }
 
-    const { data:tableData, error:tableError } =
-      await supabase
-        .from("grammar_tables")
-        .insert([
-          {
-            name: tableName,
-            total_rows: totalRows,
-            total_columns: totalColumns
-          }
-        ])
-        .select()
-        .single();
+    let tableData:any = null;
+let tableError:any = null;
+
+if(editingTableId){
+
+  const response = await supabase
+    .from("grammar_tables")
+    .update({
+      name: tableName,
+      total_rows: totalRows,
+      total_columns: totalColumns
+    })
+    .eq("id", editingTableId)
+    .select()
+    .single();
+
+  tableData = response.data;
+  tableError = response.error;
+
+} else {
+
+  const response = await supabase
+    .from("grammar_tables")
+    .insert([
+      {
+        name: tableName,
+        total_rows: totalRows,
+        total_columns: totalColumns
+      }
+    ])
+    .select()
+    .single();
+
+  tableData = response.data;
+  tableError = response.error;
+
+}
 
     if(tableError){
 
@@ -225,7 +279,14 @@ if(cells){
 
       })
     );
+if(editingTableId){
 
+  await supabase
+    .from("grammar_headers")
+    .delete()
+    .eq("table_id", editingTableId);
+
+}
     const { error:headerError } =
       await supabase
         .from("grammar_headers")
@@ -239,6 +300,21 @@ if(cells){
     }
 
     alert("Table Saved");
+    setEditingTableId(null);
+
+setTableName("");
+
+setTotalRows(10);
+
+updateColumns(5);
+
+setHeaders([
+  "Hindi",
+  "Subject",
+  "HV",
+  "Verb",
+  "Object"
+]);
     loadTables();
 
   }}
@@ -253,7 +329,10 @@ if(cells){
 
     <thead>
 
-      <tr className="bg-gray-100">
+      <tr className="bg-gray-100 sticky top-0 z-10">
+        <th className="border p-2 w-16">
+  #
+</th>
 
         {headers.map((header,index)=>(
           <th
@@ -273,7 +352,9 @@ if(cells){
       {Array.from({ length: totalRows }).map((_,rowIndex)=>(
 
         <tr key={rowIndex}>
-
+<td className="border p-2 text-center font-semibold">
+  {rowIndex + 1}
+</td>
           {headers.map((_,colIndex)=>(
             <td
               key={colIndex}
@@ -315,8 +396,8 @@ if(cells){
         <th className="border p-2 text-left">
           Columns
         </th>
-        <th className="border p-2 text-left">
-  Action
+       <th className="border p-2 text-left">
+  Actions
 </th>
 
       </tr>
@@ -341,12 +422,60 @@ if(cells){
           </td>
 <td className="border p-2">
 
-  <button
-    onClick={()=>openTable(table)}
-    className="bg-blue-600 text-white px-3 py-1 rounded"
-  >
-    Open
-  </button>
+  <div className="flex gap-2">
+    <button
+
+  onClick={()=>editTable(table)}
+
+  className="bg-yellow-500 text-white px-3 py-1 rounded"
+>
+  Edit
+</button>
+
+    <button
+      onClick={()=>openTable(table)}
+      className="bg-blue-600 text-white px-3 py-1 rounded"
+    >
+      Open
+    </button>
+
+    <button
+
+      onClick={async()=>{
+
+        const ok = confirm(
+          "Delete this table?"
+        );
+
+        if(!ok){
+          return;
+        }
+
+        await supabase
+          .from("grammar_tables")
+          .delete()
+          .eq("id", table.id);
+
+        if(
+          selectedTable?.id === table.id
+        ){
+
+          setSelectedTable(null);
+          setSelectedHeaders([]);
+          setCellData({});
+
+        }
+
+        loadTables();
+
+      }}
+
+      className="bg-red-600 text-white px-3 py-1 rounded"
+    >
+      Delete
+    </button>
+
+  </div>
 
 </td>
         </tr>
