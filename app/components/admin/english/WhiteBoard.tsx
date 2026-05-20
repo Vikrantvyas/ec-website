@@ -12,7 +12,7 @@ export default function WhiteBoard() {
 
   const [color, setColor] = useState("black");
   const [underline, setUnderline] = useState(false);
-  const [fontSize, setFontSize] = useState(24);
+  const [fontSize, setFontSize] = useState(18);
 
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
@@ -291,15 +291,16 @@ export default function WhiteBoard() {
               startEditing(item.id);
             }}
             style={{
-              position: "absolute",
-              top:item.y,
-              left:item.x,
-              color:item.color,
-              fontSize: /[\u0900-\u097F]/.test(item.text)
-                ? item.fontSize - 4
-                : item.fontSize,
-              cursor: "text"
-            }}
+  position: "absolute",
+  top:item.y,
+  left:item.x,
+  color:item.color,
+  fontSize: item.fontSize,
+  cursor: "text",
+  fontFamily: /[\u0900-\u097F]/.test(item.text)
+    ? "'Noto Sans Devanagari', sans-serif"
+    : "Arial"
+}}
           >
 
             {editingId === item.id ? (
