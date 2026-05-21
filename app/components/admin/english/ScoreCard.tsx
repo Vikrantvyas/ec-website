@@ -297,7 +297,7 @@ export default function ScoreCard({
         {students.map((s, i) => (
   <div
     key={i}
-    className={`flex items-center justify-between border p-2 rounded ${
+    className={`flex items-center gap-3 justify-between border p-2 rounded ${
       i === activeIndex ? "bg-yellow-100" : ""
     }`}
   >
@@ -306,16 +306,23 @@ export default function ScoreCard({
     <div className="flex items-center gap-2">
 
       {/* MINUS (only correct -1) */}
-      <button
-        onClick={()=>{
-          setStudents(prev=>{
-            const copy=[...prev];
-            if(copy[i].correct > 0){
-              copy[i].correct -= 1;
-            }
-            return copy;
-          });
-        }}
+     <button
+  onClick={()=>{
+    setStudents(prev=>{
+      const copy=[...prev];
+
+      if(copy[i].correct > 0){
+
+        copy[i].correct -= 1;
+
+        // 🔥 update main score
+        setScore(p => p - 1);
+
+      }
+
+      return copy;
+    });
+  }}
         className="bg-red-500 text-white px-2 rounded"
       >
         -
@@ -327,19 +334,38 @@ export default function ScoreCard({
       </div>
 
       {/* PLUS (correct +1, total +1) */}
-      <button
+     <button
   onClick={()=>{
     setStudents(prev=>{
       const copy=[...prev];
+
       copy[i].correct += 1;
+
+      // 🔥 update main score
+      setScore(p => p + 1);
+
       return copy;
     });
   }}
+  
   className="bg-green-600 text-white px-2 rounded"
 >
   +
 </button>
+<button
+  onClick={()=>{
+    setStudents(prev =>
+      prev.filter((_, index) => index !== i)
+    );
 
+    if(activeIndex === i){
+      setActiveIndex(null);
+    }
+  }}
+  className="bg-red-600 text-white px-2 rounded"
+>
+  ✕
+</button>
     </div>
   </div>
 ))}

@@ -159,7 +159,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto space-y-1 p-2"
+        className="flex-1 overflow-y-auto space-y-2 p-2"
       >
 
         {visible.map((item: any, i: number) => (
