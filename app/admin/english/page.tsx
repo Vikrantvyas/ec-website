@@ -17,7 +17,7 @@ export default function EnglishPage() {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
 const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
-
+const [topicNavIndex, setTopicNavIndex] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
@@ -201,7 +201,39 @@ const refreshData = async () => {
 
   
 
-  
+  const nextTopic = () => {
+
+  if(selectedTopics.length === 0) return;
+
+  if(topicNavIndex < selectedTopics.length - 1){
+
+    const nextIndex = topicNavIndex + 1;
+
+    setTopicNavIndex(nextIndex);
+
+    setSelectedTopics([
+      selectedTopics[nextIndex]
+    ]);
+
+  }
+
+};
+
+const prevTopic = () => {
+
+  if(topicNavIndex > 0){
+
+    const prevIndex = topicNavIndex - 1;
+
+    setTopicNavIndex(prevIndex);
+
+    setSelectedTopics([
+      selectedTopics[prevIndex]
+    ]);
+
+  }
+
+};
 
   const toggleShowAll = () => {
     if (showAll) {
@@ -273,6 +305,8 @@ const refreshData = async () => {
   isVocab={isVocab}
   isGrammar={isGrammar}
   showGrammar={showGrammar}
+  prevTopic={prevTopic}
+nextTopic={nextTopic}
   sentences={sentences}
   visible={visible}
   leftCol={leftCol}

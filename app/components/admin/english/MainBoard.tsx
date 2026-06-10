@@ -315,7 +315,7 @@ const widthClass = isVertical
               <div
                 key={item.id}
                 onClick={()=>setHighlightIndex((p:any)=>p===i ? null : i)}
-                className={`cursor-pointer select-none text-2xl leading-tight ${
+                className={`cursor-pointer select-none text-2xl leading-tight text-green-600 ${
                   highlightIndex === i ? "bg-yellow-200" : ""
                 }`}
               >
@@ -332,7 +332,7 @@ const widthClass = isVertical
                 <div
                   key={item.id}
                   onClick={()=>setHighlightIndex((p:any)=>p===realIndex ? null : realIndex)}
-                  className={`cursor-pointer select-none text-2xl leading-tight ${
+                  className={`cursor-pointer select-none text-2xl leading-tight text-red-600 ${
                     highlightIndex === realIndex ? "bg-yellow-200" : ""
                   }`}
                 >
