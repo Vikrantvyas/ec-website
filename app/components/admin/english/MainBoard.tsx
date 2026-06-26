@@ -92,7 +92,7 @@ const widthClass = isVertical
       onClick={()=>setActiveControl("grammar")}
       className={`h-[70%] min-h-0 border-b overflow-auto ${
         activeControl === "grammar"
-          ? "border-t-[8px] border-yellow-400"
+          ? ""
           : ""
       }`}
     >
@@ -104,7 +104,7 @@ const widthClass = isVertical
       onClick={()=>setActiveControl("left")}
       className={`h-[30%] min-h-0 overflow-hidden ${
         activeControl === "left"
-          ? "ring-4 ring-yellow-400"
+          ? ""
           : ""
       }`}
     >
@@ -216,7 +216,7 @@ const widthClass = isVertical
     onClick={()=>setActiveControl("left")}
     className={`${widthClass} flex flex-col ${
       activeControl === "left"
-       ? "border-b-[8px] border-yellow-400"
+       ? ""
         : ""
     }`}
   >
@@ -355,7 +355,7 @@ const widthClass = isVertical
     onClick={()=>setActiveControl("grammar")}
     className={`${widthClass} ${
       activeControl === "grammar"
-        ? "border-b-[8px] border-yellow-400"
+        ? ""
         : ""
     } ${!isVertical ? "border-l" : "border-t"} flex`}
   >
