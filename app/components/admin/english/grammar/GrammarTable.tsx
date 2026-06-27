@@ -430,7 +430,7 @@ headers?.forEach((h:string)=>{
         {/* ✅ PERFECT WIDTH CONTROL */}
         
 
-        <thead className="bg-gray-300 text-center align-middle">
+        <thead className="bg-gray-300 align-middle">
           <tr>
             {columns.map((col, i) => (
               <th
@@ -443,9 +443,9 @@ headers?.forEach((h:string)=>{
                   e.preventDefault();
                   setMenu({ x: e.clientX, y: e.clientY, colIndex: i });
                 }}
-                className="border p-2"
+                className="border px-2 py-1 text-left"
               >
-                <div className="flex items-center justify-center px-1">
+                <div className="text-left px-1">
   {col === "hindi"
     ? tableSelector || "Hindi"
     : headerMap[col] || col}
@@ -524,7 +524,7 @@ headers?.forEach((h:string)=>{
     <td
       key="hindi"
       rowSpan={group.rows.length}
-      className="border p-2 text-left align-top whitespace-nowrap"
+      className="border px-2 py-1 text-left align-top whitespace-nowrap"
     >
       {group.hindi}
     </td>
@@ -583,18 +583,14 @@ onMouseUp={()=>setIsDragging(false)}
                         e.preventDefault();
                         setMenu({ x:e.clientX, y:e.clientY, cell:true });
                       }}
-                      className={`border p-1 whitespace-nowrap ${
+                      className={`border px-2 py-1 whitespace-nowrap text-left ${
                         selected.includes(key) ? "bg-yellow-200" : ""
                       }`}
                     >
                       
-                     <input
-  value={row[col] || ""}
-  onChange={(e)=>handleCellChange(gIndex,rIndex,col,e.target.value)}
-  onMouseDown={(e)=>e.stopPropagation()}
-  style={{ width: (row[col]?.length || 1) + "ch" }}
-  className="outline-none text-center"
-/>
+                    <span className="block whitespace-nowrap px-1">
+  {row[col]}
+</span>
                     </td>
                   );
 
