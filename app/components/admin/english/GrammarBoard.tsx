@@ -118,7 +118,57 @@ console.log("GROUPED", grouped);
     );
 
   };
+useEffect(() => {
 
+  const handleKey = (e: KeyboardEvent) => {
+
+    if (tables.length === 0) return;
+
+    const currentIndex = tables.findIndex(
+      (t: any) => t.id === selectedTableId
+    );
+
+    // Page Down → Next Table
+    if (e.key === "PageDown") {
+
+      e.preventDefault();
+
+      if (currentIndex < tables.length - 1) {
+
+        const nextTable = tables[currentIndex + 1];
+
+        setSelectedTableId(nextTable.id);
+        loadTableData(nextTable.id);
+
+      }
+
+    }
+
+    // Page Up → Previous Table
+    if (e.key === "PageUp") {
+
+      e.preventDefault();
+
+      if (currentIndex > 0) {
+
+        const prevTable = tables[currentIndex - 1];
+
+        setSelectedTableId(prevTable.id);
+        loadTableData(prevTable.id);
+
+      }
+
+    }
+
+  };
+
+  window.addEventListener("keydown", handleKey);
+
+  return () => {
+    window.removeEventListener("keydown", handleKey);
+  };
+
+}, [tables, selectedTableId]);
   return (
 
     <div className="w-full h-full p-4 overflow-auto flex flex-col gap-3">
