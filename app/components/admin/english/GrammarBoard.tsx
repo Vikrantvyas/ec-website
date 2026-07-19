@@ -201,7 +201,7 @@ useEffect(() => {
 
             }}
 
-            className="w-full bg-transparent outline-none text-center font-semibold"
+            className="w-full bg-transparent outline-none text-left font-semibold pl-2"
           >
 
             {tables.map((table)=>(

@@ -223,31 +223,7 @@ useEffect(() => {
     updated[g].rows[r][c] = value;
     setTableData(updated);
   };
-const handleAddRow = (gIndex:number)=>{
-  saveHistory();
 
-  const newData = [...tableData];
-
-  const newRow: any = {};
-  columns.forEach(col=>{
-    if(col !== "index" && col !== "hindi"){
-      newRow[col] = "";
-    }
-  });
-
-  newData[gIndex].rows.push(newRow);
-  setTableData(newData);
-};
-
-const handleDeleteRow = (gIndex:number, rIndex:number)=>{
-  saveHistory();
-
-  const newData = [...tableData];
-  if(newData[gIndex].rows.length === 1) return;
-
-  newData[gIndex].rows.splice(rIndex,1);
-  setTableData(newData);
-};
   const handleCellClick = (e:any, g:number, r:number, c:string)=>{
   if(!e.shiftKey){
     setSelected([]);
@@ -425,7 +401,7 @@ headers?.forEach((h:string)=>{
 
     <div className="w-full h-full" onClick={()=>setMenu(null)}>
 
-      <table className="border border-gray-400 text-sm w-max">
+      <table className="border border-gray-400 text-sm table-auto w-max">
 
         {/* ✅ PERFECT WIDTH CONTROL */}
         
@@ -443,9 +419,9 @@ headers?.forEach((h:string)=>{
                   e.preventDefault();
                   setMenu({ x: e.clientX, y: e.clientY, colIndex: i });
                 }}
-                className="border px-2 py-1 text-left"
+                className="border px-2 py-1 text-left transition-colors hover:bg-yellow-200 hover:text-black"
               >
-                <div className="text-left px-1">
+               <div className="text-left px-1 transition-colors group-hover:bg-yellow-200 group-hover:text-black">
   {col === "hindi"
     ? tableSelector || "Hindi"
     : headerMap[col] || col}
@@ -524,7 +500,7 @@ headers?.forEach((h:string)=>{
     <td
       key="hindi"
       rowSpan={group.rows.length}
-      className="border px-2 py-1 text-left align-top whitespace-nowrap"
+      className="border px-2 py-1 text-left align-top whitespace-nowrap transition-colors hover:bg-yellow-200 hover:text-black"
     >
       {group.hindi}
     </td>
@@ -583,22 +559,28 @@ onMouseUp={()=>setIsDragging(false)}
                         e.preventDefault();
                         setMenu({ x:e.clientX, y:e.clientY, cell:true });
                       }}
-                      className={`border px-2 py-1 whitespace-nowrap text-left ${
-                        selected.includes(key) ? "bg-yellow-200" : ""
-                      }`}
+                      className={`border px-1 py-0 whitespace-nowrap text-left ${
+  selected.includes(key)
+    ? "bg-yellow-200 text-black"
+    : "hover:bg-yellow-200 hover:text-black"
+}`}
                     >
                       
-                    <span className="block whitespace-nowrap px-1">
-  {row[col]}
-</span>
+                    <input
+  type="text"
+  value={row[col] || ""}
+  onChange={(e) =>
+    handleCellChange(gIndex, rIndex, col, e.target.value)
+  }
+  className="bg-transparent outline-none border-none p-0 m-0 text-left"
+size={Math.max((row[col] || "").length, 1)}
+style={{ width: `${(row[col] || "").length + 1}ch` }}
+/>
                     </td>
                   );
 
                 })}
-<td className="border p-1 opacity-0 group-hover:opacity-100">
-  <button onClick={()=>handleAddRow(gIndex)} className="text-green-600 mr-1">＋</button>
-  <button onClick={()=>handleDeleteRow(gIndex, rIndex)} className="text-red-600">－</button>
-</td>
+
               </tr>
 
             ))
