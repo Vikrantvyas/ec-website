@@ -86,6 +86,18 @@ useEffect(() => {
   setColumns([...baseCols, ...dynamicCols]);
 
 }, [tableData, headers]);
+useEffect(() => {
+
+  if (columns.length === 0) return;
+
+  const totalRows = tableData.reduce(
+    (acc: number, group: any) => acc + group.rows.length,
+    0
+  );
+
+  setVisibleCells(totalRows * columns.length);
+
+}, [columns, tableData]);
   const saveHistory = () => {
     setHistory(prev => [...prev, {
       tableData: JSON.parse(JSON.stringify(tableData)),
