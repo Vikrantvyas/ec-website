@@ -13,6 +13,8 @@ export default function LeftPanel({
   setSelectedCourse,
   setSelectedDays,
   setSelectedTopics,
+  selectedGrammarTableId,
+  setSelectedGrammarTableId,
   refreshData   // 👈 ADD THIS
 }: any) {
 
@@ -20,25 +22,35 @@ export default function LeftPanel({
   const [showPopup, setShowPopup] = useState(false);
   const [selectedTopicData, setSelectedTopicData] = useState<any>(null);
   const [editText, setEditText] = useState("");
-const [showGrammarTables, setShowGrammarTables] = useState(true);
+  const [showGrammarTables, setShowGrammarTables] = useState(true);
 
-const grammarTables = [];
-const [showPresentIndefinite, setShowPresentIndefinite] = useState(true);
+  const [grammarTopics, setGrammarTopics] =
+    useState<any[]>([]);
+  const [expandedGrammarTopics, setExpandedGrammarTopics] = useState<string[]>([]);
+  const toggleGrammarTopic = (id: string) => {
+
+    setExpandedGrammarTopics(prev =>
+      prev.includes(id)
+        ? prev.filter(x => x !== id)
+        : [...prev, id]
+    );
+
+  };
   const selectedCourseName =
-    courses.find((c:any) => c.id === selectedCourse)?.name;
+    courses.find((c: any) => c.id === selectedCourse)?.name;
 
   const isVocab = selectedCourseName === "Vocabulary";
 
-  const toggleDay = (id:string) => {
-    setSelectedDays((prev:string[]) =>
+  const toggleDay = (id: string) => {
+    setSelectedDays((prev: string[]) =>
       prev.includes(id)
         ? prev.filter(d => d !== id)
         : [...prev, id]
     );
   };
 
-  const toggleTopic = (id:string) => {
-    setSelectedTopics((prev:string[]) =>
+  const toggleTopic = (id: string) => {
+    setSelectedTopics((prev: string[]) =>
       prev.includes(id)
         ? prev.filter(t => t !== id)
         : [...prev, id]
@@ -46,7 +58,7 @@ const [showPresentIndefinite, setShowPresentIndefinite] = useState(true);
   };
 
   // 🔥 RIGHT CLICK
-  const handleRightClick = (e:any, topic:any) => {
+  const handleRightClick = (e: any, topic: any) => {
     e.preventDefault();
     setMenu({
       x: e.clientX,
@@ -71,7 +83,7 @@ const [showPresentIndefinite, setShowPresentIndefinite] = useState(true);
         .order("order_no");
 
       if (data) {
-        const text = data.map((d:any)=>`${d.hindi} - ${d.english}`).join("\n");
+        const text = data.map((d: any) => `${d.hindi} - ${d.english}`).join("\n");
         setEditText(text);
       }
 
@@ -84,7 +96,7 @@ const [showPresentIndefinite, setShowPresentIndefinite] = useState(true);
         .order("order_no");
 
       if (data) {
-        const text = data.map((d:any)=>d.sentence).join("\n");
+        const text = data.map((d: any) => d.sentence).join("\n");
         setEditText(text);
       }
 
@@ -92,7 +104,30 @@ const [showPresentIndefinite, setShowPresentIndefinite] = useState(true);
 
     setMenu(null);
   };
+  const fetchGrammarTopics = async () => {
 
+    const { data, error } = await supabase
+      .from("grammar_topics")
+      .select(`
+      *,
+      grammar_tables (
+        id,
+        name,
+        topic_id
+      )
+    `)
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    if (data) {
+      setGrammarTopics(data);
+    }
+
+  };
   // 🔥 SAVE
   const handleSave = async () => {
 
@@ -104,7 +139,7 @@ const [showPresentIndefinite, setShowPresentIndefinite] = useState(true);
         .delete()
         .eq("topic_id", selectedTopicData.id);
 
-      const newData = lines.map((line, i)=>{
+      const newData = lines.map((line, i) => {
         const parts = line.split("-");
         return {
           topic_id: selectedTopicData.id,
@@ -122,7 +157,7 @@ const [showPresentIndefinite, setShowPresentIndefinite] = useState(true);
         .delete()
         .eq("topic_id", selectedTopicData.id);
 
-      const newData = lines.map((line, i)=>({
+      const newData = lines.map((line, i) => ({
         topic_id: selectedTopicData.id,
         sentence: line,
         order_no: i + 1
@@ -134,42 +169,47 @@ const [showPresentIndefinite, setShowPresentIndefinite] = useState(true);
 
     setShowPopup(false);
     if (refreshData) {
-  await refreshData();
-}
+      await refreshData();
+    }
   };
 
   // 🔥 CLOSE MENU
-  useEffect(()=>{
-    const close = ()=>setMenu(null);
+  useEffect(() => {
+    const close = () => setMenu(null);
     window.addEventListener("click", close);
-    return ()=>window.removeEventListener("click", close);
-  },[]);
-useEffect(() => {
+    return () => window.removeEventListener("click", close);
+  }, []);
+  useEffect(() => {
 
-  const handleKey = (e: KeyboardEvent) => {
+    fetchGrammarTopics();
 
-    // ESC → Cancel
-    if (e.key === "Escape") {
-      setShowPopup(false);
-    }
+  }, []);
+  useEffect(() => {
 
-    // Ctrl + S → Save
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-      e.preventDefault();
-      if (showPopup) {
-        handleSave();
+    const handleKey = (e: KeyboardEvent) => {
+
+      // ESC → Cancel
+      if (e.key === "Escape") {
+        setShowPopup(false);
       }
-    }
 
-  };
+      // Ctrl + S → Save
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (showPopup) {
+          handleSave();
+        }
+      }
 
-  window.addEventListener("keydown", handleKey);
+    };
 
-  return () => {
-    window.removeEventListener("keydown", handleKey);
-  };
+    window.addEventListener("keydown", handleKey);
 
-}, [showPopup, editText]);
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+    };
+
+  }, [showPopup, editText]);
   return (
 
     <div className="w-72 bg-white border-r flex flex-col relative">
@@ -179,77 +219,87 @@ useEffect(() => {
     GRAMMAR TABLES
 ======================= */}
 
-<div className="border-b">
+      <div className="border-b">
 
-  <button
-    onClick={() => setShowGrammarTables(prev => !prev)}
-    className="w-full flex justify-between items-center px-3 py-2 bg-amber-100 font-semibold"
-  >
-    <span>Grammar Tables</span>
+        <button
+          onClick={() => setShowGrammarTables(prev => !prev)}
+          className="w-full flex justify-between items-center px-3 py-2 bg-amber-100 font-semibold"
+        >
+          <span>Grammar Tables</span>
 
-    <span>
-      {showGrammarTables ? "−" : "+"}
-    </span>
-  </button>
-{showGrammarTables && (
+          <span>
+            {showGrammarTables ? "−" : "+"}
+          </span>
+        </button>
+        {showGrammarTables && (
 
-  <div className="p-2">
+          <div className="p-2 space-y-2">
 
-    <div className="border rounded">
+            {grammarTopics.map((topic: any) => (
 
-      <div
-  onClick={() => setShowPresentIndefinite(prev => !prev)}
-  className="bg-gray-100 px-3 py-2 font-medium flex justify-between items-center cursor-pointer"
->
-  <span>Present Indefinite</span>
+              <div key={topic.id} className="mb-2">
 
-  <span>
-    {showPresentIndefinite ? "−" : "+"}
-  </span>
-</div>
-{showPresentIndefinite && (
+                <div
+                  onClick={() => toggleGrammarTopic(topic.id)}
+                  className="w-full flex justify-between items-center px-3 py-2 rounded cursor-pointer border bg-gray-200 border-gray-300"
+                >
+                  <>
+                    <span>{topic.name}</span>
 
-  <div className="pl-5 py-2 space-y-1">
+                    <span>
+                      {expandedGrammarTopics.includes(topic.id) ? "−" : "+"}
+                    </span>
+                  </>
+                </div>
 
-    <label className="flex items-center gap-2">
-      <input type="radio" name="grammarTable" />
-      <span>Affirmative</span>
-    </label>
+                {expandedGrammarTopics.includes(topic.id) && (
 
-    <label className="flex items-center gap-2">
-      <input type="radio" name="grammarTable" />
-      <span>Negative</span>
-    </label>
+                  <div className="ml-4 mt-1 space-y-1">
 
-    <label className="flex items-center gap-2">
-      <input type="radio" name="grammarTable" />
-      <span>Interrogative</span>
-    </label>
+                    {topic.grammar_tables?.map((table: any) => (
 
-    <label className="flex items-center gap-2">
-      <input type="radio" name="grammarTable" />
-      <span>WH Question</span>
-    </label>
+                      <label
+                        key={table.id}
+                        className="flex items-center gap-2"
+                      >
+                        <input
+  type="radio"
+  name="grammarTable"
+  value={table.id}
+  checked={selectedGrammarTableId === table.id}
+  onChange={() => setSelectedGrammarTableId(table.id)}
+/>
 
-  </div>
+                        <span>{table.name}</span>
 
-)}
-    </div>
+                      </label>
 
-  </div>
+                    ))}
 
-)}
-</div>
+                  </div>
+
+                )}
+
+              </div>
+
+            ))}
+
+          </div>
+
+        )}
+        <div className="border-b my-2"></div>
+
+      </div>
       <div className="p-3 border-b">
 
         <select
           value={selectedCourse}
-          onChange={(e)=>setSelectedCourse(e.target.value)}
+          onChange={(e) => setSelectedCourse(e.target.value)}
           className="border px-2 py-2 rounded w-full"
         >
           <option value="">Select Course</option>
 
-          {courses.map((c:any)=>(
+          {courses.map((c: any) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
@@ -262,9 +312,9 @@ useEffect(() => {
       {/* DAYS + TOPICS */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
 
-        {days.map((d:any)=>{
+        {days.map((d: any) => {
 
-          const dayTopics = topics.filter((t:any)=>t.day_id === d.id);
+          const dayTopics = topics.filter((t: any) => t.day_id === d.id);
           const isSelected = selectedDays.includes(d.id);
           const hasTopics = dayTopics.length > 0;
 
@@ -274,33 +324,33 @@ useEffect(() => {
 
               {/* DAY CHECKBOX */}
               <label
-                className={`w-full flex justify-between items-center px-3 py-2 rounded cursor-pointer border ${
-                  isSelected
-                    ? "bg-blue-600 text-white border-blue-700"
-                    : "bg-gray-200 border-gray-300"
-                }`}
+                className={`w-full flex justify-between items-center px-3 py-2 rounded cursor-pointer border ${isSelected
+                  ? "bg-blue-600 text-white border-blue-700"
+                  : "bg-gray-200 border-gray-300"
+                  }`}
               >
 
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={isSelected}
-                    onChange={()=>toggleDay(d.id)}
+                    onChange={() => toggleDay(d.id)}
                   />
                   <div className="flex items-center gap-2">
                     <span>
 
-  {String(d.day_number).padStart(2, "0")}
+                      {String(d.day_number).padStart(2, "0")}
 
-  {d.title
-    ? ` · ${d.title}`
-    : ""}
+                      {d.title
+                        ? ` · ${d.title}`
+                        : ""}
 
-</span>
+                    </span>
 
                     {hasTopics && (
                       <span className="font-bold text-lg">+</span>
                     )}
+
                   </div>
                 </div>
 
@@ -311,7 +361,7 @@ useEffect(() => {
 
                 <div className="ml-4 mt-1 space-y-1">
 
-                  {dayTopics.map((t:any)=>{
+                  {dayTopics.map((t: any) => {
 
                     const count = t.sentences?.[0]?.count || 0;
                     const isTopicSelected = selectedTopics.includes(t.id);
@@ -320,19 +370,18 @@ useEffect(() => {
 
                       <label
                         key={t.id}
-                        onContextMenu={(e)=>handleRightClick(e, t)}
-                        className={`flex justify-between items-center px-2 py-1 rounded text-sm cursor-pointer ${
-                          isTopicSelected
-                            ? "bg-green-600 text-white"
-                            : "bg-gray-100"
-                        }`}
+                        onContextMenu={(e) => handleRightClick(e, t)}
+                        className={`flex justify-between items-center px-2 py-1 rounded text-sm cursor-pointer ${isTopicSelected
+                          ? "bg-green-600 text-white"
+                          : "bg-gray-100"
+                          }`}
                       >
 
                         <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
                             checked={isTopicSelected}
-                            onChange={()=>toggleTopic(t.id)}
+                            onChange={() => toggleTopic(t.id)}
                           />
                           <span>{t.topic_name}</span>
                         </div>
@@ -377,55 +426,55 @@ useEffect(() => {
 
       {/* POPUP */}
       {showPopup && (
-  <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center">
 
-    <div
-      className="bg-white rounded shadow-xl flex flex-col"
-      style={{ width: "80vw", height: "80vh", maxWidth: "1200px" }}
-    >
+          <div
+            className="bg-white rounded shadow-xl flex flex-col"
+            style={{ width: "80vw", height: "80vh", maxWidth: "1200px" }}
+          >
 
-      {/* HEADER */}
-      <div className="p-4 border-b text-lg font-bold">
-        Edit: {selectedTopicData?.topic_name}
-      </div>
+            {/* HEADER */}
+            <div className="p-4 border-b text-lg font-bold">
+              Edit: {selectedTopicData?.topic_name}
+            </div>
 
-      {/* BODY */}
-      <div style={{ flex: 1, padding: "10px" }}>
-        <textarea
-          value={editText}
-          onChange={(e)=>setEditText(e.target.value)}
-          style={{
-            width: "100%",
-            height: "100%",
-            fontSize: "18px",
-            lineHeight: "1.6",
-            padding: "10px",
-            border: "1px solid #ccc",
-            resize: "none"
-          }}
-        />
-      </div>
+            {/* BODY */}
+            <div style={{ flex: 1, padding: "10px" }}>
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  fontSize: "18px",
+                  lineHeight: "1.6",
+                  padding: "10px",
+                  border: "1px solid #ccc",
+                  resize: "none"
+                }}
+              />
+            </div>
 
-      {/* FOOTER */}
-      <div className="flex justify-end gap-2 p-3 border-t">
-        <button
-          onClick={()=>setShowPopup(false)}
-          className="px-3 py-1 border rounded"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleSave}
-          className="px-3 py-1 bg-blue-600 text-white rounded"
-        >
-          Save
-        </button>
-      </div>
+            {/* FOOTER */}
+            <div className="flex justify-end gap-2 p-3 border-t">
+              <button
+                onClick={() => setShowPopup(false)}
+                className="px-3 py-1 border rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-3 py-1 bg-blue-600 text-white rounded"
+              >
+                Save
+              </button>
+            </div>
 
+          </div>
+
+        </div>
+      )}
     </div>
-
-  </div>
-)}
- </div>
   );
 }

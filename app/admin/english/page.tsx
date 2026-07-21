@@ -16,8 +16,8 @@ export default function EnglishPage() {
 
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
-const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
-const [topicNavIndex, setTopicNavIndex] = useState(0);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [topicNavIndex, setTopicNavIndex] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
@@ -27,7 +27,8 @@ const [topicNavIndex, setTopicNavIndex] = useState(0);
   const [randomMode, setRandomMode] = useState(false);
   const [showLeft, setShowLeft] = useState(true);
   const [showGrammar, setShowGrammar] = useState(false);
-const [layout, setLayout] = useState<"horizontal" | "vertical">("horizontal");
+  const [selectedGrammarTableId, setSelectedGrammarTableId] = useState("");
+  const [layout, setLayout] = useState<"horizontal" | "vertical">("horizontal");
   const scrollRef = useRef<HTMLDivElement>(null);
   const vocabRef = useRef<any>(null);
 
@@ -60,23 +61,23 @@ const [layout, setLayout] = useState<"horizontal" | "vertical">("horizontal");
     }
   }, [selectedCourse]);
 
-useEffect(() => {
-  fetchTopics();
-}, [selectedDays]);
+  useEffect(() => {
+    fetchTopics();
+  }, [selectedDays]);
 
-useEffect(() => {
-  fetchSentences();
-}, [selectedTopics, selectedDays]);
-useEffect(() => {
-  const filteredTopics = selectedTopics.filter(topicId => {
-    const topic = topics.find(t => t.id === topicId);
-    return topic && selectedDays.includes(topic.day_id);
-  });
+  useEffect(() => {
+    fetchSentences();
+  }, [selectedTopics, selectedDays]);
+  useEffect(() => {
+    const filteredTopics = selectedTopics.filter(topicId => {
+      const topic = topics.find(t => t.id === topicId);
+      return topic && selectedDays.includes(topic.day_id);
+    });
 
-  if (filteredTopics.length !== selectedTopics.length) {
-    setSelectedTopics(filteredTopics);
-  }
-}, [selectedDays, topics]);
+    if (filteredTopics.length !== selectedTopics.length) {
+      setSelectedTopics(filteredTopics);
+    }
+  }, [selectedDays, topics]);
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = showAll
@@ -97,82 +98,82 @@ useEffect(() => {
   };
 
   const fetchTopics = async () => {
-  const { data } = await supabase
-    .from("topics")
-    .select("*, sentences(count)")
-    .order("order_no");
-  if (data) setTopics(data);
-};
+    const { data } = await supabase
+      .from("topics")
+      .select("*, sentences(count)")
+      .order("order_no");
+    if (data) setTopics(data);
+  };
 
   const fetchSentences = async () => {
 
-  let topicIds = selectedTopics;
+    let topicIds = selectedTopics;
 
-  if (topicIds.length === 0 && selectedDays.length > 0) {
-    topicIds = topics
-      .filter(t => selectedDays.includes(t.day_id))
-      .map(t => t.id);
-  }
-
-  if (topicIds.length === 0) return;
-
-  if (isVocab) {
-    const { data } = await supabase
-      .from("vocabulary")
-      .select("*")
-      .in("topic_id", topicIds)
-      
-.order("topic_id")
-.order("order_no");
-
-    if (data) {
-
-  // 🔥 manual sort by selectedTopics order
-  const sorted = data.sort((a: any, b: any) => {
-    const indexA = selectedTopics.indexOf(a.topic_id);
-    const indexB = selectedTopics.indexOf(b.topic_id);
-
-    if (indexA === indexB) {
-      return a.order_no - b.order_no;
+    if (topicIds.length === 0 && selectedDays.length > 0) {
+      topicIds = topics
+        .filter(t => selectedDays.includes(t.day_id))
+        .map(t => t.id);
     }
 
-    return indexA - indexB;
-  });
+    if (topicIds.length === 0) return;
 
-  setSentences(sorted);
-  setCurrentIndex(0);
-  setShowAll(false);
-}
-  } else {
-    const { data } = await supabase
-      .from("sentences")
-      .select("*")
-      .in("topic_id", topicIds)
-      .order("order_no");
+    if (isVocab) {
+      const { data } = await supabase
+        .from("vocabulary")
+        .select("*")
+        .in("topic_id", topicIds)
 
-    if (data) {
+        .order("topic_id")
+        .order("order_no");
 
-  // 🔥 manual sort by selectedTopics order
-  const sorted = data.sort((a: any, b: any) => {
-    const indexA = selectedTopics.indexOf(a.topic_id);
-    const indexB = selectedTopics.indexOf(b.topic_id);
+      if (data) {
 
-    if (indexA === indexB) {
-      return a.order_no - b.order_no;
+        // 🔥 manual sort by selectedTopics order
+        const sorted = data.sort((a: any, b: any) => {
+          const indexA = selectedTopics.indexOf(a.topic_id);
+          const indexB = selectedTopics.indexOf(b.topic_id);
+
+          if (indexA === indexB) {
+            return a.order_no - b.order_no;
+          }
+
+          return indexA - indexB;
+        });
+
+        setSentences(sorted);
+        setCurrentIndex(0);
+        setShowAll(false);
+      }
+    } else {
+      const { data } = await supabase
+        .from("sentences")
+        .select("*")
+        .in("topic_id", topicIds)
+        .order("order_no");
+
+      if (data) {
+
+        // 🔥 manual sort by selectedTopics order
+        const sorted = data.sort((a: any, b: any) => {
+          const indexA = selectedTopics.indexOf(a.topic_id);
+          const indexB = selectedTopics.indexOf(b.topic_id);
+
+          if (indexA === indexB) {
+            return a.order_no - b.order_no;
+          }
+
+          return indexA - indexB;
+        });
+
+        setSentences(sorted);
+        setCurrentIndex(0);
+        setShowAll(false);
+      }
     }
-
-    return indexA - indexB;
-  });
-
-  setSentences(sorted);
-  setCurrentIndex(0);
-  setShowAll(false);
-}
-  }
-};
-const refreshData = async () => {
-  await fetchSentences();
-};
+  };
+  const refreshData = async () => {
+    await fetchSentences();
+  };
   // ---------------- NAV ----------------
 
   const nextSentence = () => {
@@ -199,41 +200,41 @@ const refreshData = async () => {
     }
   };
 
-  
+
 
   const nextTopic = () => {
 
-  if(selectedTopics.length === 0) return;
+    if (selectedTopics.length === 0) return;
 
-  if(topicNavIndex < selectedTopics.length - 1){
+    if (topicNavIndex < selectedTopics.length - 1) {
 
-    const nextIndex = topicNavIndex + 1;
+      const nextIndex = topicNavIndex + 1;
 
-    setTopicNavIndex(nextIndex);
+      setTopicNavIndex(nextIndex);
 
-    setSelectedTopics([
-      selectedTopics[nextIndex]
-    ]);
+      setSelectedTopics([
+        selectedTopics[nextIndex]
+      ]);
 
-  }
+    }
 
-};
+  };
 
-const prevTopic = () => {
+  const prevTopic = () => {
 
-  if(topicNavIndex > 0){
+    if (topicNavIndex > 0) {
 
-    const prevIndex = topicNavIndex - 1;
+      const prevIndex = topicNavIndex - 1;
 
-    setTopicNavIndex(prevIndex);
+      setTopicNavIndex(prevIndex);
 
-    setSelectedTopics([
-      selectedTopics[prevIndex]
-    ]);
+      setSelectedTopics([
+        selectedTopics[prevIndex]
+      ]);
 
-  }
+    }
 
-};
+  };
 
   const toggleShowAll = () => {
     if (showAll) {
@@ -260,18 +261,20 @@ const prevTopic = () => {
 
     <div className="english-page flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden">
 
-   <LeftPanel
-  courses={courses}
-  days={days}
-  topics={topics}
-  selectedCourse={selectedCourse}
-  selectedDays={selectedDays}
-  selectedTopics={selectedTopics}
-  setSelectedCourse={setSelectedCourse}
-  setSelectedDays={setSelectedDays}
-  setSelectedTopics={setSelectedTopics}
-  refreshData={refreshData}
-/>
+      <LeftPanel
+        courses={courses}
+        days={days}
+        topics={topics}
+        selectedCourse={selectedCourse}
+        selectedDays={selectedDays}
+        selectedTopics={selectedTopics}
+        setSelectedCourse={setSelectedCourse}
+        setSelectedDays={setSelectedDays}
+        setSelectedTopics={setSelectedTopics}
+        selectedGrammarTableId={selectedGrammarTableId}
+        setSelectedGrammarTableId={setSelectedGrammarTableId}
+        refreshData={refreshData}
+      />
 
       <div className="flex-1 flex flex-col items-center pt-4 gap-2">
 
@@ -284,50 +287,51 @@ const prevTopic = () => {
           {!(isVocab || showGrammar) && (
             <div className="shadow-md bg-white px-4 py-2 text-sm flex justify-between z-10">
               <div>
-  Days: {selectedDays.map(id => {
-    const d = days.find(x => x.id === id);
-    return d?.day_number;
-  }).join(", ")}
-</div>
+                Days: {selectedDays.map(id => {
+                  const d = days.find(x => x.id === id);
+                  return d?.day_number;
+                }).join(", ")}
+              </div>
 
-<div>
-  Topics: {selectedTopics.length > 0
-    ? selectedTopics.map(id => {
-        const t = topics.find(x => x.id === id);
-        return t?.topic_name;
-      }).join(", ")
-    : "All Topics"}
-</div>
+              <div>
+                Topics: {selectedTopics.length > 0
+                  ? selectedTopics.map(id => {
+                    const t = topics.find(x => x.id === id);
+                    return t?.topic_name;
+                  }).join(", ")
+                  : "All Topics"}
+              </div>
             </div>
           )}
 
           <MainBoard
-  isVocab={isVocab}
-  isGrammar={isGrammar}
-  showGrammar={showGrammar}
-  prevTopic={prevTopic}
-nextTopic={nextTopic}
-  sentences={sentences}
-  visible={visible}
-  leftCol={leftCol}
-  rightCol={rightCol}
-  highlightIndex={highlightIndex}
-  setHighlightIndex={setHighlightIndex}
-  showBoard={showBoard}
-  showScore={showScore}
-  scrollRef={scrollRef}
-  vocabRef={vocabRef}
-  randomMode={randomMode}
-  showLeft={showLeft}
-  showAll={showAll}
-  layout={layout}
+            isVocab={isVocab}
+            isGrammar={isGrammar}
+            showGrammar={showGrammar}
+            prevTopic={prevTopic}
+            nextTopic={nextTopic}
+            sentences={sentences}
+            visible={visible}
+            leftCol={leftCol}
+            rightCol={rightCol}
+            highlightIndex={highlightIndex}
+            setHighlightIndex={setHighlightIndex}
+            showBoard={showBoard}
+            showScore={showScore}
+            scrollRef={scrollRef}
+            vocabRef={vocabRef}
+            randomMode={randomMode}
+            showLeft={showLeft}
+            showAll={showAll}
+            layout={layout}
 
-  // 🔥 NEW
-  selectedDays={selectedDays}
-  selectedTopics={selectedTopics}
-  topics={topics}
-  days={days}
-/>
+            // 🔥 NEW
+            selectedDays={selectedDays}
+            selectedTopics={selectedTopics}
+            topics={topics}
+            days={days}
+            selectedGrammarTableId={selectedGrammarTableId}
+          />
         </div>
 
         <Controls
@@ -352,7 +356,7 @@ nextTopic={nextTopic}
           setShowGrammar={setShowGrammar}
           isGrammar={isGrammar}
           layout={layout}
-setLayout={setLayout}
+          setLayout={setLayout}
         />
 
       </div>

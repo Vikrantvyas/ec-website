@@ -6,7 +6,9 @@ import GrammarTable from "./grammar/GrammarTable";
 
 import { supabase } from "@/lib/supabaseClient";
 
-export default function GrammarBoard() {
+export default function GrammarBoard({
+  selectedGrammarTableId
+}: any) {
 
   const [tables, setTables] = useState<any[]>([]);
 
@@ -22,7 +24,15 @@ const [tableHeaders, setTableHeaders] =
     loadTables();
 
   },[]);
+useEffect(() => {
 
+  if (!selectedGrammarTableId) return;
+
+  setSelectedTableId(selectedGrammarTableId);
+
+  loadTableData(selectedGrammarTableId);
+
+}, [selectedGrammarTableId]);
   const loadTables = async()=>{
 
     const { data } = await supabase
@@ -34,13 +44,11 @@ const [tableHeaders, setTableHeaders] =
 
       setTables(data);
 
-      if(data.length > 0){
+      if (data) {
 
-        setSelectedTableId(data[0].id);
+  setTables(data);
 
-        loadTableData(data[0].id);
-
-      }
+}
 
     }
 
