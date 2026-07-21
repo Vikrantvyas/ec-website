@@ -20,7 +20,10 @@ export default function LeftPanel({
   const [showPopup, setShowPopup] = useState(false);
   const [selectedTopicData, setSelectedTopicData] = useState<any>(null);
   const [editText, setEditText] = useState("");
+const [showGrammarTables, setShowGrammarTables] = useState(true);
 
+const grammarTables = [];
+const [showPresentIndefinite, setShowPresentIndefinite] = useState(true);
   const selectedCourseName =
     courses.find((c:any) => c.id === selectedCourse)?.name;
 
@@ -172,6 +175,71 @@ useEffect(() => {
     <div className="w-72 bg-white border-r flex flex-col relative">
 
       {/* COURSE SELECT */}
+      {/* =======================
+    GRAMMAR TABLES
+======================= */}
+
+<div className="border-b">
+
+  <button
+    onClick={() => setShowGrammarTables(prev => !prev)}
+    className="w-full flex justify-between items-center px-3 py-2 bg-amber-100 font-semibold"
+  >
+    <span>Grammar Tables</span>
+
+    <span>
+      {showGrammarTables ? "−" : "+"}
+    </span>
+  </button>
+{showGrammarTables && (
+
+  <div className="p-2">
+
+    <div className="border rounded">
+
+      <div
+  onClick={() => setShowPresentIndefinite(prev => !prev)}
+  className="bg-gray-100 px-3 py-2 font-medium flex justify-between items-center cursor-pointer"
+>
+  <span>Present Indefinite</span>
+
+  <span>
+    {showPresentIndefinite ? "−" : "+"}
+  </span>
+</div>
+{showPresentIndefinite && (
+
+  <div className="pl-5 py-2 space-y-1">
+
+    <label className="flex items-center gap-2">
+      <input type="radio" name="grammarTable" />
+      <span>Affirmative</span>
+    </label>
+
+    <label className="flex items-center gap-2">
+      <input type="radio" name="grammarTable" />
+      <span>Negative</span>
+    </label>
+
+    <label className="flex items-center gap-2">
+      <input type="radio" name="grammarTable" />
+      <span>Interrogative</span>
+    </label>
+
+    <label className="flex items-center gap-2">
+      <input type="radio" name="grammarTable" />
+      <span>WH Question</span>
+    </label>
+
+  </div>
+
+)}
+    </div>
+
+  </div>
+
+)}
+</div>
       <div className="p-3 border-b">
 
         <select

@@ -49,6 +49,21 @@ const [selectedHeaders, setSelectedHeaders] =
   const [cellData, setCellData] = useState<any>({});
   const [editingTableId, setEditingTableId] =
   useState<string | null>(null);
+  const [grammarTopics, setGrammarTopics] = useState<any[]>([]);
+
+const [selectedGrammarTopic, setSelectedGrammarTopic] =
+  useState("");
+  const [showTopicInput, setShowTopicInput] = useState(false);
+
+const [newTopicName, setNewTopicName] = useState("");
+  const [topicName, setTopicName] = useState("");
+
+const [topics, setTopics] = useState<any[]>([]);
+
+const [selectedTopic, setSelectedTopic] = useState<any>(null);
+
+const [editingTopicId, setEditingTopicId] =
+  useState<string | null>(null);
   const editTable = async(table:any)=>{
 
   setEditingTableId(table.id);
@@ -76,27 +91,44 @@ const [selectedHeaders, setSelectedHeaders] =
   }
 
 };
-useEffect(()=>{
+useEffect(() => {
 
   loadTables();
 
-},[]);
+  loadGrammarTopics();
 
-const loadTables = async()=>{
+}, []);
+
+const loadTables = async () => {
 
   const { data } = await supabase
     .from("grammar_tables")
     .select("*")
-    .order("created_at",{ ascending:false });
+    .order("created_at", { ascending: false });
 
-  if(data){
-
+  if (data) {
     setSavedTables(data);
-
   }
 
 };
-const openTable = async(table:any)=>{
+
+const loadGrammarTopics = async () => {
+
+  const { data, error } = await supabase
+    .from("grammar_topics")
+    .select("*")
+    .order("sort_order", { ascending: true });
+
+  console.log("Grammar Topics :", data);
+  console.log("Grammar Topics Error :", error);
+
+  if (data) {
+    setGrammarTopics(data);
+  }
+
+};
+
+const openTable = async (table: any) => {
 
   setSelectedTable(table);
 
@@ -106,30 +138,31 @@ const openTable = async(table:any)=>{
     .eq("table_id", table.id)
     .order("column_order");
 
-  if(data){
-
+  if (data) {
     setSelectedHeaders(data);
+  }
+
+  const { data: cells } = await supabase
+    .from("grammar_cells")
+    .select("*")
+    .eq("table_id", table.id);
+
+  if (cells) {
+
+    const formatted: any = {};
+
+    cells.forEach((cell: any) => {
+
+      formatted[
+        `${cell.row_no}__${cell.header_id}`
+      ] = cell.cell_value;
+
+    });
+
+    setCellData(formatted);
 
   }
-const { data:cells } = await supabase
-  .from("grammar_cells")
-  .select("*")
-  .eq("table_id", table.id);
 
-if(cells){
-
-  const formatted:any = {};
-
-  cells.forEach((cell:any)=>{
-
-    formatted[
-  `${cell.row_no}__${cell.header_id}`
-] = cell.cell_value;
-  });
-
-  setCellData(formatted);
-
-}
 };
   return (
 
@@ -139,23 +172,130 @@ if(cells){
         Grammar Table Master
       </h1>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-12 gap-4 items-end">
 
-        <div>
+        <div className="col-span-4">
+  <label className="block mb-1 font-medium">
+  Grammar Topic
+</label>
+
+<div className="flex gap-2">
+
+  <select
+    value={selectedGrammarTopic}
+    onChange={(e) => setSelectedGrammarTopic(e.target.value)}
+    className="border p-2 rounded flex-1"
+  >
+    <option value="">
+      Select Topic
+    </option>
+
+    {grammarTopics.map((topic) => (
+      <option
+        key={topic.id}
+        value={topic.id}
+      >
+        {topic.name}
+      </option>
+    ))}
+
+  </select>
+
+  <button
+    type="button"
+    onClick={() => setShowTopicInput(true)}
+    className="w-10 border rounded hover:bg-gray-100"
+    title="Add Grammar Topic"
+  >
+    +
+  </button>
+
+</div>
+
+{
+  showTopicInput && (
+
+    <div className="flex gap-2 mt-3">
+
+      <input
+        value={newTopicName}
+        onChange={(e) => setNewTopicName(e.target.value)}
+        placeholder="New Grammar Topic"
+        className="border p-2 rounded flex-1"
+      />
+
+      <button
+  type="button"
+  onClick={async () => {
+
+    if (!newTopicName.trim()) {
+      alert("Enter Topic Name");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("grammar_topics")
+      .insert([
+        {
+          name: newTopicName,
+          sort_order: grammarTopics.length + 1
+        }
+      ]);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    await loadGrammarTopics();
+
+    setNewTopicName("");
+
+    setShowTopicInput(false);
+
+  }}
+  className="bg-green-600 text-white px-4 rounded"
+>
+  Save
+</button>
+
+      <button
+        type="button"
+        onClick={() => {
+
+          setShowTopicInput(false);
+
+          setNewTopicName("");
+
+        }}
+        className="bg-gray-400 text-white px-4 rounded"
+      >
+        Cancel
+      </button>
+
+    </div>
+
+  )
+}
+</div>
+<div className="col-span-4">
+
+  <label className="block mb-1 font-medium">
+    Table Name
+  </label>
+
+  <input
+    type="text"
+    value={tableName}
+    onChange={(e) => setTableName(e.target.value)}
+    placeholder="Affirmative / Negative / Interrogative"
+    className="border p-2 w-full rounded"
+  />
+
+</div>
+        <div className="col-span-2">
           <label className="block mb-1 font-medium">
-            Table Name
-          </label>
-
-          <input
-            value={tableName}
-            onChange={(e)=>setTableName(e.target.value)}
-            className="border p-2 w-full rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">
-            Total Rows
+            Rows
           </label>
 
           <input
@@ -166,9 +306,9 @@ if(cells){
           />
         </div>
 
-        <div>
+        <div className="col-span-2">
           <label className="block mb-1 font-medium">
-            Total Columns
+            Columns
           </label>
 
           <input
@@ -217,7 +357,13 @@ if(cells){
       <button
 
   onClick={async()=>{
+if(!selectedGrammarTopic){
 
+  alert("Please select Grammar Topic");
+
+  return;
+
+}
     if(!tableName.trim()){
 
       alert("Enter table name");
@@ -251,6 +397,7 @@ if(editingTableId){
     .insert([
       {
         name: tableName,
+        topic_id: selectedGrammarTopic,
         total_rows: totalRows,
         total_columns: totalColumns
       }
