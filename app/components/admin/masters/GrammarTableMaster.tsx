@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabaseClient";
-
 export default function GrammarTableMaster() {
 
   const [tableName, setTableName] = useState("");
-  const [totalRows, setTotalRows] = useState(10);
+  
+  const [totalRows, setTotalRows] = useState(2);
   const [totalColumns, setTotalColumns] = useState(5);
 
 const updateColumns = (value:number) => {
@@ -41,6 +41,7 @@ const updateColumns = (value:number) => {
     "Object"
   ]);
 const [savedTables, setSavedTables] = useState<any[]>([]);
+
 const [selectedTable, setSelectedTable] =
   useState<any>(null);
 
@@ -53,6 +54,7 @@ const [selectedHeaders, setSelectedHeaders] =
 
 const [selectedGrammarTopic, setSelectedGrammarTopic] =
   useState("");
+  
   const [showTopicInput, setShowTopicInput] = useState(false);
 
 const [newTopicName, setNewTopicName] = useState("");
@@ -98,18 +100,39 @@ useEffect(() => {
   loadGrammarTopics();
 
 }, []);
+useEffect(() => {
+
+  loadTables();
+
+}, [selectedGrammarTopic]);
+
 
 const loadTables = async () => {
 
-  const { data } = await supabase
-    .from("grammar_tables")
-    .select("*")
-    .order("created_at", { ascending: false });
+ let query = supabase
+  .from("grammar_tables")
+  .select("*");
 
-  if (data) {
-    setSavedTables(data);
-  }
+if (selectedGrammarTopic) {
 
+  query = query.eq(
+    "topic_id",
+    selectedGrammarTopic
+  );
+
+}
+
+const { data } = await query.order(
+  "created_at",
+  { ascending: false }
+);
+
+if (data) {
+
+  setSavedTables(data);
+
+
+}
 };
 
 const loadGrammarTopics = async () => {
@@ -183,7 +206,11 @@ const openTable = async (table: any) => {
 
   <select
     value={selectedGrammarTopic}
-    onChange={(e) => setSelectedGrammarTopic(e.target.value)}
+   onChange={(e) => {
+
+  setSelectedGrammarTopic(e.target.value);
+
+}}
     className="border p-2 rounded flex-1"
   >
     <option value="">
@@ -287,7 +314,12 @@ const openTable = async (table: any) => {
   <input
     type="text"
     value={tableName}
-    onChange={(e) => setTableName(e.target.value)}
+    onChange={(e) => {
+
+  setTableName(e.target.value);
+
+  
+}}
     placeholder="Affirmative / Negative / Interrogative"
     className="border p-2 w-full rounded"
   />
@@ -451,7 +483,7 @@ if(editingTableId){
 
 setTableName("");
 
-setTotalRows(10);
+setTotalRows(2);
 
 updateColumns(5);
 
