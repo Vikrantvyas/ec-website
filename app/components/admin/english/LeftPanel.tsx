@@ -212,18 +212,18 @@ export default function LeftPanel({
   }, [showPopup, editText]);
   return (
 
-    <div className="w-72 bg-white border-r flex flex-col relative">
+    <div className="w-[270px] bg-white border-r flex flex-col relative">
 
       {/* COURSE SELECT */}
       {/* =======================
     GRAMMAR TABLES
 ======================= */}
 
-      <div className="border-b">
+      <div className="h-1/2 flex flex-col">
 
         <button
           onClick={() => setShowGrammarTables(prev => !prev)}
-          className="w-full flex justify-between items-center px-3 py-2 bg-amber-100 font-semibold"
+          className="w-full flex justify-between items-center px-3 py-1.5 bg-amber-100 text-[13px] font-semibold"
         >
           <span>Grammar Tables</span>
 
@@ -233,15 +233,15 @@ export default function LeftPanel({
         </button>
         {showGrammarTables && (
 
-          <div className="p-2 space-y-2">
+          <div className="flex-1 overflow-y-auto px-3 pt-1 pb-3">
 
             {grammarTopics.map((topic: any) => (
 
-              <div key={topic.id} className="mb-2">
+              <div key={topic.id} className="mb-1">
 
                 <div
                   onClick={() => toggleGrammarTopic(topic.id)}
-                  className="w-full flex justify-between items-center px-3 py-2 rounded cursor-pointer border bg-gray-200 border-gray-300"
+                  className="w-full flex justify-between items-center py-1 text-[13px] cursor-pointer"
                 >
                   <>
                     <span>{topic.name}</span>
@@ -260,15 +260,16 @@ export default function LeftPanel({
 
                       <label
                         key={table.id}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 text-[13px]"
                       >
                         <input
-  type="radio"
-  name="grammarTable"
-  value={table.id}
-  checked={selectedGrammarTableId === table.id}
-  onChange={() => setSelectedGrammarTableId(table.id)}
-/>
+                          type="radio"
+                          className="w-3.5 h-3.5"
+                          name="grammarTable"
+                          value={table.id}
+                          checked={selectedGrammarTableId === table.id}
+                          onChange={() => setSelectedGrammarTableId(table.id)}
+                        />
 
                         <span>{table.name}</span>
 
@@ -287,15 +288,15 @@ export default function LeftPanel({
           </div>
 
         )}
-        <div className="border-b my-2"></div>
+
 
       </div>
-      <div className="p-3 border-b">
+      <div className="p-3">
 
         <select
           value={selectedCourse}
           onChange={(e) => setSelectedCourse(e.target.value)}
-          className="border px-2 py-2 rounded w-full"
+          className="border px-2 py-1.5 rounded w-full text-[13px]"
         >
           <option value="">Select Course</option>
 
@@ -310,7 +311,7 @@ export default function LeftPanel({
       </div>
 
       {/* DAYS + TOPICS */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div className="h-1/2 overflow-y-auto px-3 pt-1 pb-3">
 
         {days.map((d: any) => {
 
@@ -320,39 +321,37 @@ export default function LeftPanel({
 
           return (
 
-            <div key={d.id} className="mb-2">
+            <div key={d.id}>
 
               {/* DAY CHECKBOX */}
               <label
-                className={`w-full flex justify-between items-center px-3 py-2 rounded cursor-pointer border ${isSelected
-                  ? "bg-blue-600 text-white border-blue-700"
-                  : "bg-gray-200 border-gray-300"
+                className={`flex items-center justify-between py-1 px-1 text-[13px] cursor-pointer hover:bg-gray-100 ${isSelected
+                  ? "text-blue-700 font-normal"
+                  : "text-gray-800 font-normal"
                   }`}
               >
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+
                   <input
                     type="checkbox"
+                    className="w-3.5 h-3.5"
                     checked={isSelected}
                     onChange={() => toggleDay(d.id)}
                   />
-                  <div className="flex items-center gap-2">
-                    <span>
 
-                      {String(d.day_number).padStart(2, "0")}
+                  <span className="truncate">
+                    {String(d.day_number).padStart(2, "0")}
+                    {d.title ? ` · ${d.title}` : ""}
+                  </span>
 
-                      {d.title
-                        ? ` · ${d.title}`
-                        : ""}
-
-                    </span>
-
-                    {hasTopics && (
-                      <span className="font-bold text-lg">+</span>
-                    )}
-
-                  </div>
                 </div>
+
+                {hasTopics && (
+                  <span className="font-bold text-[13px] select-none">
+                    {isSelected ? "−" : "+"}
+                  </span>
+                )}
 
               </label>
 
@@ -371,15 +370,16 @@ export default function LeftPanel({
                       <label
                         key={t.id}
                         onContextMenu={(e) => handleRightClick(e, t)}
-                        className={`flex justify-between items-center px-2 py-1 rounded text-sm cursor-pointer ${isTopicSelected
+                        className={`flex justify-between items-center px-2 py-1 rounded text-[13px] cursor-pointer ${isTopicSelected
                           ? "bg-green-600 text-white"
                           : "bg-gray-100"
                           }`}
                       >
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-[13px]">
                           <input
                             type="checkbox"
+                            className="w-3.5 h-3.5"
                             checked={isTopicSelected}
                             onChange={() => toggleTopic(t.id)}
                           />
@@ -400,7 +400,7 @@ export default function LeftPanel({
 
               )}
 
-              <div className="border-b my-2"></div>
+
             </div>
 
           );
