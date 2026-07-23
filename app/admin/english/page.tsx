@@ -30,6 +30,27 @@ export default function EnglishPage() {
   const [selectedGrammarTableId, setSelectedGrammarTableId] = useState("");
   const [layout, setLayout] = useState<"horizontal" | "vertical">("horizontal");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [currentTime, setCurrentTime] = useState("");
+
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(
+        new Date().toLocaleTimeString("en-IN", {
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+          timeZone: "Asia/Kolkata",
+        })
+      );
+    };
+
+    updateTime();
+
+    const timer = setInterval(updateTime, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
   const vocabRef = useRef<any>(null);
 
   const selectedCourseName =
@@ -43,8 +64,8 @@ export default function EnglishPage() {
 
     if (isVocab) {
       setShowLeft(true);
-      setShowScore(true);
-      setShowBoard(false);
+      setShowScore(false);
+      setShowBoard(true);
       setShowGrammar(false);
     }
 
@@ -285,7 +306,8 @@ export default function EnglishPage() {
 
           {/* 🔥 HEADER HIDE FOR VOCAB + GRAMMAR */}
           {!(isVocab || showGrammar) && (
-            <div className="shadow-md bg-white px-4 py-2 text-sm flex justify-between z-10">
+            <div className="flex items-center justify-between w-full">
+
               <div>
                 Days: {selectedDays.map(id => {
                   const d = days.find(x => x.id === id);
@@ -301,6 +323,11 @@ export default function EnglishPage() {
                   }).join(", ")
                   : "All Topics"}
               </div>
+
+              <div className="font-semibold text-blue-700">
+                {currentTime}
+              </div>
+
             </div>
           )}
 
@@ -324,6 +351,7 @@ export default function EnglishPage() {
             showLeft={showLeft}
             showAll={showAll}
             layout={layout}
+            currentTime={currentTime}
 
             // 🔥 NEW
             selectedDays={selectedDays}
