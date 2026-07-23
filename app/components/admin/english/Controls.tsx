@@ -23,20 +23,24 @@ export default function Controls({
   showGrammar,
   setShowGrammar,
   layout,
-setLayout
+  setLayout
 }: any) {
 
   const baseBtn =
     "h-10 px-3 flex items-center justify-center rounded text-sm";
+  const groupBox =
+    "inline-flex items-center gap-2";
+  const toolBtn =
+    "h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors";
 
   return (
 
-    <div className="flex flex-wrap gap-2 justify-center items-center">
+    <div className={groupBox}>
 
       <button
         onClick={prevSentence}
         disabled={!isVocab && currentIndex === 0}
-        className={`${baseBtn} bg-gray-200 disabled:opacity-40`}
+        className={`${toolBtn} disabled:opacity-40`}
       >
         Prev
       </button>
@@ -44,14 +48,14 @@ setLayout
       <button
         onClick={nextSentence}
         disabled={!isVocab && currentIndex >= sentences.length}
-        className={`${baseBtn} bg-blue-600 text-white disabled:opacity-40`}
+        className={`${toolBtn} font-medium text-blue-700 disabled:opacity-40`}
       >
         Next
       </button>
 
       {!isVocab && (currentIndex >= sentences.length || showAll) && (
         <button
-          onClick={()=>{
+          onClick={() => {
             setShowAll(false);
             setCurrentIndex(0);
           }}
@@ -63,15 +67,15 @@ setLayout
 
       <button
         onClick={toggleShowAll}
-        className={`${baseBtn} bg-green-600 text-white`}
+        className={`${toolBtn} font-medium text-red-600`}
       >
         {showAll ? "Hide All" : "Show All"}
       </button>
 
       {isVocab && (
         <button
-          onClick={()=>setRandomMode((p:any)=>!p)}
-          className={`${baseBtn} bg-indigo-600 text-white`}
+          onClick={() => setRandomMode((p: any) => !p)}
+          className={`${toolBtn} font-medium text-green-700`}
         >
           {randomMode ? "Normal" : "Random"}
         </button>
@@ -79,83 +83,83 @@ setLayout
 
       <button
         onClick={prevTopic}
-        className={`${baseBtn} bg-orange-500 text-white`}
+        className={`${toolBtn} font-medium text-indigo-700`}
       >
         ← Topic
       </button>
 
       <button
         onClick={nextTopic}
-        className={`${baseBtn} bg-orange-600 text-white`}
+        className={`${toolBtn} font-medium text-orange-700`}
       >
         Topic →
       </button>
 
       {/* CHECKBOX GROUP */}
-      <div className={`${baseBtn} border bg-white gap-3`}>
+      <div className="flex items-center gap-3 pl-4 border-l border-gray-300">
 
-        <label className="flex items-center gap-1">
+        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
           <input
             type="checkbox"
             checked={showLeft}
-            onChange={()=>setShowLeft((p:any)=>!p)}
+            onChange={() => setShowLeft((p: any) => !p)}
           />
           Left
         </label>
 
-        <label className="flex items-center gap-1">
+        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
           <input
             type="checkbox"
             checked={showBoard}
-            onChange={()=>setShowBoard((p:any)=>!p)}
+            onChange={() => setShowBoard((p: any) => !p)}
           />
           Board
         </label>
 
-        <label className="flex items-center gap-1">
+        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
           <input
             type="checkbox"
             checked={showScore}
-            onChange={()=>setShowScore((p:any)=>!p)}
+            onChange={() => setShowScore((p: any) => !p)}
           />
           Score
         </label>
 
         {/* 🔥 FORCE SHOW */}
-        <label className="flex items-center gap-1">
+        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
           <input
             type="checkbox"
             checked={showGrammar}
-            onChange={()=>setShowGrammar((p:any)=>!p)}
+            onChange={() => setShowGrammar((p: any) => !p)}
           />
           Grammar
         </label>
 
       </div>
-<div className={`${baseBtn} border bg-white gap-3`}>
+      <div className="flex items-center gap-3 pl-4 border-l border-gray-300">
 
-  <label className="flex items-center gap-1">
-    <input
-      type="radio"
-      name="layout"
-      checked={layout === "horizontal"}
-      onChange={()=>setLayout("horizontal")}
-    />
-    Left-Right
-  </label>
+        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
+          <input
+            type="radio"
+            name="layout"
+            checked={layout === "horizontal"}
+            onChange={() => setLayout("horizontal")}
+          />
+          Left-Right
+        </label>
 
-  <label className="flex items-center gap-1">
-    <input
-      type="radio"
-      name="layout"
-      checked={layout === "vertical"}
-      onChange={()=>setLayout("vertical")}
-    />
-    Up-Down
-  </label>
+        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
+          <input
+            type="radio"
+            name="layout"
+            checked={layout === "vertical"}
+            onChange={() => setLayout("vertical")}
+          />
+          Up-Down
+        </label>
 
-</div>
+      </div>
     </div>
-    
+
   );
 }
