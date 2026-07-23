@@ -30,7 +30,8 @@ export default function MainBoard({
   topics,
   layout,
   days,
-selectedGrammarTableId,
+  currentTime,
+  selectedGrammarTableId,
 }: any) {
 
   const [resultData, setResultData] = useState<any[]>([]);
@@ -219,7 +220,7 @@ selectedGrammarTableId,
             >
 
               {/* 🔥 TOP HEADER */}
-              <div className="bg-blue-200 font-bold px-3 py-2 text-sm border-b flex flex-wrap gap-2">
+              <div className="bg-blue-200 font-bold px-3 py-2 text-sm border-b flex items-center">
 
                 <span className="bg-yellow-300 px-2 rounded">
                   Day {selectedDays?.map((id: any) => {
@@ -228,7 +229,7 @@ selectedGrammarTableId,
                   }).join(", ")}
                 </span>
 
-                <span className="bg-green-300 px-2 rounded">
+                <span className="bg-green-300 px-2 rounded font-normal">
                   {selectedTopics?.length > 0
                     ? selectedTopics.map((id: any) => {
                       const t = topics?.find((x: any) => x.id === id);
@@ -236,9 +237,10 @@ selectedGrammarTableId,
                     }).join(", ")
                     : "All Topics"}
                 </span>
-
+                <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
+                  {currentTime}
+                </div>
               </div>
-
               <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
                 {/* RESULT VIEW */}
@@ -352,8 +354,8 @@ selectedGrammarTableId,
                 } ${!isVertical ? "border-l" : "border-t"} flex`}
             >
               <GrammarBoard
-  selectedGrammarTableId={selectedGrammarTableId}
-/>
+                selectedGrammarTableId={selectedGrammarTableId}
+              />
             </div>
           )}
 
