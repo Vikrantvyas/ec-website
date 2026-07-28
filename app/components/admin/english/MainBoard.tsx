@@ -5,7 +5,7 @@ import WhiteBoard from "./WhiteBoard";
 import VocabularyPlayer from "./VocabularyPlayer";
 import ScoreCard from "./ScoreCard";
 import GrammarBoard from "./GrammarBoard";
-
+import SentencePlayer from "./SentencePlayer";
 export default function MainBoard({
   isVocab,
   isGrammar,
@@ -156,42 +156,15 @@ export default function MainBoard({
                     showAll={showAll}
                   />
 
-                ) : showBoard ? (
 
-                  <div className="space-y-1 p-2">
-                    {visible.map((item: any, i: number) => (
-                      <div
-                        key={item.id}
-                        onClick={() => setHighlightIndex((p: any) => p === i ? null : i)}
-                        className={`cursor-pointer text-2xl ${highlightIndex === i ? "bg-yellow-200" : ""
-                          }`}
-                      >
-                        {i + 1}. {item.sentence?.replace(/^\d+\.\s*/, "")}
-                      </div>
-                    ))}
-                  </div>
 
                 ) : (
 
-                  <div className="flex gap-4 p-2">
-
-                    <div className="w-1/2">
-                      {leftCol.map((item: any, i: number) => (
-                        <div key={item.id}>
-                          {i + 1}. {item.sentence}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="w-1/2">
-                      {rightCol.map((item: any, i: number) => (
-                        <div key={item.id}>
-                          {i + 11}. {item.sentence}
-                        </div>
-                      ))}
-                    </div>
-
-                  </div>
+                  <SentencePlayer
+                    data={visible}
+                    highlightIndex={highlightIndex}
+                    setHighlightIndex={setHighlightIndex}
+                  />
 
                 )}
 
@@ -245,6 +218,7 @@ export default function MainBoard({
 
                 {/* RESULT VIEW */}
                 {showResult ? (
+
                   <div className="p-4 space-y-3">
 
                     <div className="flex justify-between items-center mb-3">
@@ -268,9 +242,7 @@ export default function MainBoard({
                           {i + 1}. {groupedResult[score].join(" | ")}
                         </div>
 
-                        <div className="font-bold">
-                          {score}
-                        </div>
+                        <div className="font-bold">{score}</div>
                       </div>
                     ))}
 
@@ -285,61 +257,23 @@ export default function MainBoard({
                     showAll={showAll}
                   />
 
-                ) : showBoard ? (
-
-                  <div className="space-y-1 p-2">
-                    {visible.map((item: any, i: number) => (
-                      <div
-                        key={item.id}
-                        onClick={() => setHighlightIndex((p: any) => p === i ? null : i)}
-                        className={`cursor-pointer select-none text-2xl leading-tight flex ${highlightIndex === i ? "bg-yellow-200" : ""
-                          }`}
-                      >
-                        <div className="w-10 shrink-0">{i + 1}.</div>
-                        <div className="flex-1">
-                          {item.sentence?.replace(/^\d+\.\s*/, "")}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
                 ) : (
 
-                  <div className="flex gap-4 p-2">
-
-                    <div className="w-1/2 space-y-1">
-                      {leftCol.map((item: any, i: number) => (
-                        <div
-                          key={item.id}
-                          onClick={() => setHighlightIndex((p: any) => p === i ? null : i)}
-                          className={`cursor-pointer select-none text-2xl leading-tight text-green-600 ${highlightIndex === i ? "bg-yellow-200" : ""
-                            }`}
-                        >
-                          {i + 1}. {item.sentence?.replace(/^\d+\.\s*/, "")}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="w-1/2 space-y-1">
-                      {rightCol.map((item: any, i: number) => {
-                        const realIndex = i + 10;
-
-                        return (
-                          <div
-                            key={item.id}
-                            onClick={() => setHighlightIndex((p: any) => p === realIndex ? null : realIndex)}
-                            className={`cursor-pointer select-none text-2xl leading-tight text-red-600 ${highlightIndex === realIndex ? "bg-yellow-200" : ""
-                              }`}
-                          >
-                            {realIndex + 1}. {item.sentence?.replace(/^\d+\.\s*/, "")}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                  </div>
+                  <SentencePlayer
+                    data={visible}
+                    highlightIndex={highlightIndex}
+                    setHighlightIndex={setHighlightIndex}
+                  />
 
                 )}
+
+                
+
+               
+
+               
+
+                
 
               </div>
             </div>
@@ -379,9 +313,10 @@ export default function MainBoard({
             </div>
           )}
 
-        </div>
+        </div >
 
-      )}
+      )
+      }
     </>
 
   );
