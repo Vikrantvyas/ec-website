@@ -304,32 +304,7 @@ export default function EnglishPage() {
           style={{ width: "25cm", height: "12cm" }}
         >
 
-          {/* 🔥 HEADER HIDE FOR VOCAB + GRAMMAR */}
-          {!(isVocab || showGrammar) && (
-            <div className="flex items-center justify-between w-full">
-
-              <div>
-                Days: {selectedDays.map(id => {
-                  const d = days.find(x => x.id === id);
-                  return d?.day_number;
-                }).join(", ")}
-              </div>
-
-              <div>
-                Topics: {selectedTopics.length > 0
-                  ? selectedTopics.map(id => {
-                    const t = topics.find(x => x.id === id);
-                    return t?.topic_name;
-                  }).join(", ")
-                  : "All Topics"}
-              </div>
-
-              <div className="font-semibold text-blue-700">
-                {currentTime}
-              </div>
-
-            </div>
-          )}
+                  
 
           <MainBoard
             isVocab={isVocab}
