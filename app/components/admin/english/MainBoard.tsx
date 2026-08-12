@@ -23,6 +23,7 @@ export default function MainBoard({
   vocabRef,
   randomMode,
   showAll,
+  currentIndex,
 
   // 🔥 NEW PROPS
   selectedDays,
@@ -164,6 +165,9 @@ export default function MainBoard({
                     data={visible}
                     highlightIndex={highlightIndex}
                     setHighlightIndex={setHighlightIndex}
+                    random={randomMode}
+                    showAll={showAll}
+                    currentIndex={currentIndex}
                   />
 
                 )}
@@ -263,17 +267,20 @@ export default function MainBoard({
                     data={visible}
                     highlightIndex={highlightIndex}
                     setHighlightIndex={setHighlightIndex}
+                    random={randomMode}
+                    showAll={showAll}
+                    currentIndex={currentIndex}
                   />
 
                 )}
 
-                
 
-               
 
-               
 
-                
+
+
+
+
 
               </div>
             </div>

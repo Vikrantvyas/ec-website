@@ -325,6 +325,7 @@ export default function EnglishPage() {
             randomMode={randomMode}
             showLeft={showLeft}
             showAll={showAll}
+            currentIndex={currentIndex}
             layout={layout}
             currentTime={currentTime}
 

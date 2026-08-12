@@ -15,6 +15,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
   const { data, random, showAll } = props;
 
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const [showEnglish, setShowEnglish] = useState(false);
   const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
   const [list, setList] = useState<any[]>([]);
   const [marks, setMarks] = useState<{ [key: number]: string }>({});
@@ -50,43 +51,56 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
   // NEXT
   const handleNext = () => {
 
-    if (showAll) return;
+  if (showAll) return;
 
-    if (currentIndex === -1) {
-      setCurrentIndex(0);
-      return;
-    }
+  // First click → first Hindi
+  if (currentIndex === -1) {
+    setCurrentIndex(0);
+    setShowEnglish(false);
+    return;
+  }
+
+  // Hindi is already visible → show English
+  if (!showEnglish) {
+    setShowEnglish(true);
 
     setRevealedAnswers((prev) => {
-
       if (prev.includes(currentIndex)) return prev;
-
       return [...prev, currentIndex];
-
     });
 
-    if (currentIndex < list.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    }
+    return;
+  }
 
-  };
+  // English is visible → move to next Hindi
+  if (currentIndex < list.length - 1) {
+    setCurrentIndex((prev) => prev + 1);
+    setShowEnglish(false);
+  }
+
+};
 
   // PREV
   const handlePrev = () => {
 
-    if (showAll) return;
+  if (showAll) return;
 
-    if (currentIndex <= 0) return;
+  // Nothing to go back to
+  if (currentIndex < 0) return;
 
-    const prevIndex = currentIndex - 1;
+  // English is visible → go back to Hindi
+  if (showEnglish) {
+    setShowEnglish(false);
+    return;
+  }
 
-    setRevealedAnswers((prev) =>
-      prev.filter((i) => i < prevIndex)
-    );
+  // Hindi is visible → go to previous English
+  if (currentIndex > 0) {
+    setCurrentIndex((prev) => prev - 1);
+    setShowEnglish(true);
+  }
 
-    setCurrentIndex(prevIndex);
-
-  };
+};
 
   // MARK CORRECT
   const markCorrect = () => {

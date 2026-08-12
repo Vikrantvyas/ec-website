@@ -1,66 +1,112 @@
 "use client";
 
+import {
+  forwardRef,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+const shuffleArray = (arr: any[]) => {
+  return [...arr].sort(() => Math.random() - 0.5);
+};
+
 type Props = {
   data: any[];
   highlightIndex: number | null;
   setHighlightIndex: any;
+  random?: boolean;
+  showAll?: boolean;
+  currentIndex: number;
 };
 
-export default function SentencePlayer({
-  data,
-  highlightIndex,
-  setHighlightIndex,
-}: Props) {
+const SentencePlayer = forwardRef<any, Props>(
+  (
+    {
+      data,
+      highlightIndex,
+      setHighlightIndex,
+      random = false,
+      showAll = false,
+      currentIndex,
+    },
+    ref
+  ) => {
+    const [list, setList] = useState<any[]>([]);
+    
 
-  return (
-    <div className="space-y-2 p-2">
+    const scrollRef = useRef<HTMLDivElement>(null);
 
-      {data.map((item: any, i: number) => {
+   useEffect(() => {
+  const newList = random
+    ? shuffleArray(data || [])
+    : (data || []);
 
-        const text =
-          item.sentence?.replace(/^\d+\.\s*/, "") || "";
+  setList(newList);
+}, [data, random]);
 
-        const parts = text.split(" - ");
+    useEffect(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop =
+          scrollRef.current.scrollHeight;
+      }
+    }, [currentIndex]);
 
-        const hindi = parts[0] || "";
+    const visible = showAll
+      ? list
+      : currentIndex === -1
+      ? []
+      : list.slice(0, currentIndex + 1);
 
-        const english = parts.slice(1).join(" - ");
+    return (
+      <div
+        ref={scrollRef}
+        className="space-y-2 p-2 overflow-y-auto h-full"
+      >
+        {visible.map((item: any, i: number) => {
+          const text =
+            item.sentence?.replace(/^\d+\.\s*/, "") || "";
 
-        return (
+          const parts = text.split(" - ");
 
-          <div
-            key={item.id}
-            onClick={() =>
-              setHighlightIndex((p: any) =>
-                p === i ? null : i
-              )
-            }
-            className={`text-xl flex cursor-pointer ${
-              highlightIndex === i
-                ? "bg-yellow-100"
-                : ""
-            }`}
-          >
+          const hindi = parts[0] || "";
+          const english = parts.slice(1).join(" - ");
 
-            <div className="w-10">
-              {i + 1}.
+          return (
+            <div
+              key={item.id}
+              onClick={() =>
+                setHighlightIndex((p: any) =>
+                  p === i ? null : i
+                )
+              }
+              className={`text-xl flex cursor-pointer ${
+                i === currentIndex && !showAll
+                  ? "bg-yellow-100"
+                  : highlightIndex === i
+                  ? "bg-blue-100"
+                  : ""
+              }`}
+            >
+              <div className="w-10">
+                {i + 1}.
+              </div>
+
+              <div className="w-1/2 text-lg leading-snug text-red-600">
+                {hindi}
+              </div>
+
+              <div className="w-1/2 text-[18px] leading-[1.35] font-normal text-green-600">
+                {english}
+              </div>
             </div>
+          );
+        })}
+      </div>
+    );
+  }
+);
 
-            <div className="w-1/2 text-lg leading-snug text-red-600">
-              {hindi}
-            </div>
+SentencePlayer.displayName = "SentencePlayer";
 
-            <div className="w-1/2 text-[18px] leading-[1.35] font-normal text-green-600">
-              {english}
-            </div>
-
-          </div>
-
-        );
-
-      })}
-
-    </div>
-  );
-
-}
+export default SentencePlayer;
