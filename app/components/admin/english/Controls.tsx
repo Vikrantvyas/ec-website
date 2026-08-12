@@ -53,18 +53,6 @@ export default function Controls({
         Next
       </button>
 
-      {!isVocab && (currentIndex >= sentences.length || showAll) && (
-        <button
-          onClick={() => {
-            setShowAll(false);
-            setCurrentIndex(0);
-          }}
-          className={`${baseBtn} bg-red-600 text-white`}
-        >
-          Reset
-        </button>
-      )}
-
       <button
         onClick={toggleShowAll}
         className={`${toolBtn} font-medium text-red-600`}
@@ -72,14 +60,12 @@ export default function Controls({
         {showAll ? "Hide All" : "Show All"}
       </button>
 
-      {isVocab && (
-        <button
-          onClick={() => setRandomMode((p: any) => !p)}
-          className={`${toolBtn} font-medium text-green-700`}
-        >
-          {randomMode ? "Normal" : "Random"}
-        </button>
-      )}
+      <button
+        onClick={() => setRandomMode((p: any) => !p)}
+        className={`${toolBtn} font-medium text-green-700`}
+      >
+        {randomMode ? "Normal" : "Random"}
+      </button>
 
       <button
         onClick={prevTopic}
