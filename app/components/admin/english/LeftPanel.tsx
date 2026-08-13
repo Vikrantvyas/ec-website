@@ -311,103 +311,124 @@ export default function LeftPanel({
       </div>
 
       {/* DAYS + TOPICS */}
-      <div className="h-1/2 overflow-y-auto px-3 pt-1 pb-3">
+<div className="flex-1 min-h-0 overflow-y-auto px-3 pt-1 pb-3">
 
-        {days.map((d: any) => {
+  <div className="flex flex-col">
 
-          const dayTopics = topics.filter((t: any) => t.day_id === d.id);
-          const isSelected = selectedDays.includes(d.id);
-          const hasTopics = dayTopics.length > 0;
+    {days.map((d: any) => {
 
-          return (
+      const dayTopics = topics.filter(
+        (t: any) => t.day_id === d.id
+      );
 
-            <div key={d.id}>
+      const isSelected = selectedDays.includes(d.id);
+      const hasTopics = dayTopics.length > 0;
 
-              {/* DAY CHECKBOX */}
-              <label
-                className={`flex items-center justify-between py-1 px-1 text-[13px] cursor-pointer hover:bg-gray-100 ${isSelected
-                  ? "text-blue-700 font-normal"
-                  : "text-gray-800 font-normal"
-                  }`}
-              >
+      return (
+        <div
+          key={d.id}
+          className="flex flex-col w-full"
+        >
 
-                <div className="flex items-center gap-2 min-w-0">
+          {/* DAY ROW */}
+          <label
+            className={`flex shrink-0 items-center justify-between w-full py-1 px-1 text-[13px] cursor-pointer hover:bg-gray-100 ${
+              isSelected
+                ? "text-blue-700"
+                : "text-gray-800"
+            }`}
+          >
 
-                  <input
-                    type="checkbox"
-                    className="w-3.5 h-3.5"
-                    checked={isSelected}
-                    onChange={() => toggleDay(d.id)}
-                  />
+            <div className="flex items-center gap-2 min-w-0">
 
-                  <span className="truncate">
-                    {String(d.day_number).padStart(2, "0")}
-                    {d.title ? ` · ${d.title}` : ""}
-                  </span>
+              <input
+                type="checkbox"
+                className="w-3.5 h-3.5 shrink-0"
+                checked={isSelected}
+                onChange={() => toggleDay(d.id)}
+              />
 
-                </div>
-
-                {hasTopics && (
-                  <span className="font-bold text-[13px] select-none">
-                    {isSelected ? "−" : "+"}
-                  </span>
-                )}
-
-              </label>
-
-              {/* TOPICS */}
-              {isSelected && hasTopics && (
-
-                <div className="ml-4 mt-1 space-y-1">
-
-                  {dayTopics.map((t: any) => {
-
-                    const count = t.sentences?.[0]?.count || 0;
-                    const isTopicSelected = selectedTopics.includes(t.id);
-
-                    return (
-
-                      <label
-                        key={t.id}
-                        onContextMenu={(e) => handleRightClick(e, t)}
-                        className={`flex justify-between items-center px-2 py-1 rounded text-[13px] cursor-pointer ${isTopicSelected
-                          ? "bg-green-600 text-white"
-                          : "bg-gray-100"
-                          }`}
-                      >
-
-                        <div className="flex items-center gap-2 text-[13px]">
-                          <input
-                            type="checkbox"
-                            className="w-3.5 h-3.5"
-                            checked={isTopicSelected}
-                            onChange={() => toggleTopic(t.id)}
-                          />
-                          <span>{t.topic_name}</span>
-                        </div>
-
-                        {count > 0 && (
-                          <span className="text-xs">({count})</span>
-                        )}
-
-                      </label>
-
-                    );
-
-                  })}
-
-                </div>
-
-              )}
-
+              <span className="truncate">
+                {String(d.day_number).padStart(2, "0")}
+                {d.title ? ` · ${d.title}` : ""}
+              </span>
 
             </div>
 
-          );
+            {hasTopics && (
+              <span className="font-bold text-[13px] shrink-0">
+                {isSelected ? "−" : "+"}
+              </span>
+            )}
 
-        })}
+          </label>
 
-      </div>
+          {/* TOPICS */}
+          {isSelected && hasTopics && (
+
+            <div className="flex flex-col ml-4 gap-1 pb-1">
+
+              {dayTopics.map((t: any) => {
+
+                const count =
+                  t.sentences?.[0]?.count || 0;
+
+                const isTopicSelected =
+                  selectedTopics.includes(t.id);
+
+                return (
+                  <label
+                    key={t.id}
+                    onContextMenu={(e) =>
+                      handleRightClick(e, t)
+                    }
+                    className={`flex shrink-0 items-center justify-between w-full px-2 py-1 rounded text-[13px] cursor-pointer ${
+                      isTopicSelected
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-100"
+                    }`}
+                  >
+
+                    <div className="flex items-center gap-2 min-w-0">
+
+                      <input
+                        type="checkbox"
+                        className="w-3.5 h-3.5 shrink-0"
+                        checked={isTopicSelected}
+                        onChange={() =>
+                          toggleTopic(t.id)
+                        }
+                      />
+
+                      <span className="truncate">
+                        {t.topic_name}
+                      </span>
+
+                    </div>
+
+                    {count > 0 && (
+                      <span className="text-xs shrink-0 ml-2">
+                        ({count})
+                      </span>
+                    )}
+
+                  </label>
+                );
+
+              })}
+
+            </div>
+
+          )}
+
+        </div>
+      );
+
+    })}
+
+  </div>
+
+</div>
 
       {/* RIGHT CLICK MENU */}
       {menu && (
