@@ -22,7 +22,7 @@ export default function LeftPanel({
   const [showPopup, setShowPopup] = useState(false);
   const [selectedTopicData, setSelectedTopicData] = useState<any>(null);
   const [editText, setEditText] = useState("");
-  const [showGrammarTables, setShowGrammarTables] = useState(true);
+  const [showGrammarTables, setShowGrammarTables] = useState(false);
 
   const [grammarTopics, setGrammarTopics] =
     useState<any[]>([]);
@@ -219,7 +219,11 @@ export default function LeftPanel({
     GRAMMAR TABLES
 ======================= */}
 
-      <div className="h-1/2 flex flex-col">
+      <div
+  className={`flex flex-col shrink-0 ${
+    showGrammarTables ? "h-1/2" : "h-auto"
+  }`}
+>
 
         <button
           onClick={() => setShowGrammarTables(prev => !prev)}
