@@ -100,10 +100,12 @@ const renderPanel = (panel: string) => {
     return (
       <div
         key="left"
-        className={`${widthClass} flex flex-col border-l`}
+        className={`${
+  isVertical && showGrammar ? "w-full h-[30%]" : widthClass
+} flex flex-col border-l`}
       >
 
-        <div className="bg-blue-200 font-bold px-3 py-2 text-sm border-b flex items-center">
+        <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center">
 
           <span className="bg-yellow-300 px-2 rounded">
             Day {selectedDays?.map((id: any) => {
@@ -127,7 +129,7 @@ const renderPanel = (panel: string) => {
 
         </div>
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto text-xs">
 
           {showResult ? (
 
@@ -173,23 +175,28 @@ const renderPanel = (panel: string) => {
 
           ) : isVocab ? (
 
-            <VocabularyPlayer
-              ref={vocabRef}
-              data={sentences}
-              random={randomMode}
-              showAll={showAll}
-            />
+           <div className="text-xs">
+  <VocabularyPlayer
+  ref={vocabRef}
+  data={sentences}
+  random={randomMode}
+  showAll={showAll}
+  compact={isVertical}
+/>
+</div>
 
           ) : (
 
-            <SentencePlayer
-              data={visible}
-              highlightIndex={highlightIndex}
-              setHighlightIndex={setHighlightIndex}
-              random={randomMode}
-              showAll={showAll}
-              currentIndex={currentIndex}
-            />
+           <div className="text-xs">
+  <SentencePlayer
+    data={visible}
+    highlightIndex={highlightIndex}
+    setHighlightIndex={setHighlightIndex}
+    random={randomMode}
+    showAll={showAll}
+    currentIndex={currentIndex}
+  />
+</div>
 
           )}
 
@@ -203,7 +210,9 @@ const renderPanel = (panel: string) => {
     return (
       <div
         key="grammar"
-        className={`${widthClass} border-l flex`}
+        className={`${
+  isVertical && showLeft ? "w-full h-[70%]" : widthClass
+} ${isVertical ? "border-t" : "border-l"} flex`}
       >
         <GrammarBoard
           selectedGrammarTableId={selectedGrammarTableId}
@@ -216,7 +225,7 @@ const renderPanel = (panel: string) => {
     return (
       <div
         key="board"
-        className={`${widthClass} border-l flex`}
+        className={`${widthClass} ${isVertical ? "border-t" : "border-l"} flex`}
       >
         <WhiteBoard />
       </div>
@@ -227,7 +236,7 @@ const renderPanel = (panel: string) => {
     return (
       <div
         key="score"
-        className={`${widthClass} border-l flex`}
+        className={`${widthClass} ${isVertical ? "border-t" : "border-l"} flex`}
       >
         <ScoreCard
           onCorrect={handleCorrect}
@@ -245,108 +254,15 @@ const renderPanel = (panel: string) => {
   return null;
 };
   return (
-
-    <>
-      {/* SPECIAL CASE: TOP-BOTTOM */}
-      {isVertical && showGrammar && showLeft ? (
-
-        <div className="flex flex-col w-full h-full overflow-hidden min-h-0">
-
-          {/* TOP */}
-          <div
-            
-          >
-            <GrammarBoard
-              selectedGrammarTableId={selectedGrammarTableId}
-            />
-          </div>
-
-          {/* BOTTOM */}
-          <div
-            
-          >
-            <div className="w-full h-full overflow-hidden flex flex-col justify-end">
-
-              {/* LEFT PANEL CONTENT COPY */}
-              <div
-                ref={scrollRef}
-                className="flex-1 overflow-hidden"
-              >
-
-                {showResult ? (
-                  <div className="p-4 space-y-3">
-
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="text-xl font-bold">Result</div>
-
-                      <button
-                        onClick={() => setShowResult(false)}
-                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                      >
-                        Back
-                      </button>
-                    </div>
-
-                    {sortedScores.map((score, i) => (
-                      <div
-                        key={i}
-                        className={`flex justify-between border p-2 rounded ${i === 0 ? "bg-yellow-200 font-bold" : ""
-                          }`}
-                      >
-                        <div>
-                          {i + 1}. {groupedResult[score].join(" | ")}
-                        </div>
-
-                        <div className="font-bold">{score}</div>
-                      </div>
-                    ))}
-
-                  </div>
-
-                ) : isVocab ? (
-
-                  <VocabularyPlayer
-                    ref={vocabRef}
-                    data={sentences}
-                    random={randomMode}
-                    showAll={showAll}
-                  />
-
-
-
-                ) : (
-
-                  <SentencePlayer
-                    data={visible}
-                    highlightIndex={highlightIndex}
-                    setHighlightIndex={setHighlightIndex}
-                    random={randomMode}
-                    showAll={showAll}
-                    currentIndex={currentIndex}
-                  />
-
-                )}
-
-              </div>
-
-            </div>
-          </div>
-
-        </div>
-
-
-
-      ) : (
-
-        <div className={`flex flex-1 overflow-hidden ${isVertical ? "flex-col" : ""}`}>
-
-  {panelOrder.map(renderPanel)}
-
-</div>
-
-      )
-      }
-    </>
+  <>
+    <div
+      className={`flex flex-1 overflow-hidden ${
+        isVertical ? "flex-col" : "flex-row"
+      }`}
+    >
+      {panelOrder.map(renderPanel)}
+    </div>
+  </>
   );
 }
 
