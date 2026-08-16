@@ -86,18 +86,7 @@ useEffect(() => {
   setColumns([...baseCols, ...dynamicCols]);
 
 }, [tableData, headers]);
-useEffect(() => {
 
-  if (columns.length === 0) return;
-
-  const totalRows = tableData.reduce(
-    (acc: number, group: any) => acc + group.rows.length,
-    0
-  );
-
-  setVisibleCells(totalRows * columns.length);
-
-}, [columns, tableData]);
   const saveHistory = () => {
     setHistory(prev => [...prev, {
       tableData: JSON.parse(JSON.stringify(tableData)),
@@ -359,7 +348,34 @@ const revealNextCell = () => {
 useEffect(() => {
 
   const handleKey = (e:any) => {
+if (e.key === "Enter") {
+  e.preventDefault();
 
+  const rowSize = columns.length;
+
+  if (rowSize === 0) return;
+
+  if (e.shiftKey) {
+
+    const previousRow =
+      Math.ceil(visibleCells / rowSize) - 1;
+
+    setVisibleCells(
+      Math.max(0, previousRow * rowSize)
+    );
+
+  } else {
+
+    const currentRow =
+      Math.floor(visibleCells / rowSize);
+
+    const nextRowEnd =
+      (currentRow + 1) * rowSize;
+
+    setVisibleCells(nextRowEnd);
+
+  }
+}
     if(e.key === "ArrowRight"){
       revealNextCell();
     }
@@ -467,7 +483,7 @@ headers?.forEach((h:string)=>{
       <td
         key="index"
         rowSpan={group.rows.length}
-        className="border p-2 whitespace-nowrap leading-normal align-middle h-[44px]"
+        className="border-0 p-0 h-0"
       >
       </td>
     );
@@ -499,7 +515,7 @@ headers?.forEach((h:string)=>{
       <td
         key="hindi"
         rowSpan={group.rows.length}
-        className={`border p-2 whitespace-nowrap leading-[1.4] align-middle ${
+        className={`border-0 p-0 h-0 ${
   col.toLowerCase() === "wh"
   ? "min-w-[60px]"
   : ""
@@ -542,7 +558,7 @@ if(!isVisible){
   return (
     <td
       key={col}
-      className="border p-1 bg-gray-100"
+      className="border-0 p-0 h-0"
     >
     </td>
   );

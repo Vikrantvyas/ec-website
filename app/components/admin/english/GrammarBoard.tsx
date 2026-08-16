@@ -17,215 +17,181 @@ export default function GrammarBoard({
 
   const [tableData, setTableData] =
     useState<any[]>([]);
-const [tableHeaders, setTableHeaders] =
-  useState<any[]>([]);
-  useEffect(()=>{
+  const [tableHeaders, setTableHeaders] =
+    useState<any[]>([]);
+  useEffect(() => {
 
     loadTables();
 
-  },[]);
-useEffect(() => {
+  }, []);
+  useEffect(() => {
 
-  if (!selectedGrammarTableId) return;
+    if (!selectedGrammarTableId) return;
 
-  setSelectedTableId(selectedGrammarTableId);
+    setSelectedTableId(selectedGrammarTableId);
 
-  loadTableData(selectedGrammarTableId);
+    loadTableData(selectedGrammarTableId);
 
-}, [selectedGrammarTableId]);
-  const loadTables = async()=>{
+  }, [selectedGrammarTableId]);
+  const loadTables = async () => {
 
     const { data } = await supabase
       .from("grammar_tables")
       .select("*")
       .order("created_at");
 
-    if(data){
+    if (data) {
 
       setTables(data);
 
       if (data) {
 
-  setTables(data);
+        setTables(data);
 
-}
+      }
 
     }
 
   };
 
-  const loadTableData = async(tableId:string)=>{
+  const loadTableData = async (tableId: string) => {
 
-    const { data:headers } = await supabase
+    const { data: headers } = await supabase
       .from("grammar_headers")
       .select("*")
       .eq("table_id", tableId)
       .order("column_order");
 
-    const { data:cells } = await supabase
+    const { data: cells } = await supabase
       .from("grammar_cells")
       .select("*")
       .eq("table_id", tableId);
 
-    if(!headers || !cells){
+    if (!headers || !cells) {
 
       return;
 
     }
-setTableHeaders(headers);
-    const grouped:any = {};
+    setTableHeaders(headers);
+    const grouped: any = {};
 
-    cells.forEach((cell:any)=>{
+    cells.forEach((cell: any) => {
 
-      if(!grouped[cell.row_no]){
+      if (!grouped[cell.row_no]) {
 
         grouped[cell.row_no] = {
           id: cell.row_no,
           hindi: "",
-          rows:[{}]
+          rows: [{}]
         };
 
       }
 
       const header = headers.find(
-        (h:any)=>h.id === cell.header_id
+        (h: any) => h.id === cell.header_id
       );
 
-      if(!header) return;
+      if (!header) return;
 
       const key =
         header.header_name.toLowerCase();
-let finalKey = key;
+      let finalKey = key;
 
-if(key === "hv"){
+      if (key === "hv") {
 
-  finalKey = "hv1";
+        finalKey = "hv1";
 
-}
-      if(key === "hindi"){
+      }
+      if (key === "hindi") {
 
         grouped[cell.row_no].hindi =
           cell.cell_value;
 
       } else {
 
-       grouped[cell.row_no]
-  .rows[0][finalKey] =
-    cell.cell_value;
+        grouped[cell.row_no]
+          .rows[0][finalKey] =
+          cell.cell_value;
 
       }
 
     });
-console.log("HEADERS", headers);
+    console.log("HEADERS", headers);
 
-console.log("CELLS", cells);
+    console.log("CELLS", cells);
 
-console.log("GROUPED", grouped);
+    console.log("GROUPED", grouped);
     setTableData(
       Object.values(grouped)
     );
 
   };
-useEffect(() => {
+  useEffect(() => {
 
-  const handleKey = (e: KeyboardEvent) => {
+    const handleKey = (e: KeyboardEvent) => {
 
-    if (tables.length === 0) return;
+      if (tables.length === 0) return;
 
-    const currentIndex = tables.findIndex(
-      (t: any) => t.id === selectedTableId
-    );
+      const currentIndex = tables.findIndex(
+        (t: any) => t.id === selectedTableId
+      );
 
-    // Page Down → Next Table
-    if (e.key === "PageDown") {
+      // Page Down → Next Table
+      if (e.key === "PageDown") {
 
-      e.preventDefault();
+        e.preventDefault();
 
-      if (currentIndex < tables.length - 1) {
+        if (currentIndex < tables.length - 1) {
 
-        const nextTable = tables[currentIndex + 1];
+          const nextTable = tables[currentIndex + 1];
 
-        setSelectedTableId(nextTable.id);
-        loadTableData(nextTable.id);
+          setSelectedTableId(nextTable.id);
+          loadTableData(nextTable.id);
 
-      }
-
-    }
-
-    // Page Up → Previous Table
-    if (e.key === "PageUp") {
-
-      e.preventDefault();
-
-      if (currentIndex > 0) {
-
-        const prevTable = tables[currentIndex - 1];
-
-        setSelectedTableId(prevTable.id);
-        loadTableData(prevTable.id);
+        }
 
       }
 
-    }
+      // Page Up → Previous Table
+      if (e.key === "PageUp") {
 
-  };
+        e.preventDefault();
 
-  window.addEventListener("keydown", handleKey);
+        if (currentIndex > 0) {
 
-  return () => {
-    window.removeEventListener("keydown", handleKey);
-  };
+          const prevTable = tables[currentIndex - 1];
 
-}, [tables, selectedTableId]);
+          setSelectedTableId(prevTable.id);
+          loadTableData(prevTable.id);
+
+        }
+
+      }
+
+    };
+
+    window.addEventListener("keydown", handleKey);
+
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+    };
+
+  }, [tables, selectedTableId]);
   return (
 
     <div className="w-full h-full p-4 overflow-auto flex flex-col gap-3">
 
       <GrammarTable
 
-  data={tableData}
+        data={tableData}
 
-  headers={
-    tableHeaders.map(
-      (h:any)=>h.header_name
-    )
-  }
-
-        tableSelector={
-
-          <select
-
-            value={selectedTableId}
-
-            onChange={(e)=>{
-
-              setSelectedTableId(
-                e.target.value
-              );
-
-              loadTableData(
-                e.target.value
-              );
-
-            }}
-
-            className="w-full bg-transparent outline-none text-left font-semibold pl-2"
-          >
-
-            {tables.map((table)=>(
-
-              <option
-                key={table.id}
-                value={table.id}
-              >
-                {table.name}
-              </option>
-
-            ))}
-
-          </select>
-
+        headers={
+          tableHeaders.map(
+            (h: any) => h.header_name
+          )
         }
+
+        
 
       />
 
