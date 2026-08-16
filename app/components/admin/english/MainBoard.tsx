@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import WhiteBoard from "./WhiteBoard";
 import VocabularyPlayer from "./VocabularyPlayer";
 import ScoreCard from "./ScoreCard";
@@ -37,14 +37,28 @@ export default function MainBoard({
 
   const [resultData, setResultData] = useState<any[]>([]);
   const [showResult, setShowResult] = useState(false);
-  const [activeControl, setActiveControl] = useState("left");
+  const [panelOrder, setPanelOrder] = useState<string[]>([]);
 
   const activePanels = [
-    showLeft && "left",
-    showGrammar && "grammar",
-    showBoard && "board",
-    showScore && "score"
-  ].filter(Boolean);
+  showLeft && "left",
+  showGrammar && "grammar",
+  showBoard && "board",
+  showScore && "score"
+].filter(Boolean) as string[];
+
+useEffect(() => {
+  setPanelOrder(prev => {
+    const stillActive = prev.filter(panel =>
+      activePanels.includes(panel)
+    );
+
+    const newlyActive = activePanels.filter(panel =>
+      !prev.includes(panel)
+    );
+
+    return [...stillActive, ...newlyActive];
+  });
+}, [showLeft, showGrammar, showBoard, showScore]);
 
   const isVertical = layout === "vertical";
 
@@ -80,7 +94,156 @@ export default function MainBoard({
   const sortedScores = Object.keys(groupedResult)
     .map(Number)
     .sort((a, b) => b - a);
+const renderPanel = (panel: string) => {
 
+  if (panel === "left" && showLeft) {
+    return (
+      <div
+        key="left"
+        className={`${widthClass} flex flex-col border-l`}
+      >
+
+        <div className="bg-blue-200 font-bold px-3 py-2 text-sm border-b flex items-center">
+
+          <span className="bg-yellow-300 px-2 rounded">
+            Day {selectedDays?.map((id: any) => {
+              const d = days?.find((x: any) => x.id === id);
+              return d?.day_number;
+            }).join(", ")}
+          </span>
+
+          <span className="bg-green-300 px-2 rounded font-normal">
+            {selectedTopics?.length > 0
+              ? selectedTopics.map((id: any) => {
+                  const t = topics?.find((x: any) => x.id === id);
+                  return t?.topic_name;
+                }).join(", ")
+              : "All Topics"}
+          </span>
+
+          <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
+            {currentTime}
+          </div>
+
+        </div>
+
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
+
+          {showResult ? (
+
+            <div className="p-4 space-y-3">
+
+              <div className="flex justify-between items-center mb-3">
+
+                <div className="text-xl font-bold">
+                  Result
+                </div>
+
+                <button
+                  onClick={() => setShowResult(false)}
+                  className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                >
+                  Back
+                </button>
+
+              </div>
+
+              {sortedScores.map((score, i) => (
+                <div
+                  key={i}
+                  className={`flex justify-between border p-2 rounded ${
+                    i === 0
+                      ? "bg-yellow-200 font-bold"
+                      : ""
+                  }`}
+                >
+
+                  <div>
+                    {i + 1}. {groupedResult[score].join(" | ")}
+                  </div>
+
+                  <div className="font-bold">
+                    {score}
+                  </div>
+
+                </div>
+              ))}
+
+            </div>
+
+          ) : isVocab ? (
+
+            <VocabularyPlayer
+              ref={vocabRef}
+              data={sentences}
+              random={randomMode}
+              showAll={showAll}
+            />
+
+          ) : (
+
+            <SentencePlayer
+              data={visible}
+              highlightIndex={highlightIndex}
+              setHighlightIndex={setHighlightIndex}
+              random={randomMode}
+              showAll={showAll}
+              currentIndex={currentIndex}
+            />
+
+          )}
+
+        </div>
+
+      </div>
+    );
+  }
+
+  if (panel === "grammar" && showGrammar) {
+    return (
+      <div
+        key="grammar"
+        className={`${widthClass} border-l flex`}
+      >
+        <GrammarBoard
+          selectedGrammarTableId={selectedGrammarTableId}
+        />
+      </div>
+    );
+  }
+
+  if (panel === "board" && showBoard) {
+    return (
+      <div
+        key="board"
+        className={`${widthClass} border-l flex`}
+      >
+        <WhiteBoard />
+      </div>
+    );
+  }
+
+  if (panel === "score" && showScore) {
+    return (
+      <div
+        key="score"
+        className={`${widthClass} border-l flex`}
+      >
+        <ScoreCard
+          onCorrect={handleCorrect}
+          onPass={handlePass}
+          onReset={handleReset}
+          onShowResult={(data: any) => {
+            setResultData(data);
+            setShowResult(true);
+          }}
+        />
+      </div>
+    );
+  }
+
+  return null;
+};
   return (
 
     <>
@@ -91,11 +254,7 @@ export default function MainBoard({
 
           {/* TOP */}
           <div
-            onClick={() => setActiveControl("grammar")}
-            className={`h-[70%] min-h-0 border-b overflow-auto ${activeControl === "grammar"
-              ? ""
-              : ""
-              }`}
+            
           >
             <GrammarBoard
               selectedGrammarTableId={selectedGrammarTableId}
@@ -104,11 +263,7 @@ export default function MainBoard({
 
           {/* BOTTOM */}
           <div
-            onClick={() => setActiveControl("left")}
-            className={`h-[30%] min-h-0 overflow-hidden ${activeControl === "left"
-              ? ""
-              : ""
-              }`}
+            
           >
             <div className="w-full h-full overflow-hidden flex flex-col justify-end">
 
@@ -185,146 +340,14 @@ export default function MainBoard({
 
         <div className={`flex flex-1 overflow-hidden ${isVertical ? "flex-col" : ""}`}>
 
-          {/* EXISTING OLD LAYOUT (UNCHANGED) */}
+  {panelOrder.map(renderPanel)}
 
-          {showLeft && (
-            <div
-              onClick={() => setActiveControl("left")}
-              className={`${widthClass} flex flex-col ${activeControl === "left"
-                ? ""
-                : ""
-                }`}
-            >
-
-              {/* 🔥 TOP HEADER */}
-              <div className="bg-blue-200 font-bold px-3 py-2 text-sm border-b flex items-center">
-
-                <span className="bg-yellow-300 px-2 rounded">
-                  Day {selectedDays?.map((id: any) => {
-                    const d = days?.find((x: any) => x.id === id);
-                    return d?.day_number;
-                  }).join(", ")}
-                </span>
-
-                <span className="bg-green-300 px-2 rounded font-normal">
-                  {selectedTopics?.length > 0
-                    ? selectedTopics.map((id: any) => {
-                      const t = topics?.find((x: any) => x.id === id);
-                      return t?.topic_name;
-                    }).join(", ")
-                    : "All Topics"}
-                </span>
-                <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
-                  {currentTime}
-                </div>
-              </div>
-              <div ref={scrollRef} className="flex-1 overflow-y-auto">
-
-                {/* RESULT VIEW */}
-                {showResult ? (
-
-                  <div className="p-4 space-y-3">
-
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="text-xl font-bold">Result</div>
-
-                      <button
-                        onClick={() => setShowResult(false)}
-                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                      >
-                        Back
-                      </button>
-                    </div>
-
-                    {sortedScores.map((score, i) => (
-                      <div
-                        key={i}
-                        className={`flex justify-between border p-2 rounded ${i === 0 ? "bg-yellow-200 font-bold" : ""
-                          }`}
-                      >
-                        <div>
-                          {i + 1}. {groupedResult[score].join(" | ")}
-                        </div>
-
-                        <div className="font-bold">{score}</div>
-                      </div>
-                    ))}
-
-                  </div>
-
-                ) : isVocab ? (
-
-                  <VocabularyPlayer
-                    ref={vocabRef}
-                    data={sentences}
-                    random={randomMode}
-                    showAll={showAll}
-                  />
-
-                ) : (
-
-                  <SentencePlayer
-                    data={visible}
-                    highlightIndex={highlightIndex}
-                    setHighlightIndex={setHighlightIndex}
-                    random={randomMode}
-                    showAll={showAll}
-                    currentIndex={currentIndex}
-                  />
-
-                )}
-
-
-
-
-
-
-
-
-
-              </div>
-            </div>
-          )}
-
-          {showGrammar && (
-            <div
-              onClick={() => setActiveControl("grammar")}
-              className={`${widthClass} ${activeControl === "grammar"
-                ? ""
-                : ""
-                } ${!isVertical ? "border-l" : "border-t"} flex`}
-            >
-              <GrammarBoard
-                selectedGrammarTableId={selectedGrammarTableId}
-              />
-            </div>
-          )}
-
-          {showBoard && (
-            <div className={`${widthClass} ${!isVertical ? "border-l" : "border-t"} flex`}>
-              <WhiteBoard />
-            </div>
-          )}
-
-          {showScore && (
-            <div className={`${widthClass} border-l flex`}>
-              <ScoreCard
-                onCorrect={handleCorrect}
-                onPass={handlePass}
-                onReset={handleReset}
-                onShowResult={(data: any) => {
-                  setResultData(data);
-                  setShowResult(true);
-                }}
-              />
-            </div>
-          )}
-
-        </div >
+</div>
 
       )
       }
     </>
-
   );
 }
+
+  
