@@ -508,9 +508,6 @@ onMouseEnter={() => {
 onMouseLeave={() => {
   setHoverRow(null);
 }}
-onMouseLeave={() => {
-  setHoverRow(null);
-}}
 >
 
                 {columns.map((col) => {
