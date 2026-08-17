@@ -1,56 +1,50 @@
-  import {
-    useState,
-    useEffect,
-    useRef,
-    forwardRef,
-    useImperativeHandle
-  } from "react";
+"use client";
 
-  const shuffleArray = (arr: any[]) => {
-    return [...arr].sort(() => Math.random() - 0.5);
-  };
+import {
+  useState,
+  useEffect,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 
-  const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
+const shuffleArray = (arr: any[]) => {
+  return [...arr].sort(() => Math.random() - 0.5);
+};
 
-    const { data, random, showAll, compact } = props;
+const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
+  const {
+    data,
+    random,
+    showAll,
+    compact,
+  } = props;
 
-    const [currentIndex, setCurrentIndex] = useState(-1);
-    const [showEnglish, setShowEnglish] = useState(false);
-    const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
-    const [list, setList] = useState<any[]>([]);
-    const [marks, setMarks] = useState<{ [key: number]: string }>({});
+  const [currentIndex, setCurrentIndex] = useState(-1);
+  const [showEnglish, setShowEnglish] = useState(false);
+  const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
+  const [list, setList] = useState<any[]>([]);
+  const [marks, setMarks] = useState<{ [key: number]: string }>({});
 
-    const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-    const safeData = data || [];
+  const safeData = data || [];
 
-    // RESET ON DATA CHANGE
-    useEffect(() => {
+  // RESET ON DATA CHANGE
+  useEffect(() => {
+    const newList = random
+      ? shuffleArray(safeData)
+      : safeData;
 
-      const newList = random
-        ? shuffleArray(safeData)
-        : safeData;
+    setList(newList);
+    setCurrentIndex(-1);
+    setShowEnglish(false);
+    setRevealedAnswers([]);
+    setMarks({});
+  }, [data, random]);
 
-      setList(newList);
-      setCurrentIndex(-1);
-      setRevealedAnswers([]);
-      setMarks({});
-
-    }, [data, random]);
-
-    // AUTO SCROLL
-    useEffect(() => {
-
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop =
-          scrollRef.current.scrollHeight;
-      }
-
-    }, [currentIndex]);
-
-    // NEXT
-    const handleNext = () => {
-
+  // NEXT
+  const handleNext = () => {
     if (showAll) return;
 
     // First click → first Hindi
@@ -60,180 +54,195 @@
       return;
     }
 
-    // Hindi is already visible → show English
+    // Hindi is visible → show English
     if (!showEnglish) {
       setShowEnglish(true);
 
       setRevealedAnswers((prev) => {
-        if (prev.includes(currentIndex)) return prev;
+        if (prev.includes(currentIndex)) {
+          return prev;
+        }
+
         return [...prev, currentIndex];
       });
 
       return;
     }
 
-    // English is visible → move to next Hindi
+    // English is visible → next Hindi
     if (currentIndex < list.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       setShowEnglish(false);
     }
-
   };
 
-    // PREV
-    const handlePrev = () => {
-
+  // PREV
+  const handlePrev = () => {
     if (showAll) return;
 
-    // Nothing to go back to
     if (currentIndex < 0) return;
 
-    // English is visible → go back to Hindi
+    // English visible → Hindi
     if (showEnglish) {
       setShowEnglish(false);
       return;
     }
 
-    // Hindi is visible → go to previous English
+    // Hindi visible → previous English
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
       setShowEnglish(true);
     }
-
   };
 
-    // MARK CORRECT
-    const markCorrect = () => {
+  // MARK CORRECT
+  const markCorrect = () => {
+    if (currentIndex >= 0) {
+      setRevealedAnswers((prev) => {
+        if (prev.includes(currentIndex)) {
+          return prev;
+        }
 
-      if (currentIndex >= 0) {
+        return [...prev, currentIndex];
+      });
 
-        setRevealedAnswers((prev) => {
+      setMarks((prev) => ({
+        ...prev,
+        [currentIndex]: "correct",
+      }));
+    }
 
-          if (prev.includes(currentIndex)) return prev;
+    handleNext();
+  };
 
-          return [...prev, currentIndex];
+  // MARK WRONG / PASS
+  const markWrong = () => {
+    if (currentIndex >= 0) {
+      setMarks((prev) => ({
+        ...prev,
+        [currentIndex]: "wrong",
+      }));
+    }
 
-        });
+    handleNext();
+  };
 
-        setMarks((prev) => ({
-          ...prev,
-          [currentIndex]: "correct"
-        }));
+  // RESET
+  const handleReset = () => {
+    setCurrentIndex(-1);
+    setShowEnglish(false);
+    setRevealedAnswers([]);
+    setMarks({});
+  };
 
-      }
+  // EXPOSE METHODS
+  useImperativeHandle(ref, () => ({
+    next: handleNext,
+    prev: handlePrev,
+    reset: handleReset,
+    markCorrect,
+    markWrong,
+  }));
 
-      handleNext();
+  /*
+    SHOW ALL:
+    All sentences.
 
-    };
+    NORMAL:
+    All sentences shown so far.
 
-    // MARK WRONG / PASS
-    const markWrong = () => {
+    COMPACT:
+    All sentences shown so far,
+    but the latest sentence is automatically
+    brought into view.
 
-      if (currentIndex >= 0) {
+    This keeps the scrollbar available so
+    older sentences can still be viewed.
+  */
 
-        setMarks((prev) => ({
-          ...prev,
-          [currentIndex]: "wrong"
-        }));
+  const visible =
+    showAll
+      ? list
+      : currentIndex === -1
+        ? []
+        : list.slice(0, currentIndex + 1);
 
-      }
+  // AUTO MOVE TO CURRENT SENTENCE
+  useEffect(() => {
+    if (!compact || showAll || currentIndex < 0) return;
 
-      handleNext();
+    const container = scrollRef.current;
 
-    };
+    if (!container) return;
 
-    // RESET
-    const handleReset = () => {
+    requestAnimationFrame(() => {
+      const currentRow = container.children[
+        currentIndex
+      ] as HTMLElement | undefined;
 
-      setCurrentIndex(-1);
-      setRevealedAnswers([]);
-      setMarks({});
+      if (!currentRow) return;
 
-    };
+      currentRow.scrollIntoView({
+        block: "nearest",
+        behavior: "auto",
+      });
+    });
+  }, [
+    currentIndex,
+    compact,
+    showAll,
+    visible.length,
+    showEnglish,
+  ]);
 
-    // EXPOSE METHODS
-    useImperativeHandle(ref, () => ({
-      next: handleNext,
-      prev: handlePrev,
-      reset: handleReset,
-      markCorrect,
-      markWrong
-    }));
+  return (
+    <div className="flex flex-col h-full min-h-0">
 
-    const visible =
-  showAll
-    ? list
-    : currentIndex === -1
-    ? []
-    : compact
-    ? list.slice(
-        Math.max(0, currentIndex - 2),
-        currentIndex + 1
-      )
-    : list.slice(0, currentIndex + 1);
+      <div
+        ref={scrollRef}
+        className="flex-1 min-h-0 overflow-y-auto space-y-2 p-2"
+      >
 
-    return (
-
-      <div className="flex flex-col h-full">
-
-        <div
-          ref={scrollRef}
-          className={`flex-1 ${
-  compact ? "overflow-hidden" : "overflow-y-auto"
-} space-y-2 p-2`}
-        >
-
-          {visible.map((item: any, i: number) => (
+        {visible.map((item: any, i: number) => (
 
           <div
-    key={item.id}
-    className={`flex text-base ${
-                marks[i] === "correct"
-                  ? "bg-green-200"
-                  : marks[i] === "wrong"
+            key={item.id}
+            className={`flex text-base ${
+              marks[i] === "correct"
+                ? "bg-green-200"
+                : marks[i] === "wrong"
                   ? "bg-red-200"
                   : i === currentIndex && !showAll
-                  ? "bg-yellow-100"
-                  : ""
-              }`}
-            >
+                    ? "bg-yellow-100"
+                    : ""
+            }`}
+          >
 
-             <div className="w-10">
-  {compact
-    ? Math.max(0, currentIndex - 2) + i + 1
-    : i + 1}.
-</div>
-
-              <div className="w-1/2 text-base leading-[1.25rem] text-red-600">
-    {item.hindi}
-  </div>
-
-              <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600">
-
-                {showAll
-  ? item.english
-  : compact
-  ? revealedAnswers.includes(
-      Math.max(0, currentIndex - 2) + i
-    )
-    ? item.english
-    : ""
-  : revealedAnswers.includes(i)
-  ? item.english
-  : ""}
-
-              </div>
-
+            <div className="w-10">
+              {i + 1}.
             </div>
 
-          ))}
+            <div className="w-1/2 text-base leading-[1.25rem] text-red-600">
+              {item.hindi}
+            </div>
 
-        </div>
+            <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600">
+              {showAll ||
+              revealedAnswers.includes(i)
+                ? item.english
+                : ""}
+            </div>
+
+          </div>
+
+        ))}
 
       </div>
 
-    );
+    </div>
+  );
+});
 
-  });
+VocabularyPlayer.displayName = "VocabularyPlayer";
 
-  export default VocabularyPlayer;
+export default VocabularyPlayer;

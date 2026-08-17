@@ -40,25 +40,25 @@ export default function MainBoard({
   const [panelOrder, setPanelOrder] = useState<string[]>([]);
 
   const activePanels = [
-  showLeft && "left",
-  showGrammar && "grammar",
-  showBoard && "board",
-  showScore && "score"
-].filter(Boolean) as string[];
+    showLeft && "left",
+    showGrammar && "grammar",
+    showBoard && "board",
+    showScore && "score"
+  ].filter(Boolean) as string[];
 
-useEffect(() => {
-  setPanelOrder(prev => {
-    const stillActive = prev.filter(panel =>
-      activePanels.includes(panel)
-    );
+  useEffect(() => {
+    setPanelOrder(prev => {
+      const stillActive = prev.filter(panel =>
+        activePanels.includes(panel)
+      );
 
-    const newlyActive = activePanels.filter(panel =>
-      !prev.includes(panel)
-    );
+      const newlyActive = activePanels.filter(panel =>
+        !prev.includes(panel)
+      );
 
-    return [...stillActive, ...newlyActive];
-  });
-}, [showLeft, showGrammar, showBoard, showScore]);
+      return [...stillActive, ...newlyActive];
+    });
+  }, [showLeft, showGrammar, showBoard, showScore]);
 
   const isVertical = layout === "vertical";
 
@@ -94,181 +94,174 @@ useEffect(() => {
   const sortedScores = Object.keys(groupedResult)
     .map(Number)
     .sort((a, b) => b - a);
-const renderPanel = (panel: string) => {
+  const renderPanel = (panel: string) => {
 
-  if (panel === "left" && showLeft) {
-    return (
-      <div
-        key="left"
-        className={`${
-  isVertical && showGrammar ? "w-full h-[30%]" : widthClass
-} flex flex-col border-l`}
-      >
+    if (panel === "left" && showLeft) {
+      return (
+        <div
+          key="left"
+          className={`${isVertical && showGrammar ? "w-full h-[30%]" : widthClass
+            } flex flex-col border-l`}
+        >
 
-        <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center">
+          <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center">
 
-          <span className="bg-yellow-300 px-2 rounded">
-            Day {selectedDays?.map((id: any) => {
-              const d = days?.find((x: any) => x.id === id);
-              return d?.day_number;
-            }).join(", ")}
-          </span>
+            <span className="bg-yellow-300 px-2 rounded">
+              Day {selectedDays?.map((id: any) => {
+                const d = days?.find((x: any) => x.id === id);
+                return d?.day_number;
+              }).join(", ")}
+            </span>
 
-          <span className="bg-green-300 px-2 rounded font-normal">
-            {selectedTopics?.length > 0
-              ? selectedTopics.map((id: any) => {
+            <span className="bg-green-300 px-2 rounded font-normal">
+              {selectedTopics?.length > 0
+                ? selectedTopics.map((id: any) => {
                   const t = topics?.find((x: any) => x.id === id);
                   return t?.topic_name;
                 }).join(", ")
-              : "All Topics"}
-          </span>
+                : "All Topics"}
+            </span>
 
-          <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
-            {currentTime}
+            <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
+              {currentTime}
+            </div>
+
           </div>
 
-        </div>
+          <div
+            ref={scrollRef}
+            className="flex-1 min-h-0 overflow-hidden text-xs"
+          >
 
-        <div
-  ref={scrollRef}
-  className={`flex-1 text-xs ${
-    isVertical ? "overflow-hidden" : "overflow-y-auto"
-  }`}
->
+            {showResult ? (
 
-          {showResult ? (
+              <div className="p-4 space-y-3">
 
-            <div className="p-4 space-y-3">
+                <div className="flex justify-between items-center mb-3">
 
-              <div className="flex justify-between items-center mb-3">
+                  <div className="text-xl font-bold">
+                    Result
+                  </div>
 
-                <div className="text-xl font-bold">
-                  Result
+                  <button
+                    onClick={() => setShowResult(false)}
+                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                  >
+                    Back
+                  </button>
+
                 </div>
 
-                <button
-                  onClick={() => setShowResult(false)}
-                  className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                >
-                  Back
-                </button>
+                {sortedScores.map((score, i) => (
+                  <div
+                    key={i}
+                    className={`flex justify-between border p-2 rounded ${i === 0
+                      ? "bg-yellow-200 font-bold"
+                      : ""
+                      }`}
+                  >
+
+                    <div>
+                      {i + 1}. {groupedResult[score].join(" | ")}
+                    </div>
+
+                    <div className="font-bold">
+                      {score}
+                    </div>
+
+                  </div>
+                ))}
 
               </div>
 
-              {sortedScores.map((score, i) => (
-                <div
-                  key={i}
-                  className={`flex justify-between border p-2 rounded ${
-                    i === 0
-                      ? "bg-yellow-200 font-bold"
-                      : ""
-                  }`}
-                >
+            ) : isVocab ? (
 
-                  <div>
-                    {i + 1}. {groupedResult[score].join(" | ")}
-                  </div>
-
-                  <div className="font-bold">
-                    {score}
-                  </div>
-
-                </div>
-              ))}
-
-            </div>
-
-          ) : isVocab ? (
-
-           <div className="text-xs">
+              <div className="text-xs h-full min-h-0">
   <VocabularyPlayer
-  ref={vocabRef}
-  data={sentences}
-  random={randomMode}
-  showAll={showAll}
-  compact={isVertical}
-/>
-</div>
-
-          ) : (
-
-           <div className="text-xs">
-  <SentencePlayer
-    data={visible}
-    highlightIndex={highlightIndex}
-    setHighlightIndex={setHighlightIndex}
+    ref={vocabRef}
+    data={sentences}
     random={randomMode}
     showAll={showAll}
-    currentIndex={currentIndex}
+    compact={true}
   />
 </div>
 
-          )}
+            ) : (
+
+              <div className="text-xs">
+                <SentencePlayer
+                  data={sentences}
+                  highlightIndex={highlightIndex}
+                  setHighlightIndex={setHighlightIndex}
+                  random={randomMode}
+                  showAll={showAll}
+                  currentIndex={currentIndex}
+                />
+              </div>
+
+            )}
+
+          </div>
 
         </div>
+      );
+    }
 
-      </div>
-    );
-  }
+    if (panel === "grammar" && showGrammar) {
+      return (
+        <div
+          key="grammar"
+          className={`${isVertical && showLeft ? "w-full h-[70%]" : widthClass
+            } ${isVertical ? "border-t" : "border-l"} flex`}
+        >
+          <GrammarBoard
+            selectedGrammarTableId={selectedGrammarTableId}
+          />
+        </div>
+      );
+    }
 
-  if (panel === "grammar" && showGrammar) {
-    return (
-      <div
-        key="grammar"
-        className={`${
-  isVertical && showLeft ? "w-full h-[70%]" : widthClass
-} ${isVertical ? "border-t" : "border-l"} flex`}
-      >
-        <GrammarBoard
-          selectedGrammarTableId={selectedGrammarTableId}
-        />
-      </div>
-    );
-  }
+    if (panel === "board" && showBoard) {
+      return (
+        <div
+          key="board"
+          className={`${widthClass} ${isVertical ? "border-t" : "border-l"} flex`}
+        >
+          <WhiteBoard />
+        </div>
+      );
+    }
 
-  if (panel === "board" && showBoard) {
-    return (
-      <div
-        key="board"
-        className={`${widthClass} ${isVertical ? "border-t" : "border-l"} flex`}
-      >
-        <WhiteBoard />
-      </div>
-    );
-  }
+    if (panel === "score" && showScore) {
+      return (
+        <div
+          key="score"
+          className={`${widthClass} ${isVertical ? "border-t" : "border-l"} flex`}
+        >
+          <ScoreCard
+            onCorrect={handleCorrect}
+            onPass={handlePass}
+            onReset={handleReset}
+            onShowResult={(data: any) => {
+              setResultData(data);
+              setShowResult(true);
+            }}
+          />
+        </div>
+      );
+    }
 
-  if (panel === "score" && showScore) {
-    return (
-      <div
-        key="score"
-        className={`${widthClass} ${isVertical ? "border-t" : "border-l"} flex`}
-      >
-        <ScoreCard
-          onCorrect={handleCorrect}
-          onPass={handlePass}
-          onReset={handleReset}
-          onShowResult={(data: any) => {
-            setResultData(data);
-            setShowResult(true);
-          }}
-        />
-      </div>
-    );
-  }
-
-  return null;
-};
+    return null;
+  };
   return (
-  <>
-    <div
-      className={`flex flex-1 overflow-hidden ${
-        isVertical ? "flex-col" : "flex-row"
-      }`}
-    >
-      {panelOrder.map(renderPanel)}
-    </div>
-  </>
+    <>
+      <div
+        className={`flex flex-1 overflow-hidden ${isVertical ? "flex-col" : "flex-row"
+          }`}
+      >
+        {panelOrder.map(renderPanel)}
+      </div>
+    </>
   );
 }
 
-  
