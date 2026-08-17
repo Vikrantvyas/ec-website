@@ -33,35 +33,35 @@ const SentencePlayer = forwardRef<any, Props>(
     ref
   ) => {
     const [list, setList] = useState<any[]>([]);
-    
+
 
     const scrollRef = useRef<HTMLDivElement>(null);
 
-   useEffect(() => {
-  const newList = random
-    ? shuffleArray(data || [])
-    : (data || []);
-
-  setList(newList);
-}, [data, random]);
-
     useEffect(() => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop =
-          scrollRef.current.scrollHeight;
-      }
-    }, [currentIndex]);
+      const newList = random
+        ? shuffleArray(data || [])
+        : (data || []);
+
+      setList(newList);
+    }, [data, random]);
+
+
+
+    const startIndex = Math.max(0, currentIndex - 2);
 
     const visible = showAll
       ? list
       : currentIndex === -1
-      ? []
-      : list.slice(0, currentIndex + 1);
+        ? []
+        : list.slice(
+          startIndex,
+          currentIndex + 1
+        );
 
     return (
       <div
         ref={scrollRef}
-        className="space-y-2 p-2 overflow-y-auto h-full"
+        className="space-y-2 p-2 overflow-hidden h-full"
       >
         {visible.map((item: any, i: number) => {
           const text =
@@ -80,16 +80,15 @@ const SentencePlayer = forwardRef<any, Props>(
                   p === i ? null : i
                 )
               }
-              className={`text-xl flex cursor-pointer ${
-                i === currentIndex && !showAll
-                  ? "bg-yellow-100"
-                  : highlightIndex === i
+              className={`text-xl flex cursor-pointer ${i === visible.length - 1 && !showAll
+                ? "bg-yellow-100"
+                : highlightIndex === i
                   ? "bg-blue-100"
                   : ""
-              }`}
+                }`}
             >
               <div className="w-10">
-                {i + 1}.
+                {Math.max(0, currentIndex - 2) + i + 1}.
               </div>
 
               <div className="w-1/2 text-lg leading-snug text-red-600">
