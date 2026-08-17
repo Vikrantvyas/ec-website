@@ -34,6 +34,30 @@ useEffect(() => {
 
   const [selected, setSelected] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [hoverRow, setHoverRow] = useState<string | null>(null);
+const [ctrlPressed, setCtrlPressed] = useState(false);
+useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Control") {
+      setCtrlPressed(true);
+    }
+  };
+
+  const handleKeyUp = (e: KeyboardEvent) => {
+    if (e.key === "Control") {
+      setCtrlPressed(false);
+    }
+  };
+
+  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("keyup", handleKeyUp);
+
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+    window.removeEventListener("keyup", handleKeyUp);
+  };
+}, []);
+  
   const [mergedCells, setMergedCells] = useState<any>({});
 
   const [history, setHistory] = useState<any[]>([]);
@@ -348,6 +372,12 @@ const revealNextCell = () => {
 useEffect(() => {
 
   const handleKey = (e:any) => {
+    if (
+  e.target instanceof HTMLElement &&
+  e.target.closest("input, textarea, select, button")
+) {
+  return;
+}
 if (e.key === "Enter") {
   e.preventDefault();
 
@@ -465,7 +495,23 @@ headers?.forEach((h:string)=>{
 
             group.rows.map((row, rIndex) => (
 
-              <tr key={`${gIndex}-${rIndex}`} className="text-center relative group">
+              <tr
+  key={`${gIndex}-${rIndex}`}
+  className={`text-center relative group ${
+  ctrlPressed && hoverRow === `${gIndex}-${rIndex}`
+    ? "bg-yellow-200"
+    : ""
+}`}
+onMouseEnter={() => {
+  setHoverRow(`${gIndex}-${rIndex}`);
+}}
+onMouseLeave={() => {
+  setHoverRow(null);
+}}
+onMouseLeave={() => {
+  setHoverRow(null);
+}}
+>
 
                 {columns.map((col) => {
 

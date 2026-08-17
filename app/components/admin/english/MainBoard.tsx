@@ -129,7 +129,12 @@ const renderPanel = (panel: string) => {
 
         </div>
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto text-xs">
+        <div
+  ref={scrollRef}
+  className={`flex-1 text-xs ${
+    isVertical ? "overflow-hidden" : "overflow-y-auto"
+  }`}
+>
 
           {showResult ? (
 
