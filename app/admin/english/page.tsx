@@ -25,7 +25,7 @@ export default function EnglishPage() {
   const [showBoard, setShowBoard] = useState(true);
   const [showScore, setShowScore] = useState(false);
   const [randomMode, setRandomMode] = useState(false);
-  const [showLeft, setShowLeft] = useState(true);
+  const [showLeft, setShowLeft] = useState(false);
   const [showGrammar, setShowGrammar] = useState(false);
   const [selectedGrammarTableId, setSelectedGrammarTableId] = useState("");
   const [layout, setLayout] = useState<"horizontal" | "vertical">("horizontal");
@@ -58,6 +58,17 @@ export default function EnglishPage() {
 
   const isVocab = selectedCourseName === "Vocabulary";
   const isGrammar = selectedCourseName === "Grammar";
+
+  useEffect(() => {
+    if (selectedGrammarTableId) {
+      setShowGrammar(true);
+    }
+  }, [selectedGrammarTableId]);
+  useEffect(() => {
+  if (isVocab && selectedTopics?.length > 0) {
+    setShowLeft(true);
+  }
+}, [isVocab, selectedTopics]);
 
   // 🔥 AUTO PANEL CONTROL (IMPORTANT)
   useEffect(() => {
@@ -304,7 +315,7 @@ export default function EnglishPage() {
           style={{ width: "25cm", height: "12cm" }}
         >
 
-                  
+
 
           <MainBoard
             isVocab={isVocab}
