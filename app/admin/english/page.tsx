@@ -65,22 +65,31 @@ export default function EnglishPage() {
     }
   }, [selectedGrammarTableId]);
   useEffect(() => {
-  if (isVocab && selectedTopics?.length > 0) {
-    setShowLeft(true);
-  }
-}, [isVocab, selectedTopics]);
+    if (isVocab && selectedTopics?.length > 0) {
+      setShowLeft(true);
+    }
+  }, [isVocab, selectedTopics]);
 
   // 🔥 AUTO PANEL CONTROL (IMPORTANT)
   useEffect(() => {
 
-    if (isVocab) {
-      setShowLeft(true);
-      setShowScore(false);
-      setShowBoard(true);
+  if (isVocab) {
+
+    setShowLeft(true);
+    setShowScore(false);
+    setShowBoard(false);
+
+    // Grammar Table पहले से selected है
+    if (selectedGrammarTableId) {
+      setShowGrammar(true);
+      setLayout("vertical");
+    } else {
       setShowGrammar(false);
     }
 
-  }, [isVocab]);
+  }
+
+}, [isVocab, selectedGrammarTableId]);
 
   // ---------------- FETCH ----------------
 
