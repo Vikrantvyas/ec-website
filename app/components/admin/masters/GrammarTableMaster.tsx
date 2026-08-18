@@ -280,6 +280,83 @@ export default function GrammarTableMaster() {
 
     alert("Column Deleted");
   };
+  const addColumn = async (insertAfterIndex: number) => {
+    if (!selectedTable) return;
+
+    const newColumnName = prompt("Enter new column name:");
+
+    if (!newColumnName?.trim()) return;
+
+    const trimmedName = newColumnName.trim();
+
+    const duplicateColumn = selectedHeaders.some(
+      (header) =>
+        header.header_name.trim().toLowerCase() ===
+        trimmedName.toLowerCase()
+    );
+
+    if (duplicateColumn) {
+      alert("A column with this name already exists.");
+      return;
+    }
+
+    const newHeader = {
+      table_id: selectedTable.id,
+      header_name: trimmedName,
+      column_order: insertAfterIndex + 2,
+    };
+
+    const { data, error } = await supabase
+      .from("grammar_headers")
+      .insert(newHeader)
+      .select()
+      .single();
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    if (!data) return;
+
+    // Existing columns को आगे shift करें
+    for (
+      let i = selectedHeaders.length - 1;
+      i > insertAfterIndex;
+      i--
+    ) {
+      await supabase
+        .from("grammar_headers")
+        .update({
+          column_order: i + 2,
+        })
+        .eq("id", selectedHeaders[i].id);
+    }
+
+    const updatedHeaders = [
+      ...selectedHeaders.slice(0, insertAfterIndex + 1),
+      data,
+      ...selectedHeaders.slice(insertAfterIndex + 1),
+    ];
+
+    setSelectedHeaders(updatedHeaders);
+
+    setSelectedTable({
+      ...selectedTable,
+      total_columns: updatedHeaders.length,
+    });
+
+    await supabase
+      .from("grammar_tables")
+      .update({
+        total_columns: updatedHeaders.length,
+      })
+      .eq("id", selectedTable.id);
+
+    await loadTables();
+
+    alert("Column Added");
+  };
   const deleteRow = async (actualRowIndex: number) => {
     if (!selectedTable) return;
 
@@ -354,11 +431,77 @@ export default function GrammarTableMaster() {
 
     await loadTables();
 
-window.dispatchEvent(
-  new Event("grammar-table-refresh")
-);
+    window.dispatchEvent(
+      new Event("grammar-table-refresh")
+    );
 
-alert("Row Deleted");
+    alert("Row Deleted");
+  };
+  const addRow = async (insertAfterIndex: number) => {
+    if (!selectedTable) return;
+
+    const newTotalRows = selectedTable.total_rows + 1;
+
+    // Existing rows को नीचे shift करें
+    const { data: cells, error } = await supabase
+      .from("grammar_cells")
+      .select("*")
+      .eq("table_id", selectedTable.id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    if (cells) {
+      for (const cell of [...cells].sort(
+        (a: any, b: any) => b.row_no - a.row_no
+      )) {
+        if (cell.row_no > insertAfterIndex) {
+          await supabase
+            .from("grammar_cells")
+            .update({
+              row_no: cell.row_no + 1,
+            })
+            .eq("id", cell.id);
+        }
+      }
+    }
+
+    // Table row count बढ़ाएँ
+    await supabase
+      .from("grammar_tables")
+      .update({
+        total_rows: newTotalRows,
+      })
+      .eq("id", selectedTable.id);
+
+    // UI row order update
+    setRowOrder((prev) => {
+      const updated = [...prev];
+
+      updated.splice(
+        insertAfterIndex + 1,
+        0,
+        newTotalRows - 1
+      );
+
+      return updated;
+    });
+
+    setSelectedTable({
+      ...selectedTable,
+      total_rows: newTotalRows,
+    });
+
+    await loadTables();
+
+    // Real Grammar Board refresh
+    window.dispatchEvent(
+      new Event("grammar-table-refresh")
+    );
+
+    alert("Row Added");
   };
   const saveHeaderOrder = async (showMessage = true) => {
 
@@ -1098,19 +1241,39 @@ alert("Row Deleted");
                     className="border p-2 cursor-move select-none"
                   >
                     <div className="flex items-center justify-between gap-2">
+
                       <span>{header.header_name}</span>
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteColumn(header.id);
-                        }}
-                        className="text-red-600 font-bold px-1 hover:bg-red-100 rounded"
-                        title="Delete Column"
-                      >
-                        ×
-                      </button>
+                      <div className="flex items-center gap-1">
+
+                        <button
+                          type="button"
+                          draggable={false}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addColumn(index);
+                          }}
+                          className="text-green-700 font-bold px-1 hover:bg-green-100 rounded"
+                          title="Add Column After"
+                        >
+                          +
+                        </button>
+
+                        <button
+                          type="button"
+                          draggable={false}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteColumn(header.id);
+                          }}
+                          className="text-red-600 font-bold px-1 hover:bg-red-100 rounded"
+                          title="Delete Column"
+                        >
+                          ×
+                        </button>
+
+                      </div>
+
                     </div>
                   </th>
                 ))}
@@ -1186,7 +1349,19 @@ alert("Row Deleted");
 
                     </td>
                   ))}
-                  <td className="border p-1 w-10 text-center">
+                  <td className="border p-1 w-16 text-center">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addRow(actualRowIndex);
+                      }}
+                      className="text-green-700 font-bold px-2 py-1 hover:bg-green-100 rounded"
+                      title="Add Row After"
+                    >
+                      +
+                    </button>
+
                     <button
                       type="button"
                       onClick={(e) => {
