@@ -33,6 +33,27 @@ export default function GrammarBoard({
     loadTableData(selectedGrammarTableId);
 
   }, [selectedGrammarTableId]);
+  useEffect(() => {
+
+  if (!selectedTableId) return;
+
+  const handleRefresh = () => {
+    loadTableData(selectedTableId);
+  };
+
+  window.addEventListener(
+    "grammar-table-refresh",
+    handleRefresh
+  );
+
+  return () => {
+    window.removeEventListener(
+      "grammar-table-refresh",
+      handleRefresh
+    );
+  };
+
+}, [selectedTableId]);
   const loadTables = async () => {
 
     const { data } = await supabase
@@ -191,7 +212,7 @@ export default function GrammarBoard({
           )
         }
 
-        
+
 
       />
 

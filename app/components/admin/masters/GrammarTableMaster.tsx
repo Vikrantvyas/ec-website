@@ -202,6 +202,164 @@ export default function GrammarTableMaster() {
       )
     );
   }, [selectedTable]);
+  const deleteColumn = async (headerId: string) => {
+    if (!selectedTable) return;
+
+    const headerIndex = selectedHeaders.findIndex(
+      (header) => header.id === headerId
+    );
+
+    if (headerIndex === -1) return;
+
+    const header = selectedHeaders[headerIndex];
+
+    const ok = confirm(
+      `Delete column "${header.header_name}" and all its data?`
+    );
+
+    if (!ok) return;
+
+    // Delete all cells of this column
+    const { error: cellError } = await supabase
+      .from("grammar_cells")
+      .delete()
+      .eq("table_id", selectedTable.id)
+      .eq("header_id", headerId);
+
+    if (cellError) {
+      alert(cellError.message);
+      return;
+    }
+
+    // Delete header
+    const { error: headerError } = await supabase
+      .from("grammar_headers")
+      .delete()
+      .eq("id", headerId);
+
+    if (headerError) {
+      alert(headerError.message);
+      return;
+    }
+
+    // Remaining headers
+    const updatedHeaders = selectedHeaders.filter(
+      (header) => header.id !== headerId
+    );
+
+    // Re-number column order
+    for (let i = 0; i < updatedHeaders.length; i++) {
+      await supabase
+        .from("grammar_headers")
+        .update({
+          column_order: i + 1,
+        })
+        .eq("id", updatedHeaders[i].id);
+    }
+
+    // Update table column count
+    await supabase
+      .from("grammar_tables")
+      .update({
+        total_columns: updatedHeaders.length,
+      })
+      .eq("id", selectedTable.id);
+
+    setSelectedHeaders(updatedHeaders);
+
+    setHeaders((prev: string[]) =>
+      prev.filter((_, index) => index !== headerIndex)
+    );
+
+    setSelectedTable({
+      ...selectedTable,
+      total_columns: updatedHeaders.length,
+    });
+
+    await loadTables();
+
+    alert("Column Deleted");
+  };
+  const deleteRow = async (actualRowIndex: number) => {
+    if (!selectedTable) return;
+
+    const ok = confirm(
+      `Delete Row ${actualRowIndex + 1} and all its data?`
+    );
+
+    if (!ok) return;
+
+    // Delete all cells of this row
+    const { error: cellError } = await supabase
+      .from("grammar_cells")
+      .delete()
+      .eq("table_id", selectedTable.id)
+      .eq("row_no", actualRowIndex);
+
+    if (cellError) {
+      alert(cellError.message);
+      return;
+    }
+
+    // Get remaining cells
+    const { data: remainingCells, error: fetchError } =
+      await supabase
+        .from("grammar_cells")
+        .select("*")
+        .eq("table_id", selectedTable.id);
+
+    if (fetchError) {
+      alert(fetchError.message);
+      return;
+    }
+
+    // Shift rows after deleted row
+    if (remainingCells) {
+      for (const cell of remainingCells) {
+        if (cell.row_no > actualRowIndex) {
+          await supabase
+            .from("grammar_cells")
+            .update({
+              row_no: cell.row_no - 1,
+            })
+            .eq("id", cell.id);
+        }
+      }
+    }
+
+    const newTotalRows =
+      selectedTable.total_rows - 1;
+
+    // Update table row count
+    await supabase
+      .from("grammar_tables")
+      .update({
+        total_rows: newTotalRows,
+      })
+      .eq("id", selectedTable.id);
+
+    // Update local row order
+    setRowOrder((prev) =>
+      prev
+        .filter((row) => row !== actualRowIndex)
+        .map((row) =>
+          row > actualRowIndex ? row - 1 : row
+        )
+    );
+
+    setSelectedTable({
+      ...selectedTable,
+      total_rows: newTotalRows,
+    });
+
+    await loadTables();
+
+window.dispatchEvent(
+  new Event("grammar-table-refresh")
+);
+
+alert("Row Deleted");
+  };
   const saveHeaderOrder = async (showMessage = true) => {
 
     if (!selectedTable || selectedHeaders.length === 0) {
@@ -666,6 +824,9 @@ export default function GrammarTableMaster() {
               <th className="border p-2 w-16">
                 #
               </th>
+              <th className="border p-2 w-10">
+                ×
+              </th>
 
               {headers.map((header, index) => (
                 <th
@@ -830,15 +991,15 @@ export default function GrammarTableMaster() {
             </h2>
 
             <button
-  onClick={async () => {
-    await saveHeaderOrder(false);
-    await saveRowOrder(false);
-    alert("Order Saved");
-  }}
-  className="bg-blue-600 text-white px-4 py-2 rounded"
->
-  Save Order
-</button>
+              onClick={async () => {
+                await saveHeaderOrder(false);
+                await saveRowOrder(false);
+                alert("Order Saved");
+              }}
+              className="bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Save Order
+            </button>
 
           </div>
           <button
@@ -936,7 +1097,21 @@ export default function GrammarTableMaster() {
                     }}
                     className="border p-2 cursor-move select-none"
                   >
-                    {header.header_name}
+                    <div className="flex items-center justify-between gap-2">
+                      <span>{header.header_name}</span>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteColumn(header.id);
+                        }}
+                        className="text-red-600 font-bold px-1 hover:bg-red-100 rounded"
+                        title="Delete Column"
+                      >
+                        ×
+                      </button>
+                    </div>
                   </th>
                 ))}
 
@@ -1011,7 +1186,19 @@ export default function GrammarTableMaster() {
 
                     </td>
                   ))}
-
+                  <td className="border p-1 w-10 text-center">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteRow(actualRowIndex);
+                      }}
+                      className="text-red-600 font-bold px-2 py-1 hover:bg-red-100 rounded"
+                      title="Delete Row"
+                    >
+                      ×
+                    </button>
+                  </td>
                 </tr>
 
               ))}
