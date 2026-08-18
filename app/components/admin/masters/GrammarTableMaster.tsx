@@ -6,187 +6,303 @@ import { supabase } from "@/lib/supabaseClient";
 export default function GrammarTableMaster() {
 
   const [tableName, setTableName] = useState("");
-  
+
   const [totalRows, setTotalRows] = useState(2);
   const [totalColumns, setTotalColumns] = useState(5);
 
-const updateColumns = (value:number) => {
+  const updateColumns = (value: number) => {
 
-  setTotalColumns(value);
+    setTotalColumns(value);
 
-  const updated = [...headers];
+    const updated = [...headers];
 
-  if(value > updated.length){
+    if (value > updated.length) {
 
-    while(updated.length < value){
-      updated.push("");
+      while (updated.length < value) {
+        updated.push("");
+      }
+
+    } else {
+
+      updated.length = value;
+
     }
 
-  } else {
+    setHeaders(updated);
 
-    updated.length = value;
-
-  }
-
-  setHeaders(updated);
-
-};
+  };
 
   const [headers, setHeaders] = useState([
-    
+
     "Hindi",
     "Subject",
     "HV",
     "Verb",
     "Object"
   ]);
-const [savedTables, setSavedTables] = useState<any[]>([]);
+  const [savedTables, setSavedTables] = useState<any[]>([]);
 
-const [selectedTable, setSelectedTable] =
-  useState<any>(null);
+  const [selectedTable, setSelectedTable] =
+    useState<any>(null);
 
-const [selectedHeaders, setSelectedHeaders] =
-  useState<any[]>([]);
+  const [selectedHeaders, setSelectedHeaders] =
+    useState<any[]>([]);
+  const [draggedHeaderIndex, setDraggedHeaderIndex] =
+    useState<number | null>(null);
+  const [draggedRowIndex, setDraggedRowIndex] =
+    useState<number | null>(null);
+  const [rowOrder, setRowOrder] = useState<number[]>([]);
   const [cellData, setCellData] = useState<any>({});
   const [editingTableId, setEditingTableId] =
-  useState<string | null>(null);
+    useState<string | null>(null);
   const [grammarTopics, setGrammarTopics] = useState<any[]>([]);
 
-const [selectedGrammarTopic, setSelectedGrammarTopic] =
-  useState("");
-  
+  const [selectedGrammarTopic, setSelectedGrammarTopic] =
+    useState("");
+
   const [showTopicInput, setShowTopicInput] = useState(false);
 
-const [newTopicName, setNewTopicName] = useState("");
+  const [newTopicName, setNewTopicName] = useState("");
   const [topicName, setTopicName] = useState("");
 
-const [topics, setTopics] = useState<any[]>([]);
+  const [topics, setTopics] = useState<any[]>([]);
 
-const [selectedTopic, setSelectedTopic] = useState<any>(null);
+  const [selectedTopic, setSelectedTopic] = useState<any>(null);
 
-const [editingTopicId, setEditingTopicId] =
-  useState<string | null>(null);
-  const editTable = async(table:any)=>{
+  const [editingTopicId, setEditingTopicId] =
+    useState<string | null>(null);
+  const editTable = async (table: any) => {
 
-  setEditingTableId(table.id);
+    setEditingTableId(table.id);
 
-  setTableName(table.name);
+    setTableName(table.name);
 
-  setTotalRows(table.total_rows);
+    setTotalRows(table.total_rows);
 
-  updateColumns(table.total_columns);
+    updateColumns(table.total_columns);
 
-  const { data } = await supabase
-    .from("grammar_headers")
-    .select("*")
-    .eq("table_id", table.id)
-    .order("column_order");
+    const { data } = await supabase
+      .from("grammar_headers")
+      .select("*")
+      .eq("table_id", table.id)
+      .order("column_order");
 
-  if(data){
+    if (data) {
 
-    setHeaders(
-      data.map(
-        (item:any)=>item.header_name
-      )
+      setHeaders(
+        data.map(
+          (item: any) => item.header_name
+        )
+      );
+
+    }
+
+  };
+  useEffect(() => {
+
+    loadTables();
+
+    loadGrammarTopics();
+
+  }, []);
+  useEffect(() => {
+
+    loadTables();
+
+  }, [selectedGrammarTopic]);
+
+
+  const loadTables = async () => {
+
+    let query = supabase
+      .from("grammar_tables")
+      .select("*");
+
+    if (selectedGrammarTopic) {
+
+      query = query.eq(
+        "topic_id",
+        selectedGrammarTopic
+      );
+
+    }
+
+    const { data } = await query.order(
+      "created_at",
+      { ascending: false }
     );
 
-  }
+    if (data) {
 
-};
-useEffect(() => {
-
-  loadTables();
-
-  loadGrammarTopics();
-
-}, []);
-useEffect(() => {
-
-  loadTables();
-
-}, [selectedGrammarTopic]);
+      setSavedTables(data);
 
 
-const loadTables = async () => {
+    }
+  };
 
- let query = supabase
-  .from("grammar_tables")
-  .select("*");
+  const loadGrammarTopics = async () => {
 
-if (selectedGrammarTopic) {
+    const { data, error } = await supabase
+      .from("grammar_topics")
+      .select("*")
+      .order("sort_order", { ascending: true });
 
-  query = query.eq(
-    "topic_id",
-    selectedGrammarTopic
-  );
+    console.log("Grammar Topics :", data);
+    console.log("Grammar Topics Error :", error);
 
-}
+    if (data) {
+      setGrammarTopics(data);
+    }
 
-const { data } = await query.order(
-  "created_at",
-  { ascending: false }
-);
+  };
 
-if (data) {
+  const openTable = async (table: any) => {
 
-  setSavedTables(data);
+    setSelectedTable(table);
 
+    const { data } = await supabase
+      .from("grammar_headers")
+      .select("*")
+      .eq("table_id", table.id)
+      .order("column_order");
 
-}
-};
+    if (data) {
+      setSelectedHeaders(data);
+    }
 
-const loadGrammarTopics = async () => {
+    const { data: cells } = await supabase
+      .from("grammar_cells")
+      .select("*")
+      .eq("table_id", table.id);
 
-  const { data, error } = await supabase
-    .from("grammar_topics")
-    .select("*")
-    .order("sort_order", { ascending: true });
+    if (cells) {
 
-  console.log("Grammar Topics :", data);
-  console.log("Grammar Topics Error :", error);
+      const formatted: any = {};
 
-  if (data) {
-    setGrammarTopics(data);
-  }
+      cells.forEach((cell: any) => {
 
-};
+        formatted[
+          `${cell.row_no}__${cell.header_id}`
+        ] = cell.cell_value;
 
-const openTable = async (table: any) => {
+      });
 
-  setSelectedTable(table);
+      setCellData(formatted);
 
-  const { data } = await supabase
-    .from("grammar_headers")
-    .select("*")
-    .eq("table_id", table.id)
-    .order("column_order");
+    }
 
-  if (data) {
-    setSelectedHeaders(data);
-  }
+  };
+  useEffect(() => {
+    if (!selectedTable) return;
 
-  const { data: cells } = await supabase
-    .from("grammar_cells")
-    .select("*")
-    .eq("table_id", table.id);
+    setRowOrder(
+      Array.from(
+        { length: selectedTable.total_rows },
+        (_, i) => i
+      )
+    );
+  }, [selectedTable]);
+  const saveHeaderOrder = async (showMessage = true) => {
 
-  if (cells) {
+    if (!selectedTable || selectedHeaders.length === 0) {
+      return;
+    }
 
-    const formatted: any = {};
+    for (let i = 0; i < selectedHeaders.length; i++) {
 
-    cells.forEach((cell: any) => {
+      const { error } = await supabase
+        .from("grammar_headers")
+        .update({
+          column_order: i + 1
+        })
+        .eq("id", selectedHeaders[i].id);
 
-      formatted[
-        `${cell.row_no}__${cell.header_id}`
-      ] = cell.cell_value;
+      if (error) {
+        alert(error.message);
+        return;
+      }
+    }
 
-    });
+    setSelectedHeaders([...selectedHeaders]);
 
-    setCellData(formatted);
+    if (showMessage) {
+      alert("Column Order Saved");
+    }
+  };
+  const saveRowOrder = async (showMessage = true) => {
 
-  }
+    if (!selectedTable) return;
 
-};
+    // Current UI order
+    const orderedRows = rowOrder;
+
+    // Get all cells
+    const { data: cells, error } = await supabase
+      .from("grammar_cells")
+      .select("*")
+      .eq("table_id", selectedTable.id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    if (!cells) return;
+
+    // -----------------------------------------
+    // STEP 1: Give temporary row numbers
+    // -----------------------------------------
+
+    for (const cell of cells) {
+
+      const { error: tempError } =
+        await supabase
+          .from("grammar_cells")
+          .update({
+            row_no: cell.row_no + 10000
+          })
+          .eq("id", cell.id);
+
+      if (tempError) {
+        alert(tempError.message);
+        return;
+      }
+    }
+
+    // -----------------------------------------
+    // STEP 2: Apply new row numbers
+    // -----------------------------------------
+
+    for (let newIndex = 0; newIndex < orderedRows.length; newIndex++) {
+
+      const oldRowIndex = orderedRows[newIndex];
+
+      const oldCells = cells.filter(
+        (cell: any) =>
+          cell.row_no === oldRowIndex
+      );
+
+      for (const cell of oldCells) {
+
+        const { error: finalError } =
+          await supabase
+            .from("grammar_cells")
+            .update({
+              row_no: newIndex
+            })
+            .eq("id", cell.id);
+
+        if (finalError) {
+          alert(finalError.message);
+          return;
+        }
+      }
+    }
+
+    if (showMessage) {
+      alert("Row Order Saved");
+    }
+  };
   return (
 
     <div className="p-5 space-y-5">
@@ -198,133 +314,133 @@ const openTable = async (table: any) => {
       <div className="grid grid-cols-12 gap-4 items-end">
 
         <div className="col-span-4">
-  <label className="block mb-1 font-medium">
-  Grammar Topic
-</label>
+          <label className="block mb-1 font-medium">
+            Grammar Topic
+          </label>
 
-<div className="flex gap-2">
+          <div className="flex gap-2">
 
-  <select
-    value={selectedGrammarTopic}
-   onChange={(e) => {
+            <select
+              value={selectedGrammarTopic}
+              onChange={(e) => {
 
-  setSelectedGrammarTopic(e.target.value);
+                setSelectedGrammarTopic(e.target.value);
 
-}}
-    className="border p-2 rounded flex-1"
-  >
-    <option value="">
-      Select Topic
-    </option>
+              }}
+              className="border p-2 rounded flex-1"
+            >
+              <option value="">
+                Select Topic
+              </option>
 
-    {grammarTopics.map((topic) => (
-      <option
-        key={topic.id}
-        value={topic.id}
-      >
-        {topic.name}
-      </option>
-    ))}
+              {grammarTopics.map((topic) => (
+                <option
+                  key={topic.id}
+                  value={topic.id}
+                >
+                  {topic.name}
+                </option>
+              ))}
 
-  </select>
+            </select>
 
-  <button
-    type="button"
-    onClick={() => setShowTopicInput(true)}
-    className="w-10 border rounded hover:bg-gray-100"
-    title="Add Grammar Topic"
-  >
-    +
-  </button>
+            <button
+              type="button"
+              onClick={() => setShowTopicInput(true)}
+              className="w-10 border rounded hover:bg-gray-100"
+              title="Add Grammar Topic"
+            >
+              +
+            </button>
 
-</div>
+          </div>
 
-{
-  showTopicInput && (
+          {
+            showTopicInput && (
 
-    <div className="flex gap-2 mt-3">
+              <div className="flex gap-2 mt-3">
 
-      <input
-        value={newTopicName}
-        onChange={(e) => setNewTopicName(e.target.value)}
-        placeholder="New Grammar Topic"
-        className="border p-2 rounded flex-1"
-      />
+                <input
+                  value={newTopicName}
+                  onChange={(e) => setNewTopicName(e.target.value)}
+                  placeholder="New Grammar Topic"
+                  className="border p-2 rounded flex-1"
+                />
 
-      <button
-  type="button"
-  onClick={async () => {
+                <button
+                  type="button"
+                  onClick={async () => {
 
-    if (!newTopicName.trim()) {
-      alert("Enter Topic Name");
-      return;
-    }
+                    if (!newTopicName.trim()) {
+                      alert("Enter Topic Name");
+                      return;
+                    }
 
-    const { error } = await supabase
-      .from("grammar_topics")
-      .insert([
-        {
-          name: newTopicName,
-          sort_order: grammarTopics.length + 1
-        }
-      ]);
+                    const { error } = await supabase
+                      .from("grammar_topics")
+                      .insert([
+                        {
+                          name: newTopicName,
+                          sort_order: grammarTopics.length + 1
+                        }
+                      ]);
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+                    if (error) {
+                      alert(error.message);
+                      return;
+                    }
 
-    await loadGrammarTopics();
+                    await loadGrammarTopics();
 
-    setNewTopicName("");
+                    setNewTopicName("");
 
-    setShowTopicInput(false);
+                    setShowTopicInput(false);
 
-  }}
-  className="bg-green-600 text-white px-4 rounded"
->
-  Save
-</button>
+                  }}
+                  className="bg-green-600 text-white px-4 rounded"
+                >
+                  Save
+                </button>
 
-      <button
-        type="button"
-        onClick={() => {
+                <button
+                  type="button"
+                  onClick={() => {
 
-          setShowTopicInput(false);
+                    setShowTopicInput(false);
 
-          setNewTopicName("");
+                    setNewTopicName("");
 
-        }}
-        className="bg-gray-400 text-white px-4 rounded"
-      >
-        Cancel
-      </button>
+                  }}
+                  className="bg-gray-400 text-white px-4 rounded"
+                >
+                  Cancel
+                </button>
 
-    </div>
+              </div>
 
-  )
-}
-</div>
-<div className="col-span-4">
+            )
+          }
+        </div>
+        <div className="col-span-4">
 
-  <label className="block mb-1 font-medium">
-    Table Name
-  </label>
+          <label className="block mb-1 font-medium">
+            Table Name
+          </label>
 
-  <input
-    type="text"
-    value={tableName}
-    onChange={(e) => {
+          <input
+            type="text"
+            value={tableName}
+            onChange={(e) => {
 
-  setTableName(e.target.value);
+              setTableName(e.target.value);
 
-  
-}}
-    placeholder="Affirmative / Negative / Interrogative"
-    className="border p-2 w-full rounded"
-  />
 
-</div>
+            }}
+            placeholder="Affirmative / Negative / Interrogative"
+            className="border p-2 w-full rounded"
+          />
+
+        </div>
         <div className="col-span-2">
           <label className="block mb-1 font-medium">
             Rows
@@ -333,7 +449,7 @@ const openTable = async (table: any) => {
           <input
             type="number"
             value={totalRows}
-            onChange={(e)=>setTotalRows(Number(e.target.value))}
+            onChange={(e) => setTotalRows(Number(e.target.value))}
             className="border p-2 w-full rounded"
           />
         </div>
@@ -346,7 +462,7 @@ const openTable = async (table: any) => {
           <input
             type="number"
             value={totalColumns}
-            onChange={(e)=>updateColumns(Number(e.target.value))}
+            onChange={(e) => updateColumns(Number(e.target.value))}
             className="border p-2 w-full rounded"
           />
         </div>
@@ -360,18 +476,18 @@ const openTable = async (table: any) => {
         </label>
 
         <div
-  className="grid gap-3"
-  style={{
-    gridTemplateColumns:
-      `repeat(${totalColumns}, minmax(150px,1fr))`
-  }}
->
+          className="grid gap-3"
+          style={{
+            gridTemplateColumns:
+              `repeat(${totalColumns}, minmax(150px,1fr))`
+          }}
+        >
 
-          {headers.map((header, index)=>(
+          {headers.map((header, index) => (
             <input
               key={index}
               value={header}
-              onChange={(e)=>{
+              onChange={(e) => {
 
                 const updated = [...headers];
                 updated[index] = e.target.value;
@@ -388,420 +504,525 @@ const openTable = async (table: any) => {
 
       <button
 
-  onClick={async()=>{
-if(!selectedGrammarTopic){
+        onClick={async () => {
+          if (!selectedGrammarTopic) {
 
-  alert("Please select Grammar Topic");
+            alert("Please select Grammar Topic");
 
-  return;
+            return;
 
-}
-    if(!tableName.trim()){
+          }
+          if (!tableName.trim()) {
 
-      alert("Enter table name");
-      return;
+            alert("Enter table name");
+            return;
 
-    }
+          }
 
-    let tableData:any = null;
-let tableError:any = null;
+          let tableData: any = null;
+          let tableError: any = null;
 
-if(editingTableId){
+          if (editingTableId) {
 
-  const response = await supabase
-    .from("grammar_tables")
-    .update({
-      name: tableName,
-      total_rows: totalRows,
-      total_columns: totalColumns
-    })
-    .eq("id", editingTableId)
-    .select()
-    .single();
+            const response = await supabase
+              .from("grammar_tables")
+              .update({
+                name: tableName,
+                total_rows: totalRows,
+                total_columns: totalColumns
+              })
+              .eq("id", editingTableId)
+              .select()
+              .single();
 
-  tableData = response.data;
-  tableError = response.error;
+            tableData = response.data;
+            tableError = response.error;
 
-} else {
+          } else {
 
-  const response = await supabase
-    .from("grammar_tables")
-    .insert([
-      {
-        name: tableName,
-        topic_id: selectedGrammarTopic,
-        total_rows: totalRows,
-        total_columns: totalColumns
-      }
-    ])
-    .select()
-    .single();
+            const response = await supabase
+              .from("grammar_tables")
+              .insert([
+                {
+                  name: tableName,
+                  topic_id: selectedGrammarTopic,
+                  total_rows: totalRows,
+                  total_columns: totalColumns
+                }
+              ])
+              .select()
+              .single();
 
-  tableData = response.data;
-  tableError = response.error;
+            tableData = response.data;
+            tableError = response.error;
 
-}
+          }
 
-    if(tableError){
+          if (tableError) {
 
-      alert(tableError.message);
-      return;
+            alert(tableError.message);
+            return;
 
-    }
+          }
 
-    const headersPayload = headers.map(
-      (header,index)=>({
+          const headersPayload = headers.map(
+            (header, index) => ({
 
-        table_id: tableData.id,
-        header_name: header,
-        column_order: index + 1
+              table_id: tableData.id,
+              header_name: header,
+              column_order: index + 1
 
-      })
-    );
-if(editingTableId){
+            })
+          );
+          if (editingTableId) {
 
-  await supabase
-    .from("grammar_headers")
-    .delete()
-    .eq("table_id", editingTableId);
+            const { data: oldHeaders, error: oldHeadersError } =
+              await supabase
+                .from("grammar_headers")
+                .select("*")
+                .eq("table_id", editingTableId)
+                .order("column_order");
 
-}
-    const { error:headerError } =
-      await supabase
-        .from("grammar_headers")
-        .insert(headersPayload);
+            if (oldHeadersError) {
+              alert(oldHeadersError.message);
+              return;
+            }
 
-    if(headerError){
+            for (let index = 0; index < headers.length; index++) {
 
-      alert(headerError.message);
-      return;
+              const headerName = headers[index]?.trim() || "";
 
-    }
+              if (index < oldHeaders.length) {
 
-    alert("Table Saved");
-    setEditingTableId(null);
+                await supabase
+                  .from("grammar_headers")
+                  .update({
+                    header_name: headerName,
+                    column_order: index + 1
+                  })
+                  .eq("id", oldHeaders[index].id);
 
-setTableName("");
+              } else {
 
-setTotalRows(2);
+                await supabase
+                  .from("grammar_headers")
+                  .insert({
+                    table_id: editingTableId,
+                    header_name: headerName,
+                    column_order: index + 1
+                  });
 
-updateColumns(5);
+              }
 
-setHeaders([
-  "Hindi",
-  "Subject",
-  "HV",
-  "Verb",
-  "Object"
-]);
-    loadTables();
+            }
 
-  }}
+          } else {
 
-  className="bg-blue-600 text-white px-5 py-2 rounded"
->
-  Save Table
-</button>
-<div className="border rounded overflow-auto">
+            const { error: headerError } =
+              await supabase
+                .from("grammar_headers")
+                .insert(headersPayload);
 
-  <table className="w-full border-collapse">
+            if (headerError) {
+              alert(headerError.message);
+              return;
+            }
 
-    <thead>
+          }
 
-      <tr className="bg-gray-100 sticky top-0 z-10">
-        <th className="border p-2 w-16">
-  #
-</th>
 
-        {headers.map((header,index)=>(
-          <th
-            key={index}
-            className="border p-2 min-w-[150px]"
-          >
-            {header || `Column ${index + 1}`}
-          </th>
-        ))}
 
-      </tr>
+          alert("Table Saved");
+          setEditingTableId(null);
 
-    </thead>
+          setTableName("");
 
-    <tbody>
+          setTotalRows(2);
 
-      {Array.from({ length: totalRows }).map((_,rowIndex)=>(
+          updateColumns(5);
 
-        <tr key={rowIndex}>
-<td className="border p-2 text-center font-semibold">
-  {rowIndex + 1}
-</td>
-          {headers.map((_,colIndex)=>(
-            <td
-              key={colIndex}
-              className="border p-2 h-12"
-            >
-            </td>
-          ))}
+          setHeaders([
+            "Hindi",
+            "Subject",
+            "HV",
+            "Verb",
+            "Object"
+          ]);
+          loadTables();
 
-        </tr>
+        }}
 
-      ))}
+        className="bg-blue-600 text-white px-5 py-2 rounded"
+      >
+        Save Table
+      </button>
+      <div className="border rounded overflow-auto">
 
-    </tbody>
+        <table className="w-full border-collapse">
 
-  </table>
+          <thead>
 
-</div>
+            <tr className="bg-gray-100 sticky top-0 z-10">
+              <th className="border p-2 w-16">
+                #
+              </th>
 
-<div className="border rounded p-4">
+              {headers.map((header, index) => (
+                <th
+                  key={index}
+                  className="border p-2 min-w-[150px]"
+                >
+                  {header || `Column ${index + 1}`}
+                </th>
+              ))}
 
-  <h2 className="text-xl font-semibold mb-4">
-    Saved Tables
-  </h2>
+            </tr>
 
-  <table className="w-full border-collapse">
+          </thead>
 
-    <thead>
+          <tbody>
 
-      <tr className="bg-gray-100">
+            {Array.from({ length: totalRows }).map((_, rowIndex) => (
 
-        <th className="border p-2 text-left">
-          Table Name
-        </th>
+              <tr key={rowIndex}>
+                <td className="border p-2 text-center font-semibold">
+                  {rowIndex + 1}
+                </td>
+                {headers.map((_, colIndex) => (
+                  <td
+                    key={colIndex}
+                    className="border p-2 h-12"
+                  >
+                  </td>
+                ))}
 
-        <th className="border p-2 text-left">
-          Rows
-        </th>
+              </tr>
 
-        <th className="border p-2 text-left">
-          Columns
-        </th>
-       <th className="border p-2 text-left">
-  Actions
-</th>
-
-      </tr>
-
-    </thead>
-
-    <tbody>
-
-      {savedTables.map((table)=>(
-        <tr key={table.id}>
-
-          <td className="border p-2">
-            {table.name}
-          </td>
-
-          <td className="border p-2">
-            {table.total_rows}
-          </td>
-
-          <td className="border p-2">
-            {table.total_columns}
-          </td>
-<td className="border p-2">
-
-  <div className="flex gap-2">
-    <button
-
-  onClick={()=>editTable(table)}
-
-  className="bg-yellow-500 text-white px-3 py-1 rounded"
->
-  Edit
-</button>
-
-    <button
-      onClick={()=>openTable(table)}
-      className="bg-blue-600 text-white px-3 py-1 rounded"
-    >
-      Open
-    </button>
-
-    <button
-
-      onClick={async()=>{
-
-        const ok = confirm(
-          "Delete this table?"
-        );
-
-        if(!ok){
-          return;
-        }
-
-        await supabase
-          .from("grammar_tables")
-          .delete()
-          .eq("id", table.id);
-
-        if(
-          selectedTable?.id === table.id
-        ){
-
-          setSelectedTable(null);
-          setSelectedHeaders([]);
-          setCellData({});
-
-        }
-
-        loadTables();
-
-      }}
-
-      className="bg-red-600 text-white px-3 py-1 rounded"
-    >
-      Delete
-    </button>
-
-  </div>
-
-</td>
-        </tr>
-      ))}
-
-    </tbody>
-
-  </table>
-
-</div>
-{selectedTable && (
-
-  <div className="border rounded p-4 space-y-4">
-
-    <h2 className="text-xl font-semibold">
-      {selectedTable.name}
-    </h2>
-<button
-
-  onClick={async()=>{
-
-    if(!selectedTable){
-      return;
-    }
-
-    await supabase
-      .from("grammar_cells")
-      .delete()
-      .eq("table_id", selectedTable.id);
-
-    const payload:any[] = [];
-
-    Object.entries(cellData).forEach(
-      ([key,value])=>{
-
-        const parts = key.split("__");
-
-        payload.push({
-
-          table_id: selectedTable.id,
-
-          row_no: Number(parts[0]),
-
-          header_id: parts[1],
-
-          cell_value: value
-
-        });
-
-      }
-    );
-
-    if(payload.length > 0){
-
-  const { error } = await supabase
-    .from("grammar_cells")
-    .insert(payload);
-
-  if(error){
-
-    alert(error.message);
-    return;
-
-  }
-
-}
-
-    alert("Cells Saved");
-
-  }}
-
-  className="bg-green-600 text-white px-4 py-2 rounded"
->
-  Save Cells
-</button>
-    <table className="w-full border-collapse">
-
-      <thead>
-
-        <tr className="bg-gray-100">
-
-          {selectedHeaders.map((header)=>(
-            <th
-              key={header.id}
-              className="border p-2"
-            >
-              {header.header_name}
-            </th>
-          ))}
-
-        </tr>
-
-      </thead>
-
-      <tbody>
-
-        {Array.from({
-          length: selectedTable.total_rows
-        }).map((_,rowIndex)=>(
-
-          <tr key={rowIndex}>
-
-            {selectedHeaders.map((header)=>(
-             <td
-  key={header.id}
-  className="border p-1"
->
-
-  <input
-
-    value={
-      cellData[
-        `${rowIndex}__${header.id}`
-      ] || ""
-    }
-
-    onChange={(e)=>{
-
-      setCellData((prev:any)=>({
-
-        ...prev,
-
-        [`${rowIndex}__${header.id}`]:
-          e.target.value
-
-      }));
-
-    }}
-
-    className="w-full p-2 outline-none"
-
-  />
-
-</td>
             ))}
 
-          </tr>
+          </tbody>
 
-        ))}
+        </table>
 
-      </tbody>
+      </div>
 
-    </table>
+      <div className="border rounded p-4">
 
-  </div>
+        <h2 className="text-xl font-semibold mb-4">
+          Saved Tables
+        </h2>
 
-)}
+        <table className="w-full border-collapse">
+
+          <thead>
+
+            <tr className="bg-gray-100">
+
+              <th className="border p-2 text-left">
+                Table Name
+              </th>
+
+              <th className="border p-2 text-left">
+                Rows
+              </th>
+
+              <th className="border p-2 text-left">
+                Columns
+              </th>
+              <th className="border p-2 text-left">
+                Actions
+              </th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {savedTables.map((table) => (
+              <tr key={table.id}>
+
+                <td className="border p-2">
+                  {table.name}
+                </td>
+
+                <td className="border p-2">
+                  {table.total_rows}
+                </td>
+
+                <td className="border p-2">
+                  {table.total_columns}
+                </td>
+                <td className="border p-2">
+
+                  <div className="flex gap-2">
+                    <button
+
+                      onClick={() => editTable(table)}
+
+                      className="bg-yellow-500 text-white px-3 py-1 rounded"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => openTable(table)}
+                      className="bg-blue-600 text-white px-3 py-1 rounded"
+                    >
+                      Open
+                    </button>
+
+                    <button
+
+                      onClick={async () => {
+
+                        const ok = confirm(
+                          "Delete this table?"
+                        );
+
+                        if (!ok) {
+                          return;
+                        }
+
+                        await supabase
+                          .from("grammar_tables")
+                          .delete()
+                          .eq("id", table.id);
+
+                        if (
+                          selectedTable?.id === table.id
+                        ) {
+
+                          setSelectedTable(null);
+                          setSelectedHeaders([]);
+                          setCellData({});
+
+                        }
+
+                        loadTables();
+
+                      }}
+
+                      className="bg-red-600 text-white px-3 py-1 rounded"
+                    >
+                      Delete
+                    </button>
+
+                  </div>
+
+                </td>
+              </tr>
+            ))}
+
+          </tbody>
+
+        </table>
+
+      </div>
+      {selectedTable && (
+
+        <div className="border rounded p-4 space-y-4">
+
+          <div className="flex items-center justify-between">
+
+            <h2 className="text-xl font-semibold">
+              {selectedTable.name}
+            </h2>
+
+            <button
+  onClick={async () => {
+    await saveHeaderOrder(false);
+    await saveRowOrder(false);
+    alert("Order Saved");
+  }}
+  className="bg-blue-600 text-white px-4 py-2 rounded"
+>
+  Save Order
+</button>
+
+          </div>
+          <button
+
+            onClick={async () => {
+
+              if (!selectedTable) {
+                return;
+              }
+
+              await supabase
+                .from("grammar_cells")
+                .delete()
+                .eq("table_id", selectedTable.id);
+
+              const payload: any[] = [];
+
+              Object.entries(cellData).forEach(
+                ([key, value]) => {
+
+                  const parts = key.split("__");
+
+                  payload.push({
+
+                    table_id: selectedTable.id,
+
+                    row_no: Number(parts[0]),
+
+                    header_id: parts[1],
+
+                    cell_value: value
+
+                  });
+
+                }
+              );
+
+              if (payload.length > 0) {
+
+                const { error } = await supabase
+                  .from("grammar_cells")
+                  .insert(payload);
+
+                if (error) {
+
+                  alert(error.message);
+                  return;
+
+                }
+
+              }
+
+              alert("Cells Saved");
+
+            }}
+
+            className="bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Save Cells
+          </button>
+          <table className="w-full border-collapse">
+
+            <thead>
+
+              <tr className="bg-gray-100">
+
+                {selectedHeaders.map((header, index) => (
+                  <th
+                    key={header.id}
+                    draggable
+                    onDragStart={() => {
+                      setDraggedHeaderIndex(index);
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                    }}
+                    onDrop={() => {
+
+                      if (
+                        draggedHeaderIndex === null ||
+                        draggedHeaderIndex === index
+                      ) {
+                        return;
+                      }
+
+                      const updated = [...selectedHeaders];
+
+                      const [movedHeader] =
+                        updated.splice(draggedHeaderIndex, 1);
+
+                      updated.splice(index, 0, movedHeader);
+
+                      setSelectedHeaders(updated);
+                      setDraggedHeaderIndex(null);
+                    }}
+                    className="border p-2 cursor-move select-none"
+                  >
+                    {header.header_name}
+                  </th>
+                ))}
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {rowOrder.map((actualRowIndex, displayIndex) => (
+
+                <tr
+                  key={actualRowIndex}
+                  draggable
+                  onDragStart={() => {
+                    setDraggedRowIndex(displayIndex);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                  }}
+                  onDrop={() => {
+
+                    if (
+                      draggedRowIndex === null ||
+                      draggedRowIndex === displayIndex
+                    ) {
+                      return;
+                    }
+
+                    const updated = [...rowOrder];
+
+                    const [movedRow] =
+                      updated.splice(draggedRowIndex, 1);
+
+                    updated.splice(displayIndex, 0, movedRow);
+
+                    setRowOrder(updated);
+                    setDraggedRowIndex(null);
+                  }}
+                  className="cursor-move"
+                >
+
+                  {selectedHeaders.map((header) => (
+                    <td
+                      key={header.id}
+                      className="border p-1"
+                    >
+
+                      <input
+
+                        value={
+                          cellData[
+                          `${actualRowIndex}__${header.id}`
+                          ] || ""
+                        }
+
+                        onChange={(e) => {
+
+                          setCellData((prev: any) => ({
+
+                            ...prev,
+
+                            [`${actualRowIndex}__${header.id}`]: e.target.value
+
+                          }));
+
+                        }}
+
+                        className="w-full p-2 outline-none"
+
+                      />
+
+                    </td>
+                  ))}
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      )}
     </div>
 
   );
