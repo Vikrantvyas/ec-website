@@ -71,25 +71,34 @@ export default function EnglishPage() {
   }, [isVocab, selectedTopics]);
 
   // 🔥 AUTO PANEL CONTROL (IMPORTANT)
-  useEffect(() => {
+  // 🔥 AUTO PANEL CONTROL
+// सभी Courses के लिए same layout
+useEffect(() => {
 
-  if (isVocab) {
+  if (!selectedCourse) return;
 
-    setShowLeft(true);
-    setShowScore(false);
-    setShowBoard(false);
+  // Course select होते ही:
+  // Left ON
+  // Board OFF
+  // Score OFF
+  setShowLeft(true);
+  setShowBoard(false);
+  setShowScore(false);
 
-    // Grammar Table पहले से selected है
-    if (selectedGrammarTableId) {
-      setShowGrammar(true);
-      setLayout("vertical");
-    } else {
-      setShowGrammar(false);
-    }
+  // Grammar Table selected है
+  if (selectedGrammarTableId) {
+
+    setShowGrammar(true);
+    setLayout("vertical");
+
+  } else {
+
+    setShowGrammar(false);
+    setLayout("horizontal");
 
   }
 
-}, [isVocab, selectedGrammarTableId]);
+}, [selectedCourse, selectedGrammarTableId]);
 
   // ---------------- FETCH ----------------
 
@@ -101,6 +110,15 @@ export default function EnglishPage() {
       fetchTopics();
     }
   }, [selectedCourse]);
+  useEffect(() => {
+  if (!selectedCourse) return;
+
+  setCurrentIndex(-1);
+  setShowAll(false);
+  setHighlightIndex(null);
+
+  vocabRef.current?.reset();
+}, [selectedCourse]);
 
   useEffect(() => {
     fetchTopics();
@@ -219,7 +237,7 @@ export default function EnglishPage() {
 
   const nextSentence = () => {
 
-    if (isVocab && vocabRef.current) {
+    if (vocabRef.current) {
       vocabRef.current.next();
       return;
     }
@@ -227,11 +245,12 @@ export default function EnglishPage() {
     if (currentIndex < sentences.length) {
       setCurrentIndex(prev => prev + 1);
     }
+
   };
 
   const prevSentence = () => {
 
-    if (isVocab && vocabRef.current) {
+    if (vocabRef.current) {
       vocabRef.current.prev();
       return;
     }
@@ -239,8 +258,8 @@ export default function EnglishPage() {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
     }
-  };
 
+  };
 
 
   const nextTopic = () => {

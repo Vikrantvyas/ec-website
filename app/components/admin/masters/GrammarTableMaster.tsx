@@ -52,6 +52,112 @@ export default function GrammarTableMaster() {
   const [draggedRowIndex, setDraggedRowIndex] =
     useState<number | null>(null);
   const [rowOrder, setRowOrder] = useState<number[]>([]);
+  const [copiedRow, setCopiedRow] = useState<any>(null);
+  const copyRow = (actualRowIndex: number) => {
+    if (!selectedTable) return;
+
+    const rowData: any = {};
+
+    selectedHeaders.forEach((header) => {
+      const key = `${actualRowIndex}__${header.id}`;
+
+      rowData[header.id] = cellData[key] || "";
+    });
+
+    setCopiedRow(rowData);
+
+    alert(`Row ${actualRowIndex + 1} Copied`);
+  };
+  const pasteRow = async (insertAfterIndex: number) => {
+    if (!selectedTable) return;
+
+    if (!copiedRow) {
+      alert("Please copy a row first.");
+      return;
+    }
+
+    const newRowIndex = insertAfterIndex + 1;
+
+    // Existing rows को नीचे shift करें
+    const { data: cells, error } = await supabase
+      .from("grammar_cells")
+      .select("*")
+      .eq("table_id", selectedTable.id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    if (cells) {
+      for (const cell of [...cells].sort(
+        (a: any, b: any) => b.row_no - a.row_no
+      )) {
+        if (cell.row_no >= newRowIndex) {
+          await supabase
+            .from("grammar_cells")
+            .update({
+              row_no: cell.row_no + 1,
+            })
+            .eq("id", cell.id);
+        }
+      }
+    }
+
+    // Copied row का data नई row में insert करें
+    const newCells = selectedHeaders
+  .map((header) => ({
+    table_id: selectedTable.id,
+    header_id: header.id,
+    row_no: newRowIndex,
+    cell_value:
+      copiedRow?.[header.id] !== undefined
+        ? copiedRow[header.id]
+        : "",
+  }))
+  .filter((cell) => cell.cell_value !== "");
+  setCellData((prev: any) => {
+  const updated = { ...prev };
+
+  selectedHeaders.forEach((header) => {
+    updated[`${newRowIndex}__${header.id}`] =
+      copiedRow?.[header.id] || "";
+  });
+
+  return updated;
+});
+
+    const { error: insertError } = await supabase
+      .from("grammar_cells")
+      .insert(newCells);
+
+    if (insertError) {
+      alert(insertError.message);
+      return;
+    }
+
+    const newTotalRows = selectedTable.total_rows + 1;
+
+    await supabase
+      .from("grammar_tables")
+      .update({
+        total_rows: newTotalRows,
+      })
+      .eq("id", selectedTable.id);
+
+    setSelectedTable({
+      ...selectedTable,
+      total_rows: newTotalRows,
+    });
+
+    await loadTables();
+
+    window.dispatchEvent(
+      new Event("grammar-table-refresh")
+    );
+
+    alert("Row Pasted");
+  };
   const [cellData, setCellData] = useState<any>({});
   const [editingTableId, setEditingTableId] =
     useState<string | null>(null);
@@ -1361,7 +1467,29 @@ export default function GrammarTableMaster() {
                     >
                       +
                     </button>
-
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyRow(actualRowIndex);
+                      }}
+                      className="text-blue-600 font-bold px-2 py-1 hover:bg-blue-100 rounded"
+                      title="Copy Row"
+                    >
+                      ⧉
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!copiedRow}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        pasteRow(actualRowIndex);
+                      }}
+                      className="text-purple-600 font-bold px-2 py-1 hover:bg-purple-100 rounded disabled:opacity-30"
+                      title="Paste Copied Row After This Row"
+                    >
+                      📋
+                    </button>
                     <button
                       type="button"
                       onClick={(e) => {

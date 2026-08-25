@@ -64,296 +64,360 @@ export default function GrammarTable({
   const [redoStack, setRedoStack] = useState<any[]>([]);
   const [visibleCells, setVisibleCells] = useState(0);
 
-useEffect(() => {
+  useEffect(() => {
 
-  if (columns.length > 0) return;
+    if (columns.length > 0) return;
 
-  if (headers && headers.length > 0) {
+    if (headers && headers.length > 0) {
+
+      const dynamicCols =
+        headers
+          .filter(
+            (h: string) =>
+              h.toLowerCase() !== "hindi"
+          )
+          .map((h: string) => {
+
+            const key = h.toLowerCase();
+
+            if (key === "hv") {
+              return "hv1";
+            }
+
+            return key;
+
+          });
+
+      setColumns([
+        "index",
+        "hindi",
+        ...dynamicCols
+      ]);
+
+      return;
+    }
+
+    if (!tableData || tableData.length === 0) return;
+
+    const baseCols = ["index", "hindi"];
+
+    const firstRow =
+      tableData[0]?.rows[0] || {};
 
     const dynamicCols =
-      headers
-        .filter(
-          (h: string) =>
-            h.toLowerCase() !== "hindi"
-        )
-        .map((h: string) => {
-
-          const key = h.toLowerCase();
-
-          if (key === "hv") {
-            return "hv1";
-          }
-
-          return key;
-
-        });
+      Object.keys(firstRow);
 
     setColumns([
-      "index",
-      "hindi",
+      ...baseCols,
       ...dynamicCols
     ]);
 
-    return;
-  }
+  }, [tableData, headers]);
 
-  if (!tableData || tableData.length === 0) return;
+  const saveHistory = () => {
+    setHistory(prev => [...prev, {
+      tableData: JSON.parse(JSON.stringify(tableData)),
+      columns,
+      mergedCells
+    }]);
+    setRedoStack([]);
+  };
 
-  const baseCols = ["index", "hindi"];
+  const undo = () => {
+    if (history.length === 0) return;
 
-  const firstRow =
-    tableData[0]?.rows[0] || {};
+    const last = history[history.length - 1];
 
-  const dynamicCols =
-    Object.keys(firstRow);
+    setRedoStack(prev => [...prev, { tableData, columns, mergedCells }]);
 
-  setColumns([
-    ...baseCols,
-    ...dynamicCols
-  ]);
+    setTableData(last.tableData);
+    setColumns(last.columns);
+    setMergedCells(last.mergedCells);
 
-}, [tableData, headers]);
+    setHistory(prev => prev.slice(0, -1));
+  };
 
-    const saveHistory = () => {
-      setHistory(prev => [...prev, {
-        tableData: JSON.parse(JSON.stringify(tableData)),
-        columns,
-        mergedCells
-      }]);
-      setRedoStack([]);
+  const redo = () => {
+    if (redoStack.length === 0) return;
+
+    const last = redoStack[redoStack.length - 1];
+
+    setHistory(prev => [...prev, { tableData, columns, mergedCells }]);
+
+    setTableData(last.tableData);
+    setColumns(last.columns);
+    setMergedCells(last.mergedCells);
+
+    setRedoStack(prev => prev.slice(0, -1));
+  };
+
+  useEffect(() => {
+    const handleKey = (e: any) => {
+      if (e.ctrlKey && e.key === "z") {
+        e.preventDefault(); undo();
+      }
+      if (e.ctrlKey && e.key === "y") {
+        e.preventDefault(); redo();
+      }
     };
 
-    const undo = () => {
-      if (history.length === 0) return;
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  });
 
-      const last = history[history.length - 1];
+  const handleDrop = (dropIndex: number) => {
+    if (dragIndex === null) return;
+    saveHistory();
 
-      setRedoStack(prev => [...prev, { tableData, columns, mergedCells }]);
+    const newCols = [...columns];
+    const dragged = newCols[dragIndex];
 
-      setTableData(last.tableData);
-      setColumns(last.columns);
-      setMergedCells(last.mergedCells);
+    newCols.splice(dragIndex, 1);
+    newCols.splice(dropIndex, 0, dragged);
 
-      setHistory(prev => prev.slice(0, -1));
-    };
+    setColumns(newCols);
+    setDragIndex(null);
+  };
 
-    const redo = () => {
-      if (redoStack.length === 0) return;
+  const handleAddColumn = (index: number) => {
+    const name = prompt("Column name?");
+    if (!name) return;
+    saveHistory();
 
-      const last = redoStack[redoStack.length - 1];
+    const newCols = [...columns];
+    newCols.splice(index + 1, 0, name);
 
-      setHistory(prev => [...prev, { tableData, columns, mergedCells }]);
+    const updatedData = tableData.map(g => ({
+      ...g,
+      rows: g.rows.map(r => ({ ...r, [name]: "" }))
+    }));
 
-      setTableData(last.tableData);
-      setColumns(last.columns);
-      setMergedCells(last.mergedCells);
+    setColumns(newCols);
+    setTableData(updatedData);
+    setMenu(null);
+  };
 
-      setRedoStack(prev => prev.slice(0, -1));
-    };
+  const handleRenameColumn = (index: number) => {
+    const oldName = columns[index];
+    const name = prompt("New name?", oldName);
+    if (!name) return;
+    saveHistory();
 
-    useEffect(() => {
-      const handleKey = (e: any) => {
-        if (e.ctrlKey && e.key === "z") {
-          e.preventDefault(); undo();
-        }
-        if (e.ctrlKey && e.key === "y") {
-          e.preventDefault(); redo();
-        }
-      };
+    const newCols = [...columns];
+    newCols[index] = name;
 
-      window.addEventListener("keydown", handleKey);
-      return () => window.removeEventListener("keydown", handleKey);
+    const updatedData = tableData.map(g => ({
+      ...g,
+      rows: g.rows.map(r => {
+        const newRow = { ...r };
+        newRow[name] = newRow[oldName];
+        delete newRow[oldName];
+        return newRow;
+      })
+    }));
+
+    setColumns(newCols);
+    setTableData(updatedData);
+    setMenu(null);
+  };
+
+  const handleDeleteColumn = (index: number) => {
+    const col = columns[index];
+
+    if (col === "index" || col === "hindi") {
+      alert("Cannot delete this column");
+      return;
+    }
+    saveHistory();
+
+    const newCols = columns.filter((_, i) => i !== index);
+
+    const updatedData = tableData.map(g => ({
+      ...g,
+      rows: g.rows.map(r => {
+        const newRow = { ...r };
+        delete newRow[col];
+        return newRow;
+      })
+    }));
+
+    setColumns(newCols);
+    setTableData(updatedData);
+    setMenu(null);
+  };
+
+  const handleCellChange = (g: number, r: number, c: string, value: string) => {
+    const updated = [...tableData];
+    updated[g].rows[r][c] = value;
+    setTableData(updated);
+  };
+
+  const handleCellClick = (e: any, g: number, r: number, c: string) => {
+    if (!e.shiftKey) {
+      setSelected([]);
+      return;
+    }
+
+    const key = `${g}-${r}-${c}`;
+
+    if (selected.length === 0) {
+      setSelected([key]);
+      return;
+    }
+
+    const [sg, sr, sc] = selected[0].split("-");
+
+    // same group only
+    if (Number(sg) !== g) {
+      setSelected([key]);
+      return;
+    }
+
+    const startRow = Number(sr);
+    const endRow = r;
+
+    const startCol = columns.indexOf(sc);
+    const endCol = columns.indexOf(c);
+
+    const minRow = Math.min(startRow, endRow);
+    const maxRow = Math.max(startRow, endRow);
+
+    const minCol = Math.min(startCol, endCol);
+    const maxCol = Math.max(startCol, endCol);
+
+    const newSelection: string[] = [];
+
+    for (let rowIndex = minRow; rowIndex <= maxRow; rowIndex++) {
+      for (let colIndex = minCol; colIndex <= maxCol; colIndex++) {
+
+        const colName = columns[colIndex];
+
+        if (colName === "index" || colName === "hindi") continue;
+
+        newSelection.push(`${g}-${rowIndex}-${colName}`);
+      }
+    }
+
+    setSelected(newSelection);
+  };
+
+
+
+  const handleMerge = () => {
+    if (selected.length < 2) return;
+    saveHistory();
+
+    const sorted = [...selected];
+
+    const rows = sorted.map(s => Number(s.split("-")[1]));
+    const cols = sorted.map(s => s.split("-")[2]);
+
+    const uniqueCols = [...new Set(cols)];
+    const uniqueRows = [...new Set(rows)];
+
+    const rowSpan = uniqueRows.length;
+    const colSpan = uniqueCols.length;
+
+    const base = sorted.sort((a, b) => {
+      const [ga, ra, ca] = a.split("-");
+      const [gb, rb, cb] = b.split("-");
+
+      if (Number(ra) !== Number(rb)) {
+        return Number(ra) - Number(rb);
+      }
+
+      return columns.indexOf(ca) - columns.indexOf(cb);
+    })[0];
+
+    const newMerged = { ...mergedCells };
+
+    newMerged[base] = { rowSpan, colSpan };
+
+    sorted.slice(1).forEach(s => {
+      newMerged[s] = { hidden: true };
     });
 
-    const handleDrop = (dropIndex: number) => {
-      if (dragIndex === null) return;
-      saveHistory();
-
-      const newCols = [...columns];
-      const dragged = newCols[dragIndex];
-
-      newCols.splice(dragIndex, 1);
-      newCols.splice(dropIndex, 0, dragged);
-
-      setColumns(newCols);
-      setDragIndex(null);
-    };
-
-    const handleAddColumn = (index: number) => {
-      const name = prompt("Column name?");
-      if (!name) return;
-      saveHistory();
-
-      const newCols = [...columns];
-      newCols.splice(index + 1, 0, name);
-
-      const updatedData = tableData.map(g => ({
-        ...g,
-        rows: g.rows.map(r => ({ ...r, [name]: "" }))
-      }));
-
-      setColumns(newCols);
-      setTableData(updatedData);
-      setMenu(null);
-    };
-
-    const handleRenameColumn = (index: number) => {
-      const oldName = columns[index];
-      const name = prompt("New name?", oldName);
-      if (!name) return;
-      saveHistory();
-
-      const newCols = [...columns];
-      newCols[index] = name;
-
-      const updatedData = tableData.map(g => ({
-        ...g,
-        rows: g.rows.map(r => {
-          const newRow = { ...r };
-          newRow[name] = newRow[oldName];
-          delete newRow[oldName];
-          return newRow;
-        })
-      }));
-
-      setColumns(newCols);
-      setTableData(updatedData);
-      setMenu(null);
-    };
-
-    const handleDeleteColumn = (index: number) => {
-      const col = columns[index];
-
-      if (col === "index" || col === "hindi") {
-        alert("Cannot delete this column");
-        return;
-      }
-      saveHistory();
-
-      const newCols = columns.filter((_, i) => i !== index);
-
-      const updatedData = tableData.map(g => ({
-        ...g,
-        rows: g.rows.map(r => {
-          const newRow = { ...r };
-          delete newRow[col];
-          return newRow;
-        })
-      }));
-
-      setColumns(newCols);
-      setTableData(updatedData);
-      setMenu(null);
-    };
-
-    const handleCellChange = (g: number, r: number, c: string, value: string) => {
-      const updated = [...tableData];
-      updated[g].rows[r][c] = value;
-      setTableData(updated);
-    };
-
-    const handleCellClick = (e: any, g: number, r: number, c: string) => {
-      if (!e.shiftKey) {
-        setSelected([]);
-        return;
+    setMergedCells(newMerged);
+    setSelected([]);
+    setMenu(null);
+  };
+  const revealPrevCell = () => {
+    setVisibleCells(prev => {
+      if (prev <= 0) {
+        return 0;
       }
 
-      const key = `${g}-${r}-${c}`;
+      return prev - 1;
+    });
+  };
 
-      if (selected.length === 0) {
-        setSelected([key]);
-        return;
+  const revealNextCell = () => {
+
+    setVisibleCells(prev => {
+
+      const totalRows = tableData.reduce(
+        (acc, group) => acc + group.rows.length,
+        0
+      );
+
+      const totalCells =
+        totalRows * columns.length;
+
+      if (prev >= totalCells) {
+        return prev;
       }
 
-      const [sg, sr, sc] = selected[0].split("-");
+      return prev + 1;
+    });
 
-      // same group only
-      if (Number(sg) !== g) {
-        setSelected([key]);
+  };
+
+  useEffect(() => {
+
+    const handleKey = (e: any) => {
+      if (
+        e.target instanceof HTMLElement &&
+        e.target.closest("input, textarea, select, button")
+      ) {
         return;
       }
+      if (e.key === "Enter") {
+        e.preventDefault();
 
-      const startRow = Number(sr);
-      const endRow = r;
+        const rowSize = columns.length;
 
-      const startCol = columns.indexOf(sc);
-      const endCol = columns.indexOf(c);
+        if (rowSize === 0) return;
 
-      const minRow = Math.min(startRow, endRow);
-      const maxRow = Math.max(startRow, endRow);
+        if (e.shiftKey) {
 
-      const minCol = Math.min(startCol, endCol);
-      const maxCol = Math.max(startCol, endCol);
+          const previousRow =
+            Math.ceil(visibleCells / rowSize) - 1;
 
-      const newSelection: string[] = [];
+          setVisibleCells(
+            Math.max(0, previousRow * rowSize)
+          );
 
-      for (let rowIndex = minRow; rowIndex <= maxRow; rowIndex++) {
-        for (let colIndex = minCol; colIndex <= maxCol; colIndex++) {
+        } else {
 
-          const colName = columns[colIndex];
+          const currentRow =
+            Math.floor(visibleCells / rowSize);
 
-          if (colName === "index" || colName === "hindi") continue;
+          const nextRowEnd =
+            (currentRow + 1) * rowSize;
 
-          newSelection.push(`${g}-${rowIndex}-${colName}`);
+          setVisibleCells(nextRowEnd);
+
         }
       }
+      if (e.key === "ArrowRight") {
+        revealNextCell();
+      }
 
-      setSelected(newSelection);
-    };
+      if (e.key === "ArrowLeft") {
+        revealPrevCell();
+      }
 
-
-
-    const handleMerge = () => {
-      if (selected.length < 2) return;
-      saveHistory();
-
-      const sorted = [...selected];
-
-      const rows = sorted.map(s => Number(s.split("-")[1]));
-      const cols = sorted.map(s => s.split("-")[2]);
-
-      const uniqueCols = [...new Set(cols)];
-      const uniqueRows = [...new Set(rows)];
-
-      const rowSpan = uniqueRows.length;
-      const colSpan = uniqueCols.length;
-
-      const base = sorted.sort((a, b) => {
-        const [ga, ra, ca] = a.split("-");
-        const [gb, rb, cb] = b.split("-");
-
-        if (Number(ra) !== Number(rb)) {
-          return Number(ra) - Number(rb);
-        }
-
-        return columns.indexOf(ca) - columns.indexOf(cb);
-      })[0];
-
-      const newMerged = { ...mergedCells };
-
-      newMerged[base] = { rowSpan, colSpan };
-
-      sorted.slice(1).forEach(s => {
-        newMerged[s] = { hidden: true };
-      });
-
-      setMergedCells(newMerged);
-      setSelected([]);
-      setMenu(null);
-    };
-    const revealPrevCell = () => {
-      setVisibleCells(prev => {
-        if (prev <= 0) {
-          return 0;
-        }
-
-        return prev - 1;
-      });
-    };
-
-    const revealNextCell = () => {
-
-      setVisibleCells(prev => {
+      if (e.key === "ArrowDown") {
 
         const totalRows = tableData.reduce(
           (acc, group) => acc + group.rows.length,
@@ -363,322 +427,258 @@ useEffect(() => {
         const totalCells =
           totalRows * columns.length;
 
-        if (prev >= totalCells) {
-          return prev;
-        }
+        setVisibleCells(totalCells);
+      }
 
-        return prev + 1;
-      });
+      if (e.key === "ArrowUp") {
+        setVisibleCells(0);
+      }
 
     };
 
-    useEffect(() => {
+    window.addEventListener("keydown", handleKey);
 
-      const handleKey = (e: any) => {
-        if (
-          e.target instanceof HTMLElement &&
-          e.target.closest("input, textarea, select, button")
-        ) {
-          return;
-        }
-        if (e.key === "Enter") {
-          e.preventDefault();
+    return () =>
+      window.removeEventListener("keydown", handleKey);
 
-          const rowSize = columns.length;
+  }, [columns, tableData]);
+  const headerMap: any = {
+    index: "#",
+    hindi: tableSelector || "Hindi"
+  };
 
-          if (rowSize === 0) return;
+  headers?.forEach((h: string) => {
 
-          if (e.shiftKey) {
+    const key =
+      h.toLowerCase() === "hv"
+        ? "hv1"
+        : h.toLowerCase();
 
-            const previousRow =
-              Math.ceil(visibleCells / rowSize) - 1;
+    headerMap[key] = h;
 
-            setVisibleCells(
-              Math.max(0, previousRow * rowSize)
-            );
+  });
 
-          } else {
+  return (
 
-            const currentRow =
-              Math.floor(visibleCells / rowSize);
+    <div className="w-full h-full" onClick={() => setMenu(null)}>
 
-            const nextRowEnd =
-              (currentRow + 1) * rowSize;
+      <table className="border border-gray-400 text-sm table-auto w-max">
 
-            setVisibleCells(nextRowEnd);
-
-          }
-        }
-        if (e.key === "ArrowRight") {
-          revealNextCell();
-        }
-
-        if (e.key === "ArrowLeft") {
-          revealPrevCell();
-        }
-
-        if (e.key === "ArrowDown") {
-
-          const totalRows = tableData.reduce(
-            (acc, group) => acc + group.rows.length,
-            0
-          );
-
-          const totalCells =
-            totalRows * columns.length;
-
-          setVisibleCells(totalCells);
-        }
-
-        if (e.key === "ArrowUp") {
-          setVisibleCells(0);
-        }
-
-      };
-
-      window.addEventListener("keydown", handleKey);
-
-      return () =>
-        window.removeEventListener("keydown", handleKey);
-
-    }, [columns, tableData]);
-    const headerMap: any = {
-      index: "#",
-      hindi: tableSelector || "Hindi"
-    };
-
-    headers?.forEach((h: string) => {
-
-      const key =
-        h.toLowerCase() === "hv"
-          ? "hv1"
-          : h.toLowerCase();
-
-      headerMap[key] = h;
-
-    });
-
-    return (
-
-      <div className="w-full h-full" onClick={() => setMenu(null)}>
-
-        <table className="border border-gray-400 text-sm table-auto w-max">
-
-          {/* ✅ PERFECT WIDTH CONTROL */}
+        {/* ✅ PERFECT WIDTH CONTROL */}
 
 
-          <thead className="bg-gray-300 align-middle">
-            <tr>
-              {columns.map((col, i) => (
-                <th
-                  key={col}
-                  draggable
-                  onDragStart={() => setDragIndex(i)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => handleDrop(i)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    setMenu({ x: e.clientX, y: e.clientY, colIndex: i });
-                  }}
-                  className="border px-2 py-1 text-left transition-colors hover:bg-yellow-200 hover:text-black"
-                >
-                  <div className="text-left px-1 transition-colors group-hover:bg-yellow-200 group-hover:text-black">
-                    {col === "hindi"
-                      ? tableSelector || "Hindi"
-                      : headerMap[col] || col}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
+        <thead className="bg-gray-300 align-middle">
+          <tr>
+            {columns.map((col, i) => (
+              <th
+                key={col}
+                draggable
+                onDragStart={() => setDragIndex(i)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleDrop(i)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setMenu({ x: e.clientX, y: e.clientY, colIndex: i });
+                }}
+                className="border px-2 py-1 text-left transition-colors hover:bg-yellow-200 hover:text-black"
+              >
+                <div className="text-left px-1 transition-colors group-hover:bg-yellow-200 group-hover:text-black">
+                  {col === "hindi"
+                    ? tableSelector || "Hindi"
+                    : headerMap[col] || col}
+                </div>
+              </th>
+            ))}
+          </tr>
+        </thead>
 
-          <tbody>
+        <tbody>
 
-            {tableData.map((group, gIndex) => (
+          {tableData.map((group, gIndex) => (
 
-              group.rows.map((row, rIndex) => (
+            group.rows.map((row, rIndex) => (
 
-                <tr
-                  key={`${gIndex}-${rIndex}`}
-                  className={`text-center relative group ${ctrlPressed && hoverRow === `${gIndex}-${rIndex}`
-                    ? "bg-yellow-200"
-                    : ""
-                    }`}
-                  onMouseEnter={() => {
-                    setHoverRow(`${gIndex}-${rIndex}`);
-                  }}
-                  onMouseLeave={() => {
-                    setHoverRow(null);
-                  }}
-                >
+              <tr
+                key={`${gIndex}-${rIndex}`}
+                className={`text-center relative group ${ctrlPressed && hoverRow === `${gIndex}-${rIndex}`
+                  ? "bg-yellow-200"
+                  : ""
+                  }`}
+                onMouseEnter={() => {
+                  setHoverRow(`${gIndex}-${rIndex}`);
+                }}
+                onMouseLeave={() => {
+                  setHoverRow(null);
+                }}
+              >
 
-                  {columns.map((col) => {
+                {columns.map((col) => {
 
-                    if (col === "index" && rIndex === 0) {
-
-                      const rowOffset = tableData
-                        .slice(0, gIndex)
-                        .reduce((acc, group) => acc + group.rows.length, 0);
-
-                      const revealOrder =
-                        (rowOffset + rIndex) * columns.length + 0;
-
-                      if (revealOrder >= visibleCells) {
-                        return (
-                          <td
-                            key="index"
-                            rowSpan={group.rows.length}
-                            className="border-0 p-0 h-0"
-                          >
-                          </td>
-                        );
-                      }
-
-
-
-                      return (
-                        <td
-                          key="index"
-                          rowSpan={group.rows.length}
-                          className="border p-2 font-semibold align-top"
-                        >
-                          {gIndex + 1}.
-                        </td>
-                      );
-                    }
-                    if (col === "hindi" && rIndex === 0) {
-
-                      const rowOffset = tableData
-                        .slice(0, gIndex)
-                        .reduce((acc, group) => acc + group.rows.length, 0);
-
-                      const revealOrder =
-                        (rowOffset + rIndex) * columns.length + 1;
-
-                      if (revealOrder >= visibleCells) {
-                        return (
-                          <td
-                            key="hindi"
-                            rowSpan={group.rows.length}
-                            className={`border-0 p-0 h-0 ${col.toLowerCase() === "wh"
-                              ? "min-w-[60px]"
-                              : ""
-                              }`}
-                          >
-                          </td>
-                        );
-                      }
-                      return (
-                        <td
-                          key="hindi"
-                          rowSpan={group.rows.length}
-                          className="border px-2 py-1 text-left align-top whitespace-nowrap transition-colors hover:bg-yellow-200 hover:text-black"
-                        >
-                          {group.hindi}
-                        </td>
-                      );
-                    }
-                    if (col === "index" || col === "hindi") return null;
+                  if (col === "index" && rIndex === 0) {
 
                     const rowOffset = tableData
                       .slice(0, gIndex)
                       .reduce((acc, group) => acc + group.rows.length, 0);
 
-                    const key = `${gIndex}-${rIndex}-${col}`;
+                    const revealOrder =
+                      (rowOffset + rIndex) * columns.length + 0;
 
-                    const cellOrder =
-                      (rowOffset + rIndex) * columns.length +
-                      columns.indexOf(col);
-
-                    const isVisible = cellOrder < visibleCells;
-
-                    const merge = mergedCells[key];
-
-                    if (merge?.hidden) {
-                      return null;
-                    }
-
-                    if (!isVisible) {
+                    if (revealOrder >= visibleCells) {
                       return (
                         <td
-                          key={col}
+                          key="index"
+                          rowSpan={group.rows.length}
                           className="border-0 p-0 h-0"
+                        >
+                        </td>
+                      );
+                    }
+
+
+
+                    return (
+                      <td
+                        key="index"
+                        rowSpan={group.rows.length}
+                        className="border p-2 font-semibold align-top"
+                      >
+                        {gIndex + 1}.
+                      </td>
+                    );
+                  }
+                  if (col === "hindi" && rIndex === 0) {
+
+                    const rowOffset = tableData
+                      .slice(0, gIndex)
+                      .reduce((acc, group) => acc + group.rows.length, 0);
+
+                    const revealOrder =
+                      (rowOffset + rIndex) * columns.length + 1;
+
+                    if (revealOrder >= visibleCells) {
+                      return (
+                        <td
+                          key="hindi"
+                          rowSpan={group.rows.length}
+                          className={`border-0 p-0 h-0 ${col.toLowerCase() === "wh"
+                            ? "min-w-[60px]"
+                            : ""
+                            }`}
                         >
                         </td>
                       );
                     }
                     return (
                       <td
-                        key={col}
-                        rowSpan={merge?.rowSpan || 1}
-                        colSpan={merge?.colSpan || 1}
-                        onClick={(e) => handleCellClick(e, gIndex, rIndex, col)}
-                        onMouseDown={(e) => {
-                          if (e.shiftKey) {
-                            setIsDragging(true);
-                            handleCellClick(e, gIndex, rIndex, col); // start selection
-                          }
-                        }}
-
-                        onMouseEnter={(e) => {
-                          if (isDragging && e.shiftKey) {
-                            handleCellClick(e, gIndex, rIndex, col);
-                          }
-                        }}
-
-                        onMouseUp={() => setIsDragging(false)}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          setMenu({ x: e.clientX, y: e.clientY, cell: true });
-                        }}
-                        className={`border px-1 py-0 whitespace-nowrap text-left ${selected.includes(key)
-                          ? "bg-yellow-200 text-black"
-                          : "hover:bg-yellow-200 hover:text-black"
-                          }`}
+                        key="hindi"
+                        rowSpan={group.rows.length}
+                        className="border px-2 py-1 text-left align-top whitespace-nowrap transition-colors hover:bg-yellow-200 hover:text-black"
                       >
-
-                        <input
-                          type="text"
-                          value={row[col] || ""}
-                          onChange={(e) =>
-                            handleCellChange(gIndex, rIndex, col, e.target.value)
-                          }
-                          className="bg-transparent outline-none border-none p-0 m-0 text-left"
-                          size={Math.max((row[col] || "").length, 1)}
-                          style={{ width: `${(row[col] || "").length + 1}ch` }}
-                        />
+                        {group.hindi}
                       </td>
                     );
+                  }
+                  if (col === "index" || col === "hindi") return null;
 
-                  })}
+                  const rowOffset = tableData
+                    .slice(0, gIndex)
+                    .reduce((acc, group) => acc + group.rows.length, 0);
 
-                </tr>
+                  const key = `${gIndex}-${rIndex}-${col}`;
 
-              ))
+                  const cellOrder =
+                    (rowOffset + rIndex) * columns.length +
+                    columns.indexOf(col);
 
-            ))}
+                  const isVisible = cellOrder < visibleCells;
 
-          </tbody>
+                  const merge = mergedCells[key];
 
-        </table>
+                  if (merge?.hidden) {
+                    return null;
+                  }
 
-        {menu && (
-          <div className="fixed bg-white border shadow-lg text-sm z-50" style={{ top: menu.y, left: menu.x }}>
-            {menu.cell && (
-              <div className="px-3 py-2 hover:bg-gray-100 cursor-pointer" onClick={handleMerge}>
-                🔗 Merge Cells
-              </div>
-            )}
-            {menu.colIndex !== undefined && (
-              <>
-                <div className="px-3 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => handleAddColumn(menu.colIndex)}>➕ Add Column</div>
-                <div className="px-3 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => handleRenameColumn(menu.colIndex)}>✏️ Rename Column</div>
-                <div className="px-3 py-2 hover:bg-red-100 text-red-600 cursor-pointer" onClick={() => handleDeleteColumn(menu.colIndex)}>🗑 Delete Column</div>
-              </>
-            )}
-          </div>
-        )}
+                  if (!isVisible) {
+                    return (
+                      <td
+                        key={col}
+                        className="border-0 p-0 h-0"
+                      >
+                      </td>
+                    );
+                  }
+                  return (
+                    <td
+                      key={col}
+                      rowSpan={merge?.rowSpan || 1}
+                      colSpan={merge?.colSpan || 1}
+                      onClick={(e) => handleCellClick(e, gIndex, rIndex, col)}
+                      onMouseDown={(e) => {
+                        if (e.shiftKey) {
+                          setIsDragging(true);
+                          handleCellClick(e, gIndex, rIndex, col); // start selection
+                        }
+                      }}
 
-      </div>
-    );
-  }
+                      onMouseEnter={(e) => {
+                        if (isDragging && e.shiftKey) {
+                          handleCellClick(e, gIndex, rIndex, col);
+                        }
+                      }}
+
+                      onMouseUp={() => setIsDragging(false)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setMenu({ x: e.clientX, y: e.clientY, cell: true });
+                      }}
+                      className={`border px-1 py-0 whitespace-nowrap text-left ${selected.includes(key)
+                        ? "bg-yellow-200 text-black"
+                        : "hover:bg-yellow-200 hover:text-black"
+                        }`}
+                    >
+
+                      <input
+                        type="text"
+                        value={row[col] || ""}
+                        onChange={(e) =>
+                          handleCellChange(gIndex, rIndex, col, e.target.value)
+                        }
+                        className="bg-transparent outline-none border-none p-0 m-0 text-left"
+                        size={Math.max((row[col] || "").length, 1)}
+                        style={{ width: `${(row[col] || "").length + 1}ch` }}
+                      />
+                    </td>
+                  );
+
+                })}
+
+              </tr>
+
+            ))
+
+          ))}
+
+        </tbody>
+
+      </table>
+
+      {menu && (
+        <div className="fixed bg-white border shadow-lg text-sm z-50" style={{ top: menu.y, left: menu.x }}>
+          {menu.cell && (
+            <div className="px-3 py-2 hover:bg-gray-100 cursor-pointer" onClick={handleMerge}>
+              🔗 Merge Cells
+            </div>
+          )}
+          {menu.colIndex !== undefined && (
+            <>
+              <div className="px-3 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => handleAddColumn(menu.colIndex)}>➕ Add Column</div>
+              <div className="px-3 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => handleRenameColumn(menu.colIndex)}>✏️ Rename Column</div>
+              <div className="px-3 py-2 hover:bg-red-100 text-red-600 cursor-pointer" onClick={() => handleDeleteColumn(menu.colIndex)}>🗑 Delete Column</div>
+            </>
+          )}
+        </div>
+      )}
+
+    </div>
+  );
+}

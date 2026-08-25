@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import WhiteBoard from "./WhiteBoard";
-import VocabularyPlayer from "./VocabularyPlayer";
+import CoursePlayer from "./CoursePlayer";
 import ScoreCard from "./ScoreCard";
 import GrammarBoard from "./GrammarBoard";
 import SentencePlayer from "./SentencePlayer";
@@ -177,29 +177,30 @@ export default function MainBoard({
             ) : isVocab ? (
 
               <div className="text-xs h-full min-h-0">
-  <VocabularyPlayer
-    ref={vocabRef}
-    data={sentences}
-    random={randomMode}
-    showAll={showAll}
-    compact={true}
-  />
-</div>
-
-            ) : (
-
-              <div className="text-xs">
-                <SentencePlayer
+                <CoursePlayer
+                  ref={vocabRef}
                   data={sentences}
-                  highlightIndex={highlightIndex}
-                  setHighlightIndex={setHighlightIndex}
                   random={randomMode}
                   showAll={showAll}
-                  currentIndex={currentIndex}
+                  compact={true}
                 />
               </div>
 
-            )}
+            ) : (
+
+  <div className="text-xs h-full min-h-0">
+    <CoursePlayer
+      ref={vocabRef}
+      data={sentences}
+      random={randomMode}
+      showAll={showAll}
+      compact={true}
+      highlightIndex={highlightIndex}
+      setHighlightIndex={setHighlightIndex}
+    />
+  </div>
+
+)}
 
           </div>
 
