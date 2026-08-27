@@ -65,6 +65,10 @@ export default function EnglishSentenceMaster({
   const [editId, setEditId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [editOrder, setEditOrder] = useState("");
+  const [clipboardSentences, setClipboardSentences] = useState<any[]>([]);
+  const [clipboardMode, setClipboardMode] = useState<"copy" | "cut" | null>(null);
+
+  const [selectedSentenceIds, setSelectedSentenceIds] = useState<string[]>([]);
 
   useEffect(() => { fetchCourses(); }, []);
   useEffect(() => {
@@ -115,6 +119,8 @@ export default function EnglishSentenceMaster({
     if (data) {
       const formatted = data.map((d: any) => ({
         id: d.id,
+        hindi: d.hindi,
+        english: d.english,
         sentence: `${d.hindi} - ${d.english}`,
         order_no: d.order_no
       }));
@@ -210,7 +216,128 @@ export default function EnglishSentenceMaster({
     setBulkText("");
     fetchSentences();
   };
+  const copySelectedSentences = () => {
+    const selected = sentences.filter(s =>
+      selectedSentenceIds.includes(s.id)
+    );
 
+    if (selected.length === 0) return;
+
+    setClipboardSentences(selected);
+    setClipboardMode("copy");
+  };
+
+  const cutSelectedSentences = () => {
+    const selected = sentences.filter(s =>
+      selectedSentenceIds.includes(s.id)
+    );
+
+    if (selected.length === 0) return;
+
+    setClipboardSentences(selected);
+    setClipboardMode("cut");
+  };
+  const toggleSentenceSelection = (id: string) => {
+    setSelectedSentenceIds(prev =>
+      prev.includes(id)
+        ? prev.filter(x => x !== id)
+        : [...prev, id]
+    );
+  };
+
+  const selectAllSentences = () => {
+    setSelectedSentenceIds(sentences.map(s => s.id));
+  };
+
+  const clearSentenceSelection = () => {
+    setSelectedSentenceIds([]);
+  };
+  const pasteSentences = async () => {
+    if (clipboardSentences.length === 0 || !selectedTopic) return;
+
+    let insertedIds: string[] = [];
+
+    try {
+      const maxOrder = sentences.length > 0
+        ? Math.max(...sentences.map(s => s.order_no || 0))
+        : 0;
+
+      const data = clipboardSentences.map((s, i) => ({
+        topic_id: selectedTopic,
+        hindi: s.hindi,
+        english: s.english,
+        order_no: maxOrder + i + 1
+      }));
+
+      // 1. Insert all selected sentences
+      const { data: insertedData, error: insertError } = await supabase
+        .from("vocabulary")
+        .insert(data)
+        .select("id");
+
+      if (insertError) throw insertError;
+
+      insertedIds = (insertedData || []).map((row: any) => row.id);
+
+      // 2. If CUT, delete original sentences
+      if (clipboardMode === "cut") {
+        const originalIds = clipboardSentences.map(s => s.id);
+
+        const { error: deleteError } = await supabase
+          .from("vocabulary")
+          .delete()
+          .in("id", originalIds);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // 3. Clear clipboard and selection
+      setClipboardSentences([]);
+      setClipboardMode(null);
+      setSelectedSentenceIds([]);
+
+      fetchSentences();
+
+    } catch (error) {
+
+      console.error("Paste Sentences failed:", error);
+
+      // Roll back newly inserted sentences if something failed
+      if (insertedIds.length > 0) {
+        await supabase
+          .from("vocabulary")
+          .delete()
+          .in("id", insertedIds);
+      }
+
+      alert(
+        "Paste failed. Original Sentences have NOT been deleted."
+      );
+    }
+  };
+  const deleteSelectedSentences = async () => {
+    if (selectedSentenceIds.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Delete ${selectedSentenceIds.length} selected sentences?`
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("vocabulary")
+      .delete()
+      .in("id", selectedSentenceIds);
+
+    if (error) {
+      console.error("Delete Selected Sentences failed:", error);
+      alert("Delete failed.");
+      return;
+    }
+
+    setSelectedSentenceIds([]);
+    fetchSentences();
+  };
   const deleteSentence = async (id: string) => {
 
     await supabase
@@ -290,8 +417,8 @@ export default function EnglishSentenceMaster({
         <select value={selectedDay} onChange={(e) => setSelectedDay(e.target.value)} className="border px-2 py-1 rounded">
           <option value="">Day</option>
           {days.map(d => <option key={d.id} value={d.id}>
-  Day {d.day_number}{d.title ? ` · ${d.title}` : ""}
-</option>)}
+            Day {d.day_number}{d.title ? ` · ${d.title}` : ""}
+          </option>)}
         </select>
 
         <button onClick={() => setShowDayInput(!showDayInput)}>+</button>
@@ -327,11 +454,36 @@ export default function EnglishSentenceMaster({
           <input type="checkbox" checked={showBulk} onChange={() => setShowBulk(!showBulk)} />
           Bulk
         </label>
-
-        <button onClick={saveOrder} className="bg-purple-600 text-white px-3 py-1 rounded">
-          Save Order
+        <button
+          onClick={selectAllSentences}
+          className="border px-3 py-1 rounded"
+        >
+          Select All
         </button>
 
+        <button
+          onClick={clearSentenceSelection}
+          className="border px-3 py-1 rounded"
+        >
+          Clear
+        </button>
+
+        
+
+        <button
+          onClick={saveOrder}
+          className="bg-purple-600 text-white px-3 py-1 rounded"
+        >
+          Save Order
+        </button>
+        {clipboardSentences.length > 0 && (
+          <button
+            onClick={pasteSentences}
+            className="bg-green-600 text-white px-3 py-1 rounded"
+          >
+            Paste {clipboardMode === "cut" ? "Cut" : "Copied"} {clipboardSentences.length} Sentences
+          </button>
+        )}
       </div>
 
       {/* BULK */}
@@ -370,11 +522,51 @@ export default function EnglishSentenceMaster({
                         </>
                       ) : (
                         <>
-                          <div className="cursor-move" {...attributes} {...listeners}>☰</div>
+                          <input
+                            type="checkbox"
+                            checked={selectedSentenceIds.includes(s.id)}
+                            onChange={() => toggleSentenceSelection(s.id)}
+                          />
+
+                          <div className="cursor-move" {...attributes} {...listeners}>
+                            ☰
+                          </div>
+
                           <div className="w-10">{s.order_no}</div>
+
                           <div className="flex-1">{s.sentence}</div>
-                          <button onClick={() => startEdit(s)}>Edit</button>
-                          <button onClick={() => deleteSentence(s.id)}>Delete</button>
+
+                          <button
+                            onClick={copySelectedSentences}
+                            disabled={!selectedSentenceIds.includes(s.id)}
+                            className="disabled:opacity-40"
+                          >
+                            Copy Selected
+                          </button>
+
+                          <button
+                            onClick={cutSelectedSentences}
+                            disabled={!selectedSentenceIds.includes(s.id)}
+                            className="disabled:opacity-40"
+                          >
+                            Cut Selected
+                          </button>
+
+                          <button onClick={() => startEdit(s)}>
+                            Edit
+                          </button>
+
+                          <button
+  onClick={() => {
+    if (selectedSentenceIds.includes(s.id)) {
+      deleteSelectedSentences();
+    } else {
+      deleteSentence(s.id);
+    }
+  }}
+>
+  Delete
+</button>
                         </>
                       )}
 

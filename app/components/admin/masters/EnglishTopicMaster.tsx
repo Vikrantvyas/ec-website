@@ -62,6 +62,8 @@ export default function EnglishTopicMaster({
   const [editId, setEditId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [editOrder, setEditOrder] = useState("");
+  const [clipboardTopic, setClipboardTopic] = useState<any>(null);
+  const [clipboardMode, setClipboardMode] = useState<"copy" | "cut" | null>(null);
 
   useEffect(() => {
     fetchCourses();
@@ -143,7 +145,93 @@ export default function EnglishTopicMaster({
     setBulkText("");
     fetchTopics();
   };
+  const copyTopic = (topic: any) => {
+    setClipboardTopic(topic);
+    setClipboardMode("copy");
+  };
 
+  const cutTopic = (topic: any) => {
+    setClipboardTopic(topic);
+    setClipboardMode("cut");
+  };
+  const pasteTopic = async () => {
+    if (!clipboardTopic || !selectedDay) return;
+
+    try {
+      // 1. Get all sentences of the source topic
+      const { data: oldVocabulary, error: vocabularyError } =
+        await supabase
+          .from("vocabulary")
+          .select("*")
+          .eq("topic_id", clipboardTopic.id)
+          .order("order_no");
+
+      if (vocabularyError) throw vocabularyError;
+
+      // 2. Find next order number in target Day
+      const maxOrder = topics.length > 0
+        ? Math.max(...topics.map(t => t.order_no || 0))
+        : 0;
+
+      // 3. Create new Topic
+      const { data: newTopicData, error: newTopicError } =
+        await supabase
+          .from("topics")
+          .insert([{
+            day_id: selectedDay,
+            topic_name: clipboardTopic.topic_name,
+            order_no: maxOrder + 1
+          }])
+          .select()
+          .single();
+
+      if (newTopicError) throw newTopicError;
+
+      const newTopic = newTopicData;
+
+      // 4. Copy all sentences
+      if (oldVocabulary && oldVocabulary.length > 0) {
+
+        const vocabularyData = oldVocabulary.map((v: any) => ({
+          topic_id: newTopic.id,
+          hindi: v.hindi,
+          english: v.english,
+          order_no: v.order_no
+        }));
+
+        const { error: insertVocabularyError } = await supabase
+          .from("vocabulary")
+          .insert(vocabularyData);
+
+        if (insertVocabularyError) throw insertVocabularyError;
+      }
+
+      // 5. If CUT, delete original Topic
+      if (clipboardMode === "cut") {
+
+        const { error: deleteError } = await supabase
+          .from("topics")
+          .delete()
+          .eq("id", clipboardTopic.id);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // 6. Clear clipboard
+      setClipboardTopic(null);
+      setClipboardMode(null);
+
+      fetchTopics();
+
+    } catch (error) {
+
+      console.error("Paste Topic failed:", error);
+
+      alert(
+        "Paste failed. Original Topic has NOT been deleted."
+      );
+    }
+  };
   // DELETE
   const deleteTopic = async (id: string) => {
     await supabase.from("topics").delete().eq("id", id);
@@ -206,8 +294,8 @@ export default function EnglishTopicMaster({
         <select value={selectedDay} onChange={(e) => setSelectedDay(e.target.value)} className="border px-2 py-1 rounded">
           <option value="">Day</option>
           {days.map(d => <option key={d.id} value={d.id}>
-  Day {d.day_number}{d.title ? ` · ${d.title}` : ""}
-</option>)}
+            Day {d.day_number}{d.title ? ` · ${d.title}` : ""}
+          </option>)}
         </select>
 
         <input value={topicName} onChange={(e) => setTopicName(e.target.value)}
@@ -230,6 +318,14 @@ export default function EnglishTopicMaster({
         <button onClick={saveOrder} className="bg-purple-600 text-white px-3 py-1 rounded">
           Save Order
         </button>
+        {clipboardTopic && (
+  <button
+    onClick={pasteTopic}
+    className="bg-green-600 text-white px-3 py-1 rounded"
+  >
+    Paste {clipboardMode === "cut" ? "Cut" : "Copied"} Topic
+  </button>
+)}
 
       </div>
 
@@ -280,6 +376,14 @@ export default function EnglishTopicMaster({
 
                           <button onClick={() => onManageSentences(t.id)}>
                             Manage Sentences →
+                          </button>
+
+                          <button onClick={() => copyTopic(t)}>
+                            Copy
+                          </button>
+
+                          <button onClick={() => cutTopic(t)}>
+                            Cut
                           </button>
 
                           <button onClick={() => startEdit(t)}>Edit</button>
