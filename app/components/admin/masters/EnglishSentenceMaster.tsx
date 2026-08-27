@@ -196,13 +196,26 @@ export default function EnglishSentenceMaster() {
     await supabase
       .from("vocabulary")
       .delete()
-      .eq("id", id); const parts = editText.split("-");
+      .eq("id", id);
+
+    fetchSentences();
+  };
+  const startEdit = (s: any) => {
+    setEditId(s.id);
+    setEditText(s.sentence);
+    setEditOrder(String(s.order_no));
+  };
+  const saveEdit = async () => {
+
+    if (!editId) return;
+
+    const parts = editText.split("-");
 
     await supabase
       .from("vocabulary")
       .update({
         hindi: parts[0]?.trim() || "",
-        english: parts.slice(1).join("-").trim() || "",
+        english: parts.slice(1).join(" ").trim() || "",
         order_no: Number(editOrder)
       })
       .eq("id", editId);
