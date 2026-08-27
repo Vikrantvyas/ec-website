@@ -62,8 +62,10 @@ export default function EnglishTopicMaster({
   const [editId, setEditId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [editOrder, setEditOrder] = useState("");
-  const [clipboardTopic, setClipboardTopic] = useState<any>(null);
+  const [clipboardTopics, setClipboardTopics] = useState<any[]>([]);
   const [clipboardMode, setClipboardMode] = useState<"copy" | "cut" | null>(null);
+
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
 
   useEffect(() => {
     fetchCourses();
@@ -145,94 +147,157 @@ export default function EnglishTopicMaster({
     setBulkText("");
     fetchTopics();
   };
-  const copyTopic = (topic: any) => {
-    setClipboardTopic(topic);
+
+  const toggleTopicSelection = (id: string) => {
+    setSelectedTopicIds(prev =>
+      prev.includes(id)
+        ? prev.filter(x => x !== id)
+        : [...prev, id]
+    );
+  };
+
+  const selectAllTopics = () => {
+    setSelectedTopicIds(topics.map(t => t.id));
+  };
+
+  const clearTopicSelection = () => {
+    setSelectedTopicIds([]);
+  };
+  const copySelectedTopics = () => {
+    const selected = topics.filter(t =>
+      selectedTopicIds.includes(t.id)
+    );
+
+    if (selected.length === 0) return;
+
+    setClipboardTopics(selected);
     setClipboardMode("copy");
   };
 
-  const cutTopic = (topic: any) => {
-    setClipboardTopic(topic);
+  const cutSelectedTopics = () => {
+    const selected = topics.filter(t =>
+      selectedTopicIds.includes(t.id)
+    );
+
+    if (selected.length === 0) return;
+
+    setClipboardTopics(selected);
     setClipboardMode("cut");
   };
-  const pasteTopic = async () => {
-    if (!clipboardTopic || !selectedDay) return;
+  const pasteTopics = async () => {
+    if (clipboardTopics.length === 0 || !selectedDay) return;
 
     try {
-      // 1. Get all sentences of the source topic
-      const { data: oldVocabulary, error: vocabularyError } =
-        await supabase
-          .from("vocabulary")
-          .select("*")
-          .eq("topic_id", clipboardTopic.id)
-          .order("order_no");
-
-      if (vocabularyError) throw vocabularyError;
-
-      // 2. Find next order number in target Day
       const maxOrder = topics.length > 0
         ? Math.max(...topics.map(t => t.order_no || 0))
         : 0;
 
-      // 3. Create new Topic
-      const { data: newTopicData, error: newTopicError } =
-        await supabase
-          .from("topics")
-          .insert([{
-            day_id: selectedDay,
-            topic_name: clipboardTopic.topic_name,
-            order_no: maxOrder + 1
-          }])
-          .select()
-          .single();
+      const sortedTopics = [...clipboardTopics].sort(
+        (a, b) => a.order_no - b.order_no
+      );
 
-      if (newTopicError) throw newTopicError;
+      for (let i = 0; i < sortedTopics.length; i++) {
 
-      const newTopic = newTopicData;
+        const oldTopic = sortedTopics[i];
 
-      // 4. Copy all sentences
-      if (oldVocabulary && oldVocabulary.length > 0) {
+        // 1. Get all sentences of source Topic
+        const { data: oldVocabulary, error: vocabularyError } =
+          await supabase
+            .from("vocabulary")
+            .select("*")
+            .eq("topic_id", oldTopic.id)
+            .order("order_no");
 
-        const vocabularyData = oldVocabulary.map((v: any) => ({
-          topic_id: newTopic.id,
-          hindi: v.hindi,
-          english: v.english,
-          order_no: v.order_no
-        }));
+        if (vocabularyError) throw vocabularyError;
 
-        const { error: insertVocabularyError } = await supabase
-          .from("vocabulary")
-          .insert(vocabularyData);
+        // 2. Create new Topic
+        const { data: newTopicData, error: newTopicError } =
+          await supabase
+            .from("topics")
+            .insert([{
+              day_id: selectedDay,
+              topic_name: oldTopic.topic_name,
+              order_no: maxOrder + i + 1
+            }])
+            .select()
+            .single();
 
-        if (insertVocabularyError) throw insertVocabularyError;
+        if (newTopicError) throw newTopicError;
+
+        const newTopic = newTopicData;
+
+        // 3. Copy all sentences
+        if (oldVocabulary && oldVocabulary.length > 0) {
+
+          const vocabularyData = oldVocabulary.map((v: any) => ({
+            topic_id: newTopic.id,
+            hindi: v.hindi,
+            english: v.english,
+            order_no: v.order_no
+          }));
+
+          const { error: insertVocabularyError } =
+            await supabase
+              .from("vocabulary")
+              .insert(vocabularyData);
+
+          if (insertVocabularyError) throw insertVocabularyError;
+        }
       }
 
-      // 5. If CUT, delete original Topic
+      // 4. If CUT, delete original Topics
       if (clipboardMode === "cut") {
+
+        const originalTopicIds = clipboardTopics.map(t => t.id);
 
         const { error: deleteError } = await supabase
           .from("topics")
           .delete()
-          .eq("id", clipboardTopic.id);
+          .in("id", originalTopicIds);
 
         if (deleteError) throw deleteError;
       }
 
-      // 6. Clear clipboard
-      setClipboardTopic(null);
+      // 5. Clear clipboard and selection
+      setClipboardTopics([]);
       setClipboardMode(null);
+      setSelectedTopicIds([]);
 
       fetchTopics();
 
     } catch (error) {
 
-      console.error("Paste Topic failed:", error);
+      console.error("Paste Topics failed:", error);
 
       alert(
-        "Paste failed. Original Topic has NOT been deleted."
+        "Paste failed. Original Topics have NOT been deleted."
       );
     }
   };
   // DELETE
+  const deleteSelectedTopics = async () => {
+    if (selectedTopicIds.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Delete ${selectedTopicIds.length} selected topics?`
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("topics")
+      .delete()
+      .in("id", selectedTopicIds);
+
+    if (error) {
+      console.error("Delete Selected Topics failed:", error);
+      alert("Delete failed.");
+      return;
+    }
+
+    setSelectedTopicIds([]);
+    fetchTopics();
+  };
   const deleteTopic = async (id: string) => {
     await supabase.from("topics").delete().eq("id", id);
     fetchTopics();
@@ -318,14 +383,29 @@ export default function EnglishTopicMaster({
         <button onClick={saveOrder} className="bg-purple-600 text-white px-3 py-1 rounded">
           Save Order
         </button>
-        {clipboardTopic && (
-  <button
-    onClick={pasteTopic}
-    className="bg-green-600 text-white px-3 py-1 rounded"
-  >
-    Paste {clipboardMode === "cut" ? "Cut" : "Copied"} Topic
-  </button>
-)}
+        <button
+          onClick={selectAllTopics}
+          className="border px-3 py-1 rounded"
+        >
+          Select All
+        </button>
+
+        <button
+          onClick={clearTopicSelection}
+          className="border px-3 py-1 rounded"
+        >
+          Clear
+        </button>
+
+        {clipboardTopics.length > 0 && (
+          <button
+            onClick={pasteTopics}
+            className="bg-green-600 text-white px-3 py-1 rounded"
+          >
+            Paste {clipboardMode === "cut" ? "Cut" : "Copied"}{" "}
+            {clipboardTopics.length} Topic{clipboardTopics.length > 1 ? "s" : ""}
+          </button>
+        )}
 
       </div>
 
@@ -361,6 +441,11 @@ export default function EnglishTopicMaster({
                     <div className="flex items-center gap-2 border p-2 rounded bg-white">
 
                       {/* DRAG HANDLE */}
+                      <input
+                        type="checkbox"
+                        checked={selectedTopicIds.includes(t.id)}
+                        onChange={() => toggleTopicSelection(t.id)}
+                      />
                       <div {...attributes} {...listeners} className="cursor-move px-1">☰</div>
 
                       {editId === t.id ? (
@@ -378,16 +463,34 @@ export default function EnglishTopicMaster({
                             Manage Sentences →
                           </button>
 
-                          <button onClick={() => copyTopic(t)}>
-                            Copy
+                          <button
+                            onClick={copySelectedTopics}
+                            disabled={!selectedTopicIds.includes(t.id)}
+                            className="disabled:opacity-40"
+                          >
+                            Copy Selected
                           </button>
 
-                          <button onClick={() => cutTopic(t)}>
-                            Cut
+                          <button
+                            onClick={cutSelectedTopics}
+                            disabled={!selectedTopicIds.includes(t.id)}
+                            className="disabled:opacity-40"
+                          >
+                            Cut Selected
                           </button>
 
                           <button onClick={() => startEdit(t)}>Edit</button>
-                          <button onClick={() => deleteTopic(t.id)}>Delete</button>
+                          <button
+  onClick={() => {
+    if (selectedTopicIds.includes(t.id)) {
+      deleteSelectedTopics();
+    } else {
+      deleteTopic(t.id);
+    }
+  }}
+>
+  Delete
+</button>
                         </>
                       )}
 
