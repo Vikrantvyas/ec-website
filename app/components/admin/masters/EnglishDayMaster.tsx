@@ -48,8 +48,10 @@ export default function EnglishDayMaster({
   const [editId, setEditId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [editTitle, setEditTitle] = useState("");
-  const [clipboardDay, setClipboardDay] = useState<any>(null);
+  const [clipboardDays, setClipboardDays] = useState<any[]>([]);
   const [clipboardMode, setClipboardMode] = useState<"copy" | "cut" | null>(null);
+
+  const [selectedDayIds, setSelectedDayIds] = useState<string[]>([]);
 
   useEffect(() => {
     fetchCourses();
@@ -100,121 +102,188 @@ export default function EnglishDayMaster({
     setDayNumber("");
     fetchDays();
   };
-  const copyDay = (day: any) => {
-    setClipboardDay(day);
+  const copySelectedDays = () => {
+    const selected = days.filter(d =>
+      selectedDayIds.includes(d.id)
+    );
+
+    if (selected.length === 0) return;
+
+    setClipboardDays(selected);
     setClipboardMode("copy");
   };
 
-  const cutDay = (day: any) => {
-    setClipboardDay(day);
+  const cutSelectedDays = () => {
+    const selected = days.filter(d =>
+      selectedDayIds.includes(d.id)
+    );
+
+    if (selected.length === 0) return;
+
+    setClipboardDays(selected);
     setClipboardMode("cut");
   };
-  const pasteDay = async () => {
-  if (!clipboardDay || !selectedCourse) return;
+  const toggleDaySelection = (id: string) => {
+    setSelectedDayIds(prev =>
+      prev.includes(id)
+        ? prev.filter(x => x !== id)
+        : [...prev, id]
+    );
+  };
 
-  try {
-    // 1. Get all topics of the source day
-    const { data: oldTopics, error: topicsError } = await supabase
-      .from("topics")
-      .select("*")
-      .eq("day_id", clipboardDay.id)
-      .order("order_no");
+  const selectAllDays = () => {
+    setSelectedDayIds(days.map(d => d.id));
+  };
 
-    if (topicsError) throw topicsError;
+  const clearDaySelection = () => {
+    setSelectedDayIds([]);
+  };
+  const pasteDays = async () => {
+    if (clipboardDays.length === 0 || !selectedCourse) return;
 
-    // 2. Find the next day number in target course
-    const maxDay = days.length > 0
-      ? Math.max(...days.map(d => d.day_number))
-      : 0;
+    try {
+      // Target course में current maximum day number
+      let nextDayNumber = days.length > 0
+        ? Math.max(...days.map(d => d.day_number))
+        : 0;
 
-    // 3. Create the new day
-    const { data: newDayData, error: newDayError } = await supabase
-      .from("days")
-      .insert([{
-        course_id: selectedCourse,
-        day_number: maxDay + 1,
-        title: clipboardDay.title || ""
-      }])
-      .select()
-      .single();
+      const createdDayIds: string[] = [];
 
-    if (newDayError) throw newDayError;
+      // Selected days को उनके original order में process करें
+      const sortedDays = [...clipboardDays].sort(
+        (a, b) => a.day_number - b.day_number
+      );
 
-    const newDay = newDayData;
+      for (const oldDay of sortedDays) {
 
-    // 4. Copy every topic
-    for (const oldTopic of oldTopics || []) {
+        nextDayNumber++;
 
-      const { data: newTopicData, error: newTopicError } = await supabase
-        .from("topics")
-        .insert([{
-          day_id: newDay.id,
-          topic_name: oldTopic.topic_name,
-          order_no: oldTopic.order_no
-        }])
-        .select()
-        .single();
+        // 1. Create new Day
+        const { data: newDayData, error: newDayError } = await supabase
+          .from("days")
+          .insert([{
+            course_id: selectedCourse,
+            day_number: nextDayNumber,
+            title: oldDay.title || ""
+          }])
+          .select()
+          .single();
 
-      if (newTopicError) throw newTopicError;
+        if (newDayError) throw newDayError;
 
-      const newTopic = newTopicData;
+        const newDay = newDayData;
+        createdDayIds.push(newDay.id);
 
-      // 5. Get sentences of this topic
-      const { data: oldVocabulary, error: vocabularyError } =
-        await supabase
-          .from("vocabulary")
+        // 2. Get Topics
+        const { data: oldTopics, error: topicsError } = await supabase
+          .from("topics")
           .select("*")
-          .eq("topic_id", oldTopic.id)
+          .eq("day_id", oldDay.id)
           .order("order_no");
 
-      if (vocabularyError) throw vocabularyError;
+        if (topicsError) throw topicsError;
 
-      // 6. Copy sentences
-      if (oldVocabulary && oldVocabulary.length > 0) {
+        // 3. Copy Topics
+        for (const oldTopic of oldTopics || []) {
 
-        const vocabularyData = oldVocabulary.map((v: any) => ({
-          topic_id: newTopic.id,
-          hindi: v.hindi,
-          english: v.english,
-          order_no: v.order_no
-        }));
+          const { data: newTopicData, error: newTopicError } =
+            await supabase
+              .from("topics")
+              .insert([{
+                day_id: newDay.id,
+                topic_name: oldTopic.topic_name,
+                order_no: oldTopic.order_no
+              }])
+              .select()
+              .single();
 
-        const { error: insertVocabularyError } = await supabase
-          .from("vocabulary")
-          .insert(vocabularyData);
+          if (newTopicError) throw newTopicError;
 
-        if (insertVocabularyError) throw insertVocabularyError;
+          const newTopic = newTopicData;
+
+          // 4. Get Sentences
+          const { data: oldVocabulary, error: vocabularyError } =
+            await supabase
+              .from("vocabulary")
+              .select("*")
+              .eq("topic_id", oldTopic.id)
+              .order("order_no");
+
+          if (vocabularyError) throw vocabularyError;
+
+          // 5. Copy Sentences
+          if (oldVocabulary && oldVocabulary.length > 0) {
+
+            const vocabularyData = oldVocabulary.map((v: any) => ({
+              topic_id: newTopic.id,
+              hindi: v.hindi,
+              english: v.english,
+              order_no: v.order_no
+            }));
+
+            const { error: insertVocabularyError } =
+              await supabase
+                .from("vocabulary")
+                .insert(vocabularyData);
+
+            if (insertVocabularyError) throw insertVocabularyError;
+          }
+        }
       }
+
+      // 6. अगर CUT है तो सभी original Days delete करें
+      if (clipboardMode === "cut") {
+
+        const originalDayIds = clipboardDays.map(d => d.id);
+
+        const { error: deleteError } = await supabase
+          .from("days")
+          .delete()
+          .in("id", originalDayIds);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // 7. Clear clipboard
+      setClipboardDays([]);
+      setClipboardMode(null);
+      setSelectedDayIds([]);
+
+      fetchDays();
+
+    } catch (error) {
+
+      console.error("Paste Days failed:", error);
+
+      alert(
+        "Paste failed. Original Days have NOT been deleted."
+      );
     }
-
-    // 7. Only after successful copy, delete original for CUT
-    if (clipboardMode === "cut") {
-
-      const { error: deleteError } = await supabase
-        .from("days")
-        .delete()
-        .eq("id", clipboardDay.id);
-
-      if (deleteError) throw deleteError;
-    }
-
-    // 8. Clear clipboard
-    setClipboardDay(null);
-    setClipboardMode(null);
-
-    // 9. Refresh target course
-    fetchDays();
-
-  } catch (error) {
-
-    console.error("Paste Day failed:", error);
-
-    alert(
-      "Paste failed. Original Day has NOT been deleted."
-    );
-  }
-};
+  };
   // DELETE
+  const deleteSelectedDays = async () => {
+    if (selectedDayIds.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Delete ${selectedDayIds.length} selected days?`
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("days")
+      .delete()
+      .in("id", selectedDayIds);
+
+    if (error) {
+      console.error("Delete Selected Days failed:", error);
+      alert("Delete failed.");
+      return;
+    }
+
+    setSelectedDayIds([]);
+    fetchDays();
+  };
   const deleteDay = async (id: string) => {
     await supabase.from("days").delete().eq("id", id);
     fetchDays();
@@ -289,15 +358,34 @@ export default function EnglishDayMaster({
           Add
         </button>
 
-        <button onClick={saveOrder} className="bg-purple-600 text-white px-3 py-1 rounded">
+        <button
+          onClick={selectAllDays}
+          className="border px-3 py-1 rounded"
+        >
+          Select All
+        </button>
+
+        <button
+          onClick={clearDaySelection}
+          className="border px-3 py-1 rounded"
+        >
+          Clear
+        </button>
+
+        <button
+          onClick={saveOrder}
+          className="bg-purple-600 text-white px-3 py-1 rounded"
+        >
           Save Order
         </button>
-        {clipboardDay && (
+
+        {clipboardDays.length > 0 && (
           <button
-            onClick={pasteDay}
+            onClick={pasteDays}
             className="bg-green-600 text-white px-3 py-1 rounded"
           >
-            Paste {clipboardMode === "cut" ? "Cut" : "Copied"} Day
+            Paste {clipboardMode === "cut" ? "Cut" : "Copied"}{" "}
+            {clipboardDays.length} Day{clipboardDays.length > 1 ? "s" : ""}
           </button>
         )}
       </div>
@@ -318,7 +406,14 @@ export default function EnglishDayMaster({
 
                     <div className="flex items-center gap-2 border p-2 rounded bg-white">
 
-                      <div {...attributes} {...listeners} className="cursor-move">☰</div>
+                      <input
+                        type="checkbox"
+                        checked={selectedDayIds.includes(d.id)}
+                        onChange={() => toggleDaySelection(d.id)}
+                      />
+                      <div {...attributes} {...listeners} className="cursor-move">
+                        ☰
+                      </div>
 
                       {editId === d.id ? (
                         <>
@@ -351,16 +446,37 @@ export default function EnglishDayMaster({
                             Manage Topics →
                           </button>
 
-                          <button onClick={() => copyDay(d)}>
-                            Copy
+                          <button
+                            onClick={copySelectedDays}
+                            disabled={!selectedDayIds.includes(d.id)}
+                            className="disabled:opacity-40"
+                          >
+                            Copy Selected
                           </button>
 
-                          <button onClick={() => cutDay(d)}>
-                            Cut
+                          <button
+                            onClick={cutSelectedDays}
+                            disabled={!selectedDayIds.includes(d.id)}
+                            className="disabled:opacity-40"
+                          >
+                            Cut Selected
                           </button>
 
-                          <button onClick={() => startEdit(d)}>Edit</button>
-                          <button onClick={() => deleteDay(d.id)}>Delete</button>
+                          <button onClick={() => startEdit(d)}>
+                            Edit
+                          </button>
+
+                          <button
+  onClick={() => {
+    if (selectedDayIds.includes(d.id)) {
+      deleteSelectedDays();
+    } else {
+      deleteDay(d.id);
+    }
+  }}
+>
+  Delete
+</button>
                         </>
                       )}
 
