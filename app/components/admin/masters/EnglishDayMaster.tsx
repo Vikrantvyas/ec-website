@@ -48,6 +48,8 @@ export default function EnglishDayMaster({
   const [editId, setEditId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [editTitle, setEditTitle] = useState("");
+  const [clipboardDay, setClipboardDay] = useState<any>(null);
+  const [clipboardMode, setClipboardMode] = useState<"copy" | "cut" | null>(null);
 
   useEffect(() => {
     fetchCourses();
@@ -98,7 +100,120 @@ export default function EnglishDayMaster({
     setDayNumber("");
     fetchDays();
   };
+  const copyDay = (day: any) => {
+    setClipboardDay(day);
+    setClipboardMode("copy");
+  };
 
+  const cutDay = (day: any) => {
+    setClipboardDay(day);
+    setClipboardMode("cut");
+  };
+  const pasteDay = async () => {
+  if (!clipboardDay || !selectedCourse) return;
+
+  try {
+    // 1. Get all topics of the source day
+    const { data: oldTopics, error: topicsError } = await supabase
+      .from("topics")
+      .select("*")
+      .eq("day_id", clipboardDay.id)
+      .order("order_no");
+
+    if (topicsError) throw topicsError;
+
+    // 2. Find the next day number in target course
+    const maxDay = days.length > 0
+      ? Math.max(...days.map(d => d.day_number))
+      : 0;
+
+    // 3. Create the new day
+    const { data: newDayData, error: newDayError } = await supabase
+      .from("days")
+      .insert([{
+        course_id: selectedCourse,
+        day_number: maxDay + 1,
+        title: clipboardDay.title || ""
+      }])
+      .select()
+      .single();
+
+    if (newDayError) throw newDayError;
+
+    const newDay = newDayData;
+
+    // 4. Copy every topic
+    for (const oldTopic of oldTopics || []) {
+
+      const { data: newTopicData, error: newTopicError } = await supabase
+        .from("topics")
+        .insert([{
+          day_id: newDay.id,
+          topic_name: oldTopic.topic_name,
+          order_no: oldTopic.order_no
+        }])
+        .select()
+        .single();
+
+      if (newTopicError) throw newTopicError;
+
+      const newTopic = newTopicData;
+
+      // 5. Get sentences of this topic
+      const { data: oldVocabulary, error: vocabularyError } =
+        await supabase
+          .from("vocabulary")
+          .select("*")
+          .eq("topic_id", oldTopic.id)
+          .order("order_no");
+
+      if (vocabularyError) throw vocabularyError;
+
+      // 6. Copy sentences
+      if (oldVocabulary && oldVocabulary.length > 0) {
+
+        const vocabularyData = oldVocabulary.map((v: any) => ({
+          topic_id: newTopic.id,
+          hindi: v.hindi,
+          english: v.english,
+          order_no: v.order_no
+        }));
+
+        const { error: insertVocabularyError } = await supabase
+          .from("vocabulary")
+          .insert(vocabularyData);
+
+        if (insertVocabularyError) throw insertVocabularyError;
+      }
+    }
+
+    // 7. Only after successful copy, delete original for CUT
+    if (clipboardMode === "cut") {
+
+      const { error: deleteError } = await supabase
+        .from("days")
+        .delete()
+        .eq("id", clipboardDay.id);
+
+      if (deleteError) throw deleteError;
+    }
+
+    // 8. Clear clipboard
+    setClipboardDay(null);
+    setClipboardMode(null);
+
+    // 9. Refresh target course
+    fetchDays();
+
+  } catch (error) {
+
+    console.error("Paste Day failed:", error);
+
+    alert(
+      "Paste failed. Original Day has NOT been deleted."
+    );
+  }
+};
   // DELETE
   const deleteDay = async (id: string) => {
     await supabase.from("days").delete().eq("id", id);
@@ -177,7 +292,14 @@ export default function EnglishDayMaster({
         <button onClick={saveOrder} className="bg-purple-600 text-white px-3 py-1 rounded">
           Save Order
         </button>
-
+        {clipboardDay && (
+          <button
+            onClick={pasteDay}
+            className="bg-green-600 text-white px-3 py-1 rounded"
+          >
+            Paste {clipboardMode === "cut" ? "Cut" : "Copied"} Day
+          </button>
+        )}
       </div>
 
       {/* LIST */}
@@ -217,20 +339,28 @@ export default function EnglishDayMaster({
                         <>
                           <div className="flex-1">
 
-  {String(d.day_number).padStart(2, "0")}
+                            {String(d.day_number).padStart(2, "0")}
 
-  {d.title
-    ? ` · ${d.title}`
-    : ""}
+                            {d.title
+                              ? ` · ${d.title}`
+                              : ""}
 
-</div>
+                          </div>
 
-<button onClick={() => onManageTopics(d.id)}>
-  Manage Topics →
-</button>
+                          <button onClick={() => onManageTopics(d.id)}>
+                            Manage Topics →
+                          </button>
 
-<button onClick={() => startEdit(d)}>Edit</button>
-<button onClick={() => deleteDay(d.id)}>Delete</button>
+                          <button onClick={() => copyDay(d)}>
+                            Copy
+                          </button>
+
+                          <button onClick={() => cutDay(d)}>
+                            Cut
+                          </button>
+
+                          <button onClick={() => startEdit(d)}>Edit</button>
+                          <button onClick={() => deleteDay(d.id)}>Delete</button>
                         </>
                       )}
 
