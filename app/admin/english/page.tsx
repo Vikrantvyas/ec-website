@@ -56,7 +56,7 @@ export default function EnglishPage() {
   const selectedCourseName =
     courses.find(c => c.id === selectedCourse)?.name;
 
-  const isVocab = selectedCourseName === "Vocabulary";
+  
   const isGrammar = selectedCourseName === "Grammar";
 
   useEffect(() => {
@@ -64,41 +64,37 @@ export default function EnglishPage() {
       setShowGrammar(true);
     }
   }, [selectedGrammarTableId]);
-  useEffect(() => {
-    if (isVocab && selectedTopics?.length > 0) {
-      setShowLeft(true);
-    }
-  }, [isVocab, selectedTopics]);
+  
 
   // 🔥 AUTO PANEL CONTROL (IMPORTANT)
   // 🔥 AUTO PANEL CONTROL
-// सभी Courses के लिए same layout
-useEffect(() => {
+  // सभी Courses के लिए same layout
+  useEffect(() => {
 
-  if (!selectedCourse) return;
+    if (!selectedCourse) return;
 
-  // Course select होते ही:
-  // Left ON
-  // Board OFF
-  // Score OFF
-  setShowLeft(true);
-  setShowBoard(false);
-  setShowScore(false);
+    // Course select होते ही:
+    // Left ON
+    // Board OFF
+    // Score OFF
+    setShowLeft(true);
+    setShowBoard(false);
+    setShowScore(false);
 
-  // Grammar Table selected है
-  if (selectedGrammarTableId) {
+    // Grammar Table selected है
+    if (selectedGrammarTableId) {
 
-    setShowGrammar(true);
-    setLayout("vertical");
+      setShowGrammar(true);
+      setLayout("vertical");
 
-  } else {
+    } else {
 
-    setShowGrammar(false);
-    setLayout("horizontal");
+      setShowGrammar(false);
+      setLayout("horizontal");
 
-  }
+    }
 
-}, [selectedCourse, selectedGrammarTableId]);
+  }, [selectedCourse, selectedGrammarTableId]);
 
   // ---------------- FETCH ----------------
 
@@ -111,14 +107,14 @@ useEffect(() => {
     }
   }, [selectedCourse]);
   useEffect(() => {
-  if (!selectedCourse) return;
+    if (!selectedCourse) return;
 
-  setCurrentIndex(-1);
-  setShowAll(false);
-  setHighlightIndex(null);
+    setCurrentIndex(-1);
+    setShowAll(false);
+    setHighlightIndex(null);
 
-  vocabRef.current?.reset();
-}, [selectedCourse]);
+    vocabRef.current?.reset();
+  }, [selectedCourse]);
 
   useEffect(() => {
     fetchTopics();
@@ -159,77 +155,51 @@ useEffect(() => {
   const fetchTopics = async () => {
     const { data } = await supabase
       .from("topics")
-      .select("*, sentences(count)")
+      .select("*, vocabulary(count)")
       .order("order_no");
+
     if (data) setTopics(data);
   };
 
   const fetchSentences = async () => {
 
-    let topicIds = selectedTopics;
+  let topicIds = selectedTopics;
 
-    if (topicIds.length === 0 && selectedDays.length > 0) {
-      topicIds = topics
-        .filter(t => selectedDays.includes(t.day_id))
-        .map(t => t.id);
-    }
+  if (topicIds.length === 0 && selectedDays.length > 0) {
+    topicIds = topics
+      .filter(t => selectedDays.includes(t.day_id))
+      .map(t => t.id);
+  }
 
-    if (topicIds.length === 0) return;
+  if (topicIds.length === 0) return;
 
-    if (isVocab) {
-      const { data } = await supabase
-        .from("vocabulary")
-        .select("*")
-        .in("topic_id", topicIds)
+  const { data } = await supabase
+    .from("vocabulary")
+    .select("*")
+    .in("topic_id", topicIds)
+    .order("topic_id")
+    .order("order_no");
 
-        .order("topic_id")
-        .order("order_no");
+  if (data) {
 
-      if (data) {
+    // Manual sort by selectedTopics order
+    const sorted = data.sort((a: any, b: any) => {
 
-        // 🔥 manual sort by selectedTopics order
-        const sorted = data.sort((a: any, b: any) => {
-          const indexA = selectedTopics.indexOf(a.topic_id);
-          const indexB = selectedTopics.indexOf(b.topic_id);
+      const indexA = selectedTopics.indexOf(a.topic_id);
+      const indexB = selectedTopics.indexOf(b.topic_id);
 
-          if (indexA === indexB) {
-            return a.order_no - b.order_no;
-          }
-
-          return indexA - indexB;
-        });
-
-        setSentences(sorted);
-        setCurrentIndex(0);
-        setShowAll(false);
+      if (indexA === indexB) {
+        return a.order_no - b.order_no;
       }
-    } else {
-      const { data } = await supabase
-        .from("sentences")
-        .select("*")
-        .in("topic_id", topicIds)
-        .order("order_no");
 
-      if (data) {
+      return indexA - indexB;
+    });
 
-        // 🔥 manual sort by selectedTopics order
-        const sorted = data.sort((a: any, b: any) => {
-          const indexA = selectedTopics.indexOf(a.topic_id);
-          const indexB = selectedTopics.indexOf(b.topic_id);
-
-          if (indexA === indexB) {
-            return a.order_no - b.order_no;
-          }
-
-          return indexA - indexB;
-        });
-
-        setSentences(sorted);
-        setCurrentIndex(0);
-        setShowAll(false);
-      }
-    }
-  };
+    setSentences(sorted);
+    setCurrentIndex(0);
+    setShowAll(false);
+  }
+};
   const refreshData = async () => {
     await fetchSentences();
   };
@@ -346,7 +316,7 @@ useEffect(() => {
 
 
           <MainBoard
-            isVocab={isVocab}
+            
             isGrammar={isGrammar}
             showGrammar={showGrammar}
             prevTopic={prevTopic}
@@ -390,7 +360,6 @@ useEffect(() => {
           setShowBoard={setShowBoard}
           showScore={showScore}
           setShowScore={setShowScore}
-          isVocab={isVocab}
           randomMode={randomMode}
           setRandomMode={setRandomMode}
           showLeft={showLeft}

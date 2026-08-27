@@ -15,7 +15,6 @@ export default function Controls({
   nextTopic,
   showScore,
   setShowScore,
-  isVocab,
   randomMode,
   setRandomMode,
   showLeft,
@@ -39,7 +38,7 @@ export default function Controls({
 
       <button
         onClick={prevSentence}
-        disabled={!isVocab && currentIndex === 0}
+        disabled={currentIndex === 0}
         className={`${toolBtn} disabled:opacity-40`}
       >
         Prev
@@ -47,7 +46,7 @@ export default function Controls({
 
       <button
         onClick={nextSentence}
-        disabled={!isVocab && currentIndex >= sentences.length}
+        disabled={currentIndex >= sentences.length}
         className={`${toolBtn} font-medium text-blue-700 disabled:opacity-40`}
       >
         Next

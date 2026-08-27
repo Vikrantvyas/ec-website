@@ -61,8 +61,7 @@ export default function EnglishSentenceMaster() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [editOrder, setEditOrder] = useState("");
-const isVocab =
-  courses.find(c => c.id === selectedCourse)?.name === "Vocabulary";
+
   useEffect(() => { fetchCourses(); }, []);
   useEffect(() => { if (selectedCourse) fetchDays(); }, [selectedCourse]);
   useEffect(() => { if (selectedDay) fetchTopics(); }, [selectedDay]);
@@ -87,16 +86,14 @@ const isVocab =
 
   const fetchSentences = async () => {
 
-  if (isVocab) {
-
-    const { data } = await supabase.from("vocabulary")
+    const { data } = await supabase
+      .from("vocabulary")
       .select("*")
       .eq("topic_id", selectedTopic)
       .order("order_no");
 
     if (data) {
-      // convert into same structure
-      const formatted = data.map((d:any) => ({
+      const formatted = data.map((d: any) => ({
         id: d.id,
         sentence: `${d.hindi} - ${d.english}`,
         order_no: d.order_no
@@ -105,19 +102,8 @@ const isVocab =
       setSentences(formatted);
     }
 
-  } else {
+  };
 
-    const { data } = await supabase.from("sentences")
-      .select("*")
-      .eq("topic_id", selectedTopic)
-      .order("order_no");
-
-    if (data) setSentences(data);
-
-  }
-
-};
-     
 
   const addCourse = async () => {
     if (!newCourse) return;
@@ -166,26 +152,14 @@ const isVocab =
       ? Math.max(...sentences.map(s => s.order_no || 0))
       : 0;
 
-    if (isVocab) {
+    const parts = text.split("-");
 
-  const parts = text.split("-");
-
-  await supabase.from("vocabulary").insert([{
-    topic_id: selectedTopic,
-    hindi: parts[0]?.trim() || "",
-    english: parts[1]?.trim() || "",
-    order_no: Number(orderNo || maxOrder + 1)
-  }]);
-
-} else {
-
-  await supabase.from("sentences").insert([{
-    topic_id: selectedTopic,
-    sentence: text,
-    order_no: Number(orderNo || maxOrder + 1)
-  }]);
-
-}
+    await supabase.from("vocabulary").insert([{
+      topic_id: selectedTopic,
+      hindi: parts[0]?.trim() || "",
+      english: parts.slice(1).join("-").trim() || "",
+      order_no: Number(orderNo || maxOrder + 1)
+    }]);
 
     setText("");
     setOrderNo("");
@@ -201,83 +175,43 @@ const isVocab =
       ? Math.max(...sentences.map(s => s.order_no || 0))
       : 0;
 
-    if (isVocab) {
+    const data = lines.map((line, i) => {
+      const parts = line.split("-");
 
-  const data = lines.map((line, i) => {
-    const parts = line.split("-");
+      return {
+        topic_id: selectedTopic,
+        hindi: parts[0]?.trim() || "",
+        english: parts.slice(1).join("-").trim() || "",
+        order_no: maxOrder + i + 1
+      };
+    });
 
-    return {
-      topic_id: selectedTopic,
-      hindi: parts[0]?.trim() || "",
-      english: parts[1]?.trim() || "",
-      order_no: maxOrder + i + 1
-    };
-  });
-
-  await supabase.from("vocabulary").insert(data);
-
-} else {
-
-  const data = lines.map((line, i) => ({
-    topic_id: selectedTopic,
-    sentence: line,
-    order_no: maxOrder + i + 1
-  }));
-
-  await supabase.from("sentences").insert(data);
-
-}
+    await supabase.from("vocabulary").insert(data);
     setBulkText("");
     fetchSentences();
   };
 
   const deleteSentence = async (id: string) => {
 
-  if (isVocab) {
-    await supabase.from("vocabulary").delete().eq("id", id);
-  } else {
-    await supabase.from("sentences").delete().eq("id", id);
-  }
+    await supabase
+      .from("vocabulary")
+      .delete()
+      .eq("id", id); const parts = editText.split("-");
 
-  fetchSentences();
-};
-
-  const startEdit = (s:any) => {
-    setEditId(s.id);
-    setEditText(s.sentence);
-    setEditOrder(String(s.order_no));
-  };
-
-  const saveEdit = async () => {
-
-  if (isVocab) {
-
-    const parts = editText.split("-");
-
-    await supabase.from("vocabulary")
+    await supabase
+      .from("vocabulary")
       .update({
         hindi: parts[0]?.trim() || "",
-        english: parts[1]?.trim() || "",
+        english: parts.slice(1).join("-").trim() || "",
         order_no: Number(editOrder)
       })
       .eq("id", editId);
 
-  } else {
+    setEditId(null);
+    fetchSentences();
+  };
 
-    await supabase.from("sentences")
-      .update({
-        sentence: editText,
-        order_no: Number(editOrder)
-      })
-      .eq("id", editId);
-
-  }
-
-  setEditId(null);
-  fetchSentences();
-};
-
-  const handleDragEnd = (event:any) => {
+  const handleDragEnd = (event: any) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -289,22 +223,17 @@ const isVocab =
 
   const saveOrder = async () => {
 
-  for (let i = 0; i < sentences.length; i++) {
+    for (let i = 0; i < sentences.length; i++) {
 
-    if (isVocab) {
-      await supabase.from("vocabulary")
+      await supabase
+        .from("vocabulary")
         .update({ order_no: i + 1 })
         .eq("id", sentences[i].id);
-    } else {
-      await supabase.from("sentences")
-        .update({ order_no: i + 1 })
-        .eq("id", sentences[i].id);
+
     }
 
-  }
-
-  fetchSentences();
-};
+    fetchSentences();
+  };
   return (
 
     <div className="h-full overflow-hidden">
@@ -312,55 +241,55 @@ const isVocab =
       {/* TOP BAR */}
       <div className="sticky top-0 bg-white z-20 p-3 border-b flex flex-wrap gap-2 items-center">
 
-        <select value={selectedCourse} onChange={(e)=>setSelectedCourse(e.target.value)} className="border px-2 py-1 rounded">
+        <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} className="border px-2 py-1 rounded">
           <option value="">Course</option>
-          {courses.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+          {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
 
-        <button onClick={()=>setShowCourseInput(!showCourseInput)}>+</button>
+        <button onClick={() => setShowCourseInput(!showCourseInput)}>+</button>
         {showCourseInput && (
           <>
-            <input value={newCourse} onChange={(e)=>setNewCourse(e.target.value)} className="border px-2 py-1 rounded" />
+            <input value={newCourse} onChange={(e) => setNewCourse(e.target.value)} className="border px-2 py-1 rounded" />
             <button onClick={addCourse}>Save</button>
           </>
         )}
 
-        <select value={selectedDay} onChange={(e)=>setSelectedDay(e.target.value)} className="border px-2 py-1 rounded">
+        <select value={selectedDay} onChange={(e) => setSelectedDay(e.target.value)} className="border px-2 py-1 rounded">
           <option value="">Day</option>
-          {days.map(d=><option key={d.id} value={d.id}>Day {d.day_number}</option>)}
+          {days.map(d => <option key={d.id} value={d.id}>Day {d.day_number}</option>)}
         </select>
 
-        <button onClick={()=>setShowDayInput(!showDayInput)}>+</button>
+        <button onClick={() => setShowDayInput(!showDayInput)}>+</button>
         {showDayInput && (
           <>
-            <input value={newDay} onChange={(e)=>setNewDay(e.target.value)} className="border px-2 py-1 rounded w-20" />
+            <input value={newDay} onChange={(e) => setNewDay(e.target.value)} className="border px-2 py-1 rounded w-20" />
             <button onClick={addDay}>Save</button>
           </>
         )}
 
-        <select value={selectedTopic} onChange={(e)=>setSelectedTopic(e.target.value)} className="border px-2 py-1 rounded">
+        <select value={selectedTopic} onChange={(e) => setSelectedTopic(e.target.value)} className="border px-2 py-1 rounded">
           <option value="">Topic</option>
-          {topics.map(t=><option key={t.id} value={t.id}>{t.topic_name}</option>)}
+          {topics.map(t => <option key={t.id} value={t.id}>{t.topic_name}</option>)}
         </select>
 
-        <button onClick={()=>setShowTopicInput(!showTopicInput)}>+</button>
+        <button onClick={() => setShowTopicInput(!showTopicInput)}>+</button>
         {showTopicInput && (
           <>
-            <input value={newTopic} onChange={(e)=>setNewTopic(e.target.value)} className="border px-2 py-1 rounded" />
+            <input value={newTopic} onChange={(e) => setNewTopic(e.target.value)} className="border px-2 py-1 rounded" />
             <button onClick={addTopic}>Save</button>
           </>
         )}
 
-        <input value={text} onChange={(e)=>setText(e.target.value)} placeholder="Sentence"
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Sentence"
           className="border px-2 py-1 rounded flex-1 min-w-[300px]" />
 
-        <input value={orderNo} onChange={(e)=>setOrderNo(e.target.value)}
+        <input value={orderNo} onChange={(e) => setOrderNo(e.target.value)}
           placeholder="Order" className="border px-2 py-1 rounded w-20" />
 
         <button onClick={addSentence} className="bg-blue-600 text-white px-3 py-1 rounded">Add</button>
 
         <label className="flex items-center gap-1 text-sm">
-          <input type="checkbox" checked={showBulk} onChange={()=>setShowBulk(!showBulk)} />
+          <input type="checkbox" checked={showBulk} onChange={() => setShowBulk(!showBulk)} />
           Bulk
         </label>
 
@@ -375,7 +304,7 @@ const isVocab =
         <div className="p-3 border-b">
           <textarea
             value={bulkText}
-            onChange={(e)=>setBulkText(e.target.value)}
+            onChange={(e) => setBulkText(e.target.value)}
             className="border w-full h-32 p-2 rounded"
             placeholder="Paste sentences (one per line)"
           />
@@ -388,43 +317,43 @@ const isVocab =
       {/* LIST */}
       <div className="p-3 overflow-y-auto h-[calc(100vh-180px)]">
 
-  <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-    <SortableContext items={sentences.map(s => s.id)} strategy={verticalListSortingStrategy}>
+        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={sentences.map(s => s.id)} strategy={verticalListSortingStrategy}>
 
-      <div className="space-y-2">
+            <div className="space-y-2">
 
-        {sentences.map(s => (
-          <SortableItem key={s.id} s={s}>
-            {({ attributes, listeners }: any) => (
-              <div className="flex items-center gap-2 border p-2 rounded bg-white">
+              {sentences.map(s => (
+                <SortableItem key={s.id} s={s}>
+                  {({ attributes, listeners }: any) => (
+                    <div className="flex items-center gap-2 border p-2 rounded bg-white">
 
-                {editId === s.id ? (
-                  <>
-                    <input value={editOrder} onChange={(e)=>setEditOrder(e.target.value)} className="w-16 border px-2 py-1 rounded" />
-                    <input value={editText} onChange={(e)=>setEditText(e.target.value)} className="flex-1 border px-2 py-1 rounded" />
-                    <button onClick={saveEdit}>Save</button>
-                  </>
-                ) : (
-                  <>
-                    <div className="cursor-move" {...attributes} {...listeners}>☰</div>
-                    <div className="w-10">{s.order_no}</div>
-                    <div className="flex-1">{s.sentence}</div>
-                    <button onClick={()=>startEdit(s)}>Edit</button>
-                    <button onClick={()=>deleteSentence(s.id)}>Delete</button>
-                  </>
-                )}
+                      {editId === s.id ? (
+                        <>
+                          <input value={editOrder} onChange={(e) => setEditOrder(e.target.value)} className="w-16 border px-2 py-1 rounded" />
+                          <input value={editText} onChange={(e) => setEditText(e.target.value)} className="flex-1 border px-2 py-1 rounded" />
+                          <button onClick={saveEdit}>Save</button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="cursor-move" {...attributes} {...listeners}>☰</div>
+                          <div className="w-10">{s.order_no}</div>
+                          <div className="flex-1">{s.sentence}</div>
+                          <button onClick={() => startEdit(s)}>Edit</button>
+                          <button onClick={() => deleteSentence(s.id)}>Delete</button>
+                        </>
+                      )}
 
-              </div>
-            )}
-          </SortableItem>
-        ))}
+                    </div>
+                  )}
+                </SortableItem>
+              ))}
+
+            </div>
+
+          </SortableContext>
+        </DndContext>
 
       </div>
-
-    </SortableContext>
-  </DndContext>
-
-</div>
 
     </div>
   );
