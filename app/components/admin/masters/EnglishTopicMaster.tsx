@@ -40,7 +40,11 @@ function SortableItem({ id, children }: any) {
   );
 }
 
-export default function EnglishTopicMaster() {
+export default function EnglishTopicMaster({
+  initialDayId = "",
+  initialCourseId = "",
+  onManageSentences
+}: any) {
 
   const [courses, setCourses] = useState<any[]>([]);
   const [days, setDays] = useState<any[]>([]);
@@ -59,9 +63,28 @@ export default function EnglishTopicMaster() {
   const [editText, setEditText] = useState("");
   const [editOrder, setEditOrder] = useState("");
 
-  useEffect(() => { fetchCourses(); }, []);
-  useEffect(() => { if (selectedCourse) fetchDays(); }, [selectedCourse]);
-  useEffect(() => { if (selectedDay) fetchTopics(); }, [selectedDay]);
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  useEffect(() => {
+    if (initialDayId) {
+      setSelectedDay(initialDayId);
+    }
+  }, [initialDayId]);
+  useEffect(() => {
+    if (initialCourseId) {
+      setSelectedCourse(initialCourseId);
+    }
+  }, [initialCourseId]);
+
+  useEffect(() => {
+    if (selectedCourse) fetchDays();
+  }, [selectedCourse]);
+
+  useEffect(() => {
+    if (selectedDay) fetchTopics();
+  }, [selectedDay]);
 
   const fetchCourses = async () => {
     const { data } = await supabase.from("english_courses").select("*").order("name");
@@ -122,13 +145,13 @@ export default function EnglishTopicMaster() {
   };
 
   // DELETE
-  const deleteTopic = async (id:string) => {
+  const deleteTopic = async (id: string) => {
     await supabase.from("topics").delete().eq("id", id);
     fetchTopics();
   };
 
   // EDIT
-  const startEdit = (t:any) => {
+  const startEdit = (t: any) => {
     setEditId(t.id);
     setEditText(t.topic_name);
     setEditOrder(String(t.order_no));
@@ -149,7 +172,7 @@ export default function EnglishTopicMaster() {
   };
 
   // DRAG
-  const handleDragEnd = (event:any) => {
+  const handleDragEnd = (event: any) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -175,21 +198,21 @@ export default function EnglishTopicMaster() {
       {/* TOP BAR */}
       <div className="sticky top-0 bg-white z-20 p-3 border-b flex flex-wrap gap-2 items-center">
 
-        <select value={selectedCourse} onChange={(e)=>setSelectedCourse(e.target.value)} className="border px-2 py-1 rounded">
+        <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} className="border px-2 py-1 rounded">
           <option value="">Course</option>
-          {courses.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+          {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
 
-        <select value={selectedDay} onChange={(e)=>setSelectedDay(e.target.value)} className="border px-2 py-1 rounded">
+        <select value={selectedDay} onChange={(e) => setSelectedDay(e.target.value)} className="border px-2 py-1 rounded">
           <option value="">Day</option>
-          {days.map(d=><option key={d.id} value={d.id}>Day {d.day_number}</option>)}
+          {days.map(d => <option key={d.id} value={d.id}>Day {d.day_number}</option>)}
         </select>
 
-        <input value={topicName} onChange={(e)=>setTopicName(e.target.value)}
+        <input value={topicName} onChange={(e) => setTopicName(e.target.value)}
           placeholder="Topic"
           className="border px-2 py-1 rounded flex-1 min-w-[250px]" />
 
-        <input value={orderNo} onChange={(e)=>setOrderNo(e.target.value)}
+        <input value={orderNo} onChange={(e) => setOrderNo(e.target.value)}
           placeholder="Order"
           className="border px-2 py-1 rounded w-20" />
 
@@ -198,7 +221,7 @@ export default function EnglishTopicMaster() {
         </button>
 
         <label className="flex items-center gap-1 text-sm">
-          <input type="checkbox" checked={showBulk} onChange={()=>setShowBulk(!showBulk)} />
+          <input type="checkbox" checked={showBulk} onChange={() => setShowBulk(!showBulk)} />
           Bulk
         </label>
 
@@ -213,7 +236,7 @@ export default function EnglishTopicMaster() {
         <div className="p-3 border-b">
           <textarea
             value={bulkText}
-            onChange={(e)=>setBulkText(e.target.value)}
+            onChange={(e) => setBulkText(e.target.value)}
             className="border w-full h-32 p-2 rounded"
             placeholder="Paste topics (one per line)"
           />
@@ -227,15 +250,15 @@ export default function EnglishTopicMaster() {
       <div className="p-3 overflow-y-auto h-[calc(100vh-180px)]">
 
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={topics.map(t=>t.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={topics.map(t => t.id)} strategy={verticalListSortingStrategy}>
 
             <div className="space-y-2">
 
-              {topics.map(t=>(
+              {topics.map(t => (
 
                 <SortableItem key={t.id} id={t.id}>
 
-                  {(attributes:any, listeners:any)=>(
+                  {(attributes: any, listeners: any) => (
 
                     <div className="flex items-center gap-2 border p-2 rounded bg-white">
 
@@ -244,17 +267,21 @@ export default function EnglishTopicMaster() {
 
                       {editId === t.id ? (
                         <>
-                          <input value={editOrder} onChange={(e)=>setEditOrder(e.target.value)} className="w-16 border px-2 py-1 rounded" />
-                          <input value={editText} onChange={(e)=>setEditText(e.target.value)} className="flex-1 border px-2 py-1 rounded" />
+                          <input value={editOrder} onChange={(e) => setEditOrder(e.target.value)} className="w-16 border px-2 py-1 rounded" />
+                          <input value={editText} onChange={(e) => setEditText(e.target.value)} className="flex-1 border px-2 py-1 rounded" />
                           <button onClick={saveEdit}>Save</button>
                         </>
                       ) : (
                         <>
                           <div className="w-10">{t.order_no}</div>
-                          <div className="flex-1">{t.topic_name}</div>
+<div className="flex-1">{t.topic_name}</div>
 
-                          <button onClick={()=>startEdit(t)}>Edit</button>
-                          <button onClick={()=>deleteTopic(t.id)}>Delete</button>
+<button onClick={() => onManageSentences(t.id)}>
+  Manage Sentences →
+</button>
+
+<button onClick={() => startEdit(t)}>Edit</button>
+<button onClick={() => deleteTopic(t.id)}>Delete</button>
                         </>
                       )}
 
