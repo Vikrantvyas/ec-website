@@ -73,16 +73,16 @@ export default function EnglishSentenceMaster({
     }
   }, [initialTopicId]);
   useEffect(() => {
-  if (initialCourseId) {
-    setSelectedCourse(initialCourseId);
-  }
-}, [initialCourseId]);
+    if (initialCourseId) {
+      setSelectedCourse(initialCourseId);
+    }
+  }, [initialCourseId]);
 
-useEffect(() => {
-  if (initialDayId) {
-    setSelectedDay(initialDayId);
-  }
-}, [initialDayId]);
+  useEffect(() => {
+    if (initialDayId) {
+      setSelectedDay(initialDayId);
+    }
+  }, [initialDayId]);
   useEffect(() => { if (selectedCourse) fetchDays(); }, [selectedCourse]);
   useEffect(() => { if (selectedDay) fetchTopics(); }, [selectedDay]);
   useEffect(() => { if (selectedTopic) fetchSentences(); }, [selectedTopic]);
@@ -289,7 +289,9 @@ useEffect(() => {
 
         <select value={selectedDay} onChange={(e) => setSelectedDay(e.target.value)} className="border px-2 py-1 rounded">
           <option value="">Day</option>
-          {days.map(d => <option key={d.id} value={d.id}>Day {d.day_number}</option>)}
+          {days.map(d => <option key={d.id} value={d.id}>
+  Day {d.day_number}{d.title ? ` · ${d.title}` : ""}
+</option>)}
         </select>
 
         <button onClick={() => setShowDayInput(!showDayInput)}>+</button>
