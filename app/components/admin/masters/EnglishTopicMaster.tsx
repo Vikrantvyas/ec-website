@@ -205,7 +205,9 @@ export default function EnglishTopicMaster({
 
         <select value={selectedDay} onChange={(e) => setSelectedDay(e.target.value)} className="border px-2 py-1 rounded">
           <option value="">Day</option>
-          {days.map(d => <option key={d.id} value={d.id}>Day {d.day_number}</option>)}
+          {days.map(d => <option key={d.id} value={d.id}>
+  Day {d.day_number}{d.title ? ` · ${d.title}` : ""}
+</option>)}
         </select>
 
         <input value={topicName} onChange={(e) => setTopicName(e.target.value)}
@@ -274,14 +276,14 @@ export default function EnglishTopicMaster({
                       ) : (
                         <>
                           <div className="w-10">{t.order_no}</div>
-<div className="flex-1">{t.topic_name}</div>
+                          <div className="flex-1">{t.topic_name}</div>
 
-<button onClick={() => onManageSentences(t.id)}>
-  Manage Sentences →
-</button>
+                          <button onClick={() => onManageSentences(t.id)}>
+                            Manage Sentences →
+                          </button>
 
-<button onClick={() => startEdit(t)}>Edit</button>
-<button onClick={() => deleteTopic(t.id)}>Delete</button>
+                          <button onClick={() => startEdit(t)}>Edit</button>
+                          <button onClick={() => deleteTopic(t.id)}>Delete</button>
                         </>
                       )}
 
