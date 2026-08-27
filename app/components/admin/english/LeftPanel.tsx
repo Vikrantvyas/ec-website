@@ -36,10 +36,7 @@ export default function LeftPanel({
     );
 
   };
-  const selectedCourseName =
-    courses.find((c: any) => c.id === selectedCourse)?.name;
 
-  const isVocab = selectedCourseName === "Vocabulary";
 
   const toggleDay = (id: string) => {
     setSelectedDays((prev: string[]) =>
@@ -74,32 +71,18 @@ export default function LeftPanel({
     setSelectedTopicData(topic);
     setShowPopup(true);
 
-    if (isVocab) {
+    const { data } = await supabase
+      .from("vocabulary")
+      .select("*")
+      .eq("topic_id", topic.id)
+      .order("order_no");
 
-      const { data } = await supabase
-        .from("vocabulary")
-        .select("*")
-        .eq("topic_id", topic.id)
-        .order("order_no");
+    if (data) {
+      const text = data
+        .map((d: any) => `${d.hindi} - ${d.english}`)
+        .join("\n");
 
-      if (data) {
-        const text = data.map((d: any) => `${d.hindi} - ${d.english}`).join("\n");
-        setEditText(text);
-      }
-
-    } else {
-
-      const { data } = await supabase
-        .from("sentences")
-        .select("*")
-        .eq("topic_id", topic.id)
-        .order("order_no");
-
-      if (data) {
-        const text = data.map((d: any) => d.sentence).join("\n");
-        setEditText(text);
-      }
-
+      setEditText(text);
     }
 
     setMenu(null);
@@ -133,39 +116,25 @@ export default function LeftPanel({
 
     const lines = editText.split("\n").map(l => l.trim()).filter(l => l);
 
-    if (isVocab) {
+    await supabase
+      .from("vocabulary")
+      .delete()
+      .eq("topic_id", selectedTopicData.id);
 
-      await supabase.from("vocabulary")
-        .delete()
-        .eq("topic_id", selectedTopicData.id);
+    const newData = lines.map((line, i) => {
+      const parts = line.split("-");
 
-      const newData = lines.map((line, i) => {
-        const parts = line.split("-");
-        return {
-          topic_id: selectedTopicData.id,
-          hindi: parts[0]?.trim() || "",
-          english: parts[1]?.trim() || "",
-          order_no: i + 1
-        };
-      });
-
-      await supabase.from("vocabulary").insert(newData);
-
-    } else {
-
-      await supabase.from("sentences")
-        .delete()
-        .eq("topic_id", selectedTopicData.id);
-
-      const newData = lines.map((line, i) => ({
+      return {
         topic_id: selectedTopicData.id,
-        sentence: line,
+        hindi: parts[0]?.trim() || "",
+        english: parts.slice(1).join("-").trim() || "",
         order_no: i + 1
-      }));
+      };
+    });
 
-      await supabase.from("sentences").insert(newData);
-
-    }
+    await supabase
+      .from("vocabulary")
+      .insert(newData);
 
     setShowPopup(false);
     if (refreshData) {
@@ -220,10 +189,9 @@ export default function LeftPanel({
 ======================= */}
 
       <div
-  className={`flex flex-col shrink-0 ${
-    showGrammarTables ? "h-1/2" : "h-auto"
-  }`}
->
+        className={`flex flex-col shrink-0 ${showGrammarTables ? "h-1/2" : "h-auto"
+          }`}
+      >
 
         <button
           onClick={() => setShowGrammarTables(prev => !prev)}
@@ -315,124 +283,122 @@ export default function LeftPanel({
       </div>
 
       {/* DAYS + TOPICS */}
-<div className="flex-1 min-h-0 overflow-y-auto px-3 pt-1 pb-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-1 pb-3">
 
-  <div className="flex flex-col">
+        <div className="flex flex-col">
 
-    {days.map((d: any) => {
+          {days.map((d: any) => {
 
-      const dayTopics = topics.filter(
-        (t: any) => t.day_id === d.id
-      );
+            const dayTopics = topics.filter(
+              (t: any) => t.day_id === d.id
+            );
 
-      const isSelected = selectedDays.includes(d.id);
-      const hasTopics = dayTopics.length > 0;
+            const isSelected = selectedDays.includes(d.id);
+            const hasTopics = dayTopics.length > 0;
 
-      return (
-        <div
-          key={d.id}
-          className="flex flex-col w-full"
-        >
+            return (
+              <div
+                key={d.id}
+                className="flex flex-col w-full"
+              >
 
-          {/* DAY ROW */}
-          <label
-            className={`flex shrink-0 items-center justify-between w-full py-1 px-1 text-[13px] cursor-pointer hover:bg-gray-100 ${
-              isSelected
-                ? "text-blue-700"
-                : "text-gray-800"
-            }`}
-          >
-
-            <div className="flex items-center gap-2 min-w-0">
-
-              <input
-                type="checkbox"
-                className="w-3.5 h-3.5 shrink-0"
-                checked={isSelected}
-                onChange={() => toggleDay(d.id)}
-              />
-
-              <span className="truncate">
-                {String(d.day_number).padStart(2, "0")}
-                {d.title ? ` · ${d.title}` : ""}
-              </span>
-
-            </div>
-
-            {hasTopics && (
-              <span className="font-bold text-[13px] shrink-0">
-                {isSelected ? "−" : "+"}
-              </span>
-            )}
-
-          </label>
-
-          {/* TOPICS */}
-          {isSelected && hasTopics && (
-
-            <div className="flex flex-col ml-4 gap-1 pb-1">
-
-              {dayTopics.map((t: any) => {
-
-                const count =
-                  t.sentences?.[0]?.count || 0;
-
-                const isTopicSelected =
-                  selectedTopics.includes(t.id);
-
-                return (
-                  <label
-                    key={t.id}
-                    onContextMenu={(e) =>
-                      handleRightClick(e, t)
-                    }
-                    className={`flex shrink-0 items-center justify-between w-full px-2 py-1 rounded text-[13px] cursor-pointer ${
-                      isTopicSelected
-                        ? "bg-green-600 text-white"
-                        : "bg-gray-100"
+                {/* DAY ROW */}
+                <label
+                  className={`flex shrink-0 items-center justify-between w-full py-1 px-1 text-[13px] cursor-pointer hover:bg-gray-100 ${isSelected
+                    ? "text-blue-700"
+                    : "text-gray-800"
                     }`}
-                  >
+                >
 
-                    <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
 
-                      <input
-                        type="checkbox"
-                        className="w-3.5 h-3.5 shrink-0"
-                        checked={isTopicSelected}
-                        onChange={() =>
-                          toggleTopic(t.id)
-                        }
-                      />
+                    <input
+                      type="checkbox"
+                      className="w-3.5 h-3.5 shrink-0"
+                      checked={isSelected}
+                      onChange={() => toggleDay(d.id)}
+                    />
 
-                      <span className="truncate">
-                        {t.topic_name}
-                      </span>
+                    <span className="truncate">
+                      {String(d.day_number).padStart(2, "0")}
+                      {d.title ? ` · ${d.title}` : ""}
+                    </span>
 
-                    </div>
+                  </div>
 
-                    {count > 0 && (
-                      <span className="text-xs shrink-0 ml-2">
-                        ({count})
-                      </span>
-                    )}
+                  {hasTopics && (
+                    <span className="font-bold text-[13px] shrink-0">
+                      {isSelected ? "−" : "+"}
+                    </span>
+                  )}
 
-                  </label>
-                );
+                </label>
 
-              })}
+                {/* TOPICS */}
+                {isSelected && hasTopics && (
 
-            </div>
+                  <div className="flex flex-col ml-4 gap-1 pb-1">
 
-          )}
+                    {dayTopics.map((t: any) => {
+
+                      const count =
+                        t.vocabulary?.[0]?.count || 0;
+
+                      const isTopicSelected =
+                        selectedTopics.includes(t.id);
+
+                      return (
+                        <label
+                          key={t.id}
+                          onContextMenu={(e) =>
+                            handleRightClick(e, t)
+                          }
+                          className={`flex shrink-0 items-center justify-between w-full px-2 py-1 rounded text-[13px] cursor-pointer ${isTopicSelected
+                            ? "bg-green-600 text-white"
+                            : "bg-gray-100"
+                            }`}
+                        >
+
+                          <div className="flex items-center gap-2 min-w-0">
+
+                            <input
+                              type="checkbox"
+                              className="w-3.5 h-3.5 shrink-0"
+                              checked={isTopicSelected}
+                              onChange={() =>
+                                toggleTopic(t.id)
+                              }
+                            />
+
+                            <span className="truncate">
+                              {t.topic_name}
+                            </span>
+
+                          </div>
+
+                          {count > 0 && (
+                            <span className="text-xs shrink-0 ml-2">
+                              ({count})
+                            </span>
+                          )}
+
+                        </label>
+                      );
+
+                    })}
+
+                  </div>
+
+                )}
+
+              </div>
+            );
+
+          })}
 
         </div>
-      );
 
-    })}
-
-  </div>
-
-</div>
+      </div>
 
       {/* RIGHT CLICK MENU */}
       {menu && (

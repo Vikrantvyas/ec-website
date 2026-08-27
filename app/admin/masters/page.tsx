@@ -56,7 +56,7 @@ export default function MastersPage() {
   { label:"English Courses", value:"english_courses" },
   { label:"Days", value:"english_days" },
   { label:"Topics", value:"english_topics" },
-{ label:"Sentences", value:"english_sentences" }, // existing safe
+{ label:"Sentences", value:"english_sentences" },
 { label:"Grammar Tables", value:"grammar_tables" }
 ];
 

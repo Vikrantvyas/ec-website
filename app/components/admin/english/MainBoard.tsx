@@ -7,7 +7,6 @@ import ScoreCard from "./ScoreCard";
 import GrammarBoard from "./GrammarBoard";
 import SentencePlayer from "./SentencePlayer";
 export default function MainBoard({
-  isVocab,
   isGrammar,
   showGrammar,
   sentences,
@@ -174,7 +173,7 @@ export default function MainBoard({
 
               </div>
 
-            ) : isVocab ? (
+            ) : (
 
               <div className="text-xs h-full min-h-0">
                 <CoursePlayer
@@ -183,24 +182,12 @@ export default function MainBoard({
                   random={randomMode}
                   showAll={showAll}
                   compact={true}
+                  highlightIndex={highlightIndex}
+                  setHighlightIndex={setHighlightIndex}
                 />
               </div>
 
-            ) : (
-
-  <div className="text-xs h-full min-h-0">
-    <CoursePlayer
-      ref={vocabRef}
-      data={sentences}
-      random={randomMode}
-      showAll={showAll}
-      compact={true}
-      highlightIndex={highlightIndex}
-      setHighlightIndex={setHighlightIndex}
-    />
-  </div>
-
-)}
+            )}
 
           </div>
 
