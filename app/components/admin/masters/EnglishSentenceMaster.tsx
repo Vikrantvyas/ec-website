@@ -33,7 +33,11 @@ function SortableItem({ s, children }: any) {
   );
 }
 
-export default function EnglishSentenceMaster() {
+export default function EnglishSentenceMaster({
+  initialTopicId = "",
+  initialDayId = "",
+  initialCourseId = ""
+}: any) {
 
   const [courses, setCourses] = useState<any[]>([]);
   const [days, setDays] = useState<any[]>([]);
@@ -63,6 +67,22 @@ export default function EnglishSentenceMaster() {
   const [editOrder, setEditOrder] = useState("");
 
   useEffect(() => { fetchCourses(); }, []);
+  useEffect(() => {
+    if (initialTopicId) {
+      setSelectedTopic(initialTopicId);
+    }
+  }, [initialTopicId]);
+  useEffect(() => {
+  if (initialCourseId) {
+    setSelectedCourse(initialCourseId);
+  }
+}, [initialCourseId]);
+
+useEffect(() => {
+  if (initialDayId) {
+    setSelectedDay(initialDayId);
+  }
+}, [initialDayId]);
   useEffect(() => { if (selectedCourse) fetchDays(); }, [selectedCourse]);
   useEffect(() => { if (selectedDay) fetchTopics(); }, [selectedDay]);
   useEffect(() => { if (selectedTopic) fetchSentences(); }, [selectedTopic]);

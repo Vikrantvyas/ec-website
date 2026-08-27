@@ -34,7 +34,7 @@ function SortableItem({ id, children }: any) {
   );
 }
 
-export default function EnglishCourseMaster() {
+export default function EnglishCourseMaster({ onManageDays }: any) {
 
   const [courses, setCourses] = useState<any[]>([]);
   const [name, setName] = useState("");
@@ -164,8 +164,9 @@ export default function EnglishCourseMaster() {
                         <>
                           <div className="flex-1">{c.name}</div>
 
-                          <button onClick={()=>startEdit(c)}>Edit</button>
-                          <button onClick={()=>deleteCourse(c.id)}>Delete</button>
+<button onClick={() => onManageDays(c.id)}>Manage Days →</button>
+<button onClick={()=>startEdit(c)}>Edit</button>
+<button onClick={()=>deleteCourse(c.id)}>Delete</button>
                         </>
                       )}
 

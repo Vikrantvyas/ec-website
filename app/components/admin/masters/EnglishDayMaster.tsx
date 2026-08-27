@@ -34,7 +34,10 @@ function SortableItem({ id, children }: any) {
   );
 }
 
-export default function EnglishDayMaster() {
+export default function EnglishDayMaster({
+  initialCourseId = "",
+  onManageTopics
+}: any) {
 
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState("");
@@ -46,8 +49,19 @@ export default function EnglishDayMaster() {
   const [editValue, setEditValue] = useState("");
   const [editTitle, setEditTitle] = useState("");
 
-  useEffect(() => { fetchCourses(); }, []);
-  useEffect(() => { if (selectedCourse) fetchDays(); }, [selectedCourse]);
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  useEffect(() => {
+    if (initialCourseId) {
+      setSelectedCourse(initialCourseId);
+    }
+  }, [initialCourseId]);
+
+  useEffect(() => {
+    if (selectedCourse) fetchDays();
+  }, [selectedCourse]);
 
   const fetchCourses = async () => {
     const { data } = await supabase.from("english_courses").select("*").order("name");
@@ -86,24 +100,24 @@ export default function EnglishDayMaster() {
   };
 
   // DELETE
-  const deleteDay = async (id:string) => {
+  const deleteDay = async (id: string) => {
     await supabase.from("days").delete().eq("id", id);
     fetchDays();
   };
 
   // EDIT
-  const startEdit = (d:any) => {
+  const startEdit = (d: any) => {
     setEditId(d.id);
     setEditValue(String(d.day_number));
-setEditTitle(d.title || "");
+    setEditTitle(d.title || "");
   };
 
   const saveEdit = async () => {
     await supabase.from("days")
       .update({
-  day_number: Number(editValue),
-  title: editTitle
-})
+        day_number: Number(editValue),
+        title: editTitle
+      })
       .eq("id", editId);
 
     setEditId(null);
@@ -111,7 +125,7 @@ setEditTitle(d.title || "");
   };
 
   // DRAG
-  const handleDragEnd = (event:any) => {
+  const handleDragEnd = (event: any) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -139,11 +153,11 @@ setEditTitle(d.title || "");
 
         <select
           value={selectedCourse}
-          onChange={(e)=>setSelectedCourse(e.target.value)}
+          onChange={(e) => setSelectedCourse(e.target.value)}
           className="border px-2 py-1 rounded"
         >
           <option value="">Course</option>
-          {courses.map(c=>(
+          {courses.map(c => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
@@ -151,7 +165,7 @@ setEditTitle(d.title || "");
         <input
           type="number"
           value={dayNumber}
-          onChange={(e)=>setDayNumber(e.target.value)}
+          onChange={(e) => setDayNumber(e.target.value)}
           placeholder="Enter number (e.g. 10)"
           className="border px-2 py-1 rounded w-40"
         />
@@ -170,15 +184,15 @@ setEditTitle(d.title || "");
       <div className="p-3 overflow-y-auto h-[calc(100vh-120px)]">
 
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={days.map(d=>d.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={days.map(d => d.id)} strategy={verticalListSortingStrategy}>
 
             <div className="space-y-2">
 
-              {days.map(d=>(
+              {days.map(d => (
 
                 <SortableItem key={d.id} id={d.id}>
 
-                  {(attributes:any, listeners:any)=>(
+                  {(attributes: any, listeners: any) => (
 
                     <div className="flex items-center gap-2 border p-2 rounded bg-white">
 
@@ -188,15 +202,15 @@ setEditTitle(d.title || "");
                         <>
                           <input
                             value={editValue}
-                            onChange={(e)=>setEditValue(e.target.value)}
+                            onChange={(e) => setEditValue(e.target.value)}
                             className="border px-2 py-1 rounded w-20"
                           />
                           <input
-  value={editTitle}
-  onChange={(e)=>setEditTitle(e.target.value)}
-  placeholder="Title"
-  className="border px-2 py-1 rounded flex-1"
-/>
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            placeholder="Title"
+                            className="border px-2 py-1 rounded flex-1"
+                          />
                           <button onClick={saveEdit}>Save</button>
                         </>
                       ) : (
@@ -210,8 +224,13 @@ setEditTitle(d.title || "");
     : ""}
 
 </div>
-                          <button onClick={()=>startEdit(d)}>Edit</button>
-                          <button onClick={()=>deleteDay(d.id)}>Delete</button>
+
+<button onClick={() => onManageTopics(d.id)}>
+  Manage Topics →
+</button>
+
+<button onClick={() => startEdit(d)}>Edit</button>
+<button onClick={() => deleteDay(d.id)}>Delete</button>
                         </>
                       )}
 
