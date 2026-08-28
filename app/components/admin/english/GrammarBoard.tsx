@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import GrammarTable from "./grammar/GrammarTable";
 
@@ -19,6 +19,7 @@ export default function GrammarBoard({
     useState<any[]>([]);
   const [tableHeaders, setTableHeaders] =
     useState<any[]>([]);
+  const requestIdRef = useRef(0);
   useEffect(() => {
 
     loadTables();
@@ -35,25 +36,25 @@ export default function GrammarBoard({
   }, [selectedGrammarTableId]);
   useEffect(() => {
 
-  if (!selectedTableId) return;
+    if (!selectedTableId) return;
 
-  const handleRefresh = () => {
-    loadTableData(selectedTableId);
-  };
+    const handleRefresh = () => {
+      loadTableData(selectedTableId);
+    };
 
-  window.addEventListener(
-    "grammar-table-refresh",
-    handleRefresh
-  );
-
-  return () => {
-    window.removeEventListener(
+    window.addEventListener(
       "grammar-table-refresh",
       handleRefresh
     );
-  };
 
-}, [selectedTableId]);
+    return () => {
+      window.removeEventListener(
+        "grammar-table-refresh",
+        handleRefresh
+      );
+    };
+
+  }, [selectedTableId]);
   const loadTables = async () => {
 
     const { data } = await supabase
@@ -77,7 +78,9 @@ export default function GrammarBoard({
 
   const loadTableData = async (tableId: string) => {
 
-    const { data: headers } = await supabase
+  const requestId = ++requestIdRef.current;
+
+  const { data: headers } = await supabase
       .from("grammar_headers")
       .select("*")
       .eq("table_id", tableId)
@@ -90,10 +93,19 @@ export default function GrammarBoard({
 
     if (!headers || !cells) {
 
-      return;
+  return;
 
-    }
-    setTableHeaders(headers);
+}
+
+if (requestId !== requestIdRef.current) {
+
+  console.log("Ignoring old grammar table request:", tableId);
+
+  return;
+
+}
+
+setTableHeaders(headers);
     const grouped: any = {};
 
     cells.forEach((cell: any) => {

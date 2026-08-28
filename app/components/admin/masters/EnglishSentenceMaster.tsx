@@ -468,7 +468,7 @@ export default function EnglishSentenceMaster({
           Clear
         </button>
 
-        
+
 
         <button
           onClick={saveOrder}
@@ -557,16 +557,16 @@ export default function EnglishSentenceMaster({
                           </button>
 
                           <button
-  onClick={() => {
-    if (selectedSentenceIds.includes(s.id)) {
-      deleteSelectedSentences();
-    } else {
-      deleteSentence(s.id);
-    }
-  }}
->
-  Delete
-</button>
+                            onClick={() => {
+                              if (selectedSentenceIds.includes(s.id)) {
+                                deleteSelectedSentences();
+                              } else {
+                                deleteSentence(s.id);
+                              }
+                            }}
+                          >
+                            Delete
+                          </button>
                         </>
                       )}
 

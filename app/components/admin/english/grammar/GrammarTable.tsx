@@ -23,10 +23,20 @@ export default function GrammarTable({
 }) {
 
   const [tableData, setTableData] = useState<Group[]>(data);
-  useEffect(() => {
-    setTableData(data);
-    setVisibleCells(0);
-  }, [data]);
+
+useEffect(() => {
+
+  setTableData(data);
+
+  // New table आने पर पुरानी table की state साफ करें
+  setColumns([]);
+  setMergedCells({});
+  setSelected([]);
+  setHistory([]);
+  setRedoStack([]);
+  setVisibleCells(0);
+
+}, [data]);
   const [columns, setColumns] = useState<string[]>([]);
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);

@@ -481,16 +481,16 @@ export default function EnglishTopicMaster({
 
                           <button onClick={() => startEdit(t)}>Edit</button>
                           <button
-  onClick={() => {
-    if (selectedTopicIds.includes(t.id)) {
-      deleteSelectedTopics();
-    } else {
-      deleteTopic(t.id);
-    }
-  }}
->
-  Delete
-</button>
+                            onClick={() => {
+                              if (selectedTopicIds.includes(t.id)) {
+                                deleteSelectedTopics();
+                              } else {
+                                deleteTopic(t.id);
+                              }
+                            }}
+                          >
+                            Delete
+                          </button>
                         </>
                       )}
 

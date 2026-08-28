@@ -107,8 +107,15 @@ export default function LeftPanel({
     }
 
     if (data) {
-      setGrammarTopics(data);
-    }
+  const sortedData = [...data].sort((a, b) => {
+    const numA = parseInt(a.name?.match(/\d+/)?.[0] || "9999");
+    const numB = parseInt(b.name?.match(/\d+/)?.[0] || "9999");
+
+    return numA - numB;
+  });
+
+  setGrammarTopics(sortedData);
+}
 
   };
   // 🔥 SAVE
