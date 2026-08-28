@@ -1,11 +1,12 @@
 "use client";
-
+import { supabase } from "@/lib/supabaseClient";
 import { useState, useEffect } from "react";
 import WhiteBoard from "./WhiteBoard";
 import CoursePlayer from "./CoursePlayer";
 import ScoreCard from "./ScoreCard";
 import GrammarBoard from "./GrammarBoard";
 import SentencePlayer from "./SentencePlayer";
+import ImageBoard from "./ImageBoard";
 export default function MainBoard({
   isGrammar,
   showGrammar,
@@ -32,16 +33,46 @@ export default function MainBoard({
   days,
   currentTime,
   selectedGrammarTableId,
+  selectedImageId,
+  showImages,
 }: any) {
 
   const [resultData, setResultData] = useState<any[]>([]);
   const [showResult, setShowResult] = useState(false);
   const [panelOrder, setPanelOrder] = useState<string[]>([]);
+  const [selectedImage, setSelectedImage] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchSelectedImage = async () => {
+
+      if (!selectedImageId) {
+        setSelectedImage(null);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("images")
+        .select("id, name, topic_id, file_path, sort_order, created_at")
+        .eq("id", selectedImageId)
+        .single();
+
+      if (error) {
+        console.error("SELECTED IMAGE ERROR:", error);
+        setSelectedImage(null);
+        return;
+      }
+
+      setSelectedImage(data);
+    };
+
+    fetchSelectedImage();
+  }, [selectedImageId]);
 
   const activePanels = [
-    showLeft && "left",
+      showLeft && "left",
     showGrammar && "grammar",
     showBoard && "board",
+    showImages && "images",
     showScore && "score"
   ].filter(Boolean) as string[];
 
@@ -57,7 +88,7 @@ export default function MainBoard({
 
       return [...stillActive, ...newlyActive];
     });
-  }, [showLeft, showGrammar, showBoard, showScore]);
+  }, [showLeft, showGrammar, showBoard, showImages, showScore]);
 
   const isVertical = layout === "vertical";
 
@@ -208,12 +239,29 @@ export default function MainBoard({
         </div>
       );
     }
-
+    if (panel === "images" && showImages) {
+      return (
+        <div
+          key="images"
+          className={`${widthClass} ${isVertical ? "border-t" : "border-l"
+            } flex`}
+        >
+          {selectedImage ? (
+  <ImageBoard image={selectedImage} />
+) : (
+  <div className="w-full h-full flex items-center justify-center text-gray-400">
+    Select an image
+  </div>
+)}
+        </div>
+      );
+    }
     if (panel === "board" && showBoard) {
       return (
         <div
           key="board"
-          className={`${widthClass} ${isVertical ? "border-t" : "border-l"} flex`}
+          className={`${widthClass} ${isVertical ? "border-t" : "border-l"
+            } flex`}
         >
           <WhiteBoard />
         </div>

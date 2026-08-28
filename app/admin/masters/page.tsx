@@ -1,4 +1,6 @@
 "use client";
+import ImageTopicMaster from "@/app/components/admin/masters/ImageTopicMaster";
+import ImageMaster from "@/app/components/admin/masters/ImageMaster";
 import EnglishCourseMaster from "@/app/components/admin/masters/EnglishCourseMaster";
 import EnglishDayMaster from "@/app/components/admin/masters/EnglishDayMaster";
 import EnglishTopicMaster from "@/app/components/admin/masters/EnglishTopicMaster";
@@ -60,7 +62,9 @@ export default function MastersPage() {
     { label: "Days", value: "english_days" },
     { label: "Topics", value: "english_topics" },
     { label: "Sentences", value: "english_sentences" },
-    { label: "Grammar Tables", value: "grammar_tables" }
+    { label: "Grammar Tables", value: "grammar_tables" },
+    { label: "Image Topics", value: "image_topics" },
+    { label: "Images", value: "images" }
   ];
 
   const staffMasters = [
@@ -98,26 +102,26 @@ export default function MastersPage() {
 
   useEffect(() => {
 
-  const tab = searchParams.get("tab");
-  const editTableId = searchParams.get("editTable");
+    const tab = searchParams.get("tab");
+    const editTableId = searchParams.get("editTable");
 
-  if (tab === "batches") {
+    if (tab === "batches") {
 
-    setSelectedCategory("batches");
-    setSelectedMaster("batches");
+      setSelectedCategory("batches");
+      setSelectedMaster("batches");
 
-    return;
+      return;
 
-  }
+    }
 
-  if (editTableId) {
+    if (editTableId) {
 
-    setSelectedCategory("english");
-    setSelectedMaster("grammar_tables");
+      setSelectedCategory("english");
+      setSelectedMaster("grammar_tables");
 
-  }
+    }
 
-}, [searchParams]);
+  }, [searchParams]);
 
   return (
 
@@ -232,6 +236,8 @@ export default function MastersPage() {
               />
             )}
             {selectedMaster === "grammar_tables" && <GrammarTableMaster />}
+            {selectedMaster === "image_topics" && <ImageTopicMaster />}
+            {selectedMaster === "images" && <ImageMaster />}
 
           </div>
 
