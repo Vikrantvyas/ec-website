@@ -7,8 +7,8 @@ export default function GrammarTableMaster() {
 
   const [tableName, setTableName] = useState("");
 
-  const [totalRows, setTotalRows] = useState(2);
-  const [totalColumns, setTotalColumns] = useState(5);
+  const [totalRows, setTotalRows] = useState(0);
+  const [totalColumns, setTotalColumns] = useState(0);
 
   const updateColumns = (value: number) => {
 
@@ -32,14 +32,7 @@ export default function GrammarTableMaster() {
 
   };
 
-  const [headers, setHeaders] = useState([
-
-    "Hindi",
-    "Subject",
-    "HV",
-    "Verb",
-    "Object"
-  ]);
+  const [headers, setHeaders] = useState<string[]>([]);
   const [savedTables, setSavedTables] = useState<any[]>([]);
 
   const [selectedTable, setSelectedTable] =
@@ -106,26 +99,26 @@ export default function GrammarTableMaster() {
 
     // Copied row का data नई row में insert करें
     const newCells = selectedHeaders
-  .map((header) => ({
-    table_id: selectedTable.id,
-    header_id: header.id,
-    row_no: newRowIndex,
-    cell_value:
-      copiedRow?.[header.id] !== undefined
-        ? copiedRow[header.id]
-        : "",
-  }))
-  .filter((cell) => cell.cell_value !== "");
-  setCellData((prev: any) => {
-  const updated = { ...prev };
+      .map((header) => ({
+        table_id: selectedTable.id,
+        header_id: header.id,
+        row_no: newRowIndex,
+        cell_value:
+          copiedRow?.[header.id] !== undefined
+            ? copiedRow[header.id]
+            : "",
+      }))
+      .filter((cell) => cell.cell_value !== "");
+    setCellData((prev: any) => {
+      const updated = { ...prev };
 
-  selectedHeaders.forEach((header) => {
-    updated[`${newRowIndex}__${header.id}`] =
-      copiedRow?.[header.id] || "";
-  });
+      selectedHeaders.forEach((header) => {
+        updated[`${newRowIndex}__${header.id}`] =
+          copiedRow?.[header.id] || "";
+      });
 
-  return updated;
-});
+      return updated;
+    });
 
     const { error: insertError } = await supabase
       .from("grammar_cells")
@@ -181,6 +174,8 @@ export default function GrammarTableMaster() {
 
     setEditingTableId(table.id);
 
+    setSelectedGrammarTopic(table.topic_id);
+
     setTableName(table.name);
 
     setTotalRows(table.total_rows);
@@ -217,7 +212,15 @@ export default function GrammarTableMaster() {
 
   }, [selectedGrammarTopic]);
 
+  useEffect(() => {
 
+    if (grammarTopics.length > 0) {
+
+      loadTables();
+
+    }
+
+  }, [grammarTopics]);
   const loadTables = async () => {
 
     let query = supabase
@@ -235,15 +238,49 @@ export default function GrammarTableMaster() {
 
     const { data } = await query.order(
       "created_at",
-      { ascending: false }
+      { ascending: true }
     );
 
     if (data) {
 
-      setSavedTables(data);
+      const sortedTables = [...data].sort((a, b) => {
 
+        const topicA =
+          grammarTopics.find(
+            (topic) => topic.id === a.topic_id
+          );
+
+        const topicB =
+          grammarTopics.find(
+            (topic) => topic.id === b.topic_id
+          );
+
+        const orderA =
+          parseInt(
+            topicA?.name?.match(/\d+/)?.[0] || "9999"
+          );
+
+        const orderB =
+          parseInt(
+            topicB?.name?.match(/\d+/)?.[0] || "9999"
+          );
+
+        if (orderA !== orderB) {
+
+          return orderA - orderB;
+
+        }
+        return (
+          new Date(a.created_at).getTime() -
+          new Date(b.created_at).getTime()
+        );
+
+      });
+
+      setSavedTables(sortedTables);
 
     }
+
   };
 
   const loadGrammarTopics = async () => {
@@ -257,7 +294,25 @@ export default function GrammarTableMaster() {
     console.log("Grammar Topics Error :", error);
 
     if (data) {
-      setGrammarTopics(data);
+
+      const sortedTopics = [...data].sort((a, b) => {
+
+        const numA =
+          parseInt(
+            a.name?.match(/\d+/)?.[0] || "9999"
+          );
+
+        const numB =
+          parseInt(
+            b.name?.match(/\d+/)?.[0] || "9999"
+          );
+
+        return numA - numB;
+
+      });
+
+      setGrammarTopics(sortedTopics);
+
     }
 
   };
@@ -759,6 +814,86 @@ export default function GrammarTableMaster() {
             >
               +
             </button>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                disabled={!selectedGrammarTopic}
+                onClick={() => {
+                  const topic = grammarTopics.find(
+                    (t) => t.id === selectedGrammarTopic
+                  );
+
+                  if (!topic) return;
+
+                  setEditingTopicId(topic.id);
+                  setNewTopicName(topic.name);
+                  setShowTopicInput(true);
+                }}
+                className="border rounded px-2 disabled:opacity-40"
+                title="Edit Grammar Topic"
+              >
+                Edit
+              </button>
+
+              <button
+                type="button"
+                disabled={!selectedGrammarTopic}
+                onClick={async () => {
+
+                  const topic = grammarTopics.find(
+                    (t) => t.id === selectedGrammarTopic
+                  );
+
+                  if (!topic) return;
+
+                  // Check whether this topic has grammar tables
+                  const { count, error: countError } = await supabase
+                    .from("grammar_tables")
+                    .select("id", {
+                      count: "exact",
+                      head: true
+                    })
+                    .eq("topic_id", topic.id);
+
+                  if (countError) {
+                    alert(countError.message);
+                    return;
+                  }
+
+                  // Do not delete topic if tables exist
+                  if (count && count > 0) {
+                    alert(
+                      `This topic has ${count} Grammar Table(s).\n\nPlease delete or move those tables first.`
+                    );
+                    return;
+                  }
+
+                  const ok = confirm(
+                    `Delete Grammar Topic "${topic.name}"?`
+                  );
+
+                  if (!ok) return;
+
+                  const { error } = await supabase
+                    .from("grammar_topics")
+                    .delete()
+                    .eq("id", topic.id);
+
+                  if (error) {
+                    alert(error.message);
+                    return;
+                  }
+
+                  setSelectedGrammarTopic("");
+                  await loadGrammarTopics();
+
+                }}
+                className="border rounded px-2 text-red-600 disabled:opacity-40"
+                title="Delete Grammar Topic"
+              >
+                Delete
+              </button>
+            </div>
 
           </div>
 
@@ -783,24 +918,44 @@ export default function GrammarTableMaster() {
                       return;
                     }
 
-                    const { error } = await supabase
-                      .from("grammar_topics")
-                      .insert([
-                        {
-                          name: newTopicName,
-                          sort_order: grammarTopics.length + 1
-                        }
-                      ]);
+                    // EDIT EXISTING TOPIC
+                    if (editingTopicId) {
 
-                    if (error) {
-                      alert(error.message);
-                      return;
+                      const { error } = await supabase
+                        .from("grammar_topics")
+                        .update({
+                          name: newTopicName.trim()
+                        })
+                        .eq("id", editingTopicId);
+
+                      if (error) {
+                        alert(error.message);
+                        return;
+                      }
+
+                    } else {
+
+                      // ADD NEW TOPIC
+                      const { error } = await supabase
+                        .from("grammar_topics")
+                        .insert([
+                          {
+                            name: newTopicName.trim(),
+                            sort_order: grammarTopics.length + 1
+                          }
+                        ]);
+
+                      if (error) {
+                        alert(error.message);
+                        return;
+                      }
+
                     }
 
                     await loadGrammarTopics();
 
                     setNewTopicName("");
-
+                    setEditingTopicId(null);
                     setShowTopicInput(false);
 
                   }}
@@ -812,11 +967,9 @@ export default function GrammarTableMaster() {
                 <button
                   type="button"
                   onClick={() => {
-
                     setShowTopicInput(false);
-
                     setNewTopicName("");
-
+                    setEditingTopicId(null);
                   }}
                   className="bg-gray-400 text-white px-4 rounded"
                 >
@@ -855,7 +1008,7 @@ export default function GrammarTableMaster() {
 
           <input
             type="number"
-            value={totalRows}
+            value={totalRows || ""}
             onChange={(e) => setTotalRows(Number(e.target.value))}
             className="border p-2 w-full rounded"
           />
@@ -868,7 +1021,7 @@ export default function GrammarTableMaster() {
 
           <input
             type="number"
-            value={totalColumns}
+            value={totalColumns || ""}
             onChange={(e) => updateColumns(Number(e.target.value))}
             className="border p-2 w-full rounded"
           />
@@ -876,38 +1029,45 @@ export default function GrammarTableMaster() {
 
       </div>
 
-      <div>
+      {totalRows > 0 && totalColumns > 0 && (
 
-        <label className="block mb-3 font-medium">
-          Headers
-        </label>
+        <div>
 
-        <div
-          className="grid gap-3"
-          style={{
-            gridTemplateColumns:
-              `repeat(${totalColumns}, minmax(150px,1fr))`
-          }}
-        >
+          <label className="block mb-3 font-medium">
+            Headers
+          </label>
 
-          {headers.map((header, index) => (
-            <input
-              key={index}
-              value={header}
-              onChange={(e) => {
+          <div
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns:
+                `repeat(${totalColumns}, minmax(150px,1fr))`
+            }}
+          >
 
-                const updated = [...headers];
-                updated[index] = e.target.value;
-                setHeaders(updated);
+            {headers.map((header, index) => (
+              <input
+                key={index}
+                value={header}
+                onChange={(e) => {
 
-              }}
-              className="border p-2 rounded"
-            />
-          ))}
+                  const updated = [...headers];
+
+                  updated[index] = e.target.value;
+
+                  setHeaders(updated);
+
+                }}
+                placeholder={`Column ${index + 1}`}
+                className="border p-2 rounded"
+              />
+            ))}
+
+          </div>
 
         </div>
 
-      </div>
+      )}
 
       <button
 
@@ -916,6 +1076,19 @@ export default function GrammarTableMaster() {
 
             alert("Please select Grammar Topic");
 
+            return;
+
+          }
+          if (totalRows <= 0) {
+
+            alert("Enter number of rows");
+            return;
+
+          }
+
+          if (totalColumns <= 0) {
+
+            alert("Enter number of columns");
             return;
 
           }
@@ -935,6 +1108,7 @@ export default function GrammarTableMaster() {
               .from("grammar_tables")
               .update({
                 name: tableName,
+                topic_id: selectedGrammarTopic,
                 total_rows: totalRows,
                 total_columns: totalColumns
               })
@@ -1044,17 +1218,11 @@ export default function GrammarTableMaster() {
 
           setTableName("");
 
-          setTotalRows(2);
+          setTotalRows(0);
 
-          updateColumns(5);
+          setTotalColumns(0);
 
-          setHeaders([
-            "Hindi",
-            "Subject",
-            "HV",
-            "Verb",
-            "Object"
-          ]);
+          setHeaders([]);
           loadTables();
 
         }}
@@ -1063,63 +1231,63 @@ export default function GrammarTableMaster() {
       >
         Save Table
       </button>
-      <div className="border rounded overflow-auto">
+      {totalRows > 0 && totalColumns > 0 && (
 
-        <table className="w-full border-collapse">
+        <div className="border rounded overflow-auto">
 
-          <thead>
+          <table className="w-full border-collapse">
 
-            <tr className="bg-gray-100 sticky top-0 z-10">
-              <th className="border p-2 w-16">
-                #
-              </th>
-              <th className="border p-2 w-10">
-                ×
-              </th>
+            <thead>
 
-              {headers.map((header, index) => (
-                <th
-                  key={index}
-                  className="border p-2 min-w-[150px]"
-                >
-                  {header || `Column ${index + 1}`}
+              <tr className="bg-gray-100 sticky top-0 z-10">
+                <th className="border p-2 w-16">
+                  #
                 </th>
-              ))}
 
-            </tr>
 
-          </thead>
-
-          <tbody>
-
-            {Array.from({ length: totalRows }).map((_, rowIndex) => (
-
-              <tr key={rowIndex}>
-                <td className="border p-2 text-center font-semibold">
-                  {rowIndex + 1}
-                </td>
-                {headers.map((_, colIndex) => (
-                  <td
-                    key={colIndex}
-                    className="border p-2 h-12"
+                {headers.map((header, index) => (
+                  <th
+                    key={index}
+                    className="border p-2 min-w-[150px]"
                   >
-                  </td>
+                    {header || `Column ${index + 1}`}
+                  </th>
                 ))}
 
               </tr>
 
-            ))}
+            </thead>
 
-          </tbody>
+            <tbody>
 
-        </table>
+              {Array.from({ length: totalRows }).map((_, rowIndex) => (
 
-      </div>
+                <tr key={rowIndex}>
+                  <td className="border p-2 text-center font-semibold">
+                    {rowIndex + 1}
+                  </td>
+                  {headers.map((_, colIndex) => (
+                    <td
+                      key={colIndex}
+                      className="border p-2 h-12"
+                    >
+                    </td>
+                  ))}
 
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
+      )}
       <div className="border rounded p-4">
 
         <h2 className="text-xl font-semibold mb-4">
-          Saved Tables
+          Saved Tables ({savedTables.length})
         </h2>
 
         <table className="w-full border-collapse">
@@ -1127,6 +1295,10 @@ export default function GrammarTableMaster() {
           <thead>
 
             <tr className="bg-gray-100">
+
+              <th className="border p-2 text-left">
+                Topic Name
+              </th>
 
               <th className="border p-2 text-left">
                 Table Name
@@ -1151,6 +1323,14 @@ export default function GrammarTableMaster() {
 
             {savedTables.map((table) => (
               <tr key={table.id}>
+
+                <td className="border p-2">
+                  {
+                    grammarTopics.find(
+                      (topic) => topic.id === table.topic_id
+                    )?.name || "-"
+                  }
+                </td>
 
                 <td className="border p-2">
                   {table.name}
