@@ -34,6 +34,7 @@ export default function GrammarTableMaster() {
 
   const [headers, setHeaders] = useState<string[]>([]);
   const [savedTables, setSavedTables] = useState<any[]>([]);
+  const [copiedTable, setCopiedTable] = useState<any>(null);
 
   const [selectedTable, setSelectedTable] =
     useState<any>(null);
@@ -46,6 +47,295 @@ export default function GrammarTableMaster() {
     useState<number | null>(null);
   const [rowOrder, setRowOrder] = useState<number[]>([]);
   const [copiedRow, setCopiedRow] = useState<any>(null);
+  const copyTable = async (table: any) => {
+
+    const { data: headers, error: headerError } = await supabase
+      .from("grammar_headers")
+      .select("*")
+      .eq("table_id", table.id)
+      .order("column_order");
+
+    if (headerError) {
+      alert(headerError.message);
+      return;
+    }
+
+    const { data: cells, error: cellError } = await supabase
+      .from("grammar_cells")
+      .select("*")
+      .eq("table_id", table.id);
+
+    if (cellError) {
+      alert(cellError.message);
+      return;
+    }
+
+    setCopiedTable({
+      table,
+      headers: headers || [],
+      cells: cells || [],
+      mode: "copy"
+    });
+
+    alert(`Table "${table.name}" Copied`);
+  };
+
+
+  const pasteTable = async (
+    sourceData: any = copiedTable
+  ) => {
+
+    if (!sourceData) {
+      alert("Please copy or cut a table first.");
+      return;
+    }
+
+    const sourceTable =
+      sourceData.table ||
+      sourceData.sourceTable ||
+      null;
+
+    const sourceHeaders =
+      sourceData.headers || [];
+
+    const sourceCells =
+      sourceData.cells || [];
+
+    if (!sourceTable || !sourceTable.id) {
+      console.log("PASTE DEBUG:", sourceData);
+
+      alert(
+        "Copied table data is invalid. Please Copy or Cut the table again."
+      );
+
+      return;
+    }
+
+    const targetTopicId =
+      selectedGrammarTopic ||
+      sourceTable.topic_id;
+
+    if (!targetTopicId) {
+      alert("Please select a Grammar Topic first.");
+      return;
+    }
+
+    const baseName =
+      sourceTable.name || "Grammar Table";
+
+    let newTableName =
+      `${baseName} Copy`;
+
+    let copyNumber = 2;
+
+    while (
+      savedTables.some(
+        (table) => table.name === newTableName
+      )
+    ) {
+
+      newTableName =
+        `${baseName} Copy ${copyNumber}`;
+
+      copyNumber++;
+
+    }
+
+    const {
+      data: newTable,
+      error: tableError
+    } = await supabase
+      .from("grammar_tables")
+      .insert({
+        name: newTableName,
+        topic_id: targetTopicId,
+        total_rows: sourceTable.total_rows,
+        total_columns: sourceTable.total_columns
+      })
+      .select()
+      .single();
+
+    if (tableError) {
+
+      alert(tableError.message);
+
+      return;
+    }
+
+    const headerIdMap: any = {};
+
+    for (const header of sourceHeaders) {
+
+      const {
+        data: newHeader,
+        error: headerError
+      } = await supabase
+        .from("grammar_headers")
+        .insert({
+          table_id: newTable.id,
+          header_name: header.header_name,
+          column_order: header.column_order
+        })
+        .select()
+        .single();
+
+      if (headerError) {
+
+        alert(headerError.message);
+
+        return;
+      }
+
+      headerIdMap[header.id] =
+        newHeader.id;
+    }
+
+    const newCells =
+      sourceCells
+        .filter(
+          (cell: any) =>
+            headerIdMap[cell.header_id]
+        )
+        .map(
+          (cell: any) => ({
+            table_id: newTable.id,
+            header_id:
+              headerIdMap[cell.header_id],
+            row_no: cell.row_no,
+            cell_value: cell.cell_value
+          })
+        );
+
+    if (newCells.length > 0) {
+
+      const {
+        error: cellsError
+      } = await supabase
+        .from("grammar_cells")
+        .insert(newCells);
+
+      if (cellsError) {
+
+        alert(cellsError.message);
+
+        return;
+      }
+    }
+
+    // If this was CUT, delete the original
+    // only after the new table was created successfully.
+    if (sourceData.mode === "cut") {
+
+      const originalTableId =
+        sourceTable.id;
+
+      const {
+        error: deleteCellsError
+      } = await supabase
+        .from("grammar_cells")
+        .delete()
+        .eq("table_id", originalTableId);
+
+      if (deleteCellsError) {
+
+        alert(
+          `Table pasted, but original table was not deleted.\n\n${deleteCellsError.message}`
+        );
+
+        return;
+      }
+
+      const {
+        error: deleteHeadersError
+      } = await supabase
+        .from("grammar_headers")
+        .delete()
+        .eq("table_id", originalTableId);
+
+      if (deleteHeadersError) {
+
+        alert(
+          `Table pasted, but original table was not deleted.\n\n${deleteHeadersError.message}`
+        );
+
+        return;
+      }
+
+      const {
+        error: deleteTableError
+      } = await supabase
+        .from("grammar_tables")
+        .delete()
+        .eq("id", originalTableId);
+
+      if (deleteTableError) {
+
+        alert(
+          `Table pasted, but original table was not deleted.\n\n${deleteTableError.message}`
+        );
+
+        return;
+      }
+
+      setCopiedTable(null);
+
+      if (
+        selectedTable?.id ===
+        originalTableId
+      ) {
+
+        setSelectedTable(null);
+        setSelectedHeaders([]);
+        setCellData({});
+      }
+
+      await loadTables();
+
+      alert(
+        `Table "${newTableName}" Moved Successfully`
+      );
+
+      return;
+    }
+
+    await loadTables();
+
+    alert(
+      `Table "${newTableName}" Pasted`
+    );
+  };
+  const duplicateTable = async (table: any) => {
+
+    const { data: headers, error: headerError } =
+      await supabase
+        .from("grammar_headers")
+        .select("*")
+        .eq("table_id", table.id)
+        .order("column_order");
+
+    if (headerError) {
+      alert(headerError.message);
+      return;
+    }
+
+    const { data: cells, error: cellError } =
+      await supabase
+        .from("grammar_cells")
+        .select("*")
+        .eq("table_id", table.id);
+
+    if (cellError) {
+      alert(cellError.message);
+      return;
+    }
+
+    await pasteTable({
+      table,
+      headers: headers || [],
+      cells: cells || []
+    });
+
+  };
   const copyRow = (actualRowIndex: number) => {
     if (!selectedTable) return;
 
@@ -150,6 +440,40 @@ export default function GrammarTableMaster() {
     );
 
     alert("Row Pasted");
+  };
+  const cutTable = async (table: any) => {
+
+    const { data: headers, error: headerError } =
+      await supabase
+        .from("grammar_headers")
+        .select("*")
+        .eq("table_id", table.id)
+        .order("column_order");
+
+    if (headerError) {
+      alert(headerError.message);
+      return;
+    }
+
+    const { data: cells, error: cellError } =
+      await supabase
+        .from("grammar_cells")
+        .select("*")
+        .eq("table_id", table.id);
+
+    if (cellError) {
+      alert(cellError.message);
+      return;
+    }
+
+    setCopiedTable({
+      table,
+      headers: headers || [],
+      cells: cells || [],
+      mode: "cut"
+    });
+
+    alert(`Table "${table.name}" Cut`);
   };
   const [cellData, setCellData] = useState<any>({});
   const [editingTableId, setEditingTableId] =
@@ -1284,11 +1608,24 @@ export default function GrammarTableMaster() {
 
         </div>
       )}
-      <div className="border rounded p-4">
+      <div>
 
-        <h2 className="text-xl font-semibold mb-4">
-          Saved Tables ({savedTables.length})
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+
+          <h2 className="text-xl font-semibold">
+            Saved Tables ({savedTables.length})
+          </h2>
+
+          <button
+            type="button"
+            onClick={() => pasteTable()}
+            disabled={!copiedTable}
+            className="bg-purple-600 text-white px-3 py-1 rounded disabled:opacity-40"
+          >
+            Paste Table
+          </button>
+
+        </div>
 
         <table className="w-full border-collapse">
 
@@ -1363,7 +1700,6 @@ export default function GrammarTableMaster() {
                     </button>
 
                     <button
-
                       onClick={async () => {
 
                         const ok = confirm(
@@ -1382,22 +1718,37 @@ export default function GrammarTableMaster() {
                         if (
                           selectedTable?.id === table.id
                         ) {
-
                           setSelectedTable(null);
                           setSelectedHeaders([]);
                           setCellData({});
-
                         }
 
                         loadTables();
 
                       }}
-
                       className="bg-red-600 text-white px-3 py-1 rounded"
                     >
                       Delete
                     </button>
 
+                    <button
+                      onClick={() => copyTable(table)}
+                      className="bg-gray-600 text-white px-3 py-1 rounded"
+                    >
+                      Copy
+                    </button>
+                    <button
+                      onClick={() => duplicateTable(table)}
+                      className="bg-purple-600 text-white px-3 py-1 rounded"
+                    >
+                      Duplicate
+                    </button>
+                    <button
+                      onClick={() => cutTable(table)}
+                      className="bg-orange-600 text-white px-3 py-1 rounded"
+                    >
+                      Cut
+                    </button>
                   </div>
 
                 </td>
