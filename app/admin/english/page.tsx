@@ -27,7 +27,9 @@ export default function EnglishPage() {
   const [randomMode, setRandomMode] = useState(false);
   const [showLeft, setShowLeft] = useState(false);
   const [showGrammar, setShowGrammar] = useState(false);
+  const [showImages, setShowImages] = useState(false);
   const [selectedGrammarTableId, setSelectedGrammarTableId] = useState("");
+  const [selectedImageId, setSelectedImageId] = useState("");
   const [layout, setLayout] = useState<"horizontal" | "vertical">("horizontal");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState("");
@@ -56,7 +58,7 @@ export default function EnglishPage() {
   const selectedCourseName =
     courses.find(c => c.id === selectedCourse)?.name;
 
-  
+
   const isGrammar = selectedCourseName === "Grammar";
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export default function EnglishPage() {
       setShowGrammar(true);
     }
   }, [selectedGrammarTableId]);
-  
+
 
   // 🔥 AUTO PANEL CONTROL (IMPORTANT)
   // 🔥 AUTO PANEL CONTROL
@@ -163,43 +165,43 @@ export default function EnglishPage() {
 
   const fetchSentences = async () => {
 
-  let topicIds = selectedTopics;
+    let topicIds = selectedTopics;
 
-  if (topicIds.length === 0 && selectedDays.length > 0) {
-    topicIds = topics
-      .filter(t => selectedDays.includes(t.day_id))
-      .map(t => t.id);
-  }
+    if (topicIds.length === 0 && selectedDays.length > 0) {
+      topicIds = topics
+        .filter(t => selectedDays.includes(t.day_id))
+        .map(t => t.id);
+    }
 
-  if (topicIds.length === 0) return;
+    if (topicIds.length === 0) return;
 
-  const { data } = await supabase
-    .from("vocabulary")
-    .select("*")
-    .in("topic_id", topicIds)
-    .order("topic_id")
-    .order("order_no");
+    const { data } = await supabase
+      .from("vocabulary")
+      .select("*")
+      .in("topic_id", topicIds)
+      .order("topic_id")
+      .order("order_no");
 
-  if (data) {
+    if (data) {
 
-    // Manual sort by selectedTopics order
-    const sorted = data.sort((a: any, b: any) => {
+      // Manual sort by selectedTopics order
+      const sorted = data.sort((a: any, b: any) => {
 
-      const indexA = selectedTopics.indexOf(a.topic_id);
-      const indexB = selectedTopics.indexOf(b.topic_id);
+        const indexA = selectedTopics.indexOf(a.topic_id);
+        const indexB = selectedTopics.indexOf(b.topic_id);
 
-      if (indexA === indexB) {
-        return a.order_no - b.order_no;
-      }
+        if (indexA === indexB) {
+          return a.order_no - b.order_no;
+        }
 
-      return indexA - indexB;
-    });
+        return indexA - indexB;
+      });
 
-    setSentences(sorted);
-    setCurrentIndex(0);
-    setShowAll(false);
-  }
-};
+      setSentences(sorted);
+      setCurrentIndex(0);
+      setShowAll(false);
+    }
+  };
   const refreshData = async () => {
     await fetchSentences();
   };
@@ -303,9 +305,9 @@ export default function EnglishPage() {
         setSelectedTopics={setSelectedTopics}
         selectedGrammarTableId={selectedGrammarTableId}
         setSelectedGrammarTableId={setSelectedGrammarTableId}
-        refreshData={refreshData}
+        selectedImageId={selectedImageId}
+        setSelectedImageId={setSelectedImageId}
       />
-
       <div className="flex-1 flex flex-col items-center pt-4 gap-2">
 
         <div
@@ -316,7 +318,7 @@ export default function EnglishPage() {
 
 
           <MainBoard
-            
+
             isGrammar={isGrammar}
             showGrammar={showGrammar}
             prevTopic={prevTopic}
@@ -344,6 +346,9 @@ export default function EnglishPage() {
             topics={topics}
             days={days}
             selectedGrammarTableId={selectedGrammarTableId}
+            selectedImageId={selectedImageId}
+            showImages={showImages}
+            setShowImages={setShowImages}
           />
         </div>
 
@@ -369,6 +374,8 @@ export default function EnglishPage() {
           isGrammar={isGrammar}
           layout={layout}
           setLayout={setLayout}
+          showImages={showImages}
+          setShowImages={setShowImages}
         />
 
       </div>

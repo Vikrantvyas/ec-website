@@ -15,7 +15,9 @@ export default function LeftPanel({
   setSelectedTopics,
   selectedGrammarTableId,
   setSelectedGrammarTableId,
-  refreshData   // 👈 ADD THIS
+  selectedImageId,
+  setSelectedImageId,
+  refreshData
 }: any) {
 
   const [menu, setMenu] = useState<any>(null);
@@ -27,6 +29,131 @@ export default function LeftPanel({
   const [grammarTopics, setGrammarTopics] =
     useState<any[]>([]);
   const [expandedGrammarTopics, setExpandedGrammarTopics] = useState<string[]>([]);
+  const [showImages, setShowImages] = useState(false);
+
+  const [imageTopics, setImageTopics] =
+    useState<any[]>([]);
+
+  const [expandedImageTopics, setExpandedImageTopics] =
+    useState<string[]>([]);
+
+
+  // =========================================================
+  // LOAD IMAGE TOPICS + IMAGES
+  // =========================================================
+
+  const fetchImageTopics = async () => {
+
+    const { data: topicsData, error: topicsError } =
+      await supabase
+        .from("image_topics")
+        .select("*")
+        .order("sort_order", {
+          ascending: true
+        })
+        .order("created_at", {
+          ascending: true
+        });
+
+    if (topicsError) {
+
+      console.error(
+        "IMAGE TOPICS ERROR:",
+        topicsError.message
+      );
+
+      return;
+
+    }
+
+
+    const { data: imagesData, error: imagesError } =
+      await supabase
+        .from("images")
+        .select(
+          "id, name, topic_id, file_path, sort_order, created_at"
+        )
+        .order("sort_order", {
+          ascending: true
+        })
+        .order("created_at", {
+          ascending: true
+        });
+
+
+    if (imagesError) {
+
+      console.error(
+        "IMAGES ERROR:",
+        imagesError.message
+      );
+
+      return;
+
+    }
+
+
+    const finalTopics =
+      (topicsData || []).map(
+        (topic: any) => ({
+
+          ...topic,
+
+          images: (imagesData || [])
+            .filter(
+              (image: any) =>
+                image.topic_id === topic.id
+            )
+            .sort(
+              (a: any, b: any) => {
+
+                if (
+                  (a.sort_order ?? 0) !==
+                  (b.sort_order ?? 0)
+                ) {
+
+                  return (
+                    (a.sort_order ?? 0) -
+                    (b.sort_order ?? 0)
+                  );
+
+                }
+
+                return (
+                  new Date(a.created_at).getTime() -
+                  new Date(b.created_at).getTime()
+                );
+
+              }
+            )
+
+        })
+      );
+
+
+    setImageTopics(finalTopics);
+
+  };
+
+
+  // =========================================================
+  // TOGGLE IMAGE TOPIC
+  // =========================================================
+
+  const toggleImageTopic = (
+    id: string
+  ) => {
+
+    setExpandedImageTopics(
+      prev =>
+        prev.includes(id)
+          ? prev.filter(
+            x => x !== id
+          )
+          : [...prev, id]
+    );
+
+  };
   const toggleGrammarTopic = (id: string) => {
 
     setExpandedGrammarTopics(prev =>
@@ -152,15 +279,15 @@ export default function LeftPanel({
   };
   const handleGrammarTableEdit = () => {
 
-  const table = menu?.grammarTable;
+    const table = menu?.grammarTable;
 
-  if (!table) return;
+    if (!table) return;
 
-  window.location.href =
-    `/admin/masters?editTable=${table.id}`;
+    window.location.href =
+      `/admin/masters?editTable=${table.id}`;
 
-  setMenu(null);
-};
+    setMenu(null);
+  };
   // 🔥 SAVE
   const handleSave = async () => {
 
@@ -205,6 +332,11 @@ export default function LeftPanel({
   }, []);
   useEffect(() => {
 
+    fetchImageTopics();
+
+  }, []);
+  useEffect(() => {
+
     const handleKey = (e: KeyboardEvent) => {
 
       // ESC → Cancel
@@ -234,6 +366,129 @@ export default function LeftPanel({
     <div className="w-[270px] bg-white border-r flex flex-col relative">
 
       {/* COURSE SELECT */}
+      {/* =======================
+    IMAGES
+======================= */}
+
+      <div
+        className={`flex flex-col shrink-0 ${showImages ? "h-1/2" : "h-auto"
+          }`}
+      >
+
+        <button
+          onClick={() =>
+            setShowImages(prev => !prev)
+          }
+          className="w-full flex justify-between items-center px-3 py-1.5 bg-blue-100 text-[13px] font-semibold"
+        >
+
+          <span>Images</span>
+
+          <span>
+            {showImages ? "−" : "+"}
+          </span>
+
+        </button>
+
+
+        {showImages && (
+
+          <div className="flex-1 overflow-y-auto px-3 pt-1 pb-3">
+
+            {imageTopics.map(
+              (topic: any) => (
+
+                <div
+                  key={topic.id}
+                  className="mb-1"
+                >
+
+                  {/* IMAGE TOPIC */}
+
+                  <div
+                    onClick={() =>
+                      toggleImageTopic(
+                        topic.id
+                      )
+                    }
+                    className="w-full flex justify-between items-center py-1 text-[13px] cursor-pointer"
+                  >
+
+                    <span>
+                      {topic.name}
+                    </span>
+
+                    <span>
+                      {
+                        expandedImageTopics.includes(
+                          topic.id
+                        )
+                          ? "−"
+                          : "+"
+                      }
+                    </span>
+
+                  </div>
+
+
+                  {/* IMAGES */}
+
+                  {expandedImageTopics.includes(
+                    topic.id
+                  ) && (
+
+                      <div className="ml-4 mt-1 space-y-1">
+
+                        {topic.images?.map(
+                          (image: any) => (
+
+                            <label
+                              key={image.id}
+                              className={`flex items-center gap-2 text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === image.id
+                                  ? "bg-blue-100 text-blue-700 font-semibold"
+                                  : "hover:bg-gray-100"
+                                }`}
+                            >
+
+                              <input
+                                type="radio"
+                                className="w-3.5 h-3.5"
+                                name="selectedImage"
+                                value={image.id}
+                                checked={
+                                  selectedImageId ===
+                                  image.id
+                                }
+                                onChange={() =>
+                                  setSelectedImageId(
+                                    image.id
+                                  )
+                                }
+                              />
+
+                              <span className="truncate">
+                                {image.name}
+                              </span>
+
+                            </label>
+
+                          )
+                        )}
+
+                      </div>
+
+                    )}
+
+                </div>
+
+              )
+            )}
+
+          </div>
+
+        )}
+
+      </div>
       {/* =======================
     GRAMMAR TABLES
 ======================= */}
@@ -468,22 +723,22 @@ export default function LeftPanel({
 
       {/* RIGHT CLICK MENU */}
       {menu && (
-  <div
-    className="fixed bg-white border shadow rounded text-sm z-50"
-    style={{ top: menu.y, left: menu.x }}
-  >
-    <div
-      onClick={
-        menu.grammarTable
-          ? handleGrammarTableEdit
-          : handleEdit
-      }
-      className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
-    >
-      Edit
-    </div>
-  </div>
-)}
+        <div
+          className="fixed bg-white border shadow rounded text-sm z-50"
+          style={{ top: menu.y, left: menu.x }}
+        >
+          <div
+            onClick={
+              menu.grammarTable
+                ? handleGrammarTableEdit
+                : handleEdit
+            }
+            className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+          >
+            Edit
+          </div>
+        </div>
+      )}
 
       {/* POPUP */}
       {showPopup && (

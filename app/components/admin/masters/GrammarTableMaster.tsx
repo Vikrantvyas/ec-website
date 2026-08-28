@@ -544,21 +544,21 @@ export default function GrammarTableMaster() {
   };
   useEffect(() => {
 
-  loadTables();
-  loadGrammarTopics();
+    loadTables();
+    loadGrammarTopics();
 
-  const params = new URLSearchParams(
-    window.location.search
-  );
+    const params = new URLSearchParams(
+      window.location.search
+    );
 
-  const editTableId =
-    params.get("editTable");
+    const editTableId =
+      params.get("editTable");
 
-  if (editTableId) {
-    loadTableForEdit(editTableId);
-  }
+    if (editTableId) {
+      loadTableForEdit(editTableId);
+    }
 
-}, []);
+  }, []);
   useEffect(() => {
 
     loadTables();
