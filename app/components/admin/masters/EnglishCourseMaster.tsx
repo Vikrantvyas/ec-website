@@ -66,13 +66,13 @@ export default function EnglishCourseMaster({ onManageDays }: any) {
   };
 
   // DELETE
-  const deleteCourse = async (id:string) => {
+  const deleteCourse = async (id: string) => {
     await supabase.from("english_courses").delete().eq("id", id);
     fetchCourses();
   };
 
   // EDIT
-  const startEdit = (c:any) => {
+  const startEdit = (c: any) => {
     setEditId(c.id);
     setEditText(c.name);
   };
@@ -89,7 +89,7 @@ export default function EnglishCourseMaster({ onManageDays }: any) {
   };
 
   // DRAG
-  const handleDragEnd = (event:any) => {
+  const handleDragEnd = (event: any) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -110,15 +110,15 @@ export default function EnglishCourseMaster({ onManageDays }: any) {
   };
 
   return (
-<div className="h-full flex flex-col">
-    
+    <div className="h-full flex flex-col">
+
 
       {/* TOP BAR */}
       <div className="sticky top-0 bg-white z-20 p-3 border-b flex gap-2 items-center">
 
         <input
           value={name}
-          onChange={(e)=>setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
           placeholder="Course name"
           className="border px-2 py-1 rounded w-72"
         />
@@ -137,15 +137,15 @@ export default function EnglishCourseMaster({ onManageDays }: any) {
       <div className="p-3 overflow-y-auto flex-1">
 
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={courses.map(c=>c.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={courses.map(c => c.id)} strategy={verticalListSortingStrategy}>
 
             <div className="space-y-2">
 
-              {courses.map(c=>(
+              {courses.map(c => (
 
                 <SortableItem key={c.id} id={c.id}>
 
-                  {(attributes:any, listeners:any)=>(
+                  {(attributes: any, listeners: any) => (
 
                     <div className="flex items-center gap-2 border p-2 rounded bg-white">
 
@@ -155,7 +155,7 @@ export default function EnglishCourseMaster({ onManageDays }: any) {
                         <>
                           <input
                             value={editText}
-                            onChange={(e)=>setEditText(e.target.value)}
+                            onChange={(e) => setEditText(e.target.value)}
                             className="border px-2 py-1 rounded flex-1"
                           />
                           <button onClick={saveEdit}>Save</button>
@@ -164,9 +164,9 @@ export default function EnglishCourseMaster({ onManageDays }: any) {
                         <>
                           <div className="flex-1">{c.name}</div>
 
-<button onClick={() => onManageDays(c.id)}>Manage Days →</button>
-<button onClick={()=>startEdit(c)}>Edit</button>
-<button onClick={()=>deleteCourse(c.id)}>Delete</button>
+                          <button onClick={() => onManageDays(c.id)}>Manage Days →</button>
+                          <button onClick={() => startEdit(c)}>Edit</button>
+                          <button onClick={() => deleteCourse(c.id)}>Delete</button>
                         </>
                       )}
 

@@ -211,12 +211,12 @@ export default function MastersPage() {
               />
             )}
             {selectedMaster === "english_sentences" && (
-  <EnglishSentenceMaster
-    initialTopicId={selectedEnglishTopicId}
-    initialDayId={selectedEnglishDayId}
-    initialCourseId={selectedEnglishCourseId}
-  />
-)}
+              <EnglishSentenceMaster
+                initialTopicId={selectedEnglishTopicId}
+                initialDayId={selectedEnglishDayId}
+                initialCourseId={selectedEnglishCourseId}
+              />
+            )}
             {selectedMaster === "grammar_tables" && <GrammarTableMaster />}
 
           </div>

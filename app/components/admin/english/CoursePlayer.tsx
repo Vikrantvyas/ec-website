@@ -252,9 +252,9 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
                             <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600">
                                 {showAll ||
-    revealedAnswers.includes(i)
-    ? english
-    : ""}
+                                    revealedAnswers.includes(i)
+                                    ? english
+                                    : ""}
                             </div>
 
                         </div>

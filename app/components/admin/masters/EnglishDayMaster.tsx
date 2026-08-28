@@ -467,16 +467,16 @@ export default function EnglishDayMaster({
                           </button>
 
                           <button
-  onClick={() => {
-    if (selectedDayIds.includes(d.id)) {
-      deleteSelectedDays();
-    } else {
-      deleteDay(d.id);
-    }
-  }}
->
-  Delete
-</button>
+                            onClick={() => {
+                              if (selectedDayIds.includes(d.id)) {
+                                deleteSelectedDays();
+                              } else {
+                                deleteDay(d.id);
+                              }
+                            }}
+                          >
+                            Delete
+                          </button>
                         </>
                       )}
 
