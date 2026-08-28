@@ -523,13 +523,42 @@ export default function GrammarTableMaster() {
     }
 
   };
+  const loadTableForEdit = async (tableId: string) => {
+
+    const { data: table, error } = await supabase
+      .from("grammar_tables")
+      .select("*")
+      .eq("id", tableId)
+      .single();
+
+    if (error || !table) {
+
+      console.error("Table load error:", error);
+
+      return;
+
+    }
+
+    await editTable(table);
+
+  };
   useEffect(() => {
 
-    loadTables();
+  loadTables();
+  loadGrammarTopics();
 
-    loadGrammarTopics();
+  const params = new URLSearchParams(
+    window.location.search
+  );
 
-  }, []);
+  const editTableId =
+    params.get("editTable");
+
+  if (editTableId) {
+    loadTableForEdit(editTableId);
+  }
+
+}, []);
   useEffect(() => {
 
     loadTables();
@@ -1393,136 +1422,136 @@ export default function GrammarTableMaster() {
 
       )}
       {totalRows > 0 && totalColumns > 0 && (
-            <button
-        onClick={async () => {
-          if (!selectedGrammarTopic) {
-            alert("Please select Grammar Topic");
-            return;
-          }
+        <button
+          onClick={async () => {
+            if (!selectedGrammarTopic) {
+              alert("Please select Grammar Topic");
+              return;
+            }
 
-          if (totalRows <= 0) {
-            alert("Enter number of rows");
-            return;
-          }
+            if (totalRows <= 0) {
+              alert("Enter number of rows");
+              return;
+            }
 
-          if (totalColumns <= 0) {
-            alert("Enter number of columns");
-            return;
-          }
+            if (totalColumns <= 0) {
+              alert("Enter number of columns");
+              return;
+            }
 
-          if (!tableName.trim()) {
-            alert("Enter table name");
-            return;
-          }
+            if (!tableName.trim()) {
+              alert("Enter table name");
+              return;
+            }
 
-          let tableData: any = null;
-          let tableError: any = null;
+            let tableData: any = null;
+            let tableError: any = null;
 
-          if (editingTableId) {
-            const response = await supabase
-              .from("grammar_tables")
-              .update({
-                name: tableName,
-                topic_id: selectedGrammarTopic,
-                total_rows: totalRows,
-                total_columns: totalColumns
-              })
-              .eq("id", editingTableId)
-              .select()
-              .single();
-
-            tableData = response.data;
-            tableError = response.error;
-          } else {
-            const response = await supabase
-              .from("grammar_tables")
-              .insert([
-                {
+            if (editingTableId) {
+              const response = await supabase
+                .from("grammar_tables")
+                .update({
                   name: tableName,
                   topic_id: selectedGrammarTopic,
                   total_rows: totalRows,
                   total_columns: totalColumns
-                }
-              ])
-              .select()
-              .single();
+                })
+                .eq("id", editingTableId)
+                .select()
+                .single();
 
-            tableData = response.data;
-            tableError = response.error;
-          }
+              tableData = response.data;
+              tableError = response.error;
+            } else {
+              const response = await supabase
+                .from("grammar_tables")
+                .insert([
+                  {
+                    name: tableName,
+                    topic_id: selectedGrammarTopic,
+                    total_rows: totalRows,
+                    total_columns: totalColumns
+                  }
+                ])
+                .select()
+                .single();
 
-          if (tableError) {
-            alert(tableError.message);
-            return;
-          }
+              tableData = response.data;
+              tableError = response.error;
+            }
 
-          const headersPayload = headers.map(
-            (header, index) => ({
-              table_id: tableData.id,
-              header_name: header,
-              column_order: index + 1
-            })
-          );
-
-          if (editingTableId) {
-            const { data: oldHeaders, error: oldHeadersError } =
-              await supabase
-                .from("grammar_headers")
-                .select("*")
-                .eq("table_id", editingTableId)
-                .order("column_order");
-
-            if (oldHeadersError) {
-              alert(oldHeadersError.message);
+            if (tableError) {
+              alert(tableError.message);
               return;
             }
 
-            for (let index = 0; index < headers.length; index++) {
-              const headerName = headers[index]?.trim() || "";
+            const headersPayload = headers.map(
+              (header, index) => ({
+                table_id: tableData.id,
+                header_name: header,
+                column_order: index + 1
+              })
+            );
 
-              if (index < oldHeaders.length) {
+            if (editingTableId) {
+              const { data: oldHeaders, error: oldHeadersError } =
                 await supabase
                   .from("grammar_headers")
-                  .update({
-                    header_name: headerName,
-                    column_order: index + 1
-                  })
-                  .eq("id", oldHeaders[index].id);
-              } else {
+                  .select("*")
+                  .eq("table_id", editingTableId)
+                  .order("column_order");
+
+              if (oldHeadersError) {
+                alert(oldHeadersError.message);
+                return;
+              }
+
+              for (let index = 0; index < headers.length; index++) {
+                const headerName = headers[index]?.trim() || "";
+
+                if (index < oldHeaders.length) {
+                  await supabase
+                    .from("grammar_headers")
+                    .update({
+                      header_name: headerName,
+                      column_order: index + 1
+                    })
+                    .eq("id", oldHeaders[index].id);
+                } else {
+                  await supabase
+                    .from("grammar_headers")
+                    .insert({
+                      table_id: editingTableId,
+                      header_name: headerName,
+                      column_order: index + 1
+                    });
+                }
+              }
+            } else {
+              const { error: headerError } =
                 await supabase
                   .from("grammar_headers")
-                  .insert({
-                    table_id: editingTableId,
-                    header_name: headerName,
-                    column_order: index + 1
-                  });
+                  .insert(headersPayload);
+
+              if (headerError) {
+                alert(headerError.message);
+                return;
               }
             }
-          } else {
-            const { error: headerError } =
-              await supabase
-                .from("grammar_headers")
-                .insert(headersPayload);
 
-            if (headerError) {
-              alert(headerError.message);
-              return;
-            }
-          }
-
-          alert("Table Saved");
-          setEditingTableId(null);
-          setTableName("");
-          setTotalRows(0);
-          setTotalColumns(0);
-          setHeaders([]);
-          loadTables();
-        }}
-        className="bg-blue-600 text-white px-5 py-2 rounded"
-      >
-        Save Table
-      </button>
-            )}
+            alert("Table Saved");
+            setEditingTableId(null);
+            setTableName("");
+            setTotalRows(0);
+            setTotalColumns(0);
+            setHeaders([]);
+            loadTables();
+          }}
+          className="bg-blue-600 text-white px-5 py-2 rounded"
+        >
+          Save Table
+        </button>
+      )}
 
       {totalRows > 0 && totalColumns > 0 && (
         <div className="border rounded overflow-auto">
@@ -1706,297 +1735,297 @@ export default function GrammarTableMaster() {
           </tbody>
         </table>
       </div>
-              <div>
+      <div>
 
-                
-              {
-                selectedTable && (
 
-                  <div className="border rounded p-4 space-y-4">
+        {
+          selectedTable && (
 
-                    <div className="flex items-center justify-between">
+            <div className="border rounded p-4 space-y-4">
 
-                      <h2 className="text-xl font-semibold">
-                        {selectedTable.name}
-                      </h2>
+              <div className="flex items-center justify-between">
 
-                      <button
-                        onClick={async () => {
-                          await saveHeaderOrder(false);
-                          await saveRowOrder(false);
-                          alert("Order Saved");
+                <h2 className="text-xl font-semibold">
+                  {selectedTable.name}
+                </h2>
+
+                <button
+                  onClick={async () => {
+                    await saveHeaderOrder(false);
+                    await saveRowOrder(false);
+                    alert("Order Saved");
+                  }}
+                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  Save Order
+                </button>
+
+              </div>
+              <button
+
+                onClick={async () => {
+
+                  if (!selectedTable) {
+                    return;
+                  }
+
+                  await supabase
+                    .from("grammar_cells")
+                    .delete()
+                    .eq("table_id", selectedTable.id);
+
+                  const payload: any[] = [];
+
+                  Object.entries(cellData).forEach(
+                    ([key, value]) => {
+
+                      const parts = key.split("__");
+
+                      payload.push({
+
+                        table_id: selectedTable.id,
+
+                        row_no: Number(parts[0]),
+
+                        header_id: parts[1],
+
+                        cell_value: value
+
+                      });
+
+                    }
+                  );
+
+                  if (payload.length > 0) {
+
+                    const { error } = await supabase
+                      .from("grammar_cells")
+                      .insert(payload);
+
+                    if (error) {
+
+                      alert(error.message);
+                      return;
+
+                    }
+
+                  }
+
+                  alert("Cells Saved");
+
+                }}
+
+                className="bg-green-600 text-white px-4 py-2 rounded"
+              >
+                Save Cells
+              </button>
+              <table className="w-full border-collapse">
+
+                <thead>
+
+                  <tr className="bg-gray-100">
+
+                    {selectedHeaders.map((header, index) => (
+                      <th
+                        key={header.id}
+                        draggable
+                        onDragStart={() => {
+                          setDraggedHeaderIndex(index);
                         }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded"
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                        }}
+                        onDrop={() => {
+
+                          if (
+                            draggedHeaderIndex === null ||
+                            draggedHeaderIndex === index
+                          ) {
+                            return;
+                          }
+
+                          const updated = [...selectedHeaders];
+
+                          const [movedHeader] =
+                            updated.splice(draggedHeaderIndex, 1);
+
+                          updated.splice(index, 0, movedHeader);
+
+                          setSelectedHeaders(updated);
+                          setDraggedHeaderIndex(null);
+                        }}
+                        className="border p-2 cursor-move select-none"
                       >
-                        Save Order
-                      </button>
+                        <div className="flex items-center justify-between gap-2">
 
-                    </div>
-                    <button
+                          <span>{header.header_name}</span>
 
-                      onClick={async () => {
+                          <div className="flex items-center gap-1">
 
-                        if (!selectedTable) {
+                            <button
+                              type="button"
+                              draggable={false}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addColumn(index);
+                              }}
+                              className="text-green-700 font-bold px-1 hover:bg-green-100 rounded"
+                              title="Add Column After"
+                            >
+                              +
+                            </button>
+
+                            <button
+                              type="button"
+                              draggable={false}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteColumn(header.id);
+                              }}
+                              className="text-red-600 font-bold px-1 hover:bg-red-100 rounded"
+                              title="Delete Column"
+                            >
+                              ×
+                            </button>
+
+                          </div>
+
+                        </div>
+                      </th>
+                    ))}
+
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  {rowOrder.map((actualRowIndex, displayIndex) => (
+
+                    <tr
+                      key={actualRowIndex}
+                      draggable
+                      onDragStart={() => {
+                        setDraggedRowIndex(displayIndex);
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                      }}
+                      onDrop={() => {
+
+                        if (
+                          draggedRowIndex === null ||
+                          draggedRowIndex === displayIndex
+                        ) {
                           return;
                         }
 
-                        await supabase
-                          .from("grammar_cells")
-                          .delete()
-                          .eq("table_id", selectedTable.id);
+                        const updated = [...rowOrder];
 
-                        const payload: any[] = [];
+                        const [movedRow] =
+                          updated.splice(draggedRowIndex, 1);
 
-                        Object.entries(cellData).forEach(
-                          ([key, value]) => {
+                        updated.splice(displayIndex, 0, movedRow);
 
-                            const parts = key.split("__");
-
-                            payload.push({
-
-                              table_id: selectedTable.id,
-
-                              row_no: Number(parts[0]),
-
-                              header_id: parts[1],
-
-                              cell_value: value
-
-                            });
-
-                          }
-                        );
-
-                        if (payload.length > 0) {
-
-                          const { error } = await supabase
-                            .from("grammar_cells")
-                            .insert(payload);
-
-                          if (error) {
-
-                            alert(error.message);
-                            return;
-
-                          }
-
-                        }
-
-                        alert("Cells Saved");
-
+                        setRowOrder(updated);
+                        setDraggedRowIndex(null);
                       }}
-
-                      className="bg-green-600 text-white px-4 py-2 rounded"
+                      className="cursor-move"
                     >
-                      Save Cells
-                    </button>
-                    <table className="w-full border-collapse">
 
-                      <thead>
+                      {selectedHeaders.map((header) => (
+                        <td
+                          key={header.id}
+                          className="border p-1"
+                        >
 
-                        <tr className="bg-gray-100">
+                          <input
 
-                          {selectedHeaders.map((header, index) => (
-                            <th
-                              key={header.id}
-                              draggable
-                              onDragStart={() => {
-                                setDraggedHeaderIndex(index);
-                              }}
-                              onDragOver={(e) => {
-                                e.preventDefault();
-                              }}
-                              onDrop={() => {
+                            value={
+                              cellData[
+                              `${actualRowIndex}__${header.id}`
+                              ] || ""
+                            }
 
-                                if (
-                                  draggedHeaderIndex === null ||
-                                  draggedHeaderIndex === index
-                                ) {
-                                  return;
-                                }
+                            onChange={(e) => {
 
-                                const updated = [...selectedHeaders];
+                              setCellData((prev: any) => ({
 
-                                const [movedHeader] =
-                                  updated.splice(draggedHeaderIndex, 1);
+                                ...prev,
 
-                                updated.splice(index, 0, movedHeader);
+                                [`${actualRowIndex}__${header.id}`]: e.target.value
 
-                                setSelectedHeaders(updated);
-                                setDraggedHeaderIndex(null);
-                              }}
-                              className="border p-2 cursor-move select-none"
-                            >
-                              <div className="flex items-center justify-between gap-2">
+                              }));
 
-                                <span>{header.header_name}</span>
-
-                                <div className="flex items-center gap-1">
-
-                                  <button
-                                    type="button"
-                                    draggable={false}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      addColumn(index);
-                                    }}
-                                    className="text-green-700 font-bold px-1 hover:bg-green-100 rounded"
-                                    title="Add Column After"
-                                  >
-                                    +
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    draggable={false}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      deleteColumn(header.id);
-                                    }}
-                                    className="text-red-600 font-bold px-1 hover:bg-red-100 rounded"
-                                    title="Delete Column"
-                                  >
-                                    ×
-                                  </button>
-
-                                </div>
-
-                              </div>
-                            </th>
-                          ))}
-
-                        </tr>
-
-                      </thead>
-
-                      <tbody>
-
-                        {rowOrder.map((actualRowIndex, displayIndex) => (
-
-                          <tr
-                            key={actualRowIndex}
-                            draggable
-                            onDragStart={() => {
-                              setDraggedRowIndex(displayIndex);
                             }}
-                            onDragOver={(e) => {
-                              e.preventDefault();
-                            }}
-                            onDrop={() => {
 
-                              if (
-                                draggedRowIndex === null ||
-                                draggedRowIndex === displayIndex
-                              ) {
-                                return;
-                              }
+                            className="w-full p-2 outline-none"
 
-                              const updated = [...rowOrder];
+                          />
 
-                              const [movedRow] =
-                                updated.splice(draggedRowIndex, 1);
+                        </td>
+                      ))}
+                      <td className="border p-1 w-16 text-center">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addRow(actualRowIndex);
+                          }}
+                          className="text-green-700 font-bold px-2 py-1 hover:bg-green-100 rounded"
+                          title="Add Row After"
+                        >
+                          +
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyRow(actualRowIndex);
+                          }}
+                          className="text-blue-600 font-bold px-2 py-1 hover:bg-blue-100 rounded"
+                          title="Copy Row"
+                        >
+                          ⧉
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!copiedRow}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            pasteRow(actualRowIndex);
+                          }}
+                          className="text-purple-600 font-bold px-2 py-1 hover:bg-purple-100 rounded disabled:opacity-30"
+                          title="Paste Copied Row After This Row"
+                        >
+                          📋
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteRow(actualRowIndex);
+                          }}
+                          className="text-red-600 font-bold px-2 py-1 hover:bg-red-100 rounded"
+                          title="Delete Row"
+                        >
+                          ×
+                        </button>
+                      </td>
+                    </tr>
 
-                              updated.splice(displayIndex, 0, movedRow);
+                  ))}
 
-                              setRowOrder(updated);
-                              setDraggedRowIndex(null);
-                            }}
-                            className="cursor-move"
-                          >
+                </tbody>
 
-                            {selectedHeaders.map((header) => (
-                              <td
-                                key={header.id}
-                                className="border p-1"
-                              >
+              </table>
 
-                                <input
+            </div>
 
-                                  value={
-                                    cellData[
-                                    `${actualRowIndex}__${header.id}`
-                                    ] || ""
-                                  }
-
-                                  onChange={(e) => {
-
-                                    setCellData((prev: any) => ({
-
-                                      ...prev,
-
-                                      [`${actualRowIndex}__${header.id}`]: e.target.value
-
-                                    }));
-
-                                  }}
-
-                                  className="w-full p-2 outline-none"
-
-                                />
-
-                              </td>
-                            ))}
-                            <td className="border p-1 w-16 text-center">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  addRow(actualRowIndex);
-                                }}
-                                className="text-green-700 font-bold px-2 py-1 hover:bg-green-100 rounded"
-                                title="Add Row After"
-                              >
-                                +
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  copyRow(actualRowIndex);
-                                }}
-                                className="text-blue-600 font-bold px-2 py-1 hover:bg-blue-100 rounded"
-                                title="Copy Row"
-                              >
-                                ⧉
-                              </button>
-                              <button
-                                type="button"
-                                disabled={!copiedRow}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  pasteRow(actualRowIndex);
-                                }}
-                                className="text-purple-600 font-bold px-2 py-1 hover:bg-purple-100 rounded disabled:opacity-30"
-                                title="Paste Copied Row After This Row"
-                              >
-                                📋
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteRow(actualRowIndex);
-                                }}
-                                className="text-red-600 font-bold px-2 py-1 hover:bg-red-100 rounded"
-                                title="Delete Row"
-                              >
-                                ×
-                              </button>
-                            </td>
-                          </tr>
-
-                        ))}
-
-                      </tbody>
-
-                    </table>
-
-                  </div>
-
-                )
-              }
+          )
+        }
+      </div>
     </div>
-</div>
   );
 
 }

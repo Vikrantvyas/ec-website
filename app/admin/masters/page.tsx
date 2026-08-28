@@ -97,13 +97,27 @@ export default function MastersPage() {
     arr.map((v: any) => ({ label: v.label, value: v.value }));
 
   useEffect(() => {
-    const tab = searchParams.get("tab");
 
-    if (tab === "batches") {
-      setSelectedCategory("batches");
-      setSelectedMaster("batches");
-    }
-  }, [searchParams]);
+  const tab = searchParams.get("tab");
+  const editTableId = searchParams.get("editTable");
+
+  if (tab === "batches") {
+
+    setSelectedCategory("batches");
+    setSelectedMaster("batches");
+
+    return;
+
+  }
+
+  if (editTableId) {
+
+    setSelectedCategory("english");
+    setSelectedMaster("grammar_tables");
+
+  }
+
+}, [searchParams]);
 
   return (
 
