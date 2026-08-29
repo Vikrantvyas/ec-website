@@ -371,8 +371,9 @@ export default function LeftPanel({
 ======================= */}
 
       <div
-        className={`flex flex-col shrink-0 ${showImages ? "h-1/2" : "h-auto"
-          }`}
+        className={`flex flex-col min-h-0 ${
+  showImages ? "h-1/3" : "shrink-0"
+}`}
       >
 
         <button
@@ -393,96 +394,79 @@ export default function LeftPanel({
 
         {showImages && (
 
-          <div className="flex-1 overflow-y-auto px-3 pt-1 pb-3">
+          <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-1 pb-3">
 
-            {imageTopics.map(
-              (topic: any) => (
+            <div className="flex flex-col">
+
+              {imageTopics.map((topic: any) => (
 
                 <div
                   key={topic.id}
-                  className="mb-1"
+                  className="w-full shrink-0 mb-1"
                 >
 
                   {/* IMAGE TOPIC */}
-
                   <div
-                    onClick={() =>
-                      toggleImageTopic(
-                        topic.id
-                      )
-                    }
+                    onClick={() => toggleImageTopic(topic.id)}
                     className="w-full flex justify-between items-center py-1 text-[13px] cursor-pointer"
                   >
 
-                    <span>
+                    <span className="truncate">
                       {topic.name}
                     </span>
 
-                    <span>
-                      {
-                        expandedImageTopics.includes(
-                          topic.id
-                        )
-                          ? "−"
-                          : "+"
+                    <span className="shrink-0 ml-2">
+                      {expandedImageTopics.includes(topic.id)
+                        ? "−"
+                        : "+"
                       }
                     </span>
 
                   </div>
 
-
                   {/* IMAGES */}
+                  {expandedImageTopics.includes(topic.id) && (
 
-                  {expandedImageTopics.includes(
-                    topic.id
-                  ) && (
+                    <div className="ml-4 mt-0.5 flex flex-col gap-0">
 
-                      <div className="ml-4 mt-1 space-y-1">
+                      {topic.images?.map((image: any) => (
 
-                        {topic.images?.map(
-                          (image: any) => (
+                        <label
+                          key={image.id}
+                          className={`flex items-center gap-2 w-full text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === image.id
+                              ? "bg-blue-100 text-blue-700 font-semibold"
+                              : "hover:bg-gray-100"
+                            }`}
+                        >
 
-                            <label
-                              key={image.id}
-                              className={`flex items-center gap-2 text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === image.id
-                                  ? "bg-blue-100 text-blue-700 font-semibold"
-                                  : "hover:bg-gray-100"
-                                }`}
-                            >
+                          <input
+                            type="radio"
+                            className="w-3.5 h-3.5 shrink-0"
+                            name="selectedImage"
+                            value={image.id}
+                            checked={selectedImageId === image.id}
+                            onChange={() =>
+                              setSelectedImageId(image.id)
+                            }
+                          />
 
-                              <input
-                                type="radio"
-                                className="w-3.5 h-3.5"
-                                name="selectedImage"
-                                value={image.id}
-                                checked={
-                                  selectedImageId ===
-                                  image.id
-                                }
-                                onChange={() =>
-                                  setSelectedImageId(
-                                    image.id
-                                  )
-                                }
-                              />
+                          <span className="truncate min-w-0">
+                            {image.name}
+                          </span>
 
-                              <span className="truncate">
-                                {image.name}
-                              </span>
+                        </label>
 
-                            </label>
+                      ))}
 
-                          )
-                        )}
+                    </div>
 
-                      </div>
-
-                    )}
+                  )}
 
                 </div>
 
-              )
-            )}
+              ))}
+
+            </div>
 
           </div>
 
@@ -494,8 +478,9 @@ export default function LeftPanel({
 ======================= */}
 
       <div
-        className={`flex flex-col shrink-0 ${showGrammarTables ? "h-1/2" : "h-auto"
-          }`}
+        className={`flex flex-col min-h-0 ${
+  showGrammarTables ? "h-1/3" : "shrink-0"
+}`}
       >
 
         <button
@@ -510,7 +495,7 @@ export default function LeftPanel({
         </button>
         {showGrammarTables && (
 
-          <div className="flex-1 overflow-y-auto px-3 pt-1 pb-3">
+          <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-1 pb-3">
 
             {grammarTopics.map((topic: any) => (
 
@@ -577,7 +562,7 @@ export default function LeftPanel({
 
 
       </div>
-      <div className="p-3">
+      <div className="p-3 shrink-0 bg-white">
 
         <select
           value={selectedCourse}
