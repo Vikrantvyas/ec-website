@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/lib/supabaseClient";
 
-export default function ImageTopicMaster() {
+export default function ImageTopicMaster({
+  onOpenImages
+}: {
+  onOpenImages: (topicId: string) => void;
+}) {
 
   const [topics, setTopics] = useState<any[]>([]);
 
@@ -16,6 +20,8 @@ export default function ImageTopicMaster() {
     useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const [showBulk, setShowBulk] = useState(false);
 
 
   // =========================================================
@@ -201,7 +207,82 @@ export default function ImageTopicMaster() {
     setLoading(false);
 
   };
+  // =========================================================
+  // BULK ADD TOPICS
+  // =========================================================
 
+  const handleBulkSave = async () => {
+    const lines = bulkText
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line !== "");
+
+    if (lines.length === 0) {
+      alert("Please enter at least one Image Topic.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Current maximum sort order
+      const maxSortOrder =
+        topics.length > 0
+          ? Math.max(
+              ...topics.map((topic: any) =>
+                Number(topic.sort_order) || 0
+              )
+            )
+          : 0;
+
+      const insertData = lines.map((name, index) => ({
+        name,
+        sort_order: maxSortOrder + index + 1
+      }));
+
+      const { error } = await supabase
+        .from("image_topics")
+        .insert(insertData);
+
+      if (error) {
+        console.error(
+          "BULK IMAGE TOPIC INSERT ERROR:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Unable to save Image Topics."
+        );
+
+        return;
+      }
+
+      alert(
+        `${lines.length} Image Topic(s) saved successfully.`
+      );
+
+      setBulkText("");
+      setShowBulk(false);
+
+      await loadTopics();
+
+    } catch (error: any) {
+
+      console.error(
+        "BULK IMAGE TOPIC ERROR:",
+        error
+      );
+
+      alert(
+        error?.message ||
+        "Unable to save Image Topics."
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // =========================================================
   // EDIT TOPIC
@@ -215,7 +296,7 @@ export default function ImageTopicMaster() {
 
     setSortOrder(
       topic.sort_order !== null &&
-      topic.sort_order !== undefined
+        topic.sort_order !== undefined
         ? String(topic.sort_order)
         : ""
     );
@@ -291,7 +372,76 @@ export default function ImageTopicMaster() {
       <h2 className="text-2xl font-bold text-[#06204a] mb-6">
         Image Topic Master
       </h2>
+      {/* =====================================================
+          BULK ADD
+      ====================================================== */}
 
+      <div className="mb-4 flex justify-end">
+
+        <button
+          type="button"
+          onClick={() => setShowBulk(!showBulk)}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          {showBulk
+            ? "Single Topic"
+            : "Bulk Add Topics"}
+        </button>
+
+      </div>
+
+      {showBulk && (
+        <div className="mb-6 border border-blue-200 rounded-lg p-4 bg-blue-50">
+
+          <label className="block text-sm font-medium mb-1">
+            Enter Topics
+          </label>
+
+          <textarea
+            value={bulkText}
+            onChange={(e) =>
+              setBulkText(e.target.value)
+            }
+            placeholder={`Enter one topic per line
+
+Example:
+Common Professions
+Family Members
+Animals
+Fruits
+Vegetables`}
+            rows={8}
+            className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500"
+          />
+
+          <div className="mt-3 flex gap-2">
+
+            <button
+              type="button"
+              onClick={handleBulkSave}
+              disabled={loading}
+              className="bg-green-600 text-white px-5 py-2 rounded disabled:opacity-50"
+            >
+              {loading
+                ? "Saving..."
+                : "Add Topics"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setBulkText("");
+                setShowBulk(false);
+              }}
+              className="bg-gray-500 text-white px-5 py-2 rounded"
+            >
+              Cancel
+            </button>
+
+          </div>
+
+        </div>
+      )}
 
       {/* =====================================================
           FORM
@@ -353,8 +503,8 @@ export default function ImageTopicMaster() {
           {loading
             ? "Saving..."
             : editingTopicId
-            ? "Update Topic"
-            : "Save Topic"}
+              ? "Update Topic"
+              : "Save Topic"}
         </button>
 
 
@@ -445,7 +595,13 @@ export default function ImageTopicMaster() {
                       <td className="border border-gray-300 px-3 py-2">
 
                         <div className="flex gap-2">
-
+                          <button
+                            type="button"
+                            onClick={() => onOpenImages(topic.id)}
+                            className="bg-blue-600 text-white px-3 py-1 rounded"
+                          >
+                            Open
+                          </button>
                           <button
                             type="button"
                             onClick={() =>

@@ -121,14 +121,14 @@ export default function Controls({
           />
           Grammar
         </label>
-<label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
-  <input
-    type="checkbox"
-    checked={showImages}
-    onChange={() => setShowImages((p: any) => !p)}
-  />
-  Images
-</label>
+        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
+          <input
+            type="checkbox"
+            checked={showImages}
+            onChange={() => setShowImages((p: any) => !p)}
+          />
+          Images
+        </label>
       </div>
       <div className="flex items-center gap-3 pl-4 border-l border-gray-300">
 
