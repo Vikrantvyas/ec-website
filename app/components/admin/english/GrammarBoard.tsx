@@ -78,9 +78,9 @@ export default function GrammarBoard({
 
   const loadTableData = async (tableId: string) => {
 
-  const requestId = ++requestIdRef.current;
+    const requestId = ++requestIdRef.current;
 
-  const { data: headers } = await supabase
+    const { data: headers } = await supabase
       .from("grammar_headers")
       .select("*")
       .eq("table_id", tableId)
@@ -93,19 +93,19 @@ export default function GrammarBoard({
 
     if (!headers || !cells) {
 
-  return;
+      return;
 
-}
+    }
 
-if (requestId !== requestIdRef.current) {
+    if (requestId !== requestIdRef.current) {
 
-  console.log("Ignoring old grammar table request:", tableId);
+      console.log("Ignoring old grammar table request:", tableId);
 
-  return;
+      return;
 
-}
+    }
 
-setTableHeaders(headers);
+    setTableHeaders(headers);
     const grouped: any = {};
 
     cells.forEach((cell: any) => {

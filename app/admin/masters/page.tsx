@@ -40,6 +40,7 @@ export default function MastersPage() {
   const [selectedEnglishCourseId, setSelectedEnglishCourseId] = useState("");
   const [selectedEnglishDayId, setSelectedEnglishDayId] = useState("");
   const [selectedEnglishTopicId, setSelectedEnglishTopicId] = useState("");
+  const [selectedImageTopicId, setSelectedImageTopicId] = useState("");
 
   const leadMasters = [
     { label: "Branches", value: "branches" },
@@ -236,8 +237,20 @@ export default function MastersPage() {
               />
             )}
             {selectedMaster === "grammar_tables" && <GrammarTableMaster />}
-            {selectedMaster === "image_topics" && <ImageTopicMaster />}
-            {selectedMaster === "images" && <ImageMaster />}
+            {selectedMaster === "image_topics" && (
+  <ImageTopicMaster
+    onOpenImages={(topicId: string) => {
+      setSelectedImageTopicId(topicId);
+      setSelectedMaster("images");
+    }}
+  />
+)}
+
+{selectedMaster === "images" && (
+  <ImageMaster
+    initialTopicId={selectedImageTopicId}
+  />
+)}
 
           </div>
 
