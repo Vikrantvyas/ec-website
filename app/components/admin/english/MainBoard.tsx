@@ -1,4 +1,5 @@
 "use client";
+
 import { supabase } from "@/lib/supabaseClient";
 import { useState, useEffect } from "react";
 import WhiteBoard from "./WhiteBoard";
@@ -40,6 +41,8 @@ export default function MainBoard({
   const [resultData, setResultData] = useState<any[]>([]);
   const [showResult, setShowResult] = useState(false);
   const [panelOrder, setPanelOrder] = useState<string[]>([]);
+  const [imageList, setImageList] = useState<any[]>([]);
+  const [imageIndex, setImageIndex] = useState(0);
   const [selectedImage, setSelectedImage] = useState<any>(null);
 
   useEffect(() => {
@@ -67,9 +70,55 @@ export default function MainBoard({
 
     fetchSelectedImage();
   }, [selectedImageId]);
+  useEffect(() => {
+    const loadImages = async () => {
 
+      if (!selectedImageId) {
+        setImageList([]);
+        setImageIndex(0);
+        return;
+      }
+
+      const { data: selectedImage, error: selectedError } =
+        await supabase
+          .from("images")
+          .select("id, name, topic_id, file_path, sort_order, created_at")
+          .eq("id", selectedImageId)
+          .single();
+
+      if (selectedError || !selectedImage) {
+        console.error("Selected image load error:", selectedError);
+        return;
+      }
+
+      const { data: images, error } =
+        await supabase
+          .from("images")
+          .select("id, name, topic_id, file_path, sort_order, created_at")
+          .eq("topic_id", selectedImage.topic_id)
+          .order("sort_order", { ascending: true })
+          .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("Image list load error:", error);
+        return;
+      }
+
+      const list = images || [];
+
+      setImageList(list);
+
+      const index = list.findIndex(
+        (image: any) => image.id === selectedImageId
+      );
+
+      setImageIndex(index >= 0 ? index : 0);
+    };
+
+    loadImages();
+  }, [selectedImageId]);
   const activePanels = [
-      showLeft && "left",
+    showLeft && "left",
     showGrammar && "grammar",
     showBoard && "board",
     showImages && "images",
@@ -247,12 +296,28 @@ export default function MainBoard({
             } flex`}
         >
           {selectedImage ? (
-  <ImageBoard image={selectedImage} />
-) : (
-  <div className="w-full h-full flex items-center justify-center text-gray-400">
-    Select an image
-  </div>
-)}
+            <ImageBoard
+              images={imageList}
+              currentIndex={imageIndex}
+              onPrevious={() => {
+                setImageIndex((prev) =>
+                  Math.max(0, prev - 1)
+                );
+              }}
+              onNext={() => {
+                setImageIndex((prev) =>
+                  Math.min(
+                    imageList.length - 1,
+                    prev + 1
+                  )
+                );
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              Select an image
+            </div>
+          )}
         </div>
       );
     }

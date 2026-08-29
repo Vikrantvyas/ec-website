@@ -24,19 +24,18 @@ export default function GrammarTable({
 
   const [tableData, setTableData] = useState<Group[]>(data);
 
-useEffect(() => {
+  useEffect(() => {
 
   setTableData(data);
 
-  // New table आने पर पुरानी table की state साफ करें
   setColumns([]);
   setMergedCells({});
   setSelected([]);
   setHistory([]);
   setRedoStack([]);
-  setVisibleCells(0);
 
 }, [data]);
+
   const [columns, setColumns] = useState<string[]>([]);
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -73,6 +72,27 @@ useEffect(() => {
   const [history, setHistory] = useState<any[]>([]);
   const [redoStack, setRedoStack] = useState<any[]>([]);
   const [visibleCells, setVisibleCells] = useState(0);
+  useEffect(() => {
+
+  if (
+    tableData.length === 0 ||
+    columns.length === 0
+  ) {
+    return;
+  }
+
+  const totalRows = tableData.reduce(
+    (total, group) =>
+      total + group.rows.length,
+    0
+  );
+
+  const totalCells =
+    totalRows * columns.length;
+
+  setVisibleCells(totalCells);
+
+}, [tableData, columns]);
 
   useEffect(() => {
 
