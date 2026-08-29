@@ -5,7 +5,8 @@ import GrammarTable from "./grammar/GrammarTable";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function GrammarBoard({
-  selectedGrammarTableId
+  selectedGrammarTableId,
+  onTableChange
 }: any) {
 
   const [tables, setTables] = useState<any[]>([]);
@@ -21,74 +22,74 @@ export default function GrammarBoard({
 
   useEffect(() => {
 
-  const loadTablesForTopic = async () => {
+    const loadTablesForTopic = async () => {
 
-    if (!selectedGrammarTableId) {
-      setTables([]);
-      setSelectedTableId("");
-      return;
-    }
+      if (!selectedGrammarTableId) {
+        setTables([]);
+        setSelectedTableId("");
+        return;
+      }
 
-    // पहले selected table से उसका topic पता करें
-    const {
-      data: currentTable,
-      error: currentTableError
-    } = await supabase
-      .from("grammar_tables")
-      .select("id, topic_id")
-      .eq("id", selectedGrammarTableId)
-      .single();
+      // पहले selected table से उसका topic पता करें
+      const {
+        data: currentTable,
+        error: currentTableError
+      } = await supabase
+        .from("grammar_tables")
+        .select("id, topic_id")
+        .eq("id", selectedGrammarTableId)
+        .single();
 
-    if (currentTableError || !currentTable) {
+      if (currentTableError || !currentTable) {
 
-      console.error(
-        "CURRENT GRAMMAR TABLE ERROR:",
-        currentTableError
+        console.error(
+          "CURRENT GRAMMAR TABLE ERROR:",
+          currentTableError
+        );
+
+        return;
+      }
+
+      const topicId = currentTable.topic_id;
+
+      // अब केवल इसी Grammar Topic की tables लाएँ
+      const {
+        data: topicTables,
+        error: topicTablesError
+      } = await supabase
+        .from("grammar_tables")
+        .select("*")
+        .eq("topic_id", topicId)
+        .order("created_at", {
+          ascending: true
+        });
+
+      if (topicTablesError) {
+
+        console.error(
+          "TOPIC GRAMMAR TABLES ERROR:",
+          topicTablesError
+        );
+
+        return;
+      }
+
+      setTables(topicTables || []);
+
+      setSelectedTableId(
+        selectedGrammarTableId
       );
 
-      return;
-    }
-
-    const topicId = currentTable.topic_id;
-
-    // अब केवल इसी Grammar Topic की tables लाएँ
-    const {
-      data: topicTables,
-      error: topicTablesError
-    } = await supabase
-      .from("grammar_tables")
-      .select("*")
-      .eq("topic_id", topicId)
-      .order("created_at", {
-        ascending: true
-      });
-
-    if (topicTablesError) {
-
-      console.error(
-        "TOPIC GRAMMAR TABLES ERROR:",
-        topicTablesError
+      // Selected table का पूरा content load करें
+      await loadTableData(
+        selectedGrammarTableId
       );
 
-      return;
-    }
+    };
 
-    setTables(topicTables || []);
+    loadTablesForTopic();
 
-    setSelectedTableId(
-      selectedGrammarTableId
-    );
-
-    // Selected table का पूरा content load करें
-    await loadTableData(
-      selectedGrammarTableId
-    );
-
-  };
-
-  loadTablesForTopic();
-
-}, [selectedGrammarTableId]);
+  }, [selectedGrammarTableId]);
 
   // =========================================================
   // LOAD COMPLETE TABLE DATA
@@ -272,7 +273,7 @@ export default function GrammarBoard({
   // INITIAL / EXTERNAL TABLE SELECTION
   // =========================================================
 
-  
+
 
   // =========================================================
   // CURRENT TABLE INDEX
@@ -290,34 +291,33 @@ export default function GrammarBoard({
 
   const goPrevious = async () => {
 
-    if (currentIndex <= 0) {
+  if (currentIndex <= 0) {
+    return;
+  }
 
-      return;
+  const previousTable =
+    tables[currentIndex - 1];
 
-    }
+  if (!previousTable) {
+    return;
+  }
 
-    const previousTable =
-      tables[
-        currentIndex - 1
-      ];
+  // पहले पूरा previous table load करें
+  await loadTableData(
+    previousTable.id
+  );
 
-    if (!previousTable) {
+  // GrammarBoard की current table बदलें
+  setSelectedTableId(
+    previousTable.id
+  );
 
-      return;
+  // 🔥 Left Panel का radio button भी बदलें
+  onTableChange?.(
+    previousTable.id
+  );
 
-    }
-
-    // Load complete table first.
-    // Selection changes after successful load.
-    await loadTableData(
-      previousTable.id
-    );
-
-    setSelectedTableId(
-      previousTable.id
-    );
-
-  };
+};
 
   // =========================================================
   // NEXT TABLE
@@ -337,7 +337,7 @@ export default function GrammarBoard({
 
     const nextTable =
       tables[
-        currentIndex + 1
+      currentIndex + 1
       ];
 
     if (!nextTable) {
@@ -353,6 +353,10 @@ export default function GrammarBoard({
     );
 
     setSelectedTableId(
+      nextTable.id
+    );
+
+    onTableChange?.(
       nextTable.id
     );
 
@@ -467,7 +471,7 @@ export default function GrammarBoard({
 
   const isLast =
     currentIndex ===
-      tables.length - 1 ||
+    tables.length - 1 ||
     currentIndex === -1;
 
   // =========================================================
