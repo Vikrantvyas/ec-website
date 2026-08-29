@@ -34,6 +34,7 @@ export default function MainBoard({
   days,
   currentTime,
   selectedGrammarTableId,
+  setSelectedGrammarTableId,
   selectedImageId,
   showImages,
 }: any) {
@@ -282,9 +283,10 @@ export default function MainBoard({
           className={`${isVertical && showLeft ? "w-full h-[70%]" : widthClass
             } ${isVertical ? "border-t" : "border-l"} flex`}
         >
-          <GrammarBoard
-            selectedGrammarTableId={selectedGrammarTableId}
-          />
+         <GrammarBoard
+  selectedGrammarTableId={selectedGrammarTableId}
+  onTableChange={setSelectedGrammarTableId}
+/>
         </div>
       );
     }
