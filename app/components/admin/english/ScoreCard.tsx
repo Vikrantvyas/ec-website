@@ -312,25 +312,25 @@ export default function ScoreCard({
   // =========================================================
 
   const resetAll = () => {
+  setScore(0);
+  setTotal(0);
 
-    setScore(0);
-    setTotal(0);
+  setStudents([]);
+  setActiveIndex(null);
 
-    setTime(0);
-    setRunning(false);
+  setTime(0);
+  setRunning(false);
 
-    setTimer(inputMin * 60);
-    setTimerRunning(false);
+  setTimer(inputMin * 60);
+  setTimerRunning(false);
+  setTimeUp(false);
+  setShowTimeUp(false);
 
-    setTimeUp(false);
-    setShowTimeUp(false);
+  setStarted(false);
+  setShowResult(false);
 
-    setStarted(false);
-    setShowResult(false);
-
-    onReset?.();
-
-  };
+  onReset?.();
+};
 
 
   // =========================================================
@@ -381,81 +381,75 @@ export default function ScoreCard({
       ? "opacity-40 pointer-events-none"
       : "";
 
-
   // =========================================================
   // RESULT VIEW
   // =========================================================
 
-  // =========================================================
-// RESULT VIEW
-// =========================================================
+  if (showResult) {
 
-if (showResult) {
+    return (
 
-  return (
+      <div className="flex flex-col w-full h-full min-w-0 border bg-gray-50">
 
-    <div className="flex flex-col w-full h-full min-w-0 border bg-gray-50">
+        {/* RESULT HEADER */}
 
-      {/* RESULT HEADER */}
+        <div className="flex justify-between items-center p-3 border-b bg-white">
 
-      <div className="flex justify-between items-center p-3 border-b bg-white">
+          <div className="text-xl font-bold">
+            Result
+          </div>
 
-        <div className="text-xl font-bold">
-          Result
+          <button
+            onClick={() => setShowResult(false)}
+            className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+          >
+            Back
+          </button>
+
         </div>
 
-        <button
-          onClick={() => setShowResult(false)}
-          className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-        >
-          Back
-        </button>
+
+        {/* RESULT LIST */}
+
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+
+          {groupedResults.map((group: any, i: number) => (
+
+            <div
+              key={i}
+              className={`flex justify-between items-center border p-3 rounded ${i === 0
+                  ? "bg-yellow-200 font-bold"
+                  : "bg-white"
+                }`}
+            >
+
+              <div className="flex-1">
+                {i + 1}. {group.names.join(" | ")}
+              </div>
+
+              <div className="font-bold ml-3">
+                {group.marks}
+              </div>
+
+            </div>
+
+          ))}
+
+          {groupedResults.length === 0 && (
+
+            <div className="text-center text-gray-400 p-5">
+              No students
+            </div>
+
+          )}
+
+        </div>
 
       </div>
 
+    );
 
-      {/* RESULT LIST */}
-
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-
-        {groupedResults.map((group: any, i: number) => (
-
-          <div
-            key={i}
-            className={`flex justify-between items-center border p-3 rounded ${
-              i === 0
-                ? "bg-yellow-200 font-bold"
-                : "bg-white"
-            }`}
-          >
-
-            <div className="flex-1">
-              {i + 1}. {group.names.join(" | ")}
-            </div>
-
-            <div className="font-bold ml-3">
-              {group.marks}
-            </div>
-
-          </div>
-
-        ))}
-
-        {groupedResults.length === 0 && (
-
-          <div className="text-center text-gray-400 p-5">
-            No students
-          </div>
-
-        )}
-
-      </div>
-
-    </div>
-
-  );
-
-}
+  }
 
 
   // =========================================================
