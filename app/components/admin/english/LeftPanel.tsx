@@ -134,26 +134,43 @@ export default function LeftPanel({
     setImageTopics(finalTopics);
 
   };
+// =========================================================
+// TOGGLE IMAGE TOPIC
+// =========================================================
 
-
+const toggleImageTopic = (id: string) => {
+  setExpandedImageTopics(prev =>
+    prev.includes(id)
+      ? prev.filter(x => x !== id)
+      : [...prev, id]
+  );
+};
   // =========================================================
-  // TOGGLE IMAGE TOPIC
+  // AUTO SCROLL TO SELECTED IMAGE
   // =========================================================
 
-  const toggleImageTopic = (
-    id: string
-  ) => {
+  useEffect(() => {
 
-    setExpandedImageTopics(
-      prev =>
-        prev.includes(id)
-          ? prev.filter(
-            x => x !== id
-          )
-          : [...prev, id]
-    );
+    if (!selectedImageId) return;
 
-  };
+    const timer = setTimeout(() => {
+
+      const element = document.getElementById(
+        `image-item-${selectedImageId}`
+      );
+
+      if (!element) return;
+
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+      });
+
+    }, 50);
+
+    return () => clearTimeout(timer);
+
+  }, [selectedImageId]);
   const toggleGrammarTopic = (id: string) => {
 
     setExpandedGrammarTopics(prev =>
@@ -371,9 +388,8 @@ export default function LeftPanel({
 ======================= */}
 
       <div
-        className={`flex flex-col min-h-0 ${
-  showImages ? "h-1/3" : "shrink-0"
-}`}
+        className={`flex flex-col min-h-0 ${showImages ? "h-1/3" : "shrink-0"
+          }`}
       >
 
         <button
@@ -433,6 +449,7 @@ export default function LeftPanel({
 
                         <label
                           key={image.id}
+                          id={`image-item-${image.id}`}
                           className={`flex items-center gap-2 w-full text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === image.id
                               ? "bg-blue-100 text-blue-700 font-semibold"
                               : "hover:bg-gray-100"
@@ -478,9 +495,8 @@ export default function LeftPanel({
 ======================= */}
 
       <div
-        className={`flex flex-col min-h-0 ${
-  showGrammarTables ? "h-1/3" : "shrink-0"
-}`}
+        className={`flex flex-col min-h-0 ${showGrammarTables ? "h-1/3" : "shrink-0"
+          }`}
       >
 
         <button
