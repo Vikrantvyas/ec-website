@@ -306,9 +306,8 @@ export default function EnglishPage() {
         selectedGrammarTableId={selectedGrammarTableId}
         setSelectedGrammarTableId={setSelectedGrammarTableId}
         selectedImageId={selectedImageId}
-        
-
         setSelectedImageId={setSelectedImageId}
+                
       />
       <div className="flex-1 flex flex-col items-center pt-4 gap-2">
 
@@ -352,6 +351,7 @@ export default function EnglishPage() {
             selectedImageId={selectedImageId}
             showImages={showImages}
             setShowImages={setShowImages}
+            setSelectedImageId={setSelectedImageId}
           />
         </div>
 

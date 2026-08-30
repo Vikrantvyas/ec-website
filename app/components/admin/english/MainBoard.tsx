@@ -36,6 +36,7 @@ export default function MainBoard({
   selectedGrammarTableId,
   setSelectedGrammarTableId,
   selectedImageId,
+  setSelectedImageId,
   showImages,
 }: any) {
 
@@ -283,46 +284,81 @@ export default function MainBoard({
           className={`${isVertical && showLeft ? "w-full h-[70%]" : widthClass
             } ${isVertical ? "border-t" : "border-l"} flex`}
         >
-         <GrammarBoard
-  selectedGrammarTableId={selectedGrammarTableId}
-  onTableChange={setSelectedGrammarTableId}
-/>
+          <GrammarBoard
+            selectedGrammarTableId={selectedGrammarTableId}
+            onTableChange={setSelectedGrammarTableId}
+          />
         </div>
       );
     }
     if (panel === "images" && showImages) {
-      return (
-        <div
-          key="images"
-          className={`${widthClass} ${isVertical ? "border-t" : "border-l"
-            } flex`}
-        >
-          {selectedImage ? (
-            <ImageBoard
-              images={imageList}
-              currentIndex={imageIndex}
-              onPrevious={() => {
-                setImageIndex((prev) =>
-                  Math.max(0, prev - 1)
-                );
-              }}
-              onNext={() => {
-                setImageIndex((prev) =>
-                  Math.min(
-                    imageList.length - 1,
-                    prev + 1
-                  )
-                );
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
-              Select an image
-            </div>
-          )}
+  return (
+    <div
+      key="images"
+      className={`${widthClass} ${
+        isVertical ? "border-t" : "border-l"
+      } flex`}
+    >
+      {selectedImage ? (
+        <ImageBoard
+          images={imageList}
+          currentIndex={imageIndex}
+
+          onPrevious={() => {
+
+            const newIndex =
+              Math.max(0, imageIndex - 1);
+
+            const newImage =
+              imageList[newIndex];
+
+            if (!newImage) return;
+
+            setImageIndex(newIndex);
+
+            setSelectedImage(
+              newImage
+            );
+
+            setSelectedImageId(
+              newImage.id
+            );
+
+          }}
+
+          onNext={() => {
+
+            const newIndex =
+              Math.min(
+                imageList.length - 1,
+                imageIndex + 1
+              );
+
+            const newImage =
+              imageList[newIndex];
+
+            if (!newImage) return;
+
+            setImageIndex(newIndex);
+
+            setSelectedImage(
+              newImage
+            );
+
+            setSelectedImageId(
+              newImage.id
+            );
+
+          }}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-gray-400">
+          Select an image
         </div>
-      );
-    }
+      )}
+    </div>
+  );
+}
     if (panel === "board" && showBoard) {
       return (
         <div
