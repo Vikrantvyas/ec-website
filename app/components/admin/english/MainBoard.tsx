@@ -40,8 +40,7 @@ export default function MainBoard({
   showImages,
 }: any) {
 
-  const [resultData, setResultData] = useState<any[]>([]);
-  const [showResult, setShowResult] = useState(false);
+
   const [panelOrder, setPanelOrder] = useState<string[]>([]);
   const [imageList, setImageList] = useState<any[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
@@ -166,116 +165,82 @@ export default function MainBoard({
   };
 
   // 🔹 GROUPING LOGIC
-  const groupedResult = resultData.reduce((acc: any, s: any) => {
-    if (!acc[s.correct]) acc[s.correct] = [];
-    acc[s.correct].push(s.name);
-    return acc;
-  }, {});
 
-  const sortedScores = Object.keys(groupedResult)
-    .map(Number)
-    .sort((a, b) => b - a);
+  const handleImageNext = () => {
+
+    if (!imageList.length) return;
+
+    const newIndex = Math.min(
+      imageList.length - 1,
+      imageIndex + 1
+    );
+
+    const newImage = imageList[newIndex];
+
+    if (!newImage) return;
+
+    setImageIndex(newIndex);
+    setSelectedImage(newImage);
+    setSelectedImageId(newImage.id);
+
+  };
+
   const renderPanel = (panel: string) => {
 
     if (panel === "left" && showLeft) {
-      return (
-        <div
-          key="left"
-          className={`${isVertical && showGrammar ? "w-full h-[30%]" : widthClass
-            } flex flex-col border-l`}
-        >
+  return (
+    <div
+      key="left"
+      className={`${isVertical && showGrammar ? "w-full h-[30%]" : widthClass
+        } flex flex-col border-l`}
+    >
 
-          <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center">
+      <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center">
 
-            <span className="bg-yellow-300 px-2 rounded">
-              Day {selectedDays?.map((id: any) => {
-                const d = days?.find((x: any) => x.id === id);
-                return d?.day_number;
-              }).join(", ")}
-            </span>
+        <span className="bg-yellow-300 px-2 rounded">
+          Day {selectedDays?.map((id: any) => {
+            const d = days?.find((x: any) => x.id === id);
+            return d?.day_number;
+          }).join(", ")}
+        </span>
 
-            <span className="bg-green-300 px-2 rounded font-normal">
-              {selectedTopics?.length > 0
-                ? selectedTopics.map((id: any) => {
-                  const t = topics?.find((x: any) => x.id === id);
-                  return t?.topic_name;
-                }).join(", ")
-                : "All Topics"}
-            </span>
+        <span className="bg-green-300 px-2 rounded font-normal">
+          {selectedTopics?.length > 0
+            ? selectedTopics.map((id: any) => {
+                const t = topics?.find((x: any) => x.id === id);
+                return t?.topic_name;
+              }).join(", ")
+            : "All Topics"}
+        </span>
 
-            <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
-              {currentTime}
-            </div>
-
-          </div>
-
-          <div
-            ref={scrollRef}
-            className="flex-1 min-h-0 overflow-hidden text-xs"
-          >
-
-            {showResult ? (
-
-              <div className="p-4 space-y-3">
-
-                <div className="flex justify-between items-center mb-3">
-
-                  <div className="text-xl font-bold">
-                    Result
-                  </div>
-
-                  <button
-                    onClick={() => setShowResult(false)}
-                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                  >
-                    Back
-                  </button>
-
-                </div>
-
-                {sortedScores.map((score, i) => (
-                  <div
-                    key={i}
-                    className={`flex justify-between border p-2 rounded ${i === 0
-                      ? "bg-yellow-200 font-bold"
-                      : ""
-                      }`}
-                  >
-
-                    <div>
-                      {i + 1}. {groupedResult[score].join(" | ")}
-                    </div>
-
-                    <div className="font-bold">
-                      {score}
-                    </div>
-
-                  </div>
-                ))}
-
-              </div>
-
-            ) : (
-
-              <div className="text-xs h-full min-h-0">
-                <CoursePlayer
-                  ref={vocabRef}
-                  data={sentences}
-                  random={randomMode}
-                  showAll={showAll}
-                  compact={true}
-                  highlightIndex={highlightIndex}
-                  setHighlightIndex={setHighlightIndex}
-                />
-              </div>
-
-            )}
-
-          </div>
-
+        <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
+          {currentTime}
         </div>
-      );
-    }
+
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="flex-1 min-h-0 overflow-hidden text-xs"
+      >
+
+        <div className="text-xs h-full min-h-0">
+          <CoursePlayer
+            ref={vocabRef}
+            data={sentences}
+            random={randomMode}
+            showAll={showAll}
+            compact={true}
+            highlightIndex={highlightIndex}
+            setHighlightIndex={setHighlightIndex}
+          />
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
 
     if (panel === "grammar" && showGrammar) {
       return (
@@ -292,73 +257,72 @@ export default function MainBoard({
       );
     }
     if (panel === "images" && showImages) {
-  return (
-    <div
-      key="images"
-      className={`${widthClass} ${
-        isVertical ? "border-t" : "border-l"
-      } flex`}
-    >
-      {selectedImage ? (
-        <ImageBoard
-          images={imageList}
-          currentIndex={imageIndex}
+      return (
+        <div
+          key="images"
+          className={`${widthClass} ${isVertical ? "border-t" : "border-l"
+            } flex`}
+        >
+          {selectedImage ? (
+            <ImageBoard
+              images={imageList}
+              currentIndex={imageIndex}
 
-          onPrevious={() => {
+              onPrevious={() => {
 
-            const newIndex =
-              Math.max(0, imageIndex - 1);
+                const newIndex =
+                  Math.max(0, imageIndex - 1);
 
-            const newImage =
-              imageList[newIndex];
+                const newImage =
+                  imageList[newIndex];
 
-            if (!newImage) return;
+                if (!newImage) return;
 
-            setImageIndex(newIndex);
+                setImageIndex(newIndex);
 
-            setSelectedImage(
-              newImage
-            );
+                setSelectedImage(
+                  newImage
+                );
 
-            setSelectedImageId(
-              newImage.id
-            );
+                setSelectedImageId(
+                  newImage.id
+                );
 
-          }}
+              }}
 
-          onNext={() => {
+              onNext={() => {
 
-            const newIndex =
-              Math.min(
-                imageList.length - 1,
-                imageIndex + 1
-              );
+                const newIndex =
+                  Math.min(
+                    imageList.length - 1,
+                    imageIndex + 1
+                  );
 
-            const newImage =
-              imageList[newIndex];
+                const newImage =
+                  imageList[newIndex];
 
-            if (!newImage) return;
+                if (!newImage) return;
 
-            setImageIndex(newIndex);
+                setImageIndex(newIndex);
 
-            setSelectedImage(
-              newImage
-            );
+                setSelectedImage(
+                  newImage
+                );
 
-            setSelectedImageId(
-              newImage.id
-            );
+                setSelectedImageId(
+                  newImage.id
+                );
 
-          }}
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-gray-400">
-          Select an image
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              Select an image
+            </div>
+          )}
         </div>
-      )}
-    </div>
-  );
-}
+      );
+    }
     if (panel === "board" && showBoard) {
       return (
         <div
@@ -381,10 +345,8 @@ export default function MainBoard({
             onCorrect={handleCorrect}
             onPass={handlePass}
             onReset={handleReset}
-            onShowResult={(data: any) => {
-              setResultData(data);
-              setShowResult(true);
-            }}
+            imageMode={showImages && !!selectedImage}
+            onImageNext={handleImageNext}
           />
         </div>
       );
