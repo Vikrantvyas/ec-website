@@ -109,14 +109,21 @@ export default function EnglishPage() {
     }
   }, [selectedCourse]);
   useEffect(() => {
-    if (!selectedCourse) return;
+  if (!selectedCourse) return;
 
-    setCurrentIndex(-1);
-    setShowAll(false);
-    setHighlightIndex(null);
+  // नया Course select होते ही
+  // पुराने Course की selections clear करें
+  setSelectedDays([]);
+  setSelectedTopics([]);
+  setTopicNavIndex(0);
 
-    vocabRef.current?.reset();
-  }, [selectedCourse]);
+  // Vocabulary display reset
+  setCurrentIndex(-1);
+  setShowAll(false);
+  setHighlightIndex(null);
+
+  vocabRef.current?.reset();
+}, [selectedCourse]);
 
   useEffect(() => {
     fetchTopics();
