@@ -211,33 +211,21 @@ export default function GrammarBoard({
       }
 
       const key =
-        header.header_name.toLowerCase();
+  header.header_name.trim().toLowerCase();
 
-      let finalKey =
-        key;
+let finalKey =
+  key;
 
-      // GrammarTable uses hv1 internally
-      if (key === "hv") {
+// GrammarTable uses hv1 internally
+if (key === "hv") {
+  finalKey = "hv1";
+}
 
-        finalKey = "hv1";
-
-      }
-
-      if (key === "hindi") {
-
-        grouped[
-          cell.row_no
-        ].hindi =
-          cell.cell_value;
-
-      } else {
-
-        grouped[
-          cell.row_no
-        ].rows[0][finalKey] =
-          cell.cell_value;
-
-      }
+// Hindi is now a normal column
+grouped[
+  cell.row_no
+].rows[0][finalKey] =
+  cell.cell_value;
 
     });
 
@@ -291,33 +279,33 @@ export default function GrammarBoard({
 
   const goPrevious = async () => {
 
-  if (currentIndex <= 0) {
-    return;
-  }
+    if (currentIndex <= 0) {
+      return;
+    }
 
-  const previousTable =
-    tables[currentIndex - 1];
+    const previousTable =
+      tables[currentIndex - 1];
 
-  if (!previousTable) {
-    return;
-  }
+    if (!previousTable) {
+      return;
+    }
 
-  // पहले पूरा previous table load करें
-  await loadTableData(
-    previousTable.id
-  );
+    // पहले पूरा previous table load करें
+    await loadTableData(
+      previousTable.id
+    );
 
-  // GrammarBoard की current table बदलें
-  setSelectedTableId(
-    previousTable.id
-  );
+    // GrammarBoard की current table बदलें
+    setSelectedTableId(
+      previousTable.id
+    );
 
-  // 🔥 Left Panel का radio button भी बदलें
-  onTableChange?.(
-    previousTable.id
-  );
+    // 🔥 Left Panel का radio button भी बदलें
+    onTableChange?.(
+      previousTable.id
+    );
 
-};
+  };
 
   // =========================================================
   // NEXT TABLE
