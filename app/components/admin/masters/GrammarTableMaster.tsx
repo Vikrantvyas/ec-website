@@ -1118,7 +1118,61 @@ export default function GrammarTableMaster() {
       alert("Row Order Saved");
     }
   };
+  const saveCells = async () => {
+    if (!selectedTable) {
+      return;
+    }
+
+    await supabase
+      .from("grammar_cells")
+      .delete()
+      .eq("table_id", selectedTable.id);
+
+    const payload: any[] = [];
+
+    Object.entries(cellData).forEach(
+      ([key, value]) => {
+        const parts = key.split("__");
+
+        payload.push({
+          table_id: selectedTable.id,
+          row_no: Number(parts[0]),
+          header_id: parts[1],
+          cell_value: value
+        });
+      }
+    );
+
+    if (payload.length > 0) {
+      const { error } = await supabase
+        .from("grammar_cells")
+        .insert(payload);
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+    }
+
+    alert("Cells Saved");
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        saveCells();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedTable, cellData]);
   return (
+
 
     <div className="p-5 space-y-5">
 
@@ -1665,14 +1719,14 @@ export default function GrammarTableMaster() {
 
                     <button
                       onClick={() => editTable(table)}
-                      className="bg-yellow-500 text-white px-3 py-1 rounded"
+                      className="cursor-pointer hover:underline"
                     >
                       Edit
                     </button>
 
                     <button
                       onClick={() => openTable(table)}
-                      className="bg-blue-600 text-white px-3 py-1 rounded"
+                      className="cursor-pointer hover:underline"
                     >
                       Open
                     </button>
@@ -1702,28 +1756,28 @@ export default function GrammarTableMaster() {
 
                         loadTables();
                       }}
-                      className="bg-red-600 text-white px-3 py-1 rounded"
+                      className="cursor-pointer text-red-600 hover:underline"
                     >
                       Delete
                     </button>
 
                     <button
                       onClick={() => copyTable(table)}
-                      className="bg-gray-600 text-white px-3 py-1 rounded"
+                      className="cursor-pointer hover:underline"
                     >
                       Copy
                     </button>
 
                     <button
                       onClick={() => duplicateTable(table)}
-                      className="bg-purple-600 text-white px-3 py-1 rounded"
+                      className="cursor-pointer hover:underline"
                     >
                       Duplicate
                     </button>
 
                     <button
                       onClick={() => cutTable(table)}
-                      className="bg-orange-600 text-white px-3 py-1 rounded"
+                      className="cursor-pointer hover:underline"
                     >
                       Cut
                     </button>
@@ -1741,7 +1795,7 @@ export default function GrammarTableMaster() {
         {
           selectedTable && (
 
-            <div className="border rounded p-4 space-y-4">
+            <div className="space-y-4">
 
               <div className="flex items-center justify-between">
 
@@ -1749,76 +1803,30 @@ export default function GrammarTableMaster() {
                   {selectedTable.name}
                 </h2>
 
-                <button
-                  onClick={async () => {
-                    await saveHeaderOrder(false);
-                    await saveRowOrder(false);
-                    alert("Order Saved");
-                  }}
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                  Save Order
-                </button>
+                <div className="flex items-center">
+
+                  <button
+                    onClick={async () => {
+                      await saveHeaderOrder(false);
+                      await saveRowOrder(false);
+                      alert("Order Saved");
+                    }}
+                    className="bg-blue-600 text-white px-4 py-2 rounded"
+                  >
+                    Save Order
+                  </button>
+
+                  <button
+                    onClick={saveCells}
+                    className="bg-green-600 text-white px-4 py-2 rounded"
+                  >
+                    Save Cells
+                  </button>
+
+                </div>
 
               </div>
-              <button
 
-                onClick={async () => {
-
-                  if (!selectedTable) {
-                    return;
-                  }
-
-                  await supabase
-                    .from("grammar_cells")
-                    .delete()
-                    .eq("table_id", selectedTable.id);
-
-                  const payload: any[] = [];
-
-                  Object.entries(cellData).forEach(
-                    ([key, value]) => {
-
-                      const parts = key.split("__");
-
-                      payload.push({
-
-                        table_id: selectedTable.id,
-
-                        row_no: Number(parts[0]),
-
-                        header_id: parts[1],
-
-                        cell_value: value
-
-                      });
-
-                    }
-                  );
-
-                  if (payload.length > 0) {
-
-                    const { error } = await supabase
-                      .from("grammar_cells")
-                      .insert(payload);
-
-                    if (error) {
-
-                      alert(error.message);
-                      return;
-
-                    }
-
-                  }
-
-                  alert("Cells Saved");
-
-                }}
-
-                className="bg-green-600 text-white px-4 py-2 rounded"
-              >
-                Save Cells
-              </button>
               <table className="w-full border-collapse">
 
                 <thead>
@@ -1965,52 +1973,59 @@ export default function GrammarTableMaster() {
 
                         </td>
                       ))}
-                      <td className="border p-1 w-16 text-center">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addRow(actualRowIndex);
-                          }}
-                          className="text-green-700 font-bold px-2 py-1 hover:bg-green-100 rounded"
-                          title="Add Row After"
-                        >
-                          +
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyRow(actualRowIndex);
-                          }}
-                          className="text-blue-600 font-bold px-2 py-1 hover:bg-blue-100 rounded"
-                          title="Copy Row"
-                        >
-                          ⧉
-                        </button>
-                        <button
-                          type="button"
-                          disabled={!copiedRow}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            pasteRow(actualRowIndex);
-                          }}
-                          className="text-purple-600 font-bold px-2 py-1 hover:bg-purple-100 rounded disabled:opacity-30"
-                          title="Paste Copied Row After This Row"
-                        >
-                          📋
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteRow(actualRowIndex);
-                          }}
-                          className="text-red-600 font-bold px-2 py-1 hover:bg-red-100 rounded"
-                          title="Delete Row"
-                        >
-                          ×
-                        </button>
+                      <td className="border p-1 w-20 text-center">
+                        <div className="grid grid-cols-2 gap-1">
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addRow(actualRowIndex);
+                            }}
+                            className="text-green-700 font-bold px-2 py-1 hover:bg-green-100 rounded"
+                            title="Add Row After"
+                          >
+                            +
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyRow(actualRowIndex);
+                            }}
+                            className="text-blue-600 font-bold px-2 py-1 hover:bg-blue-100 rounded"
+                            title="Copy Row"
+                          >
+                            ⧉
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={!copiedRow}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              pasteRow(actualRowIndex);
+                            }}
+                            className="text-purple-600 font-bold px-2 py-1 hover:bg-purple-100 rounded disabled:opacity-30"
+                            title="Paste Copied Row After This Row"
+                          >
+                            📋
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteRow(actualRowIndex);
+                            }}
+                            className="text-red-600 font-bold px-2 py-1 hover:bg-red-100 rounded"
+                            title="Delete Row"
+                          >
+                            ×
+                          </button>
+
+                        </div>
                       </td>
                     </tr>
 
