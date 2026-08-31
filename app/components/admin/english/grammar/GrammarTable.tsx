@@ -100,31 +100,26 @@ export default function GrammarTable({
 
     if (headers && headers.length > 0) {
 
-      const dynamicCols =
-        headers
-          .filter(
-            (h: string) =>
-              h.toLowerCase() !== "hindi"
-          )
-          .map((h: string) => {
+  const dynamicCols =
+    headers.map((h: string) => {
 
-            const key = h.toLowerCase();
+      const key = h.toLowerCase();
 
-            if (key === "hv") {
-              return "hv1";
-            }
+      if (key === "hv") {
+        return "hv1";
+      }
 
-            return key;
+      return key;
 
-          });
+    });
 
-      setColumns([
-        "index",
-        ...dynamicCols
-      ]);
+  setColumns([
+    "index",
+    ...dynamicCols
+  ]);
 
-      return;
-    }
+  return;
+}
 
     if (!tableData || tableData.length === 0) return;
 
