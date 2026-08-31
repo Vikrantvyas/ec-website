@@ -100,26 +100,26 @@ export default function GrammarTable({
 
     if (headers && headers.length > 0) {
 
-  const dynamicCols =
-    headers.map((h: string) => {
+      const dynamicCols =
+        headers.map((h: string) => {
 
-      const key = h.toLowerCase();
+          const key = h.toLowerCase();
 
-      if (key === "hv") {
-        return "hv1";
-      }
+          if (key === "hv") {
+            return "hv1";
+          }
 
-      return key;
+          return key;
 
-    });
+        });
 
-  setColumns([
-    "index",
-    ...dynamicCols
-  ]);
+      setColumns([
+        "index",
+        ...dynamicCols
+      ]);
 
-  return;
-}
+      return;
+    }
 
     if (!tableData || tableData.length === 0) return;
 
@@ -275,7 +275,44 @@ export default function GrammarTable({
     updated[g].rows[r][c] = value;
     setTableData(updated);
   };
+  const highlightText = (text: string) => {
+  if (!text) return null;
 
+  const parts = text.split(/(नहीं|not|n't|क्[\u200c\u200d]?या|क्या)/giu);
+
+  return parts.map((part, index) => {
+
+    if (
+      part === "नहीं" ||
+      part.toLowerCase() === "not" ||
+      part.toLowerCase() === "n't"
+    ) {
+      return (
+        <span key={index} className="text-red-600">
+          {part}
+        </span>
+      );
+    }
+
+    if (/^क्[\u200c\u200d]?या$|^क्या$/u.test(part)) {
+  return (
+    <span key={index} className="text-blue-600">
+      {part}
+    </span>
+  );
+}
+
+    return (
+      <span key={index}>
+        {part}
+      </span>
+    );
+  });
+};
+
+      return <span key={index}>{part}</span>;
+    });
+  };
   const handleCellClick = (e: any, g: number, r: number, c: string) => {
     if (!e.shiftKey) {
       setSelected([]);
@@ -625,16 +662,21 @@ export default function GrammarTable({
                         }`}
                     >
 
-                      <input
-                        type="text"
-                        value={row[col] || ""}
-                        onChange={(e) =>
-                          handleCellChange(gIndex, rIndex, col, e.target.value)
-                        }
-                        className="bg-transparent outline-none border-none p-0 m-0 text-left"
-                        size={Math.max((row[col] || "").length, 1)}
-                        style={{ width: `${(row[col] || "").length + 1}ch` }}
-                      />
+                      <div
+                        contentEditable
+                        suppressContentEditableWarning
+                        className="bg-transparent outline-none border-none p-0 m-0 text-left min-w-[20px]"
+                        onInput={(e) => {
+                          handleCellChange(
+                            gIndex,
+                            rIndex,
+                            col,
+                            e.currentTarget.innerText
+                          );
+                        }}
+                      >
+                        {highlightText(row[col] || "")}
+                      </div>
                     </td>
                   );
 
