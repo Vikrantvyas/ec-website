@@ -278,7 +278,9 @@ export default function GrammarTable({
   const highlightText = (text: string) => {
     if (!text) return null;
 
-    const parts = text.split(/(नहीं|not|n't|क्[\u200c\u200d]?या|क्या)/giu);
+    const parts = text.split(
+  /(नहीं|not|n't|क्[\u200c\u200d]?या|क्या|कब|कौन|कहॉं|कैसे|किसका|कितना|कितने|कितनी|किसे|क्[\u200c\u200d]?यों|क्यों)/giu
+);
 
     return parts.map((part, index) => {
 
@@ -294,13 +296,15 @@ export default function GrammarTable({
         );
       }
 
-      if (/^क्[\u200c\u200d]?या$|^क्या$/u.test(part)) {
-        return (
-          <span key={index} className="text-blue-600">
-            {part}
-          </span>
-        );
-      }
+      if (
+  /^(क्[\u200c\u200d]?या|क्या|कब|कौन|कहॉं|कैसे|किसका|कितना|कितने|कितनी|किसे|क्[\u200c\u200d]?यों|क्यों)$/u.test(part)
+) {
+  return (
+    <span key={index} className="text-blue-600">
+      {part}
+    </span>
+  );
+}
 
       return (
         <span key={index}>

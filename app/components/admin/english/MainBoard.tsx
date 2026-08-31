@@ -6,7 +6,6 @@ import WhiteBoard from "./WhiteBoard";
 import CoursePlayer from "./CoursePlayer";
 import ScoreCard from "./ScoreCard";
 import GrammarBoard from "./GrammarBoard";
-import SentencePlayer from "./SentencePlayer";
 import ImageBoard from "./ImageBoard";
 export default function MainBoard({
   isGrammar,
@@ -188,59 +187,59 @@ export default function MainBoard({
   const renderPanel = (panel: string) => {
 
     if (panel === "left" && showLeft) {
-  return (
-    <div
-      key="left"
-      className={`${isVertical && showGrammar ? "w-full h-[30%]" : widthClass
-        } flex flex-col border-l`}
-    >
+      return (
+        <div
+          key="left"
+          className={`${isVertical && showGrammar ? "w-full h-[30%]" : widthClass
+            } flex flex-col border-l`}
+        >
 
-      <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center">
+          <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center">
 
-        <span className="bg-yellow-300 px-2 rounded">
-          Day {selectedDays?.map((id: any) => {
-            const d = days?.find((x: any) => x.id === id);
-            return d?.day_number;
-          }).join(", ")}
-        </span>
+            <span className="bg-yellow-300 px-2 rounded">
+              Day {selectedDays?.map((id: any) => {
+                const d = days?.find((x: any) => x.id === id);
+                return d?.day_number;
+              }).join(", ")}
+            </span>
 
-        <span className="bg-green-300 px-2 rounded font-normal">
-          {selectedTopics?.length > 0
-            ? selectedTopics.map((id: any) => {
-                const t = topics?.find((x: any) => x.id === id);
-                return t?.topic_name;
-              }).join(", ")
-            : "All Topics"}
-        </span>
+            <span className="bg-green-300 px-2 rounded font-normal">
+              {selectedTopics?.length > 0
+                ? selectedTopics.map((id: any) => {
+                  const t = topics?.find((x: any) => x.id === id);
+                  return t?.topic_name;
+                }).join(", ")
+                : "All Topics"}
+            </span>
 
-        <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
-          {currentTime}
+            <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
+              {currentTime}
+            </div>
+
+          </div>
+
+          <div
+            ref={scrollRef}
+            className="flex-1 min-h-0 overflow-hidden text-xs"
+          >
+
+            <div className="text-xs h-full min-h-0">
+              <CoursePlayer
+                ref={vocabRef}
+                data={sentences}
+                random={randomMode}
+                showAll={showAll}
+                compact={true}
+                highlightIndex={highlightIndex}
+                setHighlightIndex={setHighlightIndex}
+              />
+            </div>
+
+          </div>
+
         </div>
-
-      </div>
-
-      <div
-        ref={scrollRef}
-        className="flex-1 min-h-0 overflow-hidden text-xs"
-      >
-
-        <div className="text-xs h-full min-h-0">
-          <CoursePlayer
-            ref={vocabRef}
-            data={sentences}
-            random={randomMode}
-            showAll={showAll}
-            compact={true}
-            highlightIndex={highlightIndex}
-            setHighlightIndex={setHighlightIndex}
-          />
-        </div>
-
-      </div>
-
-    </div>
-  );
-}
+      );
+    }
 
     if (panel === "grammar" && showGrammar) {
       return (
