@@ -26,15 +26,15 @@ export default function GrammarTable({
 
   useEffect(() => {
 
-  setTableData(data);
+    setTableData(data);
 
-  setColumns([]);
-  setMergedCells({});
-  setSelected([]);
-  setHistory([]);
-  setRedoStack([]);
+    setColumns([]);
+    setMergedCells({});
+    setSelected([]);
+    setHistory([]);
+    setRedoStack([]);
 
-}, [data]);
+  }, [data]);
 
   const [columns, setColumns] = useState<string[]>([]);
 
@@ -74,25 +74,25 @@ export default function GrammarTable({
   const [visibleCells, setVisibleCells] = useState(0);
   useEffect(() => {
 
-  if (
-    tableData.length === 0 ||
-    columns.length === 0
-  ) {
-    return;
-  }
+    if (
+      tableData.length === 0 ||
+      columns.length === 0
+    ) {
+      return;
+    }
 
-  const totalRows = tableData.reduce(
-    (total, group) =>
-      total + group.rows.length,
-    0
-  );
+    const totalRows = tableData.reduce(
+      (total, group) =>
+        total + group.rows.length,
+      0
+    );
 
-  const totalCells =
-    totalRows * columns.length;
+    const totalCells =
+      totalRows * columns.length;
 
-  setVisibleCells(totalCells);
+    setVisibleCells(totalCells);
 
-}, [tableData, columns]);
+  }, [tableData, columns]);
 
   useEffect(() => {
 
@@ -120,7 +120,6 @@ export default function GrammarTable({
 
       setColumns([
         "index",
-        "hindi",
         ...dynamicCols
       ]);
 
@@ -129,7 +128,7 @@ export default function GrammarTable({
 
     if (!tableData || tableData.length === 0) return;
 
-    const baseCols = ["index", "hindi"];
+    const baseCols = ["index"];
 
     const firstRow =
       tableData[0]?.rows[0] || {};
@@ -254,7 +253,7 @@ export default function GrammarTable({
   const handleDeleteColumn = (index: number) => {
     const col = columns[index];
 
-    if (col === "index" || col === "hindi") {
+    if (col === "index") {
       alert("Cannot delete this column");
       return;
     }
@@ -322,7 +321,7 @@ export default function GrammarTable({
 
         const colName = columns[colIndex];
 
-        if (colName === "index" || colName === "hindi") continue;
+        if (colName === "index") continue;
 
         newSelection.push(`${g}-${rowIndex}-${colName}`);
       }
@@ -473,8 +472,7 @@ export default function GrammarTable({
 
   }, [columns, tableData]);
   const headerMap: any = {
-    index: "#",
-    hindi: tableSelector || "Hindi"
+    index: "#"
   };
 
   headers?.forEach((h: string) => {
@@ -513,9 +511,7 @@ export default function GrammarTable({
                 className="border px-2 py-1 text-left transition-colors hover:bg-yellow-200 hover:text-black"
               >
                 <div className="text-left px-1 transition-colors group-hover:bg-yellow-200 group-hover:text-black">
-                  {col === "hindi"
-                    ? tableSelector || "Hindi"
-                    : headerMap[col] || col}
+                  {headerMap[col] || col}
                 </div>
               </th>
             ))}
@@ -576,39 +572,6 @@ export default function GrammarTable({
                       </td>
                     );
                   }
-                  if (col === "hindi" && rIndex === 0) {
-
-                    const rowOffset = tableData
-                      .slice(0, gIndex)
-                      .reduce((acc, group) => acc + group.rows.length, 0);
-
-                    const revealOrder =
-                      (rowOffset + rIndex) * columns.length + 1;
-
-                    if (revealOrder >= visibleCells) {
-                      return (
-                        <td
-                          key="hindi"
-                          rowSpan={group.rows.length}
-                          className={`border-0 p-0 h-0 ${col.toLowerCase() === "wh"
-                            ? "min-w-[60px]"
-                            : ""
-                            }`}
-                        >
-                        </td>
-                      );
-                    }
-                    return (
-                      <td
-                        key="hindi"
-                        rowSpan={group.rows.length}
-                        className="border px-2 py-1 text-left align-top whitespace-nowrap transition-colors hover:bg-yellow-200 hover:text-black"
-                      >
-                        {group.hindi}
-                      </td>
-                    );
-                  }
-                  if (col === "index" || col === "hindi") return null;
 
                   const rowOffset = tableData
                     .slice(0, gIndex)
