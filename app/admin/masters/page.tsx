@@ -238,19 +238,19 @@ export default function MastersPage() {
             )}
             {selectedMaster === "grammar_tables" && <GrammarTableMaster />}
             {selectedMaster === "image_topics" && (
-  <ImageTopicMaster
-    onOpenImages={(topicId: string) => {
-      setSelectedImageTopicId(topicId);
-      setSelectedMaster("images");
-    }}
-  />
-)}
+              <ImageTopicMaster
+                onOpenImages={(topicId: string) => {
+                  setSelectedImageTopicId(topicId);
+                  setSelectedMaster("images");
+                }}
+              />
+            )}
 
-{selectedMaster === "images" && (
-  <ImageMaster
-    initialTopicId={selectedImageTopicId}
-  />
-)}
+            {selectedMaster === "images" && (
+              <ImageMaster
+                initialTopicId={selectedImageTopicId}
+              />
+            )}
 
           </div>
 

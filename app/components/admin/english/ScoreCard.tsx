@@ -312,25 +312,25 @@ export default function ScoreCard({
   // =========================================================
 
   const resetAll = () => {
-  setScore(0);
-  setTotal(0);
+    setScore(0);
+    setTotal(0);
 
-  setStudents([]);
-  setActiveIndex(null);
+    setStudents([]);
+    setActiveIndex(null);
 
-  setTime(0);
-  setRunning(false);
+    setTime(0);
+    setRunning(false);
 
-  setTimer(inputMin * 60);
-  setTimerRunning(false);
-  setTimeUp(false);
-  setShowTimeUp(false);
+    setTimer(inputMin * 60);
+    setTimerRunning(false);
+    setTimeUp(false);
+    setShowTimeUp(false);
 
-  setStarted(false);
-  setShowResult(false);
+    setStarted(false);
+    setShowResult(false);
 
-  onReset?.();
-};
+    onReset?.();
+  };
 
 
   // =========================================================
@@ -418,8 +418,8 @@ export default function ScoreCard({
             <div
               key={i}
               className={`flex justify-between items-center border p-3 rounded ${i === 0
-                  ? "bg-yellow-200 font-bold"
-                  : "bg-white"
+                ? "bg-yellow-200 font-bold"
+                : "bg-white"
                 }`}
             >
 

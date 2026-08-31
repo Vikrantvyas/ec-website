@@ -211,21 +211,21 @@ export default function GrammarBoard({
       }
 
       const key =
-  header.header_name.trim().toLowerCase();
+        header.header_name.trim().toLowerCase();
 
-let finalKey =
-  key;
+      let finalKey =
+        key;
 
-// GrammarTable uses hv1 internally
-if (key === "hv") {
-  finalKey = "hv1";
-}
+      // GrammarTable uses hv1 internally
+      if (key === "hv") {
+        finalKey = "hv1";
+      }
 
-// Hindi is now a normal column
-grouped[
-  cell.row_no
-].rows[0][finalKey] =
-  cell.cell_value;
+      // Hindi is now a normal column
+      grouped[
+        cell.row_no
+      ].rows[0][finalKey] =
+        cell.cell_value;
 
     });
 

@@ -109,21 +109,21 @@ export default function EnglishPage() {
     }
   }, [selectedCourse]);
   useEffect(() => {
-  if (!selectedCourse) return;
+    if (!selectedCourse) return;
 
-  // नया Course select होते ही
-  // पुराने Course की selections clear करें
-  setSelectedDays([]);
-  setSelectedTopics([]);
-  setTopicNavIndex(0);
+    // नया Course select होते ही
+    // पुराने Course की selections clear करें
+    setSelectedDays([]);
+    setSelectedTopics([]);
+    setTopicNavIndex(0);
 
-  // Vocabulary display reset
-  setCurrentIndex(-1);
-  setShowAll(false);
-  setHighlightIndex(null);
+    // Vocabulary display reset
+    setCurrentIndex(-1);
+    setShowAll(false);
+    setHighlightIndex(null);
 
-  vocabRef.current?.reset();
-}, [selectedCourse]);
+    vocabRef.current?.reset();
+  }, [selectedCourse]);
 
   useEffect(() => {
     fetchTopics();
@@ -314,7 +314,7 @@ export default function EnglishPage() {
         setSelectedGrammarTableId={setSelectedGrammarTableId}
         selectedImageId={selectedImageId}
         setSelectedImageId={setSelectedImageId}
-                
+
       />
       <div className="flex-1 flex flex-col items-center pt-4 gap-2">
 
