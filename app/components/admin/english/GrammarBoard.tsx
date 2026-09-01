@@ -290,12 +290,6 @@ export default function GrammarBoard({
       return;
     }
 
-    // पहले पूरा previous table load करें
-    await loadTableData(
-      previousTable.id
-    );
-
-    // GrammarBoard की current table बदलें
     setSelectedTableId(
       previousTable.id
     );
@@ -334,15 +328,9 @@ export default function GrammarBoard({
 
     }
 
-    // Load complete table first.
-    // Selection changes after successful load.
-    await loadTableData(
-      nextTable.id
-    );
-
-    setSelectedTableId(
-      nextTable.id
-    );
+   setSelectedTableId(
+  nextTable.id
+);
 
     onTableChange?.(
       nextTable.id
@@ -468,7 +456,7 @@ export default function GrammarBoard({
 
   return (
 
-    <div className="w-full h-full p-4 overflow-hidden flex flex-col gap-3">
+    <div className="relative w-full h-full p-4 overflow-hidden">
 
       {/* =====================================================
           COMPLETE GRAMMAR TABLE
@@ -492,53 +480,51 @@ export default function GrammarBoard({
           PREVIOUS / NEXT BUTTONS
       ===================================================== */}
 
-      <div className="flex items-center justify-between shrink-0 px-2">
-
-        {/* PREVIOUS */}
+      <div className="absolute left-6 right-6 top-1/2 -translate-y-1/2 flex items-center justify-between pointer-events-none z-20">
 
         <button
           type="button"
           onClick={goPrevious}
           disabled={isFirst}
           className="
-            w-10
-            h-10
-            rounded-full
-            bg-black/50
-            text-white
-            text-2xl
-            flex
-            items-center
-            justify-center
-            hover:bg-black/70
-            disabled:opacity-20
-            disabled:cursor-not-allowed
-          "
+      pointer-events-auto
+      w-8
+      h-8
+      rounded-full
+      bg-black/50
+      text-white
+      text-lg
+      flex
+      items-center
+      justify-center
+      hover:bg-black/70
+      disabled:opacity-20
+      disabled:cursor-not-allowed
+    "
           title="Previous Grammar Table"
         >
           ←
         </button>
-
-        {/* NEXT */}
 
         <button
           type="button"
           onClick={goNext}
           disabled={isLast}
           className="
-            w-10
-            h-10
-            rounded-full
-            bg-black/50
-            text-white
-            text-2xl
-            flex
-            items-center
-            justify-center
-            hover:bg-black/70
-            disabled:opacity-20
-            disabled:cursor-not-allowed
-          "
+      pointer-events-auto
+      w-8
+      h-8
+      rounded-full
+      bg-black/50
+      text-white
+      text-lg
+      flex
+      items-center
+      justify-center
+      hover:bg-black/70
+      disabled:opacity-20
+      disabled:cursor-not-allowed
+    "
           title="Next Grammar Table"
         >
           →

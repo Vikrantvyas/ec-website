@@ -384,7 +384,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
                             }}
 
-                            className={`flex text-base cursor-pointer ${
+                            className={`flex text-base cursor-pointer hover:bg-yellow-200 transition-colors ${
                                 highlightIndex === i
                                     ? "bg-blue-100"
                                     : marks[i] === "correct"

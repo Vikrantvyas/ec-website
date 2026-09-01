@@ -181,42 +181,223 @@ export default function ImageMaster({
   // =========================================================
 
   // =========================================================
-// SAVE / UPDATE IMAGE
-// =========================================================
-
-const handleSave = async () => {
-
-  if (!selectedTopicId) {
-
-    alert("Please select Image Topic.");
-
-    return;
-
-  }
-
-  if (
-    sortOrder.trim() !== "" &&
-    (
-      Number.isNaN(Number(sortOrder)) ||
-      Number(sortOrder) < 0
-    )
-  ) {
-
-    alert("Please enter a valid Sort Order.");
-
-    return;
-
-  }
-
-  // =========================================================
-  // UPDATE EXISTING IMAGE
+  // SAVE / UPDATE IMAGE
   // =========================================================
 
-  if (editingImageId) {
+  const handleSave = async () => {
 
-    if (selectedFiles.length > 1) {
+    if (!selectedTopicId) {
 
-      alert("While editing, please select only one image.");
+      alert("Please select Image Topic.");
+
+      return;
+
+    }
+
+    if (
+      sortOrder.trim() !== "" &&
+      (
+        Number.isNaN(Number(sortOrder)) ||
+        Number(sortOrder) < 0
+      )
+    ) {
+
+      alert("Please enter a valid Sort Order.");
+
+      return;
+
+    }
+
+    // =========================================================
+    // UPDATE EXISTING IMAGE
+    // =========================================================
+
+    if (editingImageId) {
+
+      if (selectedFiles.length > 1) {
+
+        alert("While editing, please select only one image.");
+
+        return;
+
+      }
+
+      setLoading(true);
+
+      try {
+
+        let finalFilePath = editingFilePath;
+        let newUploadedFilePath = "";
+
+        // -------------------------------------------------------
+        // अगर नई file चुनी गई है
+        // -------------------------------------------------------
+
+        if (selectedFiles.length === 1) {
+
+          const file = selectedFiles[0];
+
+          const safeFileName = file.name
+            .replace(
+              /[^a-zA-Z0-9._-]/g,
+              "_"
+            );
+
+          const newFilePath =
+            `${selectedTopicId}/${crypto.randomUUID()}-${safeFileName}`;
+
+          const { error: uploadError } =
+            await supabase.storage
+              .from("images")
+              .upload(
+                newFilePath,
+                file,
+                {
+                  cacheControl: "3600",
+                  upsert: false,
+                  contentType: file.type
+                }
+              );
+
+          if (uploadError) {
+
+            throw uploadError;
+
+          }
+
+          finalFilePath = newFilePath;
+          newUploadedFilePath = newFilePath;
+
+        }
+
+        // -------------------------------------------------------
+        // Image Name
+        // -------------------------------------------------------
+
+        let finalName = imageName.trim();
+
+        if (!finalName) {
+
+          if (selectedFiles.length === 1) {
+
+            finalName =
+              selectedFiles[0].name
+                .replace(/\.[^/.]+$/, "");
+
+          } else {
+
+            const oldImage =
+              images.find(
+                (img: any) =>
+                  img.id === editingImageId
+              );
+
+            finalName =
+              oldImage?.name || "Image";
+
+          }
+
+        }
+
+        // -------------------------------------------------------
+        // Database update
+        // -------------------------------------------------------
+
+        const finalSortOrder =
+          sortOrder.trim() === ""
+            ? (
+              images.find(
+                (img: any) =>
+                  img.id === editingImageId
+              )?.sort_order ?? 1
+            )
+            : Number(sortOrder);
+
+        const { error: updateError } =
+          await supabase
+            .from("images")
+            .update({
+              topic_id: selectedTopicId,
+              name: finalName,
+              file_path: finalFilePath,
+              sort_order: finalSortOrder
+            })
+            .eq(
+              "id",
+              editingImageId
+            );
+
+        // -------------------------------------------------------
+        // Database update fail → new uploaded file rollback
+        // -------------------------------------------------------
+
+        if (updateError) {
+
+          if (newUploadedFilePath) {
+
+            await supabase.storage
+              .from("images")
+              .remove([
+                newUploadedFilePath
+              ]);
+
+          }
+
+          throw updateError;
+
+        }
+
+        // -------------------------------------------------------
+        // पुरानी file delete करें
+        // -------------------------------------------------------
+
+        if (
+          selectedFiles.length === 1 &&
+          editingFilePath &&
+          editingFilePath !== finalFilePath
+        ) {
+
+          await supabase.storage
+            .from("images")
+            .remove([
+              editingFilePath
+            ]);
+
+        }
+
+        alert("Image updated successfully.");
+
+        clearForm();
+
+        await loadImages();
+
+      } catch (error: any) {
+
+        console.error(
+          "IMAGE UPDATE ERROR:",
+          error
+        );
+
+        alert(
+          error?.message ||
+          "Unable to update image."
+        );
+
+      }
+
+      setLoading(false);
+
+      return;
+
+    }
+
+    // =========================================================
+    // NEW IMAGE - BULK UPLOAD
+    // =========================================================
+
+    if (selectedFiles.length === 0) {
+
+      alert("Please select at least one image.");
 
       return;
 
@@ -224,33 +405,50 @@ const handleSave = async () => {
 
     setLoading(true);
 
+    const uploadedFilePaths: string[] = [];
+    const insertedRows: any[] = [];
+
     try {
 
-      let finalFilePath = editingFilePath;
-      let newUploadedFilePath = "";
-
       // -------------------------------------------------------
-      // अगर नई file चुनी गई है
+      // Starting Sort Order
       // -------------------------------------------------------
 
-      if (selectedFiles.length === 1) {
+      let nextSortOrder =
+        sortOrder.trim() === ""
+          ? (
+            images.filter(
+              (img: any) =>
+                img.topic_id === selectedTopicId
+            ).length + 1
+          )
+          : Number(sortOrder);
 
-        const file = selectedFiles[0];
+      // -------------------------------------------------------
+      // Upload every selected image
+      // -------------------------------------------------------
 
-        const safeFileName = file.name
-          .replace(
-            /[^a-zA-Z0-9._-]/g,
-            "_"
-          );
+      for (const file of selectedFiles) {
 
-        const newFilePath =
+        const safeFileName =
+          file.name
+            .replace(
+              /[^a-zA-Z0-9._-]/g,
+              "_"
+            );
+
+        const filePath =
           `${selectedTopicId}/${crypto.randomUUID()}-${safeFileName}`;
+
+        // -----------------------------------------------
+        // Upload to Supabase Storage
+        // -----------------------------------------------
 
         const { error: uploadError } =
           await supabase.storage
             .from("images")
             .upload(
-              newFilePath,
+              filePath,
               file,
               {
                 cacheControl: "3600",
@@ -265,107 +463,85 @@ const handleSave = async () => {
 
         }
 
-        finalFilePath = newFilePath;
-        newUploadedFilePath = newFilePath;
+        uploadedFilePaths.push(filePath);
 
-      }
+        // -----------------------------------------------
+        // Automatic Image Name
+        // -----------------------------------------------
 
-      // -------------------------------------------------------
-      // Image Name
-      // -------------------------------------------------------
+        let finalName = "";
 
-      let finalName = imageName.trim();
+        /*
+         * अगर केवल एक image है और user ने manually
+         * Image Name दिया है, तो वही name इस्तेमाल होगा।
+         *
+         * Bulk upload में हर image का अपना filename
+         * automatic name बनेगा।
+         */
 
-      if (!finalName) {
+        if (
+          selectedFiles.length === 1 &&
+          imageName.trim()
+        ) {
 
-        if (selectedFiles.length === 1) {
-
-          finalName =
-            selectedFiles[0].name
-              .replace(/\.[^/.]+$/, "");
+          finalName = imageName.trim();
 
         } else {
 
-          const oldImage =
-            images.find(
-              (img: any) =>
-                img.id === editingImageId
-            );
-
           finalName =
-            oldImage?.name || "Image";
+            file.name
+              .replace(/\.[^/.]+$/, "");
 
         }
+
+        insertedRows.push({
+
+          topic_id: selectedTopicId,
+
+          name: finalName,
+
+          file_path: filePath,
+
+          sort_order: nextSortOrder
+
+        });
+
+        nextSortOrder++;
 
       }
 
       // -------------------------------------------------------
-      // Database update
+      // Insert all records into Database
       // -------------------------------------------------------
 
-      const finalSortOrder =
-        sortOrder.trim() === ""
-          ? (
-              images.find(
-                (img: any) =>
-                  img.id === editingImageId
-              )?.sort_order ?? 1
-            )
-          : Number(sortOrder);
-
-      const { error: updateError } =
+      const { error: insertError } =
         await supabase
           .from("images")
-          .update({
-            topic_id: selectedTopicId,
-            name: finalName,
-            file_path: finalFilePath,
-            sort_order: finalSortOrder
-          })
-          .eq(
-            "id",
-            editingImageId
-          );
+          .insert(insertedRows);
 
       // -------------------------------------------------------
-      // Database update fail → new uploaded file rollback
+      // Database failed → delete uploaded files
       // -------------------------------------------------------
 
-      if (updateError) {
-
-        if (newUploadedFilePath) {
-
-          await supabase.storage
-            .from("images")
-            .remove([
-              newUploadedFilePath
-            ]);
-
-        }
-
-        throw updateError;
-
-      }
-
-      // -------------------------------------------------------
-      // पुरानी file delete करें
-      // -------------------------------------------------------
-
-      if (
-        selectedFiles.length === 1 &&
-        editingFilePath &&
-        editingFilePath !== finalFilePath
-      ) {
+      if (insertError) {
 
         await supabase.storage
           .from("images")
-          .remove([
-            editingFilePath
-          ]);
+          .remove(uploadedFilePaths);
+
+        throw insertError;
 
       }
 
-      alert("Image updated successfully.");
+      // -------------------------------------------------------
+      // Success
+      // -------------------------------------------------------
+
+      alert(
+        selectedFiles.length === 1
+          ? "Image saved successfully."
+          : `${selectedFiles.length} images saved successfully.`
+      );
 
       clearForm();
 
@@ -374,208 +550,32 @@ const handleSave = async () => {
     } catch (error: any) {
 
       console.error(
-        "IMAGE UPDATE ERROR:",
+        "IMAGE BULK SAVE ERROR:",
         error
       );
 
+      // -------------------------------------------------------
+      // Safety rollback
+      // -------------------------------------------------------
+
+      if (uploadedFilePaths.length > 0) {
+
+        await supabase.storage
+          .from("images")
+          .remove(uploadedFilePaths);
+
+      }
+
       alert(
         error?.message ||
-        "Unable to update image."
+        "Unable to save images."
       );
 
     }
 
     setLoading(false);
 
-    return;
-
-  }
-
-  // =========================================================
-  // NEW IMAGE - BULK UPLOAD
-  // =========================================================
-
-  if (selectedFiles.length === 0) {
-
-    alert("Please select at least one image.");
-
-    return;
-
-  }
-
-  setLoading(true);
-
-  const uploadedFilePaths: string[] = [];
-  const insertedRows: any[] = [];
-
-  try {
-
-    // -------------------------------------------------------
-    // Starting Sort Order
-    // -------------------------------------------------------
-
-    let nextSortOrder =
-      sortOrder.trim() === ""
-        ? (
-            images.filter(
-              (img: any) =>
-                img.topic_id === selectedTopicId
-            ).length + 1
-          )
-        : Number(sortOrder);
-
-    // -------------------------------------------------------
-    // Upload every selected image
-    // -------------------------------------------------------
-
-    for (const file of selectedFiles) {
-
-      const safeFileName =
-        file.name
-          .replace(
-            /[^a-zA-Z0-9._-]/g,
-            "_"
-          );
-
-      const filePath =
-        `${selectedTopicId}/${crypto.randomUUID()}-${safeFileName}`;
-
-      // -----------------------------------------------
-      // Upload to Supabase Storage
-      // -----------------------------------------------
-
-      const { error: uploadError } =
-        await supabase.storage
-          .from("images")
-          .upload(
-            filePath,
-            file,
-            {
-              cacheControl: "3600",
-              upsert: false,
-              contentType: file.type
-            }
-          );
-
-      if (uploadError) {
-
-        throw uploadError;
-
-      }
-
-      uploadedFilePaths.push(filePath);
-
-      // -----------------------------------------------
-      // Automatic Image Name
-      // -----------------------------------------------
-
-      let finalName = "";
-
-      /*
-       * अगर केवल एक image है और user ने manually
-       * Image Name दिया है, तो वही name इस्तेमाल होगा।
-       *
-       * Bulk upload में हर image का अपना filename
-       * automatic name बनेगा।
-       */
-
-      if (
-        selectedFiles.length === 1 &&
-        imageName.trim()
-      ) {
-
-        finalName = imageName.trim();
-
-      } else {
-
-        finalName =
-          file.name
-            .replace(/\.[^/.]+$/, "");
-
-      }
-
-      insertedRows.push({
-
-        topic_id: selectedTopicId,
-
-        name: finalName,
-
-        file_path: filePath,
-
-        sort_order: nextSortOrder
-
-      });
-
-      nextSortOrder++;
-
-    }
-
-    // -------------------------------------------------------
-    // Insert all records into Database
-    // -------------------------------------------------------
-
-    const { error: insertError } =
-      await supabase
-        .from("images")
-        .insert(insertedRows);
-
-    // -------------------------------------------------------
-    // Database failed → delete uploaded files
-    // -------------------------------------------------------
-
-    if (insertError) {
-
-      await supabase.storage
-        .from("images")
-        .remove(uploadedFilePaths);
-
-      throw insertError;
-
-    }
-
-    // -------------------------------------------------------
-    // Success
-    // -------------------------------------------------------
-
-    alert(
-      selectedFiles.length === 1
-        ? "Image saved successfully."
-        : `${selectedFiles.length} images saved successfully.`
-    );
-
-    clearForm();
-
-    await loadImages();
-
-  } catch (error: any) {
-
-    console.error(
-      "IMAGE BULK SAVE ERROR:",
-      error
-    );
-
-    // -------------------------------------------------------
-    // Safety rollback
-    // -------------------------------------------------------
-
-    if (uploadedFilePaths.length > 0) {
-
-      await supabase.storage
-        .from("images")
-        .remove(uploadedFilePaths);
-
-    }
-
-    alert(
-      error?.message ||
-      "Unable to save images."
-    );
-
-  }
-
-  setLoading(false);
-
-};
+  };
 
 
   // =========================================================
@@ -748,9 +748,15 @@ const handleSave = async () => {
   // =========================================================
   // SORT IMAGES
   // =========================================================
-
+  const filteredImages =
+    selectedTopicId
+      ? images.filter(
+        (image: any) =>
+          image.topic_id === selectedTopicId
+      )
+      : images;
   const sortedImages =
-    [...images].sort(
+    [...filteredImages].sort(
       (a: any, b: any) => {
 
         const topicA =
@@ -835,7 +841,7 @@ const handleSave = async () => {
           FORM
       ====================================================== */}
 
-      <div className="grid md:grid-cols-[1fr_1fr_180px] gap-4">
+      <div className="grid grid-cols-[260px_260px_120px_1fr_auto] gap-3 items-end">
 
         {/* IMAGE TOPIC */}
 
@@ -922,7 +928,37 @@ const handleSave = async () => {
           />
 
         </div>
+        <div>
+          <label className="block text-sm mb-1">
+            Image File
+          </label>
 
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleFileChange}
+            className="block w-full border border-gray-300 rounded px-3 py-2"
+          />
+
+          {editingImageId && (
+            <p className="text-xs text-gray-500 mt-1">
+              Leave file empty to keep the existing image.
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={loading}
+          className="bg-green-600 text-white px-5 py-2 rounded disabled:opacity-50 h-[38px]"
+        >
+          {loading
+            ? "Saving..."
+            : editingImageId
+              ? "Update"
+              : "Save"}
+        </button>
       </div>
 
 
@@ -930,27 +966,6 @@ const handleSave = async () => {
           FILE UPLOAD
       ====================================================== */}
 
-      <div className="mt-4">
-
-        <label className="block text-sm mb-1">
-          Image File
-        </label>
-
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleFileChange}
-          className="block w-full border border-gray-300 rounded px-3 py-2"
-        />
-
-        {editingImageId && (
-          <p className="text-xs text-gray-500 mt-1">
-            Leave file empty to keep the existing image.
-          </p>
-        )}
-
-      </div>
 
 
       {/* =====================================================
@@ -984,36 +999,7 @@ const handleSave = async () => {
           BUTTONS
       ====================================================== */}
 
-      <div className="flex gap-2 mt-5">
-
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={loading}
-          className="bg-green-600 text-white px-5 py-2 rounded disabled:opacity-50"
-        >
-          {loading
-            ? "Saving..."
-            : editingImageId
-              ? "Update Image"
-              : "Save Image"}
-        </button>
-
-
-        {editingImageId && (
-
-          <button
-            type="button"
-            onClick={clearForm}
-            disabled={loading}
-            className="bg-gray-500 text-white px-5 py-2 rounded disabled:opacity-50"
-          >
-            Cancel
-          </button>
-
-        )}
-
-      </div>
+      
 
 
       {/* =====================================================
@@ -1025,7 +1011,7 @@ const handleSave = async () => {
         <div className="mt-8">
 
           <h3 className="text-xl font-bold text-[#06204a] mb-3">
-            Saved Images ({images.length})
+            Saved Images ({filteredImages.length})
           </h3>
 
 
