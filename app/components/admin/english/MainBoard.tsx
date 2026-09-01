@@ -28,6 +28,7 @@ export default function MainBoard({
   // 🔥 NEW PROPS
   selectedDays,
   selectedTopics,
+  setSelectedTopics,
   topics,
   layout,
   days,

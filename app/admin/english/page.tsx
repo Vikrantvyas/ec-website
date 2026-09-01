@@ -18,6 +18,7 @@ export default function EnglishPage() {
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [topicNavIndex, setTopicNavIndex] = useState(0);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
@@ -174,11 +175,7 @@ export default function EnglishPage() {
 
     let topicIds = selectedTopics;
 
-    if (topicIds.length === 0 && selectedDays.length > 0) {
-      topicIds = topics
-        .filter(t => selectedDays.includes(t.day_id))
-        .map(t => t.id);
-    }
+
 
     if (topicIds.length === 0) return;
 
@@ -205,7 +202,7 @@ export default function EnglishPage() {
       });
 
       setSentences(sorted);
-      
+
       setShowAll(false);
     }
   };
@@ -246,8 +243,9 @@ export default function EnglishPage() {
     if (selectedDays.length === 0) return;
 
     const dayTopics = topics
-      .filter((topic: any) =>
-        selectedDays.includes(topic.day_id)
+      .filter(
+        (topic: any) =>
+          selectedDays.includes(topic.day_id)
       )
       .sort(
         (a: any, b: any) =>
@@ -256,31 +254,59 @@ export default function EnglishPage() {
 
     if (dayTopics.length === 0) return;
 
-    const currentTopicId = selectedTopics[0];
+    // अगर एक ही Topic selected है,
+    // तो उसी के बाद वाला Topic लें
+    if (selectedTopics.length === 1) {
 
-    const currentIndex = dayTopics.findIndex(
-      (topic: any) =>
-        topic.id === currentTopicId
-    );
+      const currentIndex =
+        dayTopics.findIndex(
+          (topic: any) =>
+            topic.id === selectedTopics[0]
+        );
+
+      if (currentIndex < 0) return;
+
+      const nextIndex = currentIndex + 1;
+
+      if (nextIndex >= dayTopics.length) return;
+
+      const nextTopicId =
+        dayTopics[nextIndex].id;
+
+      setSelectedTopics([nextTopicId]);
+
+      setCurrentIndex(0);
+      setShowAll(false);
+      setHighlightIndex(null);
+
+      return;
+    }
+
+    // अगर कई Topics selected हैं
+    // (जैसे Day checkbox से सभी Topics)
+    // तो पहले Topic को current मानकर अगला दिखाएँ
+    const firstSelectedIndex =
+      dayTopics.findIndex(
+        (topic: any) =>
+          selectedTopics.includes(topic.id)
+      );
+
+    if (firstSelectedIndex < 0) return;
 
     const nextIndex =
-      currentIndex < 0
-        ? 0
-        : currentIndex + 1;
+      firstSelectedIndex + 1;
 
     if (nextIndex >= dayTopics.length) return;
 
     const nextTopicId =
       dayTopics[nextIndex].id;
 
-    setTopicNavIndex(nextIndex);
+    setSelectedTopics([nextTopicId]);
 
-    setSelectedTopics([
-      nextTopicId
-    ]);
-
+    setCurrentIndex(0);
+    setShowAll(false);
+    setHighlightIndex(null);
   };
-
 
   const prevTopic = () => {
 
@@ -352,6 +378,7 @@ export default function EnglishPage() {
         selectedCourse={selectedCourse}
         selectedDays={selectedDays}
         selectedTopics={selectedTopics}
+        setSelectedTopics={setSelectedTopics}
         setSelectedCourse={setSelectedCourse}
         setSelectedDays={setSelectedDays}
         setSelectedTopics={setSelectedTopics}

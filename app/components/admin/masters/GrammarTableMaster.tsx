@@ -871,29 +871,23 @@ export default function GrammarTableMaster() {
 
     alert("Column Added");
   };
-  const deleteRow = async (actualRowIndex: number) => {
+  const deleteRow = async (displayIndex: number) => {
     if (!selectedTable) return;
 
     const ok = confirm(
-      `Delete Row ${actualRowIndex + 1} and all its data?`
+      `Delete Row ${displayIndex + 1} and all its data?`
     );
 
     if (!ok) return;
 
-    // Delete all cells of this row
-    const { error: cellError } = await supabase
-      .from("grammar_cells")
-      .delete()
-      .eq("table_id", selectedTable.id)
-      .eq("row_no", actualRowIndex);
+    // UI में जिस row पर click हुआ है,
+    // वही row delete होगी
+    const targetRowNo = rowOrder[displayIndex];
 
-    if (cellError) {
-      alert(cellError.message);
-      return;
-    }
+    if (targetRowNo === undefined) return;
 
-    // Get remaining cells
-    const { data: remainingCells, error: fetchError } =
+    // सभी cells निकालें
+    const { data: cells, error: fetchError } =
       await supabase
         .from("grammar_cells")
         .select("*")
@@ -904,24 +898,69 @@ export default function GrammarTableMaster() {
       return;
     }
 
-    // Shift rows after deleted row
-    if (remainingCells) {
-      for (const cell of remainingCells) {
-        if (cell.row_no > actualRowIndex) {
-          await supabase
-            .from("grammar_cells")
-            .update({
-              row_no: cell.row_no - 1,
-            })
-            .eq("id", cell.id);
-        }
+    // Deleted row को छोड़कर बाकी rows
+    const remainingCells = (cells || []).filter(
+      (cell: any) =>
+        cell.row_no !== targetRowNo
+    );
+
+    // पहले पुराने cells delete करें
+    const { error: deleteError } =
+      await supabase
+        .from("grammar_cells")
+        .delete()
+        .eq("table_id", selectedTable.id);
+
+    if (deleteError) {
+      alert(deleteError.message);
+      return;
+    }
+
+    // Display order के हिसाब से नई numbering
+    const remainingRowIds = rowOrder
+      .filter(
+        (_, index) =>
+          index !== displayIndex
+      );
+
+    const newCells = remainingCells.map(
+      (cell: any) => {
+
+        const oldIndex =
+          rowOrder.indexOf(cell.row_no);
+
+        const newIndex =
+          remainingRowIds.indexOf(
+            cell.row_no
+          );
+
+        return {
+          table_id: selectedTable.id,
+          header_id: cell.header_id,
+          row_no: newIndex,
+          cell_value: cell.cell_value,
+        };
+      }
+    );
+
+    if (newCells.length > 0) {
+      const { error: insertError } =
+        await supabase
+          .from("grammar_cells")
+          .insert(newCells);
+
+      if (insertError) {
+        alert(insertError.message);
+        return;
       }
     }
 
     const newTotalRows =
-      selectedTable.total_rows - 1;
+      Math.max(
+        0,
+        selectedTable.total_rows - 1
+      );
 
-    // Update table row count
     await supabase
       .from("grammar_tables")
       .update({
@@ -929,16 +968,19 @@ export default function GrammarTableMaster() {
       })
       .eq("id", selectedTable.id);
 
-    // Update local row order
-    setRowOrder((prev) =>
-      prev
-        .filter((row) => row !== actualRowIndex)
-        .map((row) =>
-          row > actualRowIndex ? row - 1 : row
-        )
+    setRowOrder(
+      Array.from(
+        { length: newTotalRows },
+        (_, i) => i
+      )
     );
 
     setSelectedTable({
+      ...selectedTable,
+      total_rows: newTotalRows,
+    });
+
+    await openTable({
       ...selectedTable,
       total_rows: newTotalRows,
     });
