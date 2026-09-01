@@ -381,7 +381,6 @@ export default function EnglishPage() {
         setSelectedTopics={setSelectedTopics}
         setSelectedCourse={setSelectedCourse}
         setSelectedDays={setSelectedDays}
-        setSelectedTopics={setSelectedTopics}
         selectedGrammarTableId={selectedGrammarTableId}
         setSelectedGrammarTableId={setSelectedGrammarTableId}
         selectedImageId={selectedImageId}
