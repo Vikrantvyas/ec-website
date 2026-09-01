@@ -533,7 +533,7 @@ return (
         <tr>
           {columns.map((col, i) => (
             <th
-              key={col}
+              key={`header-${i}-${col}`}
               draggable
               onDragStart={() => setDragIndex(i)}
               onDragOver={(e) => e.preventDefault()}
@@ -628,7 +628,7 @@ return (
                 if (!isVisible) {
                   return (
                     <td
-                      key={col}
+                      key={`cell-${gIndex}-${rIndex}-${columns.indexOf(col)}`}
                       className="border-0 p-0 h-0"
                     >
                     </td>
