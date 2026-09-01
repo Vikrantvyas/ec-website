@@ -29,6 +29,7 @@ export default function LeftPanel({
   const [grammarTopics, setGrammarTopics] =
     useState<any[]>([]);
   const [expandedGrammarTopics, setExpandedGrammarTopics] = useState<string[]>([]);
+  const [expandedDays, setExpandedDays] = useState<string[]>([]);
   const [showImages, setShowImages] = useState(false);
 
   const [imageTopics, setImageTopics] =
@@ -134,17 +135,17 @@ export default function LeftPanel({
     setImageTopics(finalTopics);
 
   };
-// =========================================================
-// TOGGLE IMAGE TOPIC
-// =========================================================
+  // =========================================================
+  // TOGGLE IMAGE TOPIC
+  // =========================================================
 
-const toggleImageTopic = (id: string) => {
-  setExpandedImageTopics(prev =>
-    prev.includes(id)
-      ? prev.filter(x => x !== id)
-      : [...prev, id]
-  );
-};
+  const toggleImageTopic = (id: string) => {
+    setExpandedImageTopics(prev =>
+      prev.includes(id)
+        ? prev.filter(x => x !== id)
+        : [...prev, id]
+    );
+  };
   // =========================================================
   // AUTO SCROLL TO SELECTED IMAGE
   // =========================================================
@@ -183,19 +184,68 @@ const toggleImageTopic = (id: string) => {
 
 
   const toggleDay = (id: string) => {
-    setSelectedDays((prev: string[]) =>
-      prev.includes(id)
-        ? prev.filter(d => d !== id)
-        : [...prev, id]
-    );
-  };
 
-  const toggleTopic = (id: string) => {
-    setSelectedTopics((prev: string[]) =>
-      prev.includes(id)
-        ? prev.filter(t => t !== id)
-        : [...prev, id]
+  const dayTopicIds = topics
+    .filter(
+      (topic: any) => topic.day_id === id
+    )
+    .map(
+      (topic: any) => topic.id
     );
+
+  const allTopicsSelected =
+    dayTopicIds.length > 0 &&
+    dayTopicIds.every(
+      (topicId: string) =>
+        selectedTopics.includes(topicId)
+    );
+
+  // Day checked / all topics selected
+  // → सब uncheck करें
+  if (allTopicsSelected) {
+
+    setSelectedDays((prev: string[]) =>
+      prev.filter(
+        (dayId: string) => dayId !== id
+      )
+    );
+
+    setSelectedTopics((prev: string[]) =>
+      prev.filter(
+        (topicId: string) =>
+          !dayTopicIds.includes(topicId)
+      )
+    );
+
+    return;
+  }
+
+  // Day unchecked / सभी topics select करें
+  setSelectedDays((prev: string[]) => [
+    ...new Set([
+      ...prev,
+      id
+    ])
+  ]);
+
+  setSelectedTopics((prev: string[]) => [
+    ...new Set([
+      ...prev,
+      ...dayTopicIds
+    ])
+  ]);
+};
+  const toggleTopic = (id: string) => {
+    setSelectedTopics((prev: string[]) => {
+
+      if (prev.includes(id)) {
+        return prev.filter(
+          (topicId: string) => topicId !== id
+        );
+      }
+
+      return [...prev, id];
+    });
   };
 
   // 🔥 RIGHT CLICK
@@ -451,8 +501,8 @@ const toggleImageTopic = (id: string) => {
                           key={image.id}
                           id={`image-item-${image.id}`}
                           className={`flex items-center gap-2 w-full text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === image.id
-                              ? "bg-blue-100 text-blue-700 font-semibold"
-                              : "hover:bg-gray-100"
+                            ? "bg-blue-100 text-blue-700 font-semibold"
+                            : "hover:bg-gray-100"
                             }`}
                         >
 
@@ -611,7 +661,18 @@ const toggleImageTopic = (id: string) => {
                   (t: any) => t.day_id === d.id
                 );
 
-                const isSelected = selectedDays.includes(d.id);
+                const dayTopicIds = dayTopics.map(
+                  (topic: any) => topic.id
+                );
+
+                const isSelected =
+                  dayTopicIds.length > 0 &&
+                  dayTopicIds.every(
+                    (topicId: string) =>
+                      selectedTopics.includes(topicId)
+                  );
+                const isDayExpanded =
+                  expandedDays.includes(d.id);
                 const hasTopics = dayTopics.length > 0;
 
                 return (
@@ -621,12 +682,22 @@ const toggleImageTopic = (id: string) => {
                   >
 
                     {/* DAY ROW */}
-                    <label
+                    <div
                       className={`flex shrink-0 items-center justify-between w-full py-1 px-1 text-[13px] cursor-pointer hover:bg-gray-100 ${isSelected
                         ? "text-blue-700"
                         : "text-gray-800"
                         }`}
+                      onClick={() => {
+                        if (hasTopics) {
+                          setExpandedDays((prev: string[]) =>
+                            prev.includes(d.id)
+                              ? prev.filter(dayId => dayId !== d.id)
+                              : [...prev, d.id]
+                          );
+                        }
+                      }}
                     >
+
 
                       <div className="flex items-center gap-2 min-w-0">
 
@@ -634,6 +705,7 @@ const toggleImageTopic = (id: string) => {
                           type="checkbox"
                           className="w-3.5 h-3.5 shrink-0"
                           checked={isSelected}
+                          onClick={(e) => e.stopPropagation()}
                           onChange={() => toggleDay(d.id)}
                         />
 
@@ -649,11 +721,10 @@ const toggleImageTopic = (id: string) => {
                           {isSelected ? "−" : "+"}
                         </span>
                       )}
-
-                    </label>
+                    </div>
 
                     {/* TOPICS */}
-                    {isSelected && hasTopics && (
+                    {isDayExpanded && hasTopics && (
 
                       <div className="flex flex-col ml-4 gap-1 pb-1">
 
