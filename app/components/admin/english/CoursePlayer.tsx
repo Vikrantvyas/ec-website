@@ -162,29 +162,48 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     // PREVIOUS
     // =========================================================
 
+    // =========================================================
+    // PREVIOUS
+    // Reverse of NEXT
+    // =========================================================
+
     const handlePrev = () => {
+    if (showAll) return;
 
-        if (showAll) return;
+    if (currentIndex < 0) return;
 
-        if (currentIndex < 0) return;
+    // English visible:
+    // केवल current sentence का English hide करें
+    if (showEnglish) {
+        setRevealedAnswers((prev) =>
+            prev.filter((index) => index !== currentIndex)
+        );
 
-        // English visible → Hindi
-        if (showEnglish) {
+        setShowEnglish(false);
+        return;
+    }
 
-            setShowEnglish(false);
+    // Hindi visible:
+    // Current Hindi को भी पीछे करें और
+    // उसके previous sentence का English दिखाएँ
+    if (currentIndex > 0) {
+        const previousIndex = currentIndex - 1;
 
-            return;
-        }
+        setCurrentIndex(previousIndex);
 
-        // Hindi visible → previous English
-        if (currentIndex > 0) {
+        setRevealedAnswers((prev) =>
+            prev.filter((index) => index <= previousIndex)
+        );
 
-            setCurrentIndex((prev) => prev - 1);
-            setShowEnglish(true);
+        setShowEnglish(true);
+        return;
+    }
 
-        }
-
-    };
+    // First Hindi → Blank
+    setCurrentIndex(-1);
+    setShowEnglish(false);
+    setRevealedAnswers([]);
+};
 
 
     // =========================================================
@@ -384,8 +403,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
                             }}
 
-                            className={`flex text-base cursor-pointer hover:bg-yellow-200 transition-colors ${
-                                highlightIndex === i
+                            className={`flex text-base cursor-pointer hover:bg-yellow-200 transition-colors ${highlightIndex === i
                                     ? "bg-blue-100"
                                     : marks[i] === "correct"
                                         ? "bg-green-200"
@@ -394,7 +412,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                             : i === currentIndex && !showAll
                                                 ? "bg-yellow-100"
                                                 : ""
-                            }`}
+                                }`}
                         >
 
                             <div className="w-10">
@@ -408,7 +426,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                             <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600">
 
                                 {showAll ||
-                                revealedAnswers.includes(i)
+                                    revealedAnswers.includes(i)
                                     ? english
                                     : ""}
 
