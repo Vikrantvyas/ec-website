@@ -39,12 +39,12 @@ export default function Controls({
     <div className={groupBox}>
 
       <button
-        onClick={prevSentence}
-        disabled={currentIndex === 0}
-        className={`${toolBtn} disabled:opacity-40`}
-      >
-        Prev
-      </button>
+    onClick={prevSentence}
+    disabled={currentIndex < 0}
+    className={`${toolBtn} disabled:opacity-40`}
+>
+    Prev
+</button>
 
       <button
         onClick={nextSentence}
