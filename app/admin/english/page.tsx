@@ -205,7 +205,7 @@ export default function EnglishPage() {
       });
 
       setSentences(sorted);
-      setCurrentIndex(0);
+      
       setShowAll(false);
     }
   };
@@ -243,35 +243,80 @@ export default function EnglishPage() {
 
   const nextTopic = () => {
 
-    if (selectedTopics.length === 0) return;
+    if (selectedDays.length === 0) return;
 
-    if (topicNavIndex < selectedTopics.length - 1) {
+    const dayTopics = topics
+      .filter((topic: any) =>
+        selectedDays.includes(topic.day_id)
+      )
+      .sort(
+        (a: any, b: any) =>
+          (a.order_no ?? 0) - (b.order_no ?? 0)
+      );
 
-      const nextIndex = topicNavIndex + 1;
+    if (dayTopics.length === 0) return;
 
-      setTopicNavIndex(nextIndex);
+    const currentTopicId = selectedTopics[0];
 
-      setSelectedTopics([
-        selectedTopics[nextIndex]
-      ]);
+    const currentIndex = dayTopics.findIndex(
+      (topic: any) =>
+        topic.id === currentTopicId
+    );
 
-    }
+    const nextIndex =
+      currentIndex < 0
+        ? 0
+        : currentIndex + 1;
+
+    if (nextIndex >= dayTopics.length) return;
+
+    const nextTopicId =
+      dayTopics[nextIndex].id;
+
+    setTopicNavIndex(nextIndex);
+
+    setSelectedTopics([
+      nextTopicId
+    ]);
 
   };
 
+
   const prevTopic = () => {
 
-    if (topicNavIndex > 0) {
+    if (selectedDays.length === 0) return;
 
-      const prevIndex = topicNavIndex - 1;
+    const dayTopics = topics
+      .filter((topic: any) =>
+        selectedDays.includes(topic.day_id)
+      )
+      .sort(
+        (a: any, b: any) =>
+          (a.order_no ?? 0) - (b.order_no ?? 0)
+      );
 
-      setTopicNavIndex(prevIndex);
+    if (dayTopics.length === 0) return;
 
-      setSelectedTopics([
-        selectedTopics[prevIndex]
-      ]);
+    const currentTopicId = selectedTopics[0];
 
-    }
+    const currentIndex = dayTopics.findIndex(
+      (topic: any) =>
+        topic.id === currentTopicId
+    );
+
+    if (currentIndex <= 0) return;
+
+    const previousIndex =
+      currentIndex - 1;
+
+    const previousTopicId =
+      dayTopics[previousIndex].id;
+
+    setTopicNavIndex(previousIndex);
+
+    setSelectedTopics([
+      previousTopicId
+    ]);
 
   };
 
