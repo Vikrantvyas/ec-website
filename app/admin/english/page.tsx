@@ -131,6 +131,8 @@ export default function EnglishPage() {
   }, [selectedDays]);
 
   useEffect(() => {
+    setCurrentIndex(-1);
+    setHighlightIndex(null);
     fetchSentences();
   }, [selectedTopics, selectedDays]);
   useEffect(() => {
@@ -163,18 +165,18 @@ export default function EnglishPage() {
   };
 
   const fetchTopics = async () => {
-  const { data, error } = await supabase
-    .from("topics")
-    .select("*, vocabulary(count)")
-    .order("order_no");
+    const { data, error } = await supabase
+      .from("topics")
+      .select("*, vocabulary(count)")
+      .order("order_no");
 
-  if (error) {
-    console.error("TOPICS ERROR:", error);
-    return;
-  }
+    if (error) {
+      console.error("TOPICS ERROR:", error);
+      return;
+    }
 
-  if (data) setTopics(data);
-};
+    if (data) setTopics(data);
+  };
   const refreshTopicCount = async (topicId: string) => {
     const { data, error } = await supabase
       .from("topics")
