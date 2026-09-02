@@ -163,14 +163,43 @@ export default function EnglishPage() {
   };
 
   const fetchTopics = async () => {
-    const { data } = await supabase
+  const { data, error } = await supabase
+    .from("topics")
+    .select("*, vocabulary(count)")
+    .order("order_no");
+
+  if (error) {
+    console.error("TOPICS ERROR:", error);
+    return;
+  }
+
+  if (data) setTopics(data);
+};
+  const refreshTopicCount = async (topicId: string) => {
+    const { data, error } = await supabase
       .from("topics")
-      .select("*, vocabulary(count)")
-      .order("order_no");
+      .select("id, vocabulary(count)")
+      .eq("id", topicId)
+      .single();
 
-    if (data) setTopics(data);
+    if (error) {
+      console.error("TOPIC COUNT REFRESH ERROR:", error);
+      return;
+    }
+
+    if (!data) return;
+
+    setTopics(prev =>
+      prev.map(topic =>
+        topic.id === topicId
+          ? {
+            ...topic,
+            vocabulary: data.vocabulary,
+          }
+          : topic
+      )
+    );
   };
-
   const fetchSentences = async () => {
 
     let topicIds = selectedTopics;
@@ -207,6 +236,7 @@ export default function EnglishPage() {
     }
   };
   const refreshData = async () => {
+    await fetchTopics();
     await fetchSentences();
   };
   // ---------------- NAV ----------------
@@ -385,6 +415,7 @@ export default function EnglishPage() {
         setSelectedGrammarTableId={setSelectedGrammarTableId}
         selectedImageId={selectedImageId}
         setSelectedImageId={setSelectedImageId}
+        refreshData={refreshData}
 
       />
       <div className="flex-1 flex flex-col items-center pt-4 gap-2">
