@@ -17,7 +17,8 @@ export default function LeftPanel({
   setSelectedGrammarTableId,
   selectedImageId,
   setSelectedImageId,
-  refreshData
+  refreshData,
+  refreshTopicCount
 }: any) {
 
   const [menu, setMenu] = useState<any>(null);
@@ -185,56 +186,56 @@ export default function LeftPanel({
 
   const toggleDay = (id: string) => {
 
-  const dayTopicIds = topics
-    .filter(
-      (topic: any) => topic.day_id === id
-    )
-    .map(
-      (topic: any) => topic.id
-    );
-
-  const allTopicsSelected =
-    dayTopicIds.length > 0 &&
-    dayTopicIds.every(
-      (topicId: string) =>
-        selectedTopics.includes(topicId)
-    );
-
-  // Day checked / all topics selected
-  // → सब uncheck करें
-  if (allTopicsSelected) {
-
-    setSelectedDays((prev: string[]) =>
-      prev.filter(
-        (dayId: string) => dayId !== id
+    const dayTopicIds = topics
+      .filter(
+        (topic: any) => topic.day_id === id
       )
-    );
+      .map(
+        (topic: any) => topic.id
+      );
 
-    setSelectedTopics((prev: string[]) =>
-      prev.filter(
+    const allTopicsSelected =
+      dayTopicIds.length > 0 &&
+      dayTopicIds.every(
         (topicId: string) =>
-          !dayTopicIds.includes(topicId)
-      )
-    );
+          selectedTopics.includes(topicId)
+      );
 
-    return;
-  }
+    // Day checked / all topics selected
+    // → सब uncheck करें
+    if (allTopicsSelected) {
 
-  // Day unchecked / सभी topics select करें
-  setSelectedDays((prev: string[]) => [
-    ...new Set([
-      ...prev,
-      id
-    ])
-  ]);
+      setSelectedDays((prev: string[]) =>
+        prev.filter(
+          (dayId: string) => dayId !== id
+        )
+      );
 
-  setSelectedTopics((prev: string[]) => [
-    ...new Set([
-      ...prev,
-      ...dayTopicIds
-    ])
-  ]);
-};
+      setSelectedTopics((prev: string[]) =>
+        prev.filter(
+          (topicId: string) =>
+            !dayTopicIds.includes(topicId)
+        )
+      );
+
+      return;
+    }
+
+    // Day unchecked / सभी topics select करें
+    setSelectedDays((prev: string[]) => [
+      ...new Set([
+        ...prev,
+        id
+      ])
+    ]);
+
+    setSelectedTopics((prev: string[]) => [
+      ...new Set([
+        ...prev,
+        ...dayTopicIds
+      ])
+    ]);
+  };
   const toggleTopic = (id: string) => {
     setSelectedTopics((prev: string[]) => {
 
@@ -381,9 +382,14 @@ export default function LeftPanel({
       .insert(newData);
 
     setShowPopup(false);
-    if (refreshData) {
-      await refreshData();
-    }
+
+if (refreshData) {
+  await refreshData();
+}
+
+if (refreshTopicCount) {
+  await refreshTopicCount(selectedTopicData.id);
+}
   };
 
   // 🔥 CLOSE MENU
