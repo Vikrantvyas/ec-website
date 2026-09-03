@@ -462,7 +462,7 @@ export default function GrammarBoard({
 
   return (
 
-    <div className="relative w-full h-full p-4 overflow-hidden">
+    <div className="relative w-full h-full overflow-hidden">
 
       {/* =====================================================
           COMPLETE GRAMMAR TABLE
