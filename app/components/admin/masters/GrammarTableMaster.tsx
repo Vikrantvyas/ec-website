@@ -45,6 +45,8 @@ export default function GrammarTableMaster() {
     useState<number | null>(null);
   const [draggedRowIndex, setDraggedRowIndex] =
     useState<number | null>(null);
+  const [draggedTableId, setDraggedTableId] =
+    useState<string | null>(null);
   const [rowOrder, setRowOrder] = useState<number[]>([]);
   const [copiedRow, setCopiedRow] = useState<any>(null);
   const copyTable = async (table: any) => {
@@ -574,6 +576,66 @@ export default function GrammarTableMaster() {
     }
 
   }, [grammarTopics]);
+  const handleTableDrop = async (targetTable: any) => {
+    if (!draggedTableId || draggedTableId === targetTable.id) {
+      setDraggedTableId(null);
+      return;
+    }
+
+    const draggedTable = savedTables.find(
+      (table) => table.id === draggedTableId
+    );
+
+    if (!draggedTable) {
+      setDraggedTableId(null);
+      return;
+    }
+
+    if (draggedTable.topic_id !== targetTable.topic_id) {
+      alert("Tables can be reordered only within the same Grammar Topic.");
+      setDraggedTableId(null);
+      return;
+    }
+
+    const topicTables = savedTables
+      .filter(
+        (table) => table.topic_id === targetTable.topic_id
+      )
+      .sort(
+        (a, b) =>
+          (a.order_no || 999999) -
+          (b.order_no || 999999)
+      );
+
+    const oldIndex = topicTables.findIndex(
+      (table) => table.id === draggedTableId
+    );
+
+    const newIndex = topicTables.findIndex(
+      (table) => table.id === targetTable.id
+    );
+
+    if (oldIndex === -1 || newIndex === -1) {
+      setDraggedTableId(null);
+      return;
+    }
+
+    const reordered = [...topicTables];
+    const [movedTable] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, movedTable);
+
+    for (let i = 0; i < reordered.length; i++) {
+      await supabase
+        .from("grammar_tables")
+        .update({
+          order_no: i + 1
+        })
+        .eq("id", reordered[i].id);
+    }
+
+    setDraggedTableId(null);
+    await loadTables();
+  };
   const loadTables = async () => {
 
     let query = supabase
@@ -590,10 +652,9 @@ export default function GrammarTableMaster() {
     }
 
     const { data } = await query.order(
-      "created_at",
+      "order_no",
       { ascending: true }
     );
-
     if (data) {
 
       const sortedTables = [...data].sort((a, b) => {
@@ -624,8 +685,8 @@ export default function GrammarTableMaster() {
 
         }
         return (
-          new Date(a.created_at).getTime() -
-          new Date(b.created_at).getTime()
+          (a.order_no || 999999) -
+          (b.order_no || 999999)
         );
 
       });
@@ -1735,7 +1796,14 @@ export default function GrammarTableMaster() {
 
           <tbody>
             {savedTables.map((table) => (
-              <tr key={table.id}>
+              <tr
+  key={table.id}
+  draggable
+  onDragStart={() => setDraggedTableId(table.id)}
+  onDragOver={(e) => e.preventDefault()}
+  onDrop={() => handleTableDrop(table)}
+  className="cursor-move"
+>
                 <td className="border p-2">
                   {
                     grammarTopics.find(

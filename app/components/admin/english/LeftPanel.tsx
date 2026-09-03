@@ -299,10 +299,10 @@ export default function LeftPanel({
     }
 
     const { data: tablesData, error: tablesError } =
-      await supabase
-        .from("grammar_tables")
-        .select("id, name, topic_id, created_at")
-        .order("created_at", { ascending: true });
+  await supabase
+    .from("grammar_tables")
+    .select("id, name, topic_id, order_no")
+    .order("order_no", { ascending: true });
 
     if (tablesError) {
       console.error(
