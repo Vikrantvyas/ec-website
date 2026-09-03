@@ -168,42 +168,42 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     // =========================================================
 
     const handlePrev = () => {
-    if (showAll) return;
+        if (showAll) return;
 
-    if (currentIndex < 0) return;
+        if (currentIndex < 0) return;
 
-    // English visible:
-    // केवल current sentence का English hide करें
-    if (showEnglish) {
-        setRevealedAnswers((prev) =>
-            prev.filter((index) => index !== currentIndex)
-        );
+        // English visible:
+        // केवल current sentence का English hide करें
+        if (showEnglish) {
+            setRevealedAnswers((prev) =>
+                prev.filter((index) => index !== currentIndex)
+            );
 
+            setShowEnglish(false);
+            return;
+        }
+
+        // Hindi visible:
+        // Current Hindi को भी पीछे करें और
+        // उसके previous sentence का English दिखाएँ
+        if (currentIndex > 0) {
+            const previousIndex = currentIndex - 1;
+
+            setCurrentIndex(previousIndex);
+
+            setRevealedAnswers((prev) =>
+                prev.filter((index) => index <= previousIndex)
+            );
+
+            setShowEnglish(true);
+            return;
+        }
+
+        // First Hindi → Blank
+        setCurrentIndex(-1);
         setShowEnglish(false);
-        return;
-    }
-
-    // Hindi visible:
-    // Current Hindi को भी पीछे करें और
-    // उसके previous sentence का English दिखाएँ
-    if (currentIndex > 0) {
-        const previousIndex = currentIndex - 1;
-
-        setCurrentIndex(previousIndex);
-
-        setRevealedAnswers((prev) =>
-            prev.filter((index) => index <= previousIndex)
-        );
-
-        setShowEnglish(true);
-        return;
-    }
-
-    // First Hindi → Blank
-    setCurrentIndex(-1);
-    setShowEnglish(false);
-    setRevealedAnswers([]);
-};
+        setRevealedAnswers([]);
+    };
 
 
     // =========================================================
@@ -404,14 +404,14 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                             }}
 
                             className={`flex text-base cursor-pointer hover:bg-yellow-200 transition-colors ${highlightIndex === i
-                                    ? "bg-blue-100"
-                                    : marks[i] === "correct"
-                                        ? "bg-green-200"
-                                        : marks[i] === "wrong"
-                                            ? "bg-red-200"
-                                            : i === currentIndex && !showAll
-                                                ? "bg-yellow-100"
-                                                : ""
+                                ? "bg-blue-100"
+                                : marks[i] === "correct"
+                                    ? "bg-green-200"
+                                    : marks[i] === "wrong"
+                                        ? "bg-red-200"
+                                        : i === currentIndex && !showAll
+                                            ? "bg-yellow-100"
+                                            : ""
                                 }`}
                         >
 
