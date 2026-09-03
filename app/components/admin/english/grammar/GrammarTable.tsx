@@ -489,7 +489,7 @@ export default function GrammarTable({
         {/* ✅ PERFECT WIDTH CONTROL */}
 
 
-        <thead className="bg-gray-300 align-middle">
+        <thead className="sticky top-0 z-10 bg-gray-300 align-middle">
 
 
 
@@ -514,7 +514,7 @@ export default function GrammarTable({
             ))}
           </tr>
         </thead>
-        
+
         <tbody>
 
           {visibleTableData.map((group, gIndex) => (
@@ -621,49 +621,49 @@ export default function GrammarTable({
 
       </table>
       <div className="absolute top-1 right-1 z-10 flex items-center gap-2 text-xs">
-          <span className="font-semibold">Rows:</span>
+        <span className="font-semibold">Rows:</span>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              revealPrevCell();
-            }}
-            disabled={revealedRows <= 0}
-            className="px-2 py-0.5 border rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
-          >
-            −
-          </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            revealPrevCell();
+          }}
+          disabled={revealedRows <= 0}
+          className="px-2 py-0.5 border rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
+        >
+          −
+        </button>
 
-          <span className="min-w-[24px] text-center font-semibold">
-            {revealedRows}
-          </span>
+        <span className="min-w-[24px] text-center font-semibold">
+          {revealedRows}
+        </span>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              revealNextCell();
-            }}
-            disabled={
-              revealedRows >=
-              tableData.reduce(
-                (acc, group) => acc + group.rows.length,
-                0
-              )
-            }
-            className="px-2 py-0.5 border rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
-          >
-            +
-          </button>
-
-          <span className="text-gray-500">
-            / {tableData.reduce(
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            revealNextCell();
+          }}
+          disabled={
+            revealedRows >=
+            tableData.reduce(
               (acc, group) => acc + group.rows.length,
               0
-            )}
-          </span>
-        </div>
+            )
+          }
+          className="px-2 py-0.5 border rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40"
+        >
+          +
+        </button>
+
+        <span className="text-gray-500">
+          / {tableData.reduce(
+            (acc, group) => acc + group.rows.length,
+            0
+          )}
+        </span>
+      </div>
 
       {menu && (
         <div className="fixed bg-white border shadow-lg text-sm z-50" style={{ top: menu.y, left: menu.x }}>
