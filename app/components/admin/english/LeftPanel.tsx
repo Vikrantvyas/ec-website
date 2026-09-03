@@ -383,13 +383,13 @@ export default function LeftPanel({
 
     setShowPopup(false);
 
-if (refreshData) {
-  await refreshData();
-}
+    if (refreshData) {
+      await refreshData();
+    }
 
-if (refreshTopicCount) {
-  await refreshTopicCount(selectedTopicData.id);
-}
+    if (refreshTopicCount) {
+      await refreshTopicCount(selectedTopicData.id);
+    }
   };
 
   // 🔥 CLOSE MENU

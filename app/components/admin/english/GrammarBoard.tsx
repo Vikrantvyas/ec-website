@@ -14,8 +14,10 @@ export default function GrammarBoard({
   const [tableData, setTableData] = useState<any[]>([]);
   const [tableHeaders, setTableHeaders] = useState<any[]>([]);
 
-  const requestIdRef = useRef(0);
+  const [revealedRows, setRevealedRows] = useState(2);
+  const topicIdRef = useRef<string>("");
 
+  const requestIdRef = useRef(0);
   // =========================================================
   // LOAD ALL GRAMMAR TABLES
   // =========================================================
@@ -51,6 +53,10 @@ export default function GrammarBoard({
       }
 
       const topicId = currentTable.topic_id;
+      if (topicIdRef.current !== topicId) {
+        topicIdRef.current = topicId;
+        setRevealedRows(2);
+      }
 
       // अब केवल इसी Grammar Topic की tables लाएँ
       const {
@@ -328,9 +334,9 @@ export default function GrammarBoard({
 
     }
 
-   setSelectedTableId(
-  nextTable.id
-);
+    setSelectedTableId(
+      nextTable.id
+    );
 
     onTableChange?.(
       nextTable.id
@@ -472,6 +478,8 @@ export default function GrammarBoard({
                 h.header_name
             )
           }
+          revealedRows={revealedRows}
+          setRevealedRows={setRevealedRows}
         />
 
       </div>
