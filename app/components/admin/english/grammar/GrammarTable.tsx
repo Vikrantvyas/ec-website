@@ -188,11 +188,21 @@ export default function GrammarTable({
     setDragIndex(null);
   };
   const toggleColumnVisibility = (col: string) => {
-    setHiddenColumns(prev =>
-      prev.includes(col)
-        ? prev.filter(c => c !== col)
-        : [...prev, col]
-    );
+    setHiddenColumns(prev => {
+      // Unhide: हमेशा सबसे पहले hidden column दिखाएँ
+      if (prev.includes(col)) {
+        const firstHidden = columns.find(c => prev.includes(c));
+
+        if (firstHidden === col) {
+          return prev.filter(c => c !== col);
+        }
+
+        return prev;
+      }
+
+      // Hide
+      return [...prev, col];
+    });
   };
   const handleAddColumn = (index: number) => {
     const name = prompt("Column name?");
@@ -527,9 +537,16 @@ export default function GrammarTable({
                     <button
                       type="button"
                       onClick={(e) => {
-                        e.stopPropagation();
-                        toggleColumnVisibility(col);
-                      }}
+  e.stopPropagation();
+
+  const firstHidden = columns.find(c =>
+    hiddenColumns.includes(c)
+  );
+
+  if (firstHidden) {
+    toggleColumnVisibility(firstHidden);
+  }
+}}
                       className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-4 h-4 rounded-full bg-white border-gray-500 flex items-center justify-center cursor-pointer shadow-sm hover:bg-yellow-500"
                       title={`Show ${headerMap[col] || col}`}
                     >
