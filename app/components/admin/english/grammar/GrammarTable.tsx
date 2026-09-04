@@ -515,42 +515,66 @@ export default function GrammarTable({
 
 
           <tr>
-            {columns.map((col, i) => (
-              <th
-                key={`header-${i}-${col}`}
-                draggable
-                onDragStart={() => setDragIndex(i)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => handleDrop(i)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  setMenu({ x: e.clientX, y: e.clientY, colIndex: i });
-                }}
-                className={`border py-1 text-left transition-colors hover:bg-yellow-200 hover:text-black ${hiddenColumns.includes(col)
-                  ? "w-[24px] min-w-[24px] max-w-[24px] px-0"
-                  : "px-2"
-                  }`}
-              >
-                <div className="text-left px-1 transition-colors group-hover:bg-yellow-200 group-hover:text-black">
-                  <label className="flex items-center gap-1 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={!hiddenColumns.includes(col)}
-                      onChange={(e) => {
+            {columns.map((col, i) => {
+              const isHidden = hiddenColumns.includes(col);
+
+              if (isHidden) {
+                return (
+                  <th
+                    key={`hidden-${i}-${col}`}
+                    className="w-0 min-w-0 max-w-0 p-0 border-0 relative overflow-visible"
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => {
                         e.stopPropagation();
                         toggleColumnVisibility(col);
                       }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-3 h-3 shrink-0"
-                    />
+                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-4 h-4 rounded-full bg-white border-gray-500 flex items-center justify-center cursor-pointer shadow-sm hover:bg-yellow-500"
+                      title={`Show ${headerMap[col] || col}`}
+                    >
+                      <span className="sr-only">
+                        Show {headerMap[col] || col}
+                      </span>
+                    </button>
+                  </th>
+                );
+              }
 
-                    {!hiddenColumns.includes(col) && (
-                      <span>{headerMap[col] || col}</span>
-                    )}
-                  </label>
-                </div>
-              </th>
-            ))}
+              return (
+                <th
+                  key={`header-${i}-${col}`}
+                  draggable
+                  onDragStart={() => setDragIndex(i)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleDrop(i)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setMenu({ x: e.clientX, y: e.clientY, colIndex: i });
+                  }}
+                  className="border px-2 py-1 text-left transition-colors hover:bg-yellow-200 hover:text-black"
+                >
+                  <div className="text-left px-1 transition-colors group-hover:bg-yellow-200 group-hover:text-black">
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!hiddenColumns.includes(col)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          toggleColumnVisibility(col);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-3 h-3 shrink-0"
+                      />
+
+                      {!hiddenColumns.includes(col) && (
+                        <span>{headerMap[col] || col}</span>
+                      )}
+                    </label>
+                  </div>
+                </th>
+              );
+            })}
           </tr>
         </thead>
 
@@ -624,8 +648,8 @@ export default function GrammarTable({
                         });
                       }}
                       className={`border py-0 whitespace-nowrap text-left ${hiddenColumns.includes(col)
-                          ? "w-[24px] min-w-[24px] max-w-[24px] px-0 overflow-hidden"
-                          : "px-1"
+                        ? "w-0 min-w-0 max-w-0 p-0 border-0 overflow-hidden"
+                        : "px-1"
                         } ${selected.includes(key)
                           ? "bg-yellow-200 text-black"
                           : "hover:bg-yellow-200 hover:text-black"
@@ -633,22 +657,22 @@ export default function GrammarTable({
                     >
 
                       {!hiddenColumns.includes(col) && (
-  <div
-    contentEditable
-    suppressContentEditableWarning
-    className="bg-transparent outline-none border-none p-0 m-0 text-left min-w-[20px]"
-    onInput={(e) => {
-      handleCellChange(
-        gIndex,
-        rIndex,
-        col,
-        e.currentTarget.innerText
-      );
-    }}
-  >
-    {highlightText(row[col] || "")}
-  </div>
-)}
+                        <div
+                          contentEditable
+                          suppressContentEditableWarning
+                          className="bg-transparent outline-none border-none p-0 m-0 text-left min-w-[20px]"
+                          onInput={(e) => {
+                            handleCellChange(
+                              gIndex,
+                              rIndex,
+                              col,
+                              e.currentTarget.innerText
+                            );
+                          }}
+                        >
+                          {highlightText(row[col] || "")}
+                        </div>
+                      )}
                     </td>
                   );
 
