@@ -33,6 +33,7 @@ export default function GrammarTable({
     setTableData(data);
 
     setColumns([]);
+    setHiddenColumns([]);
     setMergedCells({});
     setSelected([]);
     setHistory([]);
@@ -41,7 +42,7 @@ export default function GrammarTable({
   }, [data]);
 
   const [columns, setColumns] = useState<string[]>([]);
-
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [menu, setMenu] = useState<any>(null);
 
@@ -186,7 +187,13 @@ export default function GrammarTable({
     setColumns(newCols);
     setDragIndex(null);
   };
-
+  const toggleColumnVisibility = (col: string) => {
+    setHiddenColumns(prev =>
+      prev.includes(col)
+        ? prev.filter(c => c !== col)
+        : [...prev, col]
+    );
+  };
   const handleAddColumn = (index: number) => {
     const name = prompt("Column name?");
     if (!name) return;
@@ -260,57 +267,57 @@ export default function GrammarTable({
     setTableData(updated);
   };
   const highlightText = (text: string) => {
-  if (!text) return null;
+    if (!text) return null;
 
-  const parts = text.split(
-    /(\([^)]*\)|नहीं|not|n't|क्[\u200c\u200d]?या|क्या|कब|कौन|कहॉं|कैसे|किसका|कितना|कितने|कितनी|किसे|क्[\u200c\u200d]?यों|क्यों)/giu
-  );
-
-  return parts.map((part, index) => {
-
-    // () वाला पूरा text
-    if (/^\([^)]*\)$/.test(part)) {
-      return (
-        <span
-          key={index}
-          className="bg-purple-600 text-white px-1 rounded"
-        >
-          {part}
-        </span>
-      );
-    }
-
-    // RED: नहीं / not / n't
-    if (
-      part === "नहीं" ||
-      part.toLowerCase() === "not" ||
-      part.toLowerCase() === "n't"
-    ) {
-      return (
-        <span key={index} className="text-red-600">
-          {part}
-        </span>
-      );
-    }
-
-    // BLUE: Question words
-    if (
-      /^(क्[\u200c\u200d]?या|क्या|कब|कौन|कहॉं|कैसे|किसका|कितना|कितने|कितनी|किसे|क्[\u200c\u200d]?यों|क्यों)$/u.test(part)
-    ) {
-      return (
-        <span key={index} className="text-blue-600">
-          {part}
-        </span>
-      );
-    }
-
-    return (
-      <span key={index}>
-        {part}
-      </span>
+    const parts = text.split(
+      /(\([^)]*\)|नहीं|not|n't|क्[\u200c\u200d]?या|क्या|कब|कौन|कहॉं|कैसे|किसका|कितना|कितने|कितनी|किसे|क्[\u200c\u200d]?यों|क्यों)/giu
     );
-  });
-};
+
+    return parts.map((part, index) => {
+
+      // () वाला पूरा text
+      if (/^\([^)]*\)$/.test(part)) {
+        return (
+          <span
+            key={index}
+            className="bg-purple-600 text-white px-1 rounded"
+          >
+            {part}
+          </span>
+        );
+      }
+
+      // RED: नहीं / not / n't
+      if (
+        part === "नहीं" ||
+        part.toLowerCase() === "not" ||
+        part.toLowerCase() === "n't"
+      ) {
+        return (
+          <span key={index} className="text-red-600">
+            {part}
+          </span>
+        );
+      }
+
+      // BLUE: Question words
+      if (
+        /^(क्[\u200c\u200d]?या|क्या|कब|कौन|कहॉं|कैसे|किसका|कितना|कितने|कितनी|किसे|क्[\u200c\u200d]?यों|क्यों)$/u.test(part)
+      ) {
+        return (
+          <span key={index} className="text-blue-600">
+            {part}
+          </span>
+        );
+      }
+
+      return (
+        <span key={index}>
+          {part}
+        </span>
+      );
+    });
+  };
 
 
   const handleCellClick = (e: any, g: number, r: number, c: string) => {
@@ -519,10 +526,28 @@ export default function GrammarTable({
                   e.preventDefault();
                   setMenu({ x: e.clientX, y: e.clientY, colIndex: i });
                 }}
-                className="border px-2 py-1 text-left transition-colors hover:bg-yellow-200 hover:text-black"
+                className={`border py-1 text-left transition-colors hover:bg-yellow-200 hover:text-black ${hiddenColumns.includes(col)
+                  ? "w-[24px] min-w-[24px] max-w-[24px] px-0"
+                  : "px-2"
+                  }`}
               >
                 <div className="text-left px-1 transition-colors group-hover:bg-yellow-200 group-hover:text-black">
-                  {headerMap[col] || col}
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!hiddenColumns.includes(col)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleColumnVisibility(col);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-3 h-3 shrink-0"
+                    />
+
+                    {!hiddenColumns.includes(col) && (
+                      <span>{headerMap[col] || col}</span>
+                    )}
+                  </label>
                 </div>
               </th>
             ))}
@@ -598,28 +623,32 @@ export default function GrammarTable({
                           cell: true
                         });
                       }}
-                      className={`border px-1 py-0 whitespace-nowrap text-left ${selected.includes(key)
-                        ? "bg-yellow-200 text-black"
-                        : "hover:bg-yellow-200 hover:text-black"
+                      className={`border py-0 whitespace-nowrap text-left ${hiddenColumns.includes(col)
+                          ? "w-[24px] min-w-[24px] max-w-[24px] px-0 overflow-hidden"
+                          : "px-1"
+                        } ${selected.includes(key)
+                          ? "bg-yellow-200 text-black"
+                          : "hover:bg-yellow-200 hover:text-black"
                         }`}
                     >
 
-                      <div
-                        contentEditable
-                        suppressContentEditableWarning
-                        className="bg-transparent outline-none border-none p-0 m-0 text-left min-w-[20px]"
-                        onInput={(e) => {
-                          handleCellChange(
-                            gIndex,
-                            rIndex,
-                            col,
-                            e.currentTarget.innerText
-                          );
-                        }}
-                      >
-                        {highlightText(row[col] || "")}
-                      </div>
-
+                      {!hiddenColumns.includes(col) && (
+  <div
+    contentEditable
+    suppressContentEditableWarning
+    className="bg-transparent outline-none border-none p-0 m-0 text-left min-w-[20px]"
+    onInput={(e) => {
+      handleCellChange(
+        gIndex,
+        rIndex,
+        col,
+        e.currentTarget.innerText
+      );
+    }}
+  >
+    {highlightText(row[col] || "")}
+  </div>
+)}
                     </td>
                   );
 
