@@ -260,43 +260,57 @@ export default function GrammarTable({
     setTableData(updated);
   };
   const highlightText = (text: string) => {
-    if (!text) return null;
+  if (!text) return null;
 
-    const parts = text.split(
-      /(नहीं|not|n't|क्[\u200c\u200d]?या|क्या|कब|कौन|कहॉं|कैसे|किसका|कितना|कितने|कितनी|किसे|क्[\u200c\u200d]?यों|क्यों)/giu
-    );
+  const parts = text.split(
+    /(\([^)]*\)|नहीं|not|n't|क्[\u200c\u200d]?या|क्या|कब|कौन|कहॉं|कैसे|किसका|कितना|कितने|कितनी|किसे|क्[\u200c\u200d]?यों|क्यों)/giu
+  );
 
-    return parts.map((part, index) => {
+  return parts.map((part, index) => {
 
-      if (
-        part === "नहीं" ||
-        part.toLowerCase() === "not" ||
-        part.toLowerCase() === "n't"
-      ) {
-        return (
-          <span key={index} className="text-red-600">
-            {part}
-          </span>
-        );
-      }
-
-      if (
-        /^(क्[\u200c\u200d]?या|क्या|कब|कौन|कहॉं|कैसे|किसका|कितना|कितने|कितनी|किसे|क्[\u200c\u200d]?यों|क्यों)$/u.test(part)
-      ) {
-        return (
-          <span key={index} className="text-blue-600">
-            {part}
-          </span>
-        );
-      }
-
+    // () वाला पूरा text
+    if (/^\([^)]*\)$/.test(part)) {
       return (
-        <span key={index}>
+        <span
+          key={index}
+          className="bg-purple-600 text-white px-1 rounded"
+        >
           {part}
         </span>
       );
-    });
-  };
+    }
+
+    // RED: नहीं / not / n't
+    if (
+      part === "नहीं" ||
+      part.toLowerCase() === "not" ||
+      part.toLowerCase() === "n't"
+    ) {
+      return (
+        <span key={index} className="text-red-600">
+          {part}
+        </span>
+      );
+    }
+
+    // BLUE: Question words
+    if (
+      /^(क्[\u200c\u200d]?या|क्या|कब|कौन|कहॉं|कैसे|किसका|कितना|कितने|कितनी|किसे|क्[\u200c\u200d]?यों|क्यों)$/u.test(part)
+    ) {
+      return (
+        <span key={index} className="text-blue-600">
+          {part}
+        </span>
+      );
+    }
+
+    return (
+      <span key={index}>
+        {part}
+      </span>
+    );
+  });
+};
 
 
   const handleCellClick = (e: any, g: number, r: number, c: string) => {
