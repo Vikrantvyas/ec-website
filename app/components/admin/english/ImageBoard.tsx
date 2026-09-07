@@ -26,13 +26,36 @@ export default function ImageBoard({
     );
   }
 
-  const { data } =
-    supabase.storage
-      .from("images")
-      .getPublicUrl(image.file_path);
+  const isVideo = image.media_type === "video";
 
-  const imageUrl = data.publicUrl;
+  let imageUrl = "";
 
+  if (!isVideo) {
+    const { data } =
+      supabase.storage
+        .from("images")
+        .getPublicUrl(image.file_path);
+
+    imageUrl = data.publicUrl;
+  }
+
+  let videoUrl = "";
+
+  if (isVideo) {
+    const rawUrl = image.video_url || "";
+
+    if (rawUrl.includes("youtube.com/watch?v=")) {
+      const videoId = rawUrl.split("v=")[1]?.split("&")[0];
+      videoUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else if (rawUrl.includes("youtu.be/")) {
+      const videoId = rawUrl.split("youtu.be/")[1]?.split("?")[0];
+      videoUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else {
+      videoUrl = rawUrl;
+    }
+  }
+
+  
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === images.length - 1;
 
@@ -53,12 +76,22 @@ export default function ImageBoard({
         ←
       </button>
 
-      {/* IMAGE */}
-      <img
-        src={imageUrl}
-        alt={image.name || "Image"}
-        className="max-w-full max-h-full object-contain"
-      />
+      {/* IMAGE / VIDEO */}
+{isVideo ? (
+  <iframe
+    src={videoUrl}
+    title={image.name || "Video"}
+    className="w-full h-full"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowFullScreen
+  />
+) : (
+  <img
+    src={imageUrl}
+    alt={image.name || "Image"}
+    className="max-w-full max-h-full object-contain"
+  />
+)}
 
       {/* NEXT */}
       <button

@@ -35,7 +35,7 @@ export default function LeftPanel({
 
   const [imageTopics, setImageTopics] =
     useState<any[]>([]);
-
+  const [videos, setVideos] = useState<any[]>([]);
   const [expandedImageTopics, setExpandedImageTopics] =
     useState<string[]>([]);
 
@@ -75,6 +75,7 @@ export default function LeftPanel({
         .select(
           "id, name, topic_id, file_path, sort_order, created_at"
         )
+
         .order("sort_order", {
           ascending: true
         })
@@ -93,14 +94,38 @@ export default function LeftPanel({
       return;
 
     }
+    const { data: videosData, error: videosError } =
+      await supabase
+        .from("videos")
+        .select(
+          "id, name, topic_id, source_type, video_url, file_path, sort_order, created_at"
+        )
+        .order("sort_order", {
+          ascending: true
+        })
+        .order("created_at", {
+          ascending: true
+        });
 
+    if (videosError) {
+      console.error(
+        "VIDEOS ERROR:",
+        videosError.message
+      );
+      return;
+    }
+
+    setVideos(videosData || []);
 
     const finalTopics =
       (topicsData || []).map(
         (topic: any) => ({
 
           ...topic,
-
+          videos: (videosData || []).filter(
+            (video: any) =>
+              video.topic_id === topic.id
+          ),
           images: (imagesData || [])
             .filter(
               (image: any) =>
@@ -299,10 +324,10 @@ export default function LeftPanel({
     }
 
     const { data: tablesData, error: tablesError } =
-  await supabase
-    .from("grammar_tables")
-    .select("id, name, topic_id, order_no")
-    .order("order_no", { ascending: true });
+      await supabase
+        .from("grammar_tables")
+        .select("id, name, topic_id, order_no")
+        .order("order_no", { ascending: true });
 
     if (tablesError) {
       console.error(
@@ -530,7 +555,33 @@ export default function LeftPanel({
                         </label>
 
                       ))}
+                      {topic.videos?.map((video: any) => (
+                        <label
+                          key={video.id}
+                          id={`image-item-${video.id}`}
+                          className={`flex items-center gap-2 w-full text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === video.id
+                              ? "bg-blue-100 text-blue-700 font-semibold"
+                              : "hover:bg-gray-100"
+                            }`}
+                        >
 
+                          <input
+                            type="radio"
+                            className="w-3.5 h-3.5 shrink-0"
+                            name="selectedImage"
+                            value={video.id}
+                            checked={selectedImageId === video.id}
+                            onChange={() =>
+                              setSelectedImageId(video.id)
+                            }
+                          />
+
+                          <span className="truncate min-w-0">
+                            {video.name}
+                          </span>
+
+                        </label>
+                      ))}
                     </div>
 
                   )}

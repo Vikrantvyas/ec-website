@@ -47,77 +47,152 @@ export default function MainBoard({
   const [selectedImage, setSelectedImage] = useState<any>(null);
 
   useEffect(() => {
-    const fetchSelectedImage = async () => {
+    const fetchSelectedMedia = async () => {
 
       if (!selectedImageId) {
         setSelectedImage(null);
         return;
       }
 
-      const { data, error } = await supabase
+      const { data: imageData } = await supabase
         .from("images")
         .select("id, name, topic_id, file_path, sort_order, created_at")
         .eq("id", selectedImageId)
         .single();
 
-      if (error) {
-        console.error("SELECTED IMAGE ERROR:", error);
+      if (imageData) {
+        setSelectedImage({
+          ...imageData,
+          media_type: "image"
+        });
+        return;
+      }
+
+      const { data: videoData, error: videoError } = await supabase
+        .from("videos")
+        .select(
+          "id, name, topic_id, source_type, video_url, file_path, sort_order, created_at"
+        )
+        .eq("id", selectedImageId)
+        .single();
+
+      if (videoError || !videoData) {
+        console.error("SELECTED MEDIA ERROR:", videoError);
         setSelectedImage(null);
         return;
       }
 
-      setSelectedImage(data);
+      setSelectedImage({
+        ...videoData,
+        media_type: "video"
+      });
     };
 
-    fetchSelectedImage();
+    fetchSelectedMedia();
   }, [selectedImageId]);
   useEffect(() => {
-    const loadImages = async () => {
+  const loadMedia = async () => {
 
-      if (!selectedImageId) {
-        setImageList([]);
-        setImageIndex(0);
-        return;
-      }
+    if (!selectedImageId) {
+      setImageList([]);
+      setImageIndex(0);
+      return;
+    }
 
-      const { data: selectedImage, error: selectedError } =
+    // IMAGE check
+    const { data: imageData } = await supabase
+      .from("images")
+      .select("id, name, topic_id, file_path, sort_order, created_at")
+      .eq("id", selectedImageId)
+      .single();
+
+    // VIDEO check
+    let selectedMedia: any = imageData
+      ? {
+          ...imageData,
+          media_type: "image"
+        }
+      : null;
+
+    if (!selectedMedia) {
+      const { data: videoData, error: videoError } =
         await supabase
-          .from("images")
-          .select("id, name, topic_id, file_path, sort_order, created_at")
+          .from("videos")
+          .select(
+            "id, name, topic_id, source_type, video_url, file_path, sort_order, created_at"
+          )
           .eq("id", selectedImageId)
           .single();
 
-      if (selectedError || !selectedImage) {
-        console.error("Selected image load error:", selectedError);
+      if (videoError || !videoData) {
+        console.error("Selected media load error:", videoError);
         return;
       }
 
-      const { data: images, error } =
-        await supabase
-          .from("images")
-          .select("id, name, topic_id, file_path, sort_order, created_at")
-          .eq("topic_id", selectedImage.topic_id)
-          .order("sort_order", { ascending: true })
-          .order("created_at", { ascending: true });
+      selectedMedia = {
+        ...videoData,
+        media_type: "video"
+      };
+    }
 
-      if (error) {
-        console.error("Image list load error:", error);
-        return;
+    // Same topic ke images
+    const { data: images, error: imagesError } =
+      await supabase
+        .from("images")
+        .select("id, name, topic_id, file_path, sort_order, created_at")
+        .eq("topic_id", selectedMedia.topic_id);
+
+    if (imagesError) {
+      console.error("Image list load error:", imagesError);
+      return;
+    }
+
+    // Same topic ke videos
+    const { data: videos, error: videosError } =
+      await supabase
+        .from("videos")
+        .select(
+          "id, name, topic_id, source_type, video_url, file_path, sort_order, created_at"
+        )
+        .eq("topic_id", selectedMedia.topic_id);
+
+    if (videosError) {
+      console.error("Video list load error:", videosError);
+      return;
+    }
+
+    const mediaList = [
+      ...(images || []).map((image: any) => ({
+        ...image,
+        media_type: "image"
+      })),
+      ...(videos || []).map((video: any) => ({
+        ...video,
+        media_type: "video"
+      }))
+    ].sort((a: any, b: any) => {
+
+      if ((a.sort_order ?? 0) !== (b.sort_order ?? 0)) {
+        return (a.sort_order ?? 0) - (b.sort_order ?? 0);
       }
 
-      const list = images || [];
-
-      setImageList(list);
-
-      const index = list.findIndex(
-        (image: any) => image.id === selectedImageId
+      return (
+        new Date(a.created_at).getTime() -
+        new Date(b.created_at).getTime()
       );
+    });
 
-      setImageIndex(index >= 0 ? index : 0);
-    };
+    setImageList(mediaList);
 
-    loadImages();
-  }, [selectedImageId]);
+    const index = mediaList.findIndex(
+      (media: any) => media.id === selectedImageId
+    );
+
+    setImageIndex(index >= 0 ? index : 0);
+  };
+
+  loadMedia();
+}, [selectedImageId]);
   const activePanels = [
     showLeft && "left",
     showGrammar && "grammar",
@@ -225,6 +300,56 @@ export default function MainBoard({
           >
 
             <div className="text-xs h-full min-h-0">
+              {showAll && selectedTopics?.length > 0 && (
+                <div className="flex items-center justify-center gap-3 py-1 border-b bg-white">
+
+                  <button
+                    type="button"
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700 text-lg"
+                    onClick={() => {
+
+                      const currentIndex = topics.findIndex(
+                        (topic: any) => topic.id === selectedTopics[0]
+                      );
+
+                      if (currentIndex <= 0) return;
+
+                      setSelectedTopics([
+                        topics[currentIndex - 1].id
+                      ]);
+                    }}
+                  >
+                    ←
+                  </button>
+
+                  <span className="text-xs font-medium text-gray-600">
+                    Topic
+                  </span>
+
+                  <button
+                    type="button"
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700 text-lg"
+                    onClick={() => {
+
+                      const currentIndex = topics.findIndex(
+                        (topic: any) => topic.id === selectedTopics[0]
+                      );
+
+                      if (
+                        currentIndex < 0 ||
+                        currentIndex >= topics.length - 1
+                      ) return;
+
+                      setSelectedTopics([
+                        topics[currentIndex + 1].id
+                      ]);
+                    }}
+                  >
+                    →
+                  </button>
+
+                </div>
+              )}
               <CoursePlayer
                 ref={vocabRef}
                 data={sentences}
