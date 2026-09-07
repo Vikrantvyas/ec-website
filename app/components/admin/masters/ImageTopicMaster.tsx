@@ -14,6 +14,9 @@ export default function ImageTopicMaster({
 
   const [topicName, setTopicName] = useState("");
 
+  const [mediaType, setMediaType] =
+    useState<"image" | "video">("image");
+
   const [sortOrder, setSortOrder] = useState("");
 
   const [editingTopicId, setEditingTopicId] =
@@ -75,6 +78,8 @@ export default function ImageTopicMaster({
 
     setTopicName("");
 
+    setMediaType("image");
+
     setSortOrder("");
 
     setEditingTopicId(null);
@@ -134,6 +139,7 @@ export default function ImageTopicMaster({
         .from("image_topics")
         .update({
           name,
+          media_type: mediaType,
           sort_order: finalSortOrder
         })
         .eq("id", editingTopicId);
@@ -177,6 +183,7 @@ export default function ImageTopicMaster({
       .from("image_topics")
       .insert({
         name,
+        media_type: mediaType,
         sort_order: finalSortOrder
       });
 
@@ -229,10 +236,10 @@ export default function ImageTopicMaster({
       const maxSortOrder =
         topics.length > 0
           ? Math.max(
-              ...topics.map((topic: any) =>
-                Number(topic.sort_order) || 0
-              )
+            ...topics.map((topic: any) =>
+              Number(topic.sort_order) || 0
             )
+          )
           : 0;
 
       const insertData = lines.map((name, index) => ({
@@ -448,7 +455,24 @@ Vegetables`}
       ====================================================== */}
 
       <div className="grid md:grid-cols-[1fr_180px_auto_auto] gap-3 items-end">
+<div>
+  <label className="block text-sm mb-1">
+    Media Type
+  </label>
 
+  <select
+    value={mediaType}
+    onChange={(e) =>
+      setMediaType(
+        e.target.value as "image" | "video"
+      )
+    }
+    className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500"
+  >
+    <option value="image">Image</option>
+    <option value="video">Video</option>
+  </select>
+</div>
         {/* TOPIC NAME */}
 
         <div>

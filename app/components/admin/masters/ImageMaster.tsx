@@ -12,8 +12,14 @@ export default function ImageMaster({
 
   const [topics, setTopics] = useState<any[]>([]);
   const [images, setImages] = useState<any[]>([]);
-
+  const [videos, setVideos] = useState<any[]>([]);
   const [selectedTopicId, setSelectedTopicId] =
+    useState("");
+
+  const [mediaType, setMediaType] =
+    useState<"image" | "video">("image");
+
+  const [videoUrl, setVideoUrl] =
     useState("");
 
   const [imageName, setImageName] =
@@ -29,6 +35,8 @@ export default function ImageMaster({
     useState("");
 
   const [editingImageId, setEditingImageId] =
+    useState<string | null>(null);
+  const [editingVideoId, setEditingVideoId] =
     useState<string | null>(null);
 
   const [editingFilePath, setEditingFilePath] =
@@ -101,7 +109,36 @@ export default function ImageMaster({
 
   };
 
+  // =========================================================
+  // LOAD VIDEOS
+  // =========================================================
 
+  const loadVideos = async () => {
+
+    const { data, error } = await supabase
+      .from("videos")
+      .select("*")
+      .order("sort_order", {
+        ascending: true
+      })
+      .order("created_at", {
+        ascending: true
+      });
+
+    if (error) {
+
+      console.error(
+        "VIDEOS LOAD ERROR:",
+        error
+      );
+
+      return;
+    }
+
+    setVideos(data || []);
+    console.log("LOADED VIDEOS:", data);
+
+  };
   // =========================================================
   // INITIAL LOAD
   // =========================================================
@@ -110,6 +147,7 @@ export default function ImageMaster({
 
     loadTopics();
     loadImages();
+    loadVideos();
 
   }, []);
   useEffect(() => {
@@ -129,6 +167,8 @@ export default function ImageMaster({
 
     setSelectedTopicId("");
 
+    setVideoUrl("");
+
     setImageName("");
 
     setSortOrder("");
@@ -138,7 +178,7 @@ export default function ImageMaster({
     setPreviewUrl("");
 
     setEditingImageId(null);
-
+    setEditingVideoId(null);
     setEditingFilePath("");
 
   };
@@ -206,6 +246,128 @@ export default function ImageMaster({
 
       return;
 
+    }
+    // =========================================================
+    // SAVE NEW YOUTUBE VIDEO
+    // =========================================================
+
+    if (mediaType === "video") {
+
+      if (!videoUrl.trim()) {
+        alert("Please enter YouTube / Video URL.");
+        return;
+      }
+
+      if (!imageName.trim()) {
+        alert("Please enter Video Name.");
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+
+        // =====================================================
+        // UPDATE EXISTING VIDEO
+        // =====================================================
+
+        if (editingVideoId) {
+
+          const finalSortOrder =
+            sortOrder.trim() === ""
+              ? (
+                videos.find(
+                  (video: any) =>
+                    video.id === editingVideoId
+                )?.sort_order ?? 1
+              )
+              : Number(sortOrder);
+
+          const { error: updateError } =
+            await supabase
+              .from("videos")
+              .update({
+                topic_id: selectedTopicId,
+                name: imageName.trim(),
+                video_url: videoUrl.trim(),
+                sort_order: finalSortOrder
+              })
+              .eq(
+                "id",
+                editingVideoId
+              );
+
+          if (updateError) {
+            throw updateError;
+          }
+
+          alert(
+            "Video updated successfully."
+          );
+
+          clearForm();
+
+          await loadVideos();
+
+          return;
+        }
+
+        // =====================================================
+        // SAVE NEW YOUTUBE VIDEO
+        // =====================================================
+
+        const finalSortOrder =
+          sortOrder.trim() === ""
+            ? (
+              videos.filter(
+                (video: any) =>
+                  video.topic_id === selectedTopicId
+              ).length + 1
+            )
+            : Number(sortOrder);
+
+        const { error } = await supabase
+          .from("videos")
+          .insert({
+            topic_id: selectedTopicId,
+            name: imageName.trim(),
+            source_type: "youtube",
+            video_url: videoUrl.trim(),
+            file_path: null,
+            sort_order: finalSortOrder
+          });
+
+        if (error) {
+          throw error;
+        }
+
+        alert(
+          "YouTube video saved successfully."
+        );
+
+        clearForm();
+
+        await loadVideos();
+
+      } catch (error: any) {
+
+        console.error(
+          "YOUTUBE VIDEO SAVE ERROR:",
+          error
+        );
+
+        alert(
+          error?.message ||
+          "Unable to save video."
+        );
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+      return;
     }
 
     // =========================================================
@@ -576,7 +738,106 @@ export default function ImageMaster({
     setLoading(false);
 
   };
+  // =========================================================
+  // EDIT VIDEO
+  // =========================================================
 
+  const handleEditVideo = (
+    video: any
+  ) => {
+
+    setMediaType("video");
+    setEditingVideoId(String(video.id));
+    setEditingImageId(null);
+
+    setSelectedTopicId(
+      video.topic_id
+    );
+
+    setImageName(
+      video.name || ""
+    );
+
+    setVideoUrl(
+      video.video_url || ""
+    );
+
+    setSortOrder(
+      video.sort_order !== null &&
+        video.sort_order !== undefined
+        ? String(video.sort_order)
+        : ""
+    );
+
+    setSelectedFiles([]);
+
+    setPreviewUrl("");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  };
+
+
+  // =========================================================
+  // DELETE VIDEO
+  // =========================================================
+
+  const handleDeleteVideo = async (
+    video: any
+  ) => {
+
+    const confirmed =
+      window.confirm(
+        `Delete video "${video.name}"?`
+      );
+
+    if (!confirmed) return;
+
+    setLoading(true);
+
+    try {
+
+      const { error } =
+        await supabase
+          .from("videos")
+          .delete()
+          .eq(
+            "id",
+            video.id
+          );
+
+      if (error) {
+        throw error;
+      }
+
+      alert(
+        "Video deleted successfully."
+      );
+
+      await loadVideos();
+
+    } catch (error: any) {
+
+      console.error(
+        "VIDEO DELETE ERROR:",
+        error
+      );
+
+      alert(
+        error?.message ||
+        "Unable to delete video."
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
 
   // =========================================================
   // EDIT IMAGE
@@ -744,7 +1005,18 @@ export default function ImageMaster({
 
   };
 
-
+  const filteredTopics =
+    topics.filter(
+      (topic: any) =>
+        topic.media_type === mediaType
+    );
+  const filteredVideos =
+    selectedTopicId
+      ? videos.filter(
+        (video: any) =>
+          video.topic_id === selectedTopicId
+      )
+      : videos;
   // =========================================================
   // SORT IMAGES
   // =========================================================
@@ -755,6 +1027,12 @@ export default function ImageMaster({
           image.topic_id === selectedTopicId
       )
       : images;
+  const sortedVideos =
+    [...filteredVideos].sort(
+      (a: any, b: any) =>
+        (a.sort_order ?? 0) -
+        (b.sort_order ?? 0)
+    );
   const sortedImages =
     [...filteredImages].sort(
       (a: any, b: any) => {
@@ -842,7 +1120,31 @@ export default function ImageMaster({
       ====================================================== */}
 
       <div className="grid grid-cols-[260px_260px_120px_1fr_auto] gap-3 items-end">
+        {/* MEDIA TYPE */}
 
+        <div>
+          <label className="block text-sm mb-1">
+            Media Type
+          </label>
+
+          <select
+            value={mediaType}
+            onChange={(e) =>
+              setMediaType(
+                e.target.value as "image" | "video"
+              )
+            }
+            className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500"
+          >
+            <option value="image">
+              Image
+            </option>
+
+            <option value="video">
+              Video
+            </option>
+          </select>
+        </div>
         {/* IMAGE TOPIC */}
 
         <div>
@@ -865,7 +1167,7 @@ export default function ImageMaster({
               Select Image Topic
             </option>
 
-            {topics.map(
+            {filteredTopics.map(
               (topic: any) => (
 
                 <option
@@ -928,39 +1230,65 @@ export default function ImageMaster({
           />
 
         </div>
+        {mediaType === "video" && (
+          <div className="mb-2">
+            <label className="block text-sm mb-1">
+              YouTube / Video URL
+            </label>
+
+            <input
+              type="url"
+              value={videoUrl}
+              onChange={(e) =>
+                setVideoUrl(e.target.value)
+              }
+              placeholder="Paste YouTube video URL"
+              className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500"
+            />
+          </div>
+        )}
         <div>
-          <label className="block text-sm mb-1">
-            Image File
-          </label>
+          <div>
+            <label className="block text-sm mb-1">
+              {mediaType === "image"
+                ? "Image File"
+                : "Video File"}
+            </label>
 
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleFileChange}
-            className="block w-full border border-gray-300 rounded px-3 py-2"
-          />
+            <input
+              type="file"
+              accept={
+                mediaType === "image"
+                  ? "image/*"
+                  : "video/*"
+              }
+              multiple={mediaType === "image"}
+              onChange={handleFileChange}
+              className="block w-full border border-gray-300 rounded px-3 py-2"
+            />
 
-          {editingImageId && (
-            <p className="text-xs text-gray-500 mt-1">
-              Leave file empty to keep the existing image.
-            </p>
-          )}
+            {editingImageId && (
+              <p className="text-xs text-gray-500 mt-1">
+                {mediaType === "image"
+                  ? "Leave file empty to keep the existing image."
+                  : "Leave file empty to keep the existing video."}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={loading}
+            className="bg-green-600 text-white px-5 py-2 rounded disabled:opacity-50 h-[38px]"
+          >
+            {loading
+  ? "Saving..."
+  : editingImageId || editingVideoId
+    ? "Update"
+    : "Save"}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={loading}
-          className="bg-green-600 text-white px-5 py-2 rounded disabled:opacity-50 h-[38px]"
-        >
-          {loading
-            ? "Saving..."
-            : editingImageId
-              ? "Update"
-              : "Save"}
-        </button>
       </div>
-
 
       {/* =====================================================
           FILE UPLOAD
@@ -999,151 +1327,228 @@ export default function ImageMaster({
           BUTTONS
       ====================================================== */}
 
-      
+
 
 
       {/* =====================================================
           SAVED IMAGES
       ====================================================== */}
 
-      {images.length > 0 && (
+      {(mediaType === "image"
+        ? filteredImages.length > 0
+        : filteredVideos.length > 0) && (
 
-        <div className="mt-8">
+          <div className="mt-8">
 
-          <h3 className="text-xl font-bold text-[#06204a] mb-3">
-            Saved Images ({filteredImages.length})
-          </h3>
+            <h3 className="text-xl font-bold text-[#06204a] mb-3">
+              {mediaType === "image"
+                ? `Saved Images (${filteredImages.length})`
+                : `Saved Videos (${filteredVideos.length})`}
+            </h3>
 
+            <div className="overflow-x-auto">
 
-          <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-300">
 
-            <table className="w-full border-collapse border border-gray-300">
+                <thead>
 
-              <thead>
+                  <tr className="bg-gray-100">
 
-                <tr className="bg-gray-100">
+                    <th className="border border-gray-300 px-3 py-2 text-left">
+                      #
+                    </th>
 
-                  <th className="border border-gray-300 px-3 py-2 text-left">
-                    #
-                  </th>
+                    <th className="border border-gray-300 px-3 py-2 text-left">
+                      Topic
+                    </th>
 
-                  <th className="border border-gray-300 px-3 py-2 text-left">
-                    Topic
-                  </th>
+                    <th className="border border-gray-300 px-3 py-2 text-left">
+                      {mediaType === "image"
+                        ? "Image Name"
+                        : "Video Name"}
+                    </th>
 
-                  <th className="border border-gray-300 px-3 py-2 text-left">
-                    Image Name
-                  </th>
+                    <th className="border border-gray-300 px-3 py-2 text-left">
+                      {mediaType === "image"
+                        ? "Preview"
+                        : "Video URL"}
+                    </th>
 
-                  <th className="border border-gray-300 px-3 py-2 text-left">
-                    Preview
-                  </th>
+                    <th className="border border-gray-300 px-3 py-2 text-left">
+                      Sort Order
+                    </th>
 
-                  <th className="border border-gray-300 px-3 py-2 text-left">
-                    Sort Order
-                  </th>
+                    <th className="border border-gray-300 px-3 py-2 text-left">
+                      Actions
+                    </th>
 
-                  <th className="border border-gray-300 px-3 py-2 text-left">
-                    Actions
-                  </th>
+                  </tr>
 
-                </tr>
-
-              </thead>
-
-
-              <tbody>
-
-                {sortedImages.map(
-                  (
-                    image: any,
-                    index: number
-                  ) => (
-
-                    <tr
-                      key={image.id}
-                      className="hover:bg-gray-50"
-                    >
-
-                      <td className="border border-gray-300 px-3 py-2">
-                        {index + 1}
-                      </td>
+                </thead>
 
 
-                      <td className="border border-gray-300 px-3 py-2">
-                        {getTopicName(
-                          image.topic_id
-                        )}
-                      </td>
+                <tbody>
 
+                  {mediaType === "image"
+                    ? sortedImages.map(
+                      (
+                        image: any,
+                        index: number
+                      ) => (
 
-                      <td className="border border-gray-300 px-3 py-2">
-                        {image.name}
-                      </td>
+                        <tr
+                          key={image.id}
+                          className="hover:bg-gray-50"
+                        >
 
+                          <td className="border border-gray-300 px-3 py-2">
+                            {index + 1}
+                          </td>
 
-                      <td className="border border-gray-300 px-3 py-2">
-
-                        <div className="w-24 h-16 border border-gray-200 rounded overflow-hidden bg-gray-50 flex items-center justify-center">
-
-                          <img
-                            src={getImageUrl(
-                              image.file_path
+                          <td className="border border-gray-300 px-3 py-2">
+                            {getTopicName(
+                              image.topic_id
                             )}
-                            alt={image.name}
-                            className="max-w-full max-h-full object-contain"
-                          />
+                          </td>
 
-                        </div>
+                          <td className="border border-gray-300 px-3 py-2">
+                            {image.name}
+                          </td>
 
-                      </td>
+                          <td className="border border-gray-300 px-3 py-2">
 
+                            <div className="w-24 h-16 border border-gray-200 rounded overflow-hidden bg-gray-50 flex items-center justify-center">
 
-                      <td className="border border-gray-300 px-3 py-2">
-                        {image.sort_order}
-                      </td>
+                              <img
+                                src={getImageUrl(
+                                  image.file_path
+                                )}
+                                alt={image.name}
+                                className="max-w-full max-h-full object-contain"
+                              />
 
+                            </div>
 
-                      <td className="border border-gray-300 px-3 py-2">
+                          </td>
 
-                        <div className="flex gap-2">
+                          <td className="border border-gray-300 px-3 py-2">
+                            {image.sort_order}
+                          </td>
 
-                          <button
-                            type="button"
-                            onClick={() => handleEdit(image)}
-                            disabled={loading}
-                            className="bg-yellow-500 text-white px-3 py-1 rounded disabled:opacity-50"
-                          >
-                            Edit
-                          </button>
+                          <td className="border border-gray-300 px-3 py-2">
 
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(image)}
-                            disabled={loading}
-                            className="bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
-                          >
-                            Delete
-                          </button>
+                            <div className="flex gap-2">
 
-                        </div>
+                              <button
+                                type="button"
+                                onClick={() => handleEdit(image)}
+                                disabled={loading}
+                                className="bg-yellow-500 text-white px-3 py-1 rounded disabled:opacity-50"
+                              >
+                                Edit
+                              </button>
 
-                      </td>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(image)}
+                                disabled={loading}
+                                className="bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
+                              >
+                                Delete
+                              </button>
 
-                    </tr>
+                            </div>
 
-                  )
-                )}
+                          </td>
 
-              </tbody>
+                        </tr>
 
-            </table>
+                      )
+                    )
+                    : sortedVideos.map(
+                      (
+                        video: any,
+                        index: number
+                      ) => (
+
+                        <tr
+                          key={video.id}
+                          className="hover:bg-gray-50"
+                        >
+
+                          <td className="border border-gray-300 px-3 py-2">
+                            {index + 1}
+                          </td>
+
+                          <td className="border border-gray-300 px-3 py-2">
+                            {getTopicName(
+                              video.topic_id
+                            )}
+                          </td>
+
+                          <td className="border border-gray-300 px-3 py-2">
+                            {video.name}
+                          </td>
+
+                          <td className="border border-gray-300 px-3 py-2">
+                            <a
+                              href={video.video_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 underline break-all"
+                            >
+                              {video.video_url}
+                            </a>
+                          </td>
+
+                          <td className="border border-gray-300 px-3 py-2">
+                            {video.sort_order}
+                          </td>
+
+                          <td className="border border-gray-300 px-3 py-2">
+
+                            <div className="flex gap-2">
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleEditVideo(video)
+                                }
+                                disabled={loading}
+                                className="bg-yellow-500 text-white px-3 py-1 rounded disabled:opacity-50"
+                              >
+                                Edit
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeleteVideo(video)
+                                }
+                                disabled={loading}
+                                className="bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
+                              >
+                                Delete
+                              </button>
+
+                            </div>
+
+                          </td>
+
+                        </tr>
+
+                      )
+                    )}
+
+                </tbody>
+
+              </table>
+
+            </div>
 
           </div>
 
-        </div>
-
-      )
+        )
       }
 
     </div >
