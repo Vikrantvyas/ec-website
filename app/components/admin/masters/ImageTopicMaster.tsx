@@ -15,7 +15,7 @@ export default function ImageTopicMaster({
   const [topicName, setTopicName] = useState("");
 
   const [mediaType, setMediaType] =
-    useState<"image" | "video">("image");
+    useState<"all" | "image" | "video">("all");
 
   const [sortOrder, setSortOrder] = useState("");
 
@@ -69,7 +69,12 @@ export default function ImageTopicMaster({
 
   }, []);
 
-
+  const filteredTopics =
+    mediaType === "all"
+      ? topics
+      : topics.filter(
+        (topic: any) => topic.media_type === mediaType
+      );
   // =========================================================
   // CLEAR FORM
   // =========================================================
@@ -300,6 +305,11 @@ export default function ImageTopicMaster({
     setEditingTopicId(topic.id);
 
     setTopicName(topic.name || "");
+    setMediaType(
+  topic.media_type === "video"
+    ? "video"
+    : "image"
+);
 
     setSortOrder(
       topic.sort_order !== null &&
@@ -454,25 +464,28 @@ Vegetables`}
           FORM
       ====================================================== */}
 
-      <div className="grid md:grid-cols-[1fr_180px_auto_auto] gap-3 items-end">
-<div>
-  <label className="block text-sm mb-1">
-    Media Type
-  </label>
+      <div className="grid md:grid-cols-[180px_1fr_100px_auto] gap-3 items-end">
+        <div>
+          <label className="block text-sm mb-1">
+            Media Type
+          </label>
 
-  <select
-    value={mediaType}
-    onChange={(e) =>
-      setMediaType(
-        e.target.value as "image" | "video"
-      )
-    }
-    className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500"
-  >
-    <option value="image">Image</option>
-    <option value="video">Video</option>
-  </select>
-</div>
+          <select
+            value={mediaType}
+            onChange={(e) =>
+              setMediaType(
+                e.target.value as "all" | "image" | "video"
+              )
+            }
+            className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500"
+          >
+            <option value="all">
+              Select Media Type
+            </option>
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+          </select>
+        </div>
         {/* TOPIC NAME */}
 
         <div>
@@ -575,9 +588,12 @@ Vegetables`}
                   </th>
 
                   <th className="border border-gray-300 px-3 py-2 text-left">
-                    Topic Name
+                    Media Type
                   </th>
 
+                  <th className="border border-gray-300 px-3 py-2 text-left">
+                    Topic Name
+                  </th>
                   <th className="border border-gray-300 px-3 py-2 text-left">
                     Sort Order
                   </th>
@@ -593,7 +609,7 @@ Vegetables`}
 
               <tbody>
 
-                {topics.map(
+                {filteredTopics.map(
                   (topic: any, index: number) => (
 
                     <tr
@@ -604,7 +620,11 @@ Vegetables`}
                       <td className="border border-gray-300 px-3 py-2">
                         {index + 1}
                       </td>
-
+                      <td className="border border-gray-300 px-3 py-2">
+                        {topic.media_type === "video"
+                          ? "Video"
+                          : "Image"}
+                      </td>
 
                       <td className="border border-gray-300 px-3 py-2">
                         {topic.name}

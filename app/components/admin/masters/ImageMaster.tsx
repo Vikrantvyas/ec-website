@@ -1119,9 +1119,9 @@ export default function ImageMaster({
           FORM
       ====================================================== */}
 
-      <div className="grid grid-cols-[260px_260px_120px_1fr_auto] gap-3 items-end">
-        {/* MEDIA TYPE */}
+      <div className="grid grid-cols-[150px_230px_1fr_90px_300px_auto] gap-3 items-end">
 
+        {/* MEDIA TYPE */}
         <div>
           <label className="block text-sm mb-1">
             Media Type
@@ -1145,10 +1145,10 @@ export default function ImageMaster({
             </option>
           </select>
         </div>
+
+
         {/* IMAGE TOPIC */}
-
         <div>
-
           <label className="block text-sm mb-1">
             Image Topic
           </label>
@@ -1162,35 +1162,30 @@ export default function ImageMaster({
             }
             className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500"
           >
-
             <option value="">
               Select Image Topic
             </option>
 
             {filteredTopics.map(
               (topic: any) => (
-
                 <option
                   key={topic.id}
                   value={topic.id}
                 >
                   {topic.name}
                 </option>
-
               )
             )}
-
           </select>
-
         </div>
 
 
-        {/* IMAGE NAME */}
-
+        {/* IMAGE / VIDEO NAME */}
         <div>
-
           <label className="block text-sm mb-1">
-            Image Name
+            {mediaType === "image"
+              ? "Image Name"
+              : "Video Name"}
           </label>
 
           <input
@@ -1201,17 +1196,18 @@ export default function ImageMaster({
                 e.target.value
               )
             }
-            placeholder="Enter Image Name"
+            placeholder={
+              mediaType === "image"
+                ? "Enter Image Name"
+                : "Enter Video Name"
+            }
             className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500"
           />
-
         </div>
 
 
         {/* SORT ORDER */}
-
         <div>
-
           <label className="block text-sm mb-1">
             Sort Order
           </label>
@@ -1228,66 +1224,62 @@ export default function ImageMaster({
             placeholder="Auto"
             className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500"
           />
-
         </div>
-        {mediaType === "video" && (
-          <div className="mb-2">
-            <label className="block text-sm mb-1">
-              YouTube / Video URL
-            </label>
 
+
+        {/* IMAGE FILE / VIDEO URL */}
+        <div>
+          <label className="block text-sm mb-1">
+            {mediaType === "image"
+              ? "Image File"
+              : "YouTube / Video URL"}
+          </label>
+
+          {mediaType === "image" ? (
+            <input
+  key="image-file-input"
+  type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFileChange}
+              className="block w-full border border-gray-300 rounded px-3 py-2"
+            />
+          ) : (
             <input
               type="url"
               value={videoUrl}
               onChange={(e) =>
-                setVideoUrl(e.target.value)
+                setVideoUrl(
+                  e.target.value
+                )
               }
               placeholder="Paste YouTube video URL"
               className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-500"
             />
-          </div>
-        )}
-        <div>
-          <div>
-            <label className="block text-sm mb-1">
-              {mediaType === "image"
-                ? "Image File"
-                : "Video File"}
-            </label>
+          )}
 
-            <input
-              type="file"
-              accept={
-                mediaType === "image"
-                  ? "image/*"
-                  : "video/*"
-              }
-              multiple={mediaType === "image"}
-              onChange={handleFileChange}
-              className="block w-full border border-gray-300 rounded px-3 py-2"
-            />
-
-            {editingImageId && (
-              <p className="text-xs text-gray-500 mt-1">
-                {mediaType === "image"
-                  ? "Leave file empty to keep the existing image."
-                  : "Leave file empty to keep the existing video."}
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={loading}
-            className="bg-green-600 text-white px-5 py-2 rounded disabled:opacity-50 h-[38px]"
-          >
-            {loading
-  ? "Saving..."
-  : editingImageId || editingVideoId
-    ? "Update"
-    : "Save"}
-          </button>
+          {editingImageId && (
+            <p className="text-xs text-gray-500 mt-1">
+              Leave file empty to keep the existing image.
+            </p>
+          )}
         </div>
+
+
+        {/* SAVE */}
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={loading}
+          className="bg-green-600 text-white px-5 py-2 rounded disabled:opacity-50 h-[38px]"
+        >
+          {loading
+            ? "Saving..."
+            : editingImageId || editingVideoId
+              ? "Update"
+              : "Save"}
+        </button>
+
       </div>
 
       {/* =====================================================
@@ -1359,6 +1351,10 @@ export default function ImageMaster({
                     </th>
 
                     <th className="border border-gray-300 px-3 py-2 text-left">
+                      Media Type
+                    </th>
+
+                    <th className="border border-gray-300 px-3 py-2 text-left">
                       Topic
                     </th>
 
@@ -1404,7 +1400,9 @@ export default function ImageMaster({
                           <td className="border border-gray-300 px-3 py-2">
                             {index + 1}
                           </td>
-
+                          <td className="border border-gray-300 px-3 py-2">
+                            Image
+                          </td>
                           <td className="border border-gray-300 px-3 py-2">
                             {getTopicName(
                               image.topic_id
@@ -1479,7 +1477,9 @@ export default function ImageMaster({
                           <td className="border border-gray-300 px-3 py-2">
                             {index + 1}
                           </td>
-
+                          <td className="border border-gray-300 px-3 py-2">
+                            Video
+                          </td>
                           <td className="border border-gray-300 px-3 py-2">
                             {getTopicName(
                               video.topic_id
