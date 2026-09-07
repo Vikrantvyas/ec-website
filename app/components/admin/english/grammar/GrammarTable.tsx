@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 type Row = {
   [key: string]: any;
@@ -34,6 +34,7 @@ export default function GrammarTable({
 
     setColumns([]);
     setHiddenColumns([]);
+    setHiddenRows([]);
     setMergedCells({});
     setSelected([]);
     setHistory([]);
@@ -43,7 +44,48 @@ export default function GrammarTable({
 
   const [columns, setColumns] = useState<string[]>([]);
   const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
+  const [hiddenRows, setHiddenRows] = useState<string[]>([]);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const tableRef = useRef<HTMLTableElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
+  const [hiddenRowPositions, setHiddenRowPositions] = useState<
+    Record<string, { left: number; top: number }>
+  >({});
+  useEffect(() => {
+    const updateHiddenRowPositions = () => {
+      const positions: Record<string, { left: number; top: number }> = {};
+
+      hiddenRows.forEach((rowKey) => {
+        const row = rowRefs.current[rowKey];
+        const container = containerRef.current;
+
+        if (!row || !container) return;
+
+        const rowRect = row.getBoundingClientRect();
+        const firstCell = row.querySelector("td");
+
+        if (!firstCell) return;
+
+        const cellRect = firstCell.getBoundingClientRect();
+
+        positions[rowKey] = {
+  left: cellRect.left + cellRect.width / 2,
+  top: rowRect.top
+};
+      });
+
+      setHiddenRowPositions(positions);
+    };
+
+    requestAnimationFrame(updateHiddenRowPositions);
+
+    window.addEventListener("resize", updateHiddenRowPositions);
+
+    return () => {
+      window.removeEventListener("resize", updateHiddenRowPositions);
+    };
+  }, [hiddenRows, tableData, revealedRows]);
   const [menu, setMenu] = useState<any>(null);
 
   const [selected, setSelected] = useState<string[]>([]);
@@ -202,6 +244,25 @@ export default function GrammarTable({
 
       // Hide
       return [...prev, col];
+    });
+  };
+  const toggleRowVisibility = (rowKey: string) => {
+    setHiddenRows(prev => {
+      if (prev.includes(rowKey)) {
+        const firstHidden = tableData
+          .flatMap((group, gIndex) =>
+            group.rows.map((_, rIndex) => `${gIndex}-${rIndex}`)
+          )
+          .find(key => prev.includes(key));
+
+        if (firstHidden === rowKey) {
+          return prev.filter(k => k !== rowKey);
+        }
+
+        return prev;
+      }
+
+      return [...prev, rowKey];
     });
   };
   const handleAddColumn = (index: number) => {
@@ -513,9 +574,16 @@ export default function GrammarTable({
   })();
   return (
 
-    <div className="relative w-full h-full" onClick={() => setMenu(null)}>
+    <div
+      className="relative w-full h-full"
+      onClick={() => setMenu(null)}
+      ref={containerRef}
+    >
 
-      <table className="border border-gray-400 text-sm table-auto w-max">
+      <table
+        ref={tableRef}
+        className="border border-gray-400 text-sm table-auto w-max"
+      >
 
         {/* ✅ PERFECT WIDTH CONTROL */}
 
@@ -537,17 +605,17 @@ export default function GrammarTable({
                     <button
                       type="button"
                       onClick={(e) => {
-  e.stopPropagation();
+                        e.stopPropagation();
 
-  const firstHidden = columns.find(c =>
-    hiddenColumns.includes(c)
-  );
+                        const firstHidden = columns.find(c =>
+                          hiddenColumns.includes(c)
+                        );
 
-  if (firstHidden) {
-    toggleColumnVisibility(firstHidden);
-  }
-}}
-                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-4 h-4 rounded-full bg-white border-gray-500 flex items-center justify-center cursor-pointer shadow-sm hover:bg-yellow-500"
+                        if (firstHidden) {
+                          toggleColumnVisibility(firstHidden);
+                        }
+                      }}
+                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] w-4 h-4 rounded-full bg-white border border-gray-500 cursor-pointer shadow-sm hover:bg-yellow-500"
                       title={`Show ${headerMap[col] || col}`}
                     >
                       <span className="sr-only">
@@ -603,6 +671,9 @@ export default function GrammarTable({
 
               <tr
                 key={`${gIndex}-${rIndex}`}
+                ref={(el) => {
+                  rowRefs.current[`${gIndex}-${rIndex}`] = el;
+                }}
                 className={`text-center relative group ${ctrlPressed && hoverRow === `${gIndex}-${rIndex}`
                   ? "bg-yellow-200"
                   : ""
@@ -616,22 +687,63 @@ export default function GrammarTable({
               >
 
                 {columns.map((col) => {
+                  const rowKey = `${gIndex}-${rIndex}`;
+                  const isRowHidden = hiddenRows.includes(rowKey);
 
-                  if (col === "index" && rIndex === 0) {
-
+                  if (col === "index") {
                     return (
                       <td
                         key="index"
-                        rowSpan={group.rows.length}
-                        className="border p-2 font-semibold align-top"
+                        className={`border font-semibold align-top bg-gray-300 ${isRowHidden
+                          ? "w-0 h-0 min-h-0 p-0 border-0 relative overflow-visible z-[999999] [transform:translateZ(0)]"
+                          : "p-2"
+                          }`}
                       >
-                        {gIndex + 1}.
+                        {isRowHidden ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+
+                              const firstHidden = tableData
+                                .flatMap((group, groupIndex) =>
+                                  group.rows.map(
+                                    (_, rowIndex) => `${groupIndex}-${rowIndex}`
+                                  )
+                                )
+                                .find(key => hiddenRows.includes(key));
+
+                              if (firstHidden) {
+                                setHiddenRows(prev =>
+                                  prev.filter(key => key !== firstHidden)
+                                );
+                              }
+                            }}
+                            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[999999] w-4 h-4 rounded-full bg-white border border-gray-500 cursor-pointer shadow-md hover:bg-yellow-500"
+                            title="Show row"
+                          />
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              checked={true}
+                              onChange={(e) => {
+                                e.stopPropagation();
+
+                                setHiddenRows(prev => [...prev, rowKey]);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-3 h-3 shrink-0"
+                            />
+
+                            {rIndex === 0 && `${gIndex + 1}.`}
+                          </div>
+                        )}
                       </td>
                     );
                   }
 
                   const key = `${gIndex}-${rIndex}-${col}`;
-
                   const merge = mergedCells[key];
 
                   if (merge?.hidden) {
@@ -664,16 +776,17 @@ export default function GrammarTable({
                           cell: true
                         });
                       }}
-                      className={`border py-0 whitespace-nowrap text-left ${hiddenColumns.includes(col)
-                        ? "w-0 min-w-0 max-w-0 p-0 border-0 overflow-hidden"
-                        : "px-1"
+                      className={`border whitespace-nowrap text-left ${isRowHidden
+                        ? "w-0 h-0 min-h-0 p-0 border-0 overflow-hidden"
+                        : hiddenColumns.includes(col)
+                          ? "w-0 min-w-0 max-w-0 p-0 border-0 overflow-hidden"
+                          : "py-0 px-1"
                         } ${selected.includes(key)
                           ? "bg-yellow-200 text-black"
                           : "hover:bg-yellow-200 hover:text-black"
                         }`}
                     >
-
-                      {!hiddenColumns.includes(col) && (
+                      {!isRowHidden && !hiddenColumns.includes(col) && (
                         <div
                           contentEditable
                           suppressContentEditableWarning
@@ -692,7 +805,6 @@ export default function GrammarTable({
                       )}
                     </td>
                   );
-
                 })}
 
               </tr>
@@ -704,6 +816,37 @@ export default function GrammarTable({
         </tbody>
 
       </table>
+
+      {Object.entries(hiddenRowPositions).map(([rowKey, position]) => (
+        <button
+          key={`hidden-row-${rowKey}`}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+
+            const firstHidden = tableData
+              .flatMap((group, groupIndex) =>
+                group.rows.map(
+                  (_, rowIndex) => `${groupIndex}-${rowIndex}`
+                )
+              )
+              .find(key => hiddenRows.includes(key));
+
+            if (firstHidden) {
+              setHiddenRows(prev =>
+                prev.filter(key => key !== firstHidden)
+              );
+            }
+          }}
+          className="fixed z-[999999] w-4 h-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white border border-gray-500 cursor-pointer shadow-md hover:bg-yellow-500"
+          style={{
+            left: position.left,
+            top: position.top
+          }}
+          title="Show row"
+        />
+      ))}
+
       <div className="absolute top-1 right-1 z-10 flex items-center gap-2 text-xs">
         <span className="font-semibold">Rows:</span>
 

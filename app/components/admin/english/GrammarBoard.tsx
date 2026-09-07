@@ -488,7 +488,7 @@ export default function GrammarBoard({
           PREVIOUS / NEXT BUTTONS
       ===================================================== */}
 
-      <div className="absolute left-6 right-6 top-1/2 -translate-y-1/2 flex items-center justify-between pointer-events-none z-20">
+      <div className="absolute left-6 right-6 top-1/2 -translate-y-1/2 flex items-center justify-between pointer-events-none z-[2000]">
 
         <button
           type="button"
