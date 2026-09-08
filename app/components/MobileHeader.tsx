@@ -9,6 +9,14 @@ import { Menu, X } from "lucide-react";
 export default function MobileHeader() {
   const [open, setOpen] = useState(false);
 
+  const isPracticePage =
+    typeof window !== "undefined" &&
+    window.location.pathname.startsWith("/practice");
+
+  if (isPracticePage) {
+    return null;
+  }
+
   return (
     <>
       {/* ===== TOP BAR ===== */}

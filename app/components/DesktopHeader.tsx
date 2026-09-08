@@ -3,12 +3,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { FaFacebookF, FaInstagram, FaYoutube } from "react-icons/fa";
 
 export default function DesktopHeader() {
   const [showLogin, setShowLogin] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+
+if (pathname.startsWith("/practice")) {
+  return null;
+}
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

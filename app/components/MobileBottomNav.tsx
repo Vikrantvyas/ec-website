@@ -1,7 +1,14 @@
 "use client";
 
 export default function MobileBottomNav() {
-  return (
+    const isPracticePage =
+    typeof window !== "undefined" &&
+    window.location.pathname.startsWith("/practice");
+  if (isPracticePage) {
+    return null;
+}
+
+return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t md:hidden">
       <div className="flex justify-around py-2 text-xs text-gray-700">
         
