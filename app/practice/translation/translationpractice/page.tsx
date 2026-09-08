@@ -291,7 +291,7 @@ function TranslationPracticeContent() {
                     SENTENCE AREA
                 ===================================================== */}
 
-                <div className="flex-1 min-h-0 md:flex-none md:h-[520px] bg-white border-l border-r border-b shadow overflow-hidden">
+                <div className="h-[calc(100vh-120px)] md:h-[520px] bg-white border-l border-r border-b shadow overflow-hidden">
 
                     <div className="flex flex-col h-full min-h-0">
 
