@@ -1,6 +1,0 @@
-tree a9101ab02d74ef398ecadd1a59d740c909f92b2f
-parent dcbc58a80ecc23bea12511c7baae0c4423b95417
-author Vikrantvyas <gotovikrant@gmail.com> 1777623725 +0530
-committer Vikrantvyas <gotovikrant@gmail.com> 1777623725 +0530
-
-BatchCard: added clean 3-dot menu (edit/delete) right aligned
