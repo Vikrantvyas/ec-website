@@ -262,7 +262,7 @@ function TranslationPracticeContent() {
     // =========================================================
 
     return (
-        <div className="h-screen bg-gray-100 overflow-hidden p-4 -mt-16 md:mt-0">
+        <div className="h-screen bg-gray-100 overflow-hidden p-4">
 
             <div className="max-w-6xl mx-auto w-full h-full flex flex-col">
 
@@ -291,7 +291,7 @@ function TranslationPracticeContent() {
                     SENTENCE AREA
                 ===================================================== */}
 
-                <div className="h-[calc(100vh-220px)] md:h-[520px] bg-white border-l border-r border-b shadow overflow-hidden">
+                <div className="flex-1 min-h-0 md:flex-none md:h-[520px] bg-white border-l border-r border-b shadow overflow-hidden">
 
                     <div className="flex flex-col h-full min-h-0">
 
