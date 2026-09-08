@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -8,7 +8,7 @@ const shuffleArray = (arr: any[]) => {
     return [...arr].sort(() => Math.random() - 0.5);
 };
 
-export default function TranslationPracticePage() {
+function TranslationPracticeContent() {
     const searchParams = useSearchParams();
 
     const topicIds =
@@ -419,5 +419,18 @@ export default function TranslationPracticePage() {
             </div>
 
         </div>
+    );
+}
+export default function TranslationPracticePage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="h-screen bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                    Loading...
+                </div>
+            }
+        >
+            <TranslationPracticeContent />
+        </Suspense>
     );
 }
