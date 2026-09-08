@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { FaFacebookF, FaInstagram, FaYoutube } from "react-icons/fa";
@@ -8,21 +9,18 @@ import { Menu, X } from "lucide-react";
 
 export default function MobileHeader() {
   const [open, setOpen] = useState(false);
+const pathname = usePathname();
 
-  const isPracticePage =
-    typeof window !== "undefined" &&
-    window.location.pathname.startsWith("/practice");
-
-  if (isPracticePage) {
-    return null;
-  }
+if (pathname.startsWith("/practice")) {
+  return null;
+}
 
   return (
     <>
       {/* ===== TOP BAR ===== */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-blue-600 md:hidden shadow">
         <div className="flex items-center justify-between px-4 h-14 text-white">
-          
+
           {/* Hamburger */}
           <button
             onClick={() => setOpen(true)}
@@ -52,22 +50,19 @@ export default function MobileHeader() {
 
       {/* ===== OVERLAY ===== */}
       <div
-        className={`fixed inset-0 z-40 md:hidden transition ${
-          open ? "visible" : "invisible"
-        }`}
+        className={`fixed inset-0 z-40 md:hidden transition ${open ? "visible" : "invisible"
+          }`}
       >
         <div
-          className={`absolute inset-0 bg-black transition-opacity ${
-            open ? "opacity-50" : "opacity-0"
-          }`}
+          className={`absolute inset-0 bg-black transition-opacity ${open ? "opacity-50" : "opacity-0"
+            }`}
           onClick={() => setOpen(false)}
         />
 
         {/* ===== DRAWER ===== */}
         <div
-          className={`absolute left-0 top-0 h-full w-72 bg-white shadow-xl transform transition-transform duration-300 ${
-            open ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className={`absolute left-0 top-0 h-full w-72 bg-white shadow-xl transform transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"
+            }`}
         >
           {/* Drawer Header */}
           <div className="flex items-center justify-between p-4 border-b">
