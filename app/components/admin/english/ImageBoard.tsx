@@ -55,7 +55,7 @@ export default function ImageBoard({
     }
   }
 
-  
+
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === images.length - 1;
 
@@ -77,21 +77,21 @@ export default function ImageBoard({
       </button>
 
       {/* IMAGE / VIDEO */}
-{isVideo ? (
-  <iframe
-    src={videoUrl}
-    title={image.name || "Video"}
-    className="w-full h-full"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowFullScreen
-  />
-) : (
-  <img
-    src={imageUrl}
-    alt={image.name || "Image"}
-    className="max-w-full max-h-full object-contain"
-  />
-)}
+      {isVideo ? (
+        <iframe
+          src={videoUrl}
+          title={image.name || "Video"}
+          className="w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      ) : (
+        <img
+          src={imageUrl}
+          alt={image.name || "Image"}
+          className="max-w-full max-h-full object-contain"
+        />
+      )}
 
       {/* NEXT */}
       <button

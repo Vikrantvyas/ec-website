@@ -1797,13 +1797,13 @@ export default function GrammarTableMaster() {
           <tbody>
             {savedTables.map((table) => (
               <tr
-  key={table.id}
-  draggable
-  onDragStart={() => setDraggedTableId(table.id)}
-  onDragOver={(e) => e.preventDefault()}
-  onDrop={() => handleTableDrop(table)}
-  className="cursor-move"
->
+                key={table.id}
+                draggable
+                onDragStart={() => setDraggedTableId(table.id)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleTableDrop(table)}
+                className="cursor-move"
+              >
                 <td className="border p-2">
                   {
                     grammarTopics.find(

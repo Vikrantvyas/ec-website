@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function TranslationPracticePage() {
+    const router = useRouter();
     const [courses, setCourses] = useState<any[]>([]);
     const [selectedCourse, setSelectedCourse] = useState("");
     const [days, setDays] = useState<any[]>([]);
@@ -163,11 +165,14 @@ export default function TranslationPracticePage() {
                         {selectedTopics.length > 0 && (
                             <button
                                 onClick={() => {
-                                    console.log(
-                                        "START PRACTICE:",
-                                        selectedTopics
-                                    );
-                                }}
+    const topicIds = selectedTopics.join(",");
+
+    router.push(
+        `/practice/translation/translationpractice?topics=${encodeURIComponent(
+            topicIds
+        )}`
+    );
+}}
                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
                             >
                                 Start Practice
