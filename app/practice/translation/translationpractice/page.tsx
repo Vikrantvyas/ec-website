@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -25,6 +25,7 @@ function TranslationPracticeContent() {
     const [randomMode, setRandomMode] = useState(false);
 
     const [loading, setLoading] = useState(true);
+    const sentenceAreaRef = useRef<HTMLDivElement>(null);
     const [currentTime, setCurrentTime] = useState("");
 
     // =========================================================
@@ -241,6 +242,20 @@ function TranslationPracticeContent() {
         : currentIndex === -1
             ? []
             : list.slice(0, currentIndex + 1);
+    useEffect(() => {
+        if (currentIndex < 0 || showAll) return;
+
+        const sentence = document.getElementById(
+            `practice-sentence-${currentIndex}`
+        );
+
+        if (sentence) {
+            sentence.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+            });
+        }
+    }, [currentIndex, showAll]);
 
     // =========================================================
     // UI
@@ -276,7 +291,7 @@ function TranslationPracticeContent() {
                     SENTENCE AREA
                 ===================================================== */}
 
-                <div className="h-[calc(100vh-300px)] md:h-[520px] bg-white border-l border-r border-b shadow overflow-hidden">
+                <div className="h-[calc(100vh-220px)] md:h-[520px] bg-white border-l border-r border-b shadow overflow-hidden">
 
                     <div className="flex flex-col h-full min-h-0">
 
@@ -323,9 +338,10 @@ function TranslationPracticeContent() {
 
                                         <div
                                             key={item.id || i}
+                                            id={`practice-sentence-${i}`}
                                             className={`flex text-base ${i === currentIndex && !showAll
-                                                    ? "bg-yellow-100"
-                                                    : ""
+                                                ? "bg-yellow-100"
+                                                : ""
                                                 }`}
                                         >
 
