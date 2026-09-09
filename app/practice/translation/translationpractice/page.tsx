@@ -262,7 +262,7 @@ function TranslationPracticeContent() {
     // =========================================================
 
     return (
-        <div className="h-screen bg-gray-100 overflow-hidden px-4 pb-4 pt-0">
+        <div className="h-screen bg-gray-100 overflow-hidden px-4 pb-4 pt-0 -mt-[110px] md:mt-0">
 
             <div className="max-w-6xl mx-auto w-full h-full flex flex-col">
 
