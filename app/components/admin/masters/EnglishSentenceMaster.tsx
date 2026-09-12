@@ -110,26 +110,73 @@ export default function EnglishSentenceMaster({
 
   const fetchSentences = async () => {
 
-    const { data } = await supabase
-      .from("vocabulary")
+  const selectedCourseName =
+    courses.find((c: any) => c.id === selectedCourse)?.name;
+
+  // Conversation
+  if (selectedCourseName === "Conversation") {
+
+    const { data: questions, error: questionError } = await supabase
+      .from("conversation_questions")
       .select("*")
       .eq("topic_id", selectedTopic)
       .order("order_no");
 
-    if (data) {
-      const formatted = data.map((d: any) => ({
-        id: d.id,
-        hindi: d.hindi,
-        english: d.english,
-        sentence: `${d.hindi} - ${d.english}`,
-        order_no: d.order_no
-      }));
-
-      setSentences(formatted);
+    if (questionError) {
+      console.error(questionError);
+      return;
     }
 
-  };
+    const result: any[] = [];
 
+    for (const q of questions || []) {
+
+      const { data: lines, error: linesError } = await supabase
+        .from("conversation_lines")
+        .select("*")
+        .eq("question_id", q.id)
+        .order("step_no");
+
+      if (linesError) {
+        console.error(linesError);
+        continue;
+      }
+
+      const fullText = [
+        q.question_text,
+        ...(lines || []).map((l: any) => l.text)
+      ].join(" - ");
+
+      result.push({
+        id: q.id,
+        sentence: fullText,
+        order_no: q.order_no
+      });
+    }
+
+    setSentences(result);
+    return;
+  }
+
+  // Existing courses
+  const { data } = await supabase
+    .from("vocabulary")
+    .select("*")
+    .eq("topic_id", selectedTopic)
+    .order("order_no");
+
+  if (data) {
+    const formatted = data.map((d: any) => ({
+      id: d.id,
+      hindi: d.hindi,
+      english: d.english,
+      sentence: `${d.hindi} - ${d.english}`,
+      order_no: d.order_no
+    }));
+
+    setSentences(formatted);
+  }
+};
 
   const addCourse = async () => {
     if (!newCourse) return;
@@ -172,50 +219,165 @@ export default function EnglishSentenceMaster({
   };
 
   const addSentence = async () => {
-    if (!text) return;
+  if (!text || !selectedTopic) return;
 
-    const maxOrder = sentences.length > 0
-      ? Math.max(...sentences.map(s => s.order_no || 0))
-      : 0;
+  const selectedCourseName =
+    courses.find((c: any) => c.id === selectedCourse)?.name;
 
-    const parts = text.split("-");
+  const maxOrder = sentences.length > 0
+    ? Math.max(...sentences.map(s => s.order_no || 0))
+    : 0;
 
-    await supabase.from("vocabulary").insert([{
-      topic_id: selectedTopic,
-      hindi: parts[0]?.trim() || "",
-      english: parts.slice(1).join("-").trim() || "",
-      order_no: Number(orderNo || maxOrder + 1)
-    }]);
+  // Conversation
+  if (selectedCourseName === "Conversation") {
+
+    const parts = text
+      .split("-")
+      .map((p: string) => p.trim())
+      .filter((p: string) => p);
+
+    if (parts.length < 2) {
+      alert("Conversation data में - लगाकर lines अलग करें.");
+      return;
+    }
+
+    const { data: question, error: questionError } = await supabase
+      .from("conversation_questions")
+      .insert([{
+        topic_id: selectedTopic,
+        question_text: parts[0],
+        order_no: Number(orderNo || maxOrder + 1)
+      }])
+      .select()
+      .single();
+
+    if (questionError) {
+      alert("Question save failed: " + questionError.message);
+      return;
+    }
+
+    const lines = parts.slice(1).map((line: string, index: number) => ({
+      question_id: question.id,
+      step_no: index + 1,
+      speaker: `Step ${index + 1}`,
+      text: line
+    }));
+
+    const { error: linesError } = await supabase
+      .from("conversation_lines")
+      .insert(lines);
+
+    if (linesError) {
+      alert("Conversation lines save failed: " + linesError.message);
+      return;
+    }
 
     setText("");
     setOrderNo("");
     fetchSentences();
-  };
+    return;
+  }
+
+  // Existing courses
+  const parts = text.split("-");
+
+  await supabase.from("vocabulary").insert([{
+    topic_id: selectedTopic,
+    hindi: parts[0]?.trim() || "",
+    english: parts.slice(1).join("-").trim() || "",
+    order_no: Number(orderNo || maxOrder + 1)
+  }]);
+
+  setText("");
+  setOrderNo("");
+  fetchSentences();
+};
 
   const addBulk = async () => {
-    if (!bulkText) return;
+  if (!bulkText || !selectedTopic) return;
 
-    const lines = bulkText.split("\n").map(l => l.trim()).filter(l => l);
+  const selectedCourseName =
+    courses.find((c: any) => c.id === selectedCourse)?.name;
 
-    const maxOrder = sentences.length > 0
-      ? Math.max(...sentences.map(s => s.order_no || 0))
-      : 0;
+  const lines = bulkText
+    .split("\n")
+    .map((l: string) => l.trim())
+    .filter((l: string) => l);
 
-    const data = lines.map((line, i) => {
-      const parts = line.split("-");
+  const maxOrder = sentences.length > 0
+    ? Math.max(...sentences.map(s => s.order_no || 0))
+    : 0;
 
-      return {
-        topic_id: selectedTopic,
-        hindi: parts[0]?.trim() || "",
-        english: parts.slice(1).join("-").trim() || "",
-        order_no: maxOrder + i + 1
-      };
-    });
+  // Conversation
+  if (selectedCourseName === "Conversation") {
 
-    await supabase.from("vocabulary").insert(data);
+    for (let i = 0; i < lines.length; i++) {
+
+      const parts = lines[i]
+        .split("-")
+        .map((p: string) => p.trim())
+        .filter((p: string) => p);
+
+      if (parts.length < 2) {
+        continue;
+      }
+
+      const { data: question, error: questionError } =
+        await supabase
+          .from("conversation_questions")
+          .insert([{
+            topic_id: selectedTopic,
+            question_text: parts[0],
+            order_no: maxOrder + i + 1
+          }])
+          .select()
+          .single();
+
+      if (questionError) {
+        console.error("Conversation question save failed:", questionError);
+        continue;
+      }
+
+      const conversationLines = parts.slice(1).map(
+        (line: string, index: number) => ({
+          question_id: question.id,
+          step_no: index + 1,
+          speaker: `Step ${index + 1}`,
+          text: line
+        })
+      );
+
+      const { error: linesError } = await supabase
+        .from("conversation_lines")
+        .insert(conversationLines);
+
+      if (linesError) {
+        console.error("Conversation lines save failed:", linesError);
+      }
+    }
+
     setBulkText("");
     fetchSentences();
-  };
+    return;
+  }
+
+  // Existing courses
+  const data = lines.map((line, i) => {
+    const parts = line.split("-");
+
+    return {
+      topic_id: selectedTopic,
+      hindi: parts[0]?.trim() || "",
+      english: parts.slice(1).join("-").trim() || "",
+      order_no: maxOrder + i + 1
+    };
+  });
+
+  await supabase.from("vocabulary").insert(data);
+
+  setBulkText("");
+  fetchSentences();
+};
   const copySelectedSentences = () => {
     const selected = sentences.filter(s =>
       selectedSentenceIds.includes(s.id)

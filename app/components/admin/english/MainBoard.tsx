@@ -38,6 +38,8 @@ export default function MainBoard({
   selectedImageId,
   setSelectedImageId,
   showImages,
+isConversation,
+conversationImageUrl,
 }: any) {
 
 
@@ -91,108 +93,108 @@ export default function MainBoard({
     fetchSelectedMedia();
   }, [selectedImageId]);
   useEffect(() => {
-  const loadMedia = async () => {
+    const loadMedia = async () => {
 
-    if (!selectedImageId) {
-      setImageList([]);
-      setImageIndex(0);
-      return;
-    }
+      if (!selectedImageId) {
+        setImageList([]);
+        setImageIndex(0);
+        return;
+      }
 
-    // IMAGE check
-    const { data: imageData } = await supabase
-      .from("images")
-      .select("id, name, topic_id, file_path, sort_order, created_at")
-      .eq("id", selectedImageId)
-      .single();
+      // IMAGE check
+      const { data: imageData } = await supabase
+        .from("images")
+        .select("id, name, topic_id, file_path, sort_order, created_at")
+        .eq("id", selectedImageId)
+        .single();
 
-    // VIDEO check
-    let selectedMedia: any = imageData
-      ? {
+      // VIDEO check
+      let selectedMedia: any = imageData
+        ? {
           ...imageData,
           media_type: "image"
         }
-      : null;
+        : null;
 
-    if (!selectedMedia) {
-      const { data: videoData, error: videoError } =
+      if (!selectedMedia) {
+        const { data: videoData, error: videoError } =
+          await supabase
+            .from("videos")
+            .select(
+              "id, name, topic_id, source_type, video_url, file_path, sort_order, created_at"
+            )
+            .eq("id", selectedImageId)
+            .single();
+
+        if (videoError || !videoData) {
+          console.error("Selected media load error:", videoError);
+          return;
+        }
+
+        selectedMedia = {
+          ...videoData,
+          media_type: "video"
+        };
+      }
+
+      // Same topic ke images
+      const { data: images, error: imagesError } =
+        await supabase
+          .from("images")
+          .select("id, name, topic_id, file_path, sort_order, created_at")
+          .eq("topic_id", selectedMedia.topic_id);
+
+      if (imagesError) {
+        console.error("Image list load error:", imagesError);
+        return;
+      }
+
+      // Same topic ke videos
+      const { data: videos, error: videosError } =
         await supabase
           .from("videos")
           .select(
             "id, name, topic_id, source_type, video_url, file_path, sort_order, created_at"
           )
-          .eq("id", selectedImageId)
-          .single();
+          .eq("topic_id", selectedMedia.topic_id);
 
-      if (videoError || !videoData) {
-        console.error("Selected media load error:", videoError);
+      if (videosError) {
+        console.error("Video list load error:", videosError);
         return;
       }
 
-      selectedMedia = {
-        ...videoData,
-        media_type: "video"
-      };
-    }
+      const mediaList = [
+        ...(images || []).map((image: any) => ({
+          ...image,
+          media_type: "image"
+        })),
+        ...(videos || []).map((video: any) => ({
+          ...video,
+          media_type: "video"
+        }))
+      ].sort((a: any, b: any) => {
 
-    // Same topic ke images
-    const { data: images, error: imagesError } =
-      await supabase
-        .from("images")
-        .select("id, name, topic_id, file_path, sort_order, created_at")
-        .eq("topic_id", selectedMedia.topic_id);
+        if ((a.sort_order ?? 0) !== (b.sort_order ?? 0)) {
+          return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+        }
 
-    if (imagesError) {
-      console.error("Image list load error:", imagesError);
-      return;
-    }
+        return (
+          new Date(a.created_at).getTime() -
+          new Date(b.created_at).getTime()
+        );
+      });
 
-    // Same topic ke videos
-    const { data: videos, error: videosError } =
-      await supabase
-        .from("videos")
-        .select(
-          "id, name, topic_id, source_type, video_url, file_path, sort_order, created_at"
-        )
-        .eq("topic_id", selectedMedia.topic_id);
+      setImageList(mediaList);
 
-    if (videosError) {
-      console.error("Video list load error:", videosError);
-      return;
-    }
-
-    const mediaList = [
-      ...(images || []).map((image: any) => ({
-        ...image,
-        media_type: "image"
-      })),
-      ...(videos || []).map((video: any) => ({
-        ...video,
-        media_type: "video"
-      }))
-    ].sort((a: any, b: any) => {
-
-      if ((a.sort_order ?? 0) !== (b.sort_order ?? 0)) {
-        return (a.sort_order ?? 0) - (b.sort_order ?? 0);
-      }
-
-      return (
-        new Date(a.created_at).getTime() -
-        new Date(b.created_at).getTime()
+      const index = mediaList.findIndex(
+        (media: any) => media.id === selectedImageId
       );
-    });
 
-    setImageList(mediaList);
+      setImageIndex(index >= 0 ? index : 0);
+    };
 
-    const index = mediaList.findIndex(
-      (media: any) => media.id === selectedImageId
-    );
-
-    setImageIndex(index >= 0 ? index : 0);
-  };
-
-  loadMedia();
-}, [selectedImageId]);
+    loadMedia();
+  }, [selectedImageId]);
   const activePanels = [
     showLeft && "left",
     showGrammar && "grammar",
@@ -358,6 +360,8 @@ export default function MainBoard({
                 compact={true}
                 highlightIndex={highlightIndex}
                 setHighlightIndex={setHighlightIndex}
+                isConversation={isConversation}
+                conversationImageUrl={conversationImageUrl}
               />
             </div>
 

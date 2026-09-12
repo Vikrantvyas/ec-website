@@ -61,7 +61,26 @@ export default function EnglishPage() {
 
 
   const isGrammar = selectedCourseName === "Grammar";
+  const isConversation = selectedCourseName === "Conversation";
 
+ const conversationDay =
+  days.find((d: any) =>
+    selectedTopics.some((topicId: string) =>
+      topics.some(
+        (t: any) =>
+          t.id === topicId &&
+          t.day_id === d.id
+      )
+    )
+  );
+
+const conversationImageUrl =
+  conversationDay?.conversation_image_url || "";
+  console.log("CONVERSATION DEBUG:", {
+    selectedDays,
+    days,
+    conversationImageUrl,
+  });
   useEffect(() => {
     if (selectedGrammarTableId) {
       setShowGrammar(true);
@@ -203,7 +222,39 @@ export default function EnglishPage() {
     );
   };
   const fetchSentences = async () => {
+    if (isConversation) {
+      if (selectedTopics.length === 0) {
+        setSentences([]);
+        return;
+      }
 
+      const { data: questions, error } = await supabase
+        .from("conversation_questions")
+        .select(`
+      id,
+      topic_id,
+      question_text,
+      order_no,
+      conversation_lines (
+        id,
+        step_no,
+        speaker,
+        text
+      )
+    `)
+        .in("topic_id", selectedTopics)
+        .order("order_no");
+
+      if (error) {
+        console.error("CONVERSATION QUESTIONS ERROR:", error);
+        setSentences([]);
+        return;
+      }
+
+      setSentences(questions || []);
+      setShowAll(false);
+      return;
+    }
     let topicIds = selectedTopics;
 
 
@@ -462,6 +513,8 @@ export default function EnglishPage() {
             selectedImageId={selectedImageId}
             showImages={showImages}
             setShowImages={setShowImages}
+            isConversation={isConversation}
+            conversationImageUrl={conversationImageUrl}
             setSelectedImageId={setSelectedImageId}
           />
         </div>

@@ -41,6 +41,7 @@ export default function EnglishDayMaster({
 
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState("");
+  const [conversationImageFile, setConversationImageFile] = useState<File | null>(null);
 
   const [days, setDays] = useState<any[]>([]);
   const [dayNumber, setDayNumber] = useState("");
@@ -71,7 +72,28 @@ export default function EnglishDayMaster({
     const { data } = await supabase.from("english_courses").select("*").order("name");
     if (data) setCourses(data);
   };
+  const uploadConversationImage = async () => {
+    if (!conversationImageFile) return null;
 
+    const fileExt = conversationImageFile.name.split(".").pop();
+    const fileName = `conversation-${Date.now()}.${fileExt}`;
+    const filePath = `backgrounds/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from("conversation")
+      .upload(filePath, conversationImageFile);
+
+    if (error) {
+      alert("Image upload failed: " + error.message);
+      return null;
+    }
+
+    const { data } = supabase.storage
+      .from("conversation")
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
   const fetchDays = async () => {
     const { data } = await supabase.from("days")
       .select("*").eq("course_id", selectedCourse).order("day_number");
@@ -82,24 +104,51 @@ export default function EnglishDayMaster({
   const addDay = async () => {
     if (!selectedCourse || !dayNumber) return;
 
+    const selectedCourseName =
+      courses.find((c: any) => c.id === selectedCourse)?.name;
+
     const count = Number(dayNumber);
 
     const maxDay = days.length > 0
       ? Math.max(...days.map(d => d.day_number))
       : 0;
 
+    let conversationImageUrl: string | null = null;
+
+    if (selectedCourseName === "Conversation") {
+  if (!conversationImageFile) {
+    alert("Please select a Conversation background image.");
+    return;
+  }
+
+  conversationImageUrl = await uploadConversationImage();
+
+  if (!conversationImageUrl) {
+    return;
+  }
+}
+
     const data = [];
 
     for (let i = 1; i <= count; i++) {
       data.push({
         course_id: selectedCourse,
-        day_number: maxDay + i
+        day_number: maxDay + i,
+        conversation_image_url: conversationImageUrl
       });
     }
 
-    await supabase.from("days").insert(data);
+    const { error } = await supabase
+      .from("days")
+      .insert(data);
+
+    if (error) {
+      alert("Day save failed: " + error.message);
+      return;
+    }
 
     setDayNumber("");
+    setConversationImageFile(null);
     fetchDays();
   };
   const copySelectedDays = () => {
@@ -294,19 +343,39 @@ export default function EnglishDayMaster({
     setEditId(d.id);
     setEditValue(String(d.day_number));
     setEditTitle(d.title || "");
+    setConversationImageFile(null);
   };
 
   const saveEdit = async () => {
-    await supabase.from("days")
-      .update({
-        day_number: Number(editValue),
-        title: editTitle
-      })
+    let conversationImageUrl: string | null = null;
+
+    if (conversationImageFile) {
+      conversationImageUrl = await uploadConversationImage();
+
+      if (!conversationImageUrl) {
+        return;
+      }
+    }
+
+    const updateData: any = {
+      day_number: Number(editValue),
+      title: editTitle
+    };
+
+    if (conversationImageUrl) {
+      updateData.conversation_image_url = conversationImageUrl;
+    }
+
+    await supabase
+      .from("days")
+      .update(updateData)
       .eq("id", editId);
 
     setEditId(null);
+    setConversationImageFile(null);
     fetchDays();
   };
+
 
   // DRAG
   const handleDragEnd = (event: any) => {
@@ -345,7 +414,30 @@ export default function EnglishDayMaster({
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
+        {courses.find((c: any) => c.id === selectedCourse)?.name === "Conversation" && (
+          <>
+            {(() => {
+              const currentDay = days.find((day: any) => day.id === editId);
 
+              return currentDay?.conversation_image_url ? (
+                <img
+                  src={currentDay.conversation_image_url}
+                  alt="Current Conversation background"
+                  className="w-16 h-10 object-cover rounded border"
+                />
+              ) : null;
+            })()}
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) =>
+                setConversationImageFile(e.target.files?.[0] || null)
+              }
+              className="border px-2 py-1 rounded"
+            />
+          </>
+        )}
         <input
           type="number"
           value={dayNumber}
@@ -428,6 +520,16 @@ export default function EnglishDayMaster({
                             placeholder="Title"
                             className="border px-2 py-1 rounded flex-1"
                           />
+                          {courses.find((c: any) => c.id === selectedCourse)?.name === "Conversation" && (
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) =>
+                                setConversationImageFile(e.target.files?.[0] || null)
+                              }
+                              className="border px-2 py-1 rounded"
+                            />
+                          )}
                           <button onClick={saveEdit}>Save</button>
                         </>
                       ) : (
@@ -441,7 +543,13 @@ export default function EnglishDayMaster({
                               : ""}
 
                           </div>
-
+                          {d.conversation_image_url && (
+                            <img
+                              src={d.conversation_image_url}
+                              alt="Conversation background"
+                              className="w-16 h-10 object-cover rounded border"
+                            />
+                          )}
                           <button onClick={() => onManageTopics(d.id)}>
                             Manage Topics →
                           </button>
