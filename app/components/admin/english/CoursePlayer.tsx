@@ -94,31 +94,58 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         currentItem: conversationData[currentIndex],
     });
     const handleNext = () => {
-        if (isConversation) {
-            if (showAll) return;
+    if (isConversation) {
+        if (showAll) return;
 
-            // First Next → Arjun Hindi
-            if (currentIndex === -1) {
-                setCurrentIndex(0);
-                setConversationStep(0);
-                return;
-            }
-
-            // Same question: move through all 8 dialogue steps
-            if (conversationStep < 7) {
-                setConversationStep((prev) => prev + 1);
-                return;
-            }
-
-            // 8 steps complete → next question
-            if (currentIndex < list.length - 1) {
-                setCurrentIndex((prev) => prev + 1);
-                setConversationStep(0);
-            }
-
+        // First Next → Arjun Hindi
+        if (currentIndex === -1) {
+            setCurrentIndex(0);
+            setConversationStep(0);
             return;
         }
-    };
+
+        // Same question: move through all 8 dialogue steps
+        if (conversationStep < 7) {
+            setConversationStep((prev) => prev + 1);
+            return;
+        }
+
+        // 8 steps complete → next question
+        if (currentIndex < list.length - 1) {
+            setCurrentIndex((prev) => prev + 1);
+            setConversationStep(0);
+        }
+
+        return;
+    }
+
+    // NORMAL COURSE
+    if (showAll) return;
+
+    // First Next → first Hindi
+    if (currentIndex === -1) {
+        setCurrentIndex(0);
+        setShowEnglish(false);
+        return;
+    }
+
+    // Hindi visible → English reveal
+    if (!showEnglish) {
+        setShowEnglish(true);
+        setRevealedAnswers((prev) =>
+            prev.includes(currentIndex)
+                ? prev
+                : [...prev, currentIndex]
+        );
+        return;
+    }
+
+    // English visible → next Hindi
+    if (currentIndex < list.length - 1) {
+        setCurrentIndex((prev) => prev + 1);
+        setShowEnglish(false);
+    }
+};
     // =========================================================
     // SCORE NAVIGATION
     //

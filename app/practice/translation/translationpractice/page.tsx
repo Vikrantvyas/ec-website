@@ -519,54 +519,108 @@ function TranslationPracticeContent() {
                                     Click Next to start practice
                                 </div>
                             ) : (
-                                visible.map((item: any, i: number) => {
-                                    const isVocabulary =
-                                        item.hindi !== undefined;
+                                <div className="space-y-2">
+                                    {visible.map((item: any, i: number) => {
+                                        const isVocabulary =
+                                            item.hindi !== undefined;
 
-                                    const sentenceText =
-                                        item.sentence?.replace(/^\d+\.\s*/, "") || "";
+                                        const sentenceText =
+                                            item.sentence?.replace(/^\d+\.\s*/, "") || "";
 
-                                    const hindi =
-                                        isVocabulary
-                                            ? item.hindi
-                                            : sentenceText.split(" - ")[0];
+                                        const hindi =
+                                            isVocabulary
+                                                ? item.hindi
+                                                : sentenceText.split(" - ")[0];
 
-                                    const english =
-                                        isVocabulary
-                                            ? item.english
-                                            : sentenceText
-                                                .split(" - ")
-                                                .slice(1)
-                                                .join(" - ");
+                                        const english =
+                                            isVocabulary
+                                                ? item.english
+                                                : sentenceText
+                                                    .split(" - ")
+                                                    .slice(1)
+                                                    .join(" - ");
 
-                                    return (
-                                        <div
-                                            key={item.id || i}
-                                            id={`practice-sentence-${i}`}
-                                            className={`flex text-base ${i === currentIndex && !showAll
-                                                ? "bg-yellow-100"
-                                                : ""
-                                                }`}
-                                        >
-                                            <div className="w-10">
-                                                {i + 1}.
+                                        return (
+                                            <div
+                                                key={item.id || i}
+                                                id={`practice-sentence-${i}`}
+                                                className={`flex text-base ${i === currentIndex && !showAll
+                                                    ? "bg-yellow-100"
+                                                    : ""
+                                                    }`}
+                                            >
+                                                <div className="w-10">
+                                                    {i + 1}.
+                                                </div>
+
+                                                <div className="w-1/2 text-base leading-[1.25rem] text-red-600 pr-2">
+                                                    {hindi}
+                                                </div>
+
+                                                <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600 pl-2">
+                                                    {showAll ||
+                                                        revealedAnswers.includes(i)
+                                                        ? english
+                                                        : ""}
+                                                </div>
                                             </div>
-
-                                            <div className="w-1/2 text-base leading-[1.25rem] text-red-600 pr-2">
-                                                {hindi}
-                                            </div>
-
-                                            <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600 pl-2">
-                                                {showAll ||
-                                                    revealedAnswers.includes(i)
-                                                    ? english
-                                                    : ""}
-                                            </div>
-                                        </div>
-                                    );
-                                })
+                                        );
+                                                                   })}
+                            </div>
                             )}
 
+
+                                </div>
+
+                    </div>
+
+                    </div>
+
+                    {/* =====================================================
+                    BOTTOM CONTROL BAR
+                ===================================================== */}
+
+                    <div className="flex items-center justify-center shrink-0 py-1">
+
+                        <div className="inline-flex items-center gap-2">
+
+                            <button
+                                onClick={prevSentence}
+                                disabled={currentIndex < 0}
+                                className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors disabled:opacity-40"
+                            >
+                                Prev
+                            </button>
+
+                            <button
+                                onClick={nextSentence}
+                                disabled={
+                                    list.length === 0 ||
+                                    (
+                                        currentIndex >= list.length - 1 &&
+                                        showEnglish
+                                    )
+                                }
+                                className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-blue-700 disabled:opacity-40"
+                            >
+                                Next
+                            </button>
+
+                            <button
+                                onClick={toggleShowAll}
+                                className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-red-600"
+                            >
+                                {showAll ? "Hide All" : "Show All"}
+                            </button>
+
+                            <button
+                                onClick={() =>
+                                    setRandomMode((prev) => !prev)
+                                }
+                                className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-green-700"
+                            >
+                                {randomMode ? "Normal" : "Random"}
+                            </button>
 
                         </div>
 
@@ -574,71 +628,19 @@ function TranslationPracticeContent() {
 
                 </div>
 
-                {/* =====================================================
-                    BOTTOM CONTROL BAR
-                ===================================================== */}
-
-                <div className="flex items-center justify-center shrink-0 py-1">
-
-                    <div className="inline-flex items-center gap-2">
-
-                        <button
-                            onClick={prevSentence}
-                            disabled={currentIndex < 0}
-                            className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors disabled:opacity-40"
-                        >
-                            Prev
-                        </button>
-
-                        <button
-                            onClick={nextSentence}
-                            disabled={
-                                list.length === 0 ||
-                                (
-                                    currentIndex >= list.length - 1 &&
-                                    showEnglish
-                                )
-                            }
-                            className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-blue-700 disabled:opacity-40"
-                        >
-                            Next
-                        </button>
-
-                        <button
-                            onClick={toggleShowAll}
-                            className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-red-600"
-                        >
-                            {showAll ? "Hide All" : "Show All"}
-                        </button>
-
-                        <button
-                            onClick={() =>
-                                setRandomMode((prev) => !prev)
-                            }
-                            className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-green-700"
-                        >
-                            {randomMode ? "Normal" : "Random"}
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div >
-    );
+            </div >
+            );
 }
-export default function TranslationPracticePage() {
+            export default function TranslationPracticePage() {
     return (
-        <Suspense
-            fallback={
-                <div className="h-screen bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
-                    Loading...
-                </div>
-            }
-        >
-            <TranslationPracticeContent />
-        </Suspense>
-    );
+            <Suspense
+                fallback={
+                    <div className="h-screen bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                        Loading...
+                    </div>
+                }
+            >
+                <TranslationPracticeContent />
+            </Suspense>
+            );
 }
