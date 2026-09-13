@@ -31,7 +31,21 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         isConversation,
         conversationImageUrl,
     } = props;
-    const conversationData = data || [];
+    const conversationData = (data || []).map((item: any) => ({
+        ...item,
+
+        hindi1: item.question_text || "",
+        english1: item.question_english || "",
+
+        hindi2: item.question_hindi_2 || "",
+        english2: item.question_english_2 || "",
+
+        hindi3: item.answer_hindi_3 || "",
+        english3: item.answer_english_3 || "",
+
+        hindi4: item.answer_hindi_4 || "",
+        english4: item.answer_english_4 || "",
+    }));
     const [currentIndex, setCurrentIndex] = useState(-1);
     const [showEnglish, setShowEnglish] = useState(false);
     const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
@@ -49,9 +63,13 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
     useEffect(() => {
 
-        const newList = random
-            ? shuffleArray(safeData)
-            : safeData;
+        const newList = isConversation
+            ? (random
+                ? shuffleArray(conversationData)
+                : conversationData)
+            : (random
+                ? shuffleArray(safeData)
+                : safeData);
 
         setList(newList);
         setCurrentIndex(-1);
@@ -69,72 +87,38 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     // Hindi → English
     // English → Next Hindi
     // =========================================================
-
+    console.log("CONVERSATION DEBUG", {
+        isConversation,
+        currentIndex,
+        conversationStep,
+        currentItem: conversationData[currentIndex],
+    });
     const handleNext = () => {
         if (isConversation) {
             if (showAll) return;
 
-            // पहला Next → पहला Question
+            // First Next → Arjun Hindi
             if (currentIndex === -1) {
                 setCurrentIndex(0);
                 setConversationStep(0);
                 return;
             }
 
-            // अगले dialogue step पर जाएँ
-            if (conversationStep < 4) {
-                setConversationStep(prev => prev + 1);
+            // Same question: move through all 8 dialogue steps
+            if (conversationStep < 7) {
+                setConversationStep((prev) => prev + 1);
                 return;
             }
 
-            // पाँचों parts पूरे → अगला Question
-            if (currentIndex < conversationData.length - 1) {
-                setCurrentIndex(prev => prev + 1);
+            // 8 steps complete → next question
+            if (currentIndex < list.length - 1) {
+                setCurrentIndex((prev) => prev + 1);
                 setConversationStep(0);
             }
 
             return;
         }
-        if (showAll) return;
-
-        // First click → first Hindi
-        if (currentIndex === -1) {
-
-            setCurrentIndex(0);
-            setShowEnglish(false);
-
-            return;
-        }
-
-        // Hindi is visible → show English
-        if (!showEnglish) {
-
-            setShowEnglish(true);
-
-            setRevealedAnswers((prev) => {
-
-                if (prev.includes(currentIndex)) {
-                    return prev;
-                }
-
-                return [...prev, currentIndex];
-
-            });
-
-            return;
-        }
-
-        // English is visible → next Hindi
-        if (currentIndex < list.length - 1) {
-
-            setCurrentIndex((prev) => prev + 1);
-            setShowEnglish(false);
-
-        }
-
     };
-
-
     // =========================================================
     // SCORE NAVIGATION
     //
@@ -202,43 +186,45 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     // =========================================================
 
     const handlePrev = () => {
-        if (showAll) return;
+        if (isConversation) {
+            if (currentIndex === -1) return;
 
-        if (currentIndex < 0) return;
+            if (conversationStep > 0) {
+                setConversationStep((prev) => prev - 1);
+                return;
+            }
 
-        // English visible:
-        // केवल current sentence का English hide करें
+            if (currentIndex > 0) {
+                setCurrentIndex((prev) => prev - 1);
+                setConversationStep(7);
+                return;
+            }
+
+            setCurrentIndex(-1);
+            setConversationStep(-1);
+            return;
+        }
+
         if (showEnglish) {
-            setRevealedAnswers((prev) =>
-                prev.filter((index) => index !== currentIndex)
-            );
-
             setShowEnglish(false);
-            return;
-        }
-
-        // Hindi visible:
-        // Current Hindi को भी पीछे करें और
-        // उसके previous sentence का English दिखाएँ
-        if (currentIndex > 0) {
-            const previousIndex = currentIndex - 1;
-
-            setCurrentIndex(previousIndex);
-
             setRevealedAnswers((prev) =>
-                prev.filter((index) => index <= previousIndex)
+                prev.filter((i) => i !== currentIndex)
             );
-
-            setShowEnglish(true);
             return;
         }
 
-        // First Hindi → Blank
-        setCurrentIndex(-1);
-        setShowEnglish(false);
-        setRevealedAnswers([]);
-    };
+        if (currentIndex > 0) {
+            const prevIndex = currentIndex - 1;
+            setCurrentIndex(prevIndex);
+            setShowEnglish(true);
+            setRevealedAnswers((prev) =>
+                prev.filter((i) => i <= prevIndex)
+            );
+            return;
+        }
 
+        setCurrentIndex(-1);
+    };
 
     // =========================================================
     // MARK CORRECT
@@ -324,10 +310,10 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     /*
       SHOW ALL:
       All sentences.
-
+ 
       NORMAL:
       All sentences shown so far.
-
+ 
       COMPACT:
       All sentences shown so far,
       but the latest sentence is automatically
@@ -396,12 +382,6 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
                     {conversationData.length > 0 && currentIndex >= 0 && (
                         <>
-                            {/* Question */}
-                            <div className="shrink-0 flex items-center justify-center px-4 py-2 bg-white">
-                                <div className="text-center font-bold text-lg md:text-xl text-gray-800 leading-tight">
-                                    {conversationData[currentIndex]?.question_text || ""}
-                                </div>
-                            </div>
 
                             {/* Fixed Conversation Image */}
                             <div
@@ -422,73 +402,69 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                 )}
 
                                 {/* Arjun */}
-                                <div className="absolute left-[24%] top-[2%] w-[22%] h-[13%] flex items-center justify-center text-center px-2">
-                                    {conversationStep >= 1 && (
-                                        <div
-                                            className="w-full text-black font-semibold leading-tight text-center break-words"
-                                            style={{
-                                                fontSize: getConversationFontSize(
-                                                    conversationData[currentIndex]?.conversation_lines
-                                                        ?.find((line: any) => line.step_no === 1)?.text || ""
-                                                ),
-                                            }}
-                                        >
-                                            {conversationData[currentIndex]?.conversation_lines
-                                                ?.find((line: any) => line.step_no === 1)?.text || ""}
+                                <div className="absolute left-[22%] top-[2%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                    {conversationStep >= 0 && (
+                                        <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                            <div className="text-red-600">
+                                                {conversationData[currentIndex]?.hindi1 || ""}
+                                            </div>
+
+                                            {conversationStep >= 1 && (
+                                                <div className="text-green-600">
+                                                    {conversationData[currentIndex]?.english1 || ""}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Meera */}
-                                <div className="absolute left-[55%] top-[2%] w-[22%] h-[13%] flex items-center justify-center text-center px-2">
+                                <div className="absolute left-[57%] top-[2%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
                                     {conversationStep >= 2 && (
-                                        <div
-                                            className="w-full text-black font-semibold leading-tight text-center break-words"
-                                            style={{
-                                                fontSize: getConversationFontSize(
-                                                    conversationData[currentIndex]?.conversation_lines
-                                                        ?.find((line: any) => line.step_no === 2)?.text || ""
-                                                ),
-                                            }}
-                                        >
-                                            {conversationData[currentIndex]?.conversation_lines
-                                                ?.find((line: any) => line.step_no === 2)?.text || ""}
+                                        <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                            <div className="text-red-600">
+                                                {conversationData[currentIndex]?.hindi2 || ""}
+                                            </div>
+
+                                            {conversationStep >= 3 && (
+                                                <div className="text-green-600">
+                                                    {conversationData[currentIndex]?.english2 || ""}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Rohan */}
-                                <div className="absolute left-[22%] top-[50%] w-[28%] h-[13%] flex items-center justify-center text-center px-2">
-                                    {conversationStep >= 3 && (
-                                        <div
-                                            className="w-full text-black font-semibold leading-tight text-center break-words"
-                                            style={{
-                                                fontSize: getConversationFontSize(
-                                                    conversationData[currentIndex]?.conversation_lines
-                                                        ?.find((line: any) => line.step_no === 3)?.text || ""
-                                                ),
-                                            }}
-                                        >
-                                            {conversationData[currentIndex]?.conversation_lines
-                                                ?.find((line: any) => line.step_no === 3)?.text || ""}
+                                <div className="absolute left-[20%] top-[51%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                    {conversationStep >= 4 && (
+                                        <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                            <div className="text-red-600">
+                                                {conversationData[currentIndex]?.hindi3 || ""}
+                                            </div>
+
+                                            {conversationStep >= 5 && (
+                                                <div className="text-green-600">
+                                                    {conversationData[currentIndex]?.english3 || ""}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Meera Final */}
-                                <div className="absolute left-[50%] top-[50%] w-[28%] h-[13%] flex items-center justify-center text-center px-2">
-                                    {conversationStep >= 4 && (
-                                        <div
-                                            className="w-full text-black font-semibold leading-tight text-center break-words"
-                                            style={{
-                                                fontSize: getConversationFontSize(
-                                                    conversationData[currentIndex]?.conversation_lines
-                                                        ?.find((line: any) => line.step_no === 4)?.text || ""
-                                                ),
-                                            }}
-                                        >
-                                            {conversationData[currentIndex]?.conversation_lines
-                                                ?.find((line: any) => line.step_no === 4)?.text || ""}
+                                <div className="absolute left-[54%] top-[51%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                    {conversationStep >= 6 && (
+                                        <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                            <div className="text-red-600">
+                                                {conversationData[currentIndex]?.hindi4 || ""}
+                                            </div>
+
+                                            {conversationStep >= 7 && (
+                                                <div className="text-green-600">
+                                                    {conversationData[currentIndex]?.english4 || ""}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

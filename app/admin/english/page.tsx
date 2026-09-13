@@ -63,19 +63,19 @@ export default function EnglishPage() {
   const isGrammar = selectedCourseName === "Grammar";
   const isConversation = selectedCourseName === "Conversation";
 
- const conversationDay =
-  days.find((d: any) =>
-    selectedTopics.some((topicId: string) =>
-      topics.some(
-        (t: any) =>
-          t.id === topicId &&
-          t.day_id === d.id
+  const conversationDay =
+    days.find((d: any) =>
+      selectedTopics.some((topicId: string) =>
+        topics.some(
+          (t: any) =>
+            t.id === topicId &&
+            t.day_id === d.id
+        )
       )
-    )
-  );
+    );
 
-const conversationImageUrl =
-  conversationDay?.conversation_image_url || "";
+  const conversationImageUrl =
+    conversationDay?.conversation_image_url || "";
   console.log("CONVERSATION DEBUG:", {
     selectedDays,
     days,
@@ -222,38 +222,52 @@ const conversationImageUrl =
     );
   };
   const fetchSentences = async () => {
-    if (isConversation) {
-      if (selectedTopics.length === 0) {
-        setSentences([]);
-        return;
-      }
-
-      const { data: questions, error } = await supabase
-        .from("conversation_questions")
-        .select(`
-      id,
-      topic_id,
-      question_text,
-      order_no,
-      conversation_lines (
-        id,
-        step_no,
-        speaker,
-        text
-      )
-    `)
-        .in("topic_id", selectedTopics)
-        .order("order_no");
-
-      if (error) {
-        console.error("CONVERSATION QUESTIONS ERROR:", error);
-        setSentences([]);
-        return;
-      }
-
-      setSentences(questions || []);
-      setShowAll(false);
+  if (isConversation) {
+    if (selectedTopics.length === 0) {
+      setSentences([]);
       return;
+    }
+
+    const { data: questions, error } = await supabase
+      .from("conversation_questions")
+      .select(`
+        id,
+        topic_id,
+        question_text,
+        question_english,
+        question_hindi_2,
+        question_english_2,
+        answer_hindi_3,
+        answer_english_3,
+        answer_hindi_4,
+        answer_english_4,
+        order_no
+      `)
+      .in("topic_id", selectedTopics)
+      .order("topic_id")
+      .order("order_no");
+
+    if (error) {
+      console.error("CONVERSATION QUESTIONS ERROR:", error);
+      setSentences([]);
+      return;
+    }
+
+    const sorted = (questions || []).sort((a: any, b: any) => {
+      const indexA = selectedTopics.indexOf(a.topic_id);
+      const indexB = selectedTopics.indexOf(b.topic_id);
+
+      if (indexA === indexB) {
+        return (a.order_no ?? 0) - (b.order_no ?? 0);
+      }
+
+      return indexA - indexB;
+    });
+
+    setSentences(sorted);
+    setShowAll(false);
+    return;
+
     }
     let topicIds = selectedTopics;
 

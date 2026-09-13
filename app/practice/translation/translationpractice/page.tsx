@@ -85,16 +85,18 @@ function TranslationPracticeContent() {
                 ? await supabase
                     .from("conversation_questions")
                     .select(`
-            id,
-            topic_id,
-            question_text,
-            order_no,
-            conversation_lines (
-                step_no,
-                speaker,
-                text
-            )
-        `)
+        id,
+        topic_id,
+        question_text,
+        question_english,
+        question_hindi_2,
+        question_english_2,
+        answer_hindi_3,
+        answer_english_3,
+        answer_hindi_4,
+        answer_english_4,
+        order_no
+      `)
                     .in("topic_id", topicIds)
                     .order("topic_id")
                     .order("order_no")
@@ -104,12 +106,6 @@ function TranslationPracticeContent() {
                     .in("topic_id", topicIds)
                     .order("topic_id")
                     .order("order_no");
-
-            if (error) {
-                console.error("SENTENCES ERROR:", error.message);
-                setLoading(false);
-                return;
-            }
 
             // Selected Topics जिस order में आए हैं,
             // उसी order में sentences रखेंगे।
@@ -127,15 +123,18 @@ function TranslationPracticeContent() {
             const practiceItems = isConversation
                 ? sorted.map((item: any) => ({
                     ...item,
-                    hindi: item.question_text || "",
-                    english: (item.conversation_lines || [])
-                        .sort(
-                            (a: any, b: any) =>
-                                (a.step_no ?? 0) - (b.step_no ?? 0)
-                        )
-                        .map((line: any) => line.text)
-                        .filter(Boolean)
-                        .join(" - "),
+
+                    hindi1: item.question_text || "",
+                    english1: item.question_english || "",
+
+                    hindi2: item.question_hindi_2 || "",
+                    english2: item.question_english_2 || "",
+
+                    hindi3: item.answer_hindi_3 || "",
+                    english3: item.answer_english_3 || "",
+
+                    hindi4: item.answer_hindi_4 || "",
+                    english4: item.answer_english_4 || "",
                 }))
                 : sorted;
 
@@ -177,8 +176,8 @@ function TranslationPracticeContent() {
                 }
             }
             const newList = randomMode
-                ? shuffleArray(sorted)
-                : sorted;
+                ? shuffleArray(practiceItems)
+                : practiceItems;
 
             setList(newList);
 
@@ -229,7 +228,7 @@ function TranslationPracticeContent() {
         // =========================================================
         if (isConversation) {
 
-            // First Next → first Question
+            // First Next → Arjun Hindi
             if (currentIndex === -1) {
                 setCurrentIndex(0);
                 setConversationStep(0);
@@ -237,12 +236,12 @@ function TranslationPracticeContent() {
             }
 
             // Next dialogue step
-            if (conversationStep < 4) {
+            if (conversationStep < 7) {
                 setConversationStep((prev) => prev + 1);
                 return;
             }
 
-            // All 4 dialogue parts completed → next Question
+            // All 8 steps completed → next Question
             if (currentIndex < list.length - 1) {
                 setCurrentIndex((prev) => prev + 1);
                 setConversationStep(0);
@@ -422,15 +421,12 @@ function TranslationPracticeContent() {
                                         </div>
                                     ) : (
                                         <>
-                                            {/* Conversation Question */}
-                                            <div className="shrink-0 px-4 py-2 text-center font-bold text-lg">
-                                                {list[currentIndex]?.question_text || ""}
-                                            </div>
+
 
                                             {/* Conversation Image + Dialogue */}
                                             <div className="relative flex-1 min-h-0 overflow-hidden bg-white flex items-center justify-center">
 
-                                                <div className="relative w-full max-w-[650px] aspect-square">
+                                                <div className="relative w-full h-full">
 
                                                     {conversationImageUrl ? (
                                                         <img
@@ -445,45 +441,70 @@ function TranslationPracticeContent() {
                                                     )}
 
                                                     {/* Arjun */}
-                                                    <div className="absolute left-[12%] top-[15%] w-[22%] h-[13%] flex items-center justify-center text-center px-2">
-                                                        {conversationStep >= 1 && (
-                                                            <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
-                                                                {list[currentIndex]?.conversation_lines?.find(
-                                                                    (line: any) => line.step_no === 1
-                                                                )?.text || ""}
+                                                    <div className="absolute left-[22%] top-[3%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                                        {conversationStep >= 0 && (
+                                                            <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                                                <div className="text-red-600">
+                                                                    {list[currentIndex]?.hindi1 || ""}
+                                                                </div>
+
+                                                                {conversationStep >= 1 && (
+                                                                    <div className="text-green-600">
+                                                                        {list[currentIndex]?.english1 || ""}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
+
                                                     </div>
 
                                                     {/* Meera */}
-                                                    <div className="absolute left-[56%] top-[15%] w-[22%] h-[13%] flex items-center justify-center text-center px-2">
+                                                    <div className="absolute left-[57%] top-[3%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
                                                         {conversationStep >= 2 && (
-                                                            <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
-                                                                {list[currentIndex]?.conversation_lines?.find(
-                                                                    (line: any) => line.step_no === 2
-                                                                )?.text || ""}
+                                                            <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                                                <div className="text-red-600">
+                                                                    {list[currentIndex]?.hindi2 || ""}
+                                                                </div>
+
+                                                                {conversationStep >= 3 && (
+                                                                    <div className="text-green-600">
+                                                                        {list[currentIndex]?.english2 || ""}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
 
                                                     {/* Rohan */}
-                                                    <div className="absolute left-[12%] top-[47%] w-[28%] h-[13%] flex items-center justify-center text-center px-2">
-                                                        {conversationStep >= 3 && (
-                                                            <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
-                                                                {list[currentIndex]?.conversation_lines?.find(
-                                                                    (line: any) => line.step_no === 3
-                                                                )?.text || ""}
+                                                    <div className="absolute left-[20%] top-[52%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                                        {conversationStep >= 4 && (
+                                                            <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                                                <div className="text-red-600">
+                                                                    {list[currentIndex]?.hindi3 || ""}
+                                                                </div>
+
+                                                                {conversationStep >= 5 && (
+                                                                    <div className="text-green-600">
+                                                                        {list[currentIndex]?.english3 || ""}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
 
                                                     {/* Meera Final */}
-                                                    <div className="absolute left-[56%] top-[47%] w-[28%] h-[13%] flex items-center justify-center text-center px-2">
-                                                        {conversationStep >= 4 && (
-                                                            <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
-                                                                {list[currentIndex]?.conversation_lines?.find(
-                                                                    (line: any) => line.step_no === 4
-                                                                )?.text || ""}
+                                                    <div className="absolute left-[54%] top-[52%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                                        {conversationStep >= 6 && (
+                                                            <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                                                <div className="text-red-600">
+                                                                    {list[currentIndex]?.hindi4 || ""}
+                                                                </div>
+
+                                                                {conversationStep >= 7 && (
+                                                                    <div className="text-green-600">
+                                                                        {list[currentIndex]?.english4 || ""}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
@@ -605,7 +626,7 @@ function TranslationPracticeContent() {
 
             </div>
 
-        </div>
+        </div >
     );
 }
 export default function TranslationPracticePage() {

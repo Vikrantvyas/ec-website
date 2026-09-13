@@ -109,74 +109,77 @@ export default function EnglishSentenceMaster({
   };
 
   const fetchSentences = async () => {
+  const selectedCourseName =
+    courses.find((c: any) => c.id === selectedCourse)?.name;
 
-    const selectedCourseName =
-      courses.find((c: any) => c.id === selectedCourse)?.name;
-
-    // Conversation
-    if (selectedCourseName === "Conversation") {
-
-      const { data: questions, error: questionError } = await supabase
-        .from("conversation_questions")
-        .select("*")
-        .eq("topic_id", selectedTopic)
-        .order("order_no");
-
-      if (questionError) {
-        console.error(questionError);
-        return;
-      }
-
-      const result: any[] = [];
-
-      for (const q of questions || []) {
-
-        const { data: lines, error: linesError } = await supabase
-          .from("conversation_lines")
-          .select("*")
-          .eq("question_id", q.id)
-          .order("step_no");
-
-        if (linesError) {
-          console.error(linesError);
-          continue;
-        }
-
-        const fullText = [
-          q.question_text,
-          ...(lines || []).map((l: any) => l.text)
-        ].join(" - ");
-
-        result.push({
-          id: q.id,
-          sentence: fullText,
-          order_no: q.order_no
-        });
-      }
-
-      setSentences(result);
-      return;
-    }
-
-    // Existing courses
-    const { data } = await supabase
-      .from("vocabulary")
-      .select("*")
+  // Conversation
+  if (selectedCourseName === "Conversation") {
+    const { data, error } = await supabase
+      .from("conversation_questions")
+      .select(`
+        id,
+        topic_id,
+        question_text,
+        question_english,
+        question_hindi_2,
+        question_english_2,
+        answer_hindi_3,
+        answer_english_3,
+        answer_hindi_4,
+        answer_english_4,
+        order_no
+      `)
       .eq("topic_id", selectedTopic)
       .order("order_no");
+
+    if (error) {
+      console.error("Conversation fetch failed:", error);
+      return;
+    }
 
     if (data) {
       const formatted = data.map((d: any) => ({
         id: d.id,
-        hindi: d.hindi,
-        english: d.english,
-        sentence: `${d.hindi} - ${d.english}`,
-        order_no: d.order_no
+        sentence: [
+          d.question_text,
+          d.question_english,
+          d.question_hindi_2,
+          d.question_english_2,
+          d.answer_hindi_3,
+          d.answer_english_3,
+          d.answer_hindi_4,
+          d.answer_english_4,
+        ]
+          .filter(Boolean)
+          .join(" - "),
+        order_no: d.order_no,
       }));
 
       setSentences(formatted);
     }
-  };
+
+    return;
+  }
+
+  // Existing courses
+  const { data } = await supabase
+    .from("vocabulary")
+    .select("*")
+    .eq("topic_id", selectedTopic)
+    .order("order_no");
+
+  if (data) {
+    const formatted = data.map((d: any) => ({
+      id: d.id,
+      hindi: d.hindi,
+      english: d.english,
+      sentence: `${d.hindi} - ${d.english}`,
+      order_no: d.order_no,
+    }));
+
+    setSentences(formatted);
+  }
+};
 
   const addCourse = async () => {
     if (!newCourse) return;
@@ -230,45 +233,37 @@ export default function EnglishSentenceMaster({
 
     // Conversation
     if (selectedCourseName === "Conversation") {
-
       const parts = text
         .split("-")
         .map((p: string) => p.trim())
         .filter((p: string) => p);
 
-      if (parts.length < 2) {
-        alert("Conversation data में - लगाकर lines अलग करें.");
+      if (parts.length !== 8) {
+        alert(
+          "Conversation data में कुल 8 parts होने चाहिए, और उन्हें - से अलग करें."
+        );
         return;
       }
 
-      const { data: question, error: questionError } = await supabase
+      const { error: questionError } = await supabase
         .from("conversation_questions")
-        .insert([{
-          topic_id: selectedTopic,
-          question_text: parts[0],
-          order_no: Number(orderNo || maxOrder + 1)
-        }])
-        .select()
-        .single();
+        .insert([
+          {
+            topic_id: selectedTopic,
+            question_text: parts[0],
+            question_english: parts[1],
+            question_hindi_2: parts[2],
+            question_english_2: parts[3],
+            answer_hindi_3: parts[4],
+            answer_english_3: parts[5],
+            answer_hindi_4: parts[6],
+            answer_english_4: parts[7],
+            order_no: Number(orderNo || maxOrder + 1),
+          },
+        ]);
 
       if (questionError) {
-        alert("Question save failed: " + questionError.message);
-        return;
-      }
-
-      const lines = parts.slice(1).map((line: string, index: number) => ({
-        question_id: question.id,
-        step_no: index + 1,
-        speaker: `Step ${index + 1}`,
-        text: line
-      }));
-
-      const { error: linesError } = await supabase
-        .from("conversation_lines")
-        .insert(lines);
-
-      if (linesError) {
-        alert("Conversation lines save failed: " + linesError.message);
+        alert("Conversation save failed: " + questionError.message);
         return;
       }
 
@@ -310,49 +305,41 @@ export default function EnglishSentenceMaster({
 
     // Conversation
     if (selectedCourseName === "Conversation") {
-
       for (let i = 0; i < lines.length; i++) {
-
         const parts = lines[i]
           .split("-")
           .map((p: string) => p.trim())
           .filter((p: string) => p);
 
-        if (parts.length < 2) {
+        if (parts.length !== 8) {
+          console.error(
+            `Conversation line ${i + 1} में 8 parts नहीं हैं.`
+          );
           continue;
         }
 
-        const { data: question, error: questionError } =
-          await supabase
-            .from("conversation_questions")
-            .insert([{
+        const { error: questionError } = await supabase
+          .from("conversation_questions")
+          .insert([
+            {
               topic_id: selectedTopic,
               question_text: parts[0],
-              order_no: maxOrder + i + 1
-            }])
-            .select()
-            .single();
+              question_english: parts[1],
+              question_hindi_2: parts[2],
+              question_english_2: parts[3],
+              answer_hindi_3: parts[4],
+              answer_english_3: parts[5],
+              answer_hindi_4: parts[6],
+              answer_english_4: parts[7],
+              order_no: maxOrder + i + 1,
+            },
+          ]);
 
         if (questionError) {
-          console.error("Conversation question save failed:", questionError);
-          continue;
-        }
-
-        const conversationLines = parts.slice(1).map(
-          (line: string, index: number) => ({
-            question_id: question.id,
-            step_no: index + 1,
-            speaker: `Step ${index + 1}`,
-            text: line
-          })
-        );
-
-        const { error: linesError } = await supabase
-          .from("conversation_lines")
-          .insert(conversationLines);
-
-        if (linesError) {
-          console.error("Conversation lines save failed:", linesError);
+          console.error(
+            "Conversation save failed:",
+            questionError
+          );
         }
       }
 
@@ -369,7 +356,7 @@ export default function EnglishSentenceMaster({
         topic_id: selectedTopic,
         hindi: parts[0]?.trim() || "",
         english: parts.slice(1).join("-").trim() || "",
-        order_no: maxOrder + i + 1
+        order_no: maxOrder + i + 1,
       };
     });
 
