@@ -9,11 +9,11 @@ import { Menu, X } from "lucide-react";
 
 export default function MobileHeader() {
   const [open, setOpen] = useState(false);
-const pathname = usePathname();
+  const pathname = usePathname();
 
-if (pathname.startsWith("/practice")) {
-  return null;
-}
+  if (pathname.startsWith("/practice")) {
+    return null;
+  }
 
   return (
     <>

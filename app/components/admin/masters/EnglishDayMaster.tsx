@@ -116,17 +116,17 @@ export default function EnglishDayMaster({
     let conversationImageUrl: string | null = null;
 
     if (selectedCourseName === "Conversation") {
-  if (!conversationImageFile) {
-    alert("Please select a Conversation background image.");
-    return;
-  }
+      if (!conversationImageFile) {
+        alert("Please select a Conversation background image.");
+        return;
+      }
 
-  conversationImageUrl = await uploadConversationImage();
+      conversationImageUrl = await uploadConversationImage();
 
-  if (!conversationImageUrl) {
-    return;
-  }
-}
+      if (!conversationImageUrl) {
+        return;
+      }
+    }
 
     const data = [];
 

@@ -1237,8 +1237,8 @@ export default function ImageMaster({
 
           {mediaType === "image" ? (
             <input
-  key="image-file-input"
-  type="file"
+              key="image-file-input"
+              type="file"
               accept="image/*"
               multiple
               onChange={handleFileChange}

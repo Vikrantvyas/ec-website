@@ -398,10 +398,10 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                         <>
                             {/* Question */}
                             <div className="shrink-0 flex items-center justify-center px-4 py-2 bg-white">
-    <div className="text-center font-bold text-lg md:text-xl text-gray-800 leading-tight">
-        {conversationData[currentIndex]?.question_text || ""}
-    </div>
-</div>
+                                <div className="text-center font-bold text-lg md:text-xl text-gray-800 leading-tight">
+                                    {conversationData[currentIndex]?.question_text || ""}
+                                </div>
+                            </div>
 
                             {/* Fixed Conversation Image */}
                             <div

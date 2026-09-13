@@ -11,9 +11,9 @@ export default function DesktopHeader() {
   const router = useRouter();
   const pathname = usePathname();
 
-if (pathname.startsWith("/practice")) {
-  return null;
-}
+  if (pathname.startsWith("/practice")) {
+    return null;
+  }
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

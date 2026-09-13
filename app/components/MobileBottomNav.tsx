@@ -3,9 +3,9 @@ import { usePathname } from "next/navigation";
 export default function MobileBottomNav() {
   const pathname = usePathname();
 
-if (pathname.startsWith("/practice")) {
-  return null;
-}
+  if (pathname.startsWith("/practice")) {
+    return null;
+  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t md:hidden">

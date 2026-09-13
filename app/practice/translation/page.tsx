@@ -104,10 +104,10 @@ export default function TranslationPracticePage() {
             }
 
             const { data: topicsData, error: topicsError } = await supabase
-                .from("topics")
-                .select("id, topic_name, day_id, order_no")
-                .in("day_id", dayIds)
-                .order("order_no");
+    .from("topics")
+    .select("id, topic_name, day_id, order_no")
+    .in("day_id", dayIds)
+    .order("order_no");
 
             if (topicsError) {
                 console.error("TOPICS ERROR:", topicsError.message);
@@ -165,14 +165,16 @@ export default function TranslationPracticePage() {
                         {selectedTopics.length > 0 && (
                             <button
                                 onClick={() => {
-    const topicIds = selectedTopics.join(",");
+                                    const topicIds = selectedTopics.join(",");
+                                    const courseName =
+                                        courses.find((course) => course.id === selectedCourse)?.name || "";
 
-    router.push(
-        `/practice/translation/translationpractice?topics=${encodeURIComponent(
-            topicIds
-        )}`
-    );
-}}
+                                    router.push(
+                                        `/practice/translation/translationpractice?course=${encodeURIComponent(
+                                            courseName
+                                        )}&topics=${encodeURIComponent(topicIds)}`
+                                    );
+                                }}
                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
                             >
                                 Start Practice
@@ -353,5 +355,5 @@ export default function TranslationPracticePage() {
             </div>
         </div>
     );
-           
+
 }

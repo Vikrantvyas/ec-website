@@ -13,6 +13,10 @@ function TranslationPracticeContent() {
 
     const topicIds =
         searchParams.get("topics")?.split(",").filter(Boolean) || [];
+    const courseName = searchParams.get("course") || "";
+
+    const isConversation =
+        courseName.trim().toLowerCase() === "conversation";
 
     const [sentences, setSentences] = useState<any[]>([]);
     const [list, setList] = useState<any[]>([]);
@@ -27,6 +31,9 @@ function TranslationPracticeContent() {
     const [loading, setLoading] = useState(true);
     const sentenceAreaRef = useRef<HTMLDivElement>(null);
     const [currentTime, setCurrentTime] = useState("");
+    const [conversationStep, setConversationStep] = useState(-1);
+    const [conversationImageUrl, setConversationImageUrl] =
+        useState("");
 
     // =========================================================
     // CLOCK
@@ -65,17 +72,38 @@ function TranslationPracticeContent() {
                 setShowEnglish(false);
                 setRevealedAnswers([]);
                 setLoading(false);
+                setConversationStep(-1);
                 return;
             }
 
             setLoading(true);
 
-            const { data, error } = await supabase
-                .from("vocabulary")
-                .select("*")
-                .in("topic_id", topicIds)
-                .order("topic_id")
-                .order("order_no");
+
+
+
+            const { data, error } = isConversation
+                ? await supabase
+                    .from("conversation_questions")
+                    .select(`
+            id,
+            topic_id,
+            question_text,
+            order_no,
+            conversation_lines (
+                step_no,
+                speaker,
+                text
+            )
+        `)
+                    .in("topic_id", topicIds)
+                    .order("topic_id")
+                    .order("order_no")
+                : await supabase
+                    .from("vocabulary")
+                    .select("*")
+                    .in("topic_id", topicIds)
+                    .order("topic_id")
+                    .order("order_no");
 
             if (error) {
                 console.error("SENTENCES ERROR:", error.message);
@@ -96,8 +124,58 @@ function TranslationPracticeContent() {
                 return indexA - indexB;
             });
 
-            setSentences(sorted);
+            const practiceItems = isConversation
+                ? sorted.map((item: any) => ({
+                    ...item,
+                    hindi: item.question_text || "",
+                    english: (item.conversation_lines || [])
+                        .sort(
+                            (a: any, b: any) =>
+                                (a.step_no ?? 0) - (b.step_no ?? 0)
+                        )
+                        .map((line: any) => line.text)
+                        .filter(Boolean)
+                        .join(" - "),
+                }))
+                : sorted;
 
+            setSentences(practiceItems);
+            if (isConversation) {
+                const { data: topicData, error: topicError } = await supabase
+                    .from("topics")
+                    .select("id, day_id")
+                    .in("id", topicIds);
+
+                if (topicError) {
+                    console.error(
+                        "CONVERSATION TOPICS ERROR:",
+                        topicError.message
+                    );
+                }
+
+                const dayId = topicData?.[0]?.day_id;
+
+                if (dayId) {
+                    const { data: dayData, error: dayError } = await supabase
+                        .from("days")
+                        .select("conversation_image_url")
+                        .eq("id", dayId)
+                        .single();
+
+                    if (dayError) {
+                        console.error(
+                            "CONVERSATION IMAGE ERROR:",
+                            dayError.message
+                        );
+                    }
+
+                    setConversationImageUrl(
+                        dayData?.conversation_image_url || ""
+                    );
+                } else {
+                    setConversationImageUrl("");
+                }
+            }
             const newList = randomMode
                 ? shuffleArray(sorted)
                 : sorted;
@@ -145,6 +223,38 @@ function TranslationPracticeContent() {
         if (showAll) return;
         if (list.length === 0) return;
 
+        // =========================================================
+        // CONVERSATION NEXT
+        // Same logic as CoursePlayer / VocabularyPlayer
+        // =========================================================
+        if (isConversation) {
+
+            // First Next → first Question
+            if (currentIndex === -1) {
+                setCurrentIndex(0);
+                setConversationStep(0);
+                return;
+            }
+
+            // Next dialogue step
+            if (conversationStep < 4) {
+                setConversationStep((prev) => prev + 1);
+                return;
+            }
+
+            // All 4 dialogue parts completed → next Question
+            if (currentIndex < list.length - 1) {
+                setCurrentIndex((prev) => prev + 1);
+                setConversationStep(0);
+            }
+
+            return;
+        }
+
+        // =========================================================
+        // NORMAL COURSES
+        // =========================================================
+
         // First click → first Hindi
         if (currentIndex === -1) {
             setCurrentIndex(0);
@@ -173,7 +283,6 @@ function TranslationPracticeContent() {
             setShowEnglish(false);
         }
     };
-
     // =========================================================
     // PREVIOUS
     // =========================================================
@@ -297,26 +406,97 @@ function TranslationPracticeContent() {
                     <div className="flex flex-col h-full min-h-0">
 
                         <div
-    ref={sentenceAreaRef}
-    className="flex-1 min-h-0 overflow-y-auto space-y-2 p-2"
->
+                            ref={sentenceAreaRef}
+                            className="flex-1 min-h-0 overflow-y-auto flex flex-col"
+                        >
 
                             {loading ? (
-
                                 <div className="h-full flex items-center justify-center text-gray-400 text-xs">
                                     Loading...
                                 </div>
+                            ) : isConversation ? (
+                                <div className="flex-1 min-h-0 flex flex-col">
+                                    {currentIndex < 0 ? (
+                                        <div className="h-full flex items-center justify-center text-gray-400 text-xs">
+                                            Click Next to start practice
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {/* Conversation Question */}
+                                            <div className="shrink-0 px-4 py-2 text-center font-bold text-lg">
+    {list[currentIndex]?.question_text || ""}
+</div>
 
+                                            {/* Conversation Image + Dialogue */}
+                                            <div className="relative flex-1 min-h-0 overflow-hidden bg-white">
+
+                                                {conversationImageUrl ? (
+                                                    <img
+                                                        src={conversationImageUrl}
+                                                        alt="Conversation"
+                                                        className="absolute inset-0 w-full h-full object-contain"
+                                                        onLoad={() => console.log("CONVERSATION IMAGE LOADED:", conversationImageUrl)}
+                                                        onError={() => console.error("CONVERSATION IMAGE FAILED:", conversationImageUrl)}
+                                                    />
+                                                ) : (
+                                                    <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
+                                                        Conversation Image URL नहीं मिला
+                                                    </div>
+                                                )}
+
+                                                {/* Arjun */}
+                                                <div className="absolute left-[22%] top-[2%] w-[22%] h-[13%] flex items-center justify-center text-center px-2">
+                                                    {conversationStep >= 1 && (
+                                                        <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center break-words">
+                                                            {list[currentIndex]?.conversation_lines?.find(
+                                                                (line: any) => line.step_no === 1
+                                                            )?.text || ""}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Meera */}
+                                                <div className="absolute left-[55%] top-[2%] w-[22%] h-[13%] flex items-center justify-center text-center px-2">
+                                                    {conversationStep >= 2 && (
+                                                        <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center break-words">
+                                                            {list[currentIndex]?.conversation_lines?.find(
+                                                                (line: any) => line.step_no === 2
+                                                            )?.text || ""}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Rohan */}
+                                                <div className="absolute left-[22%] top-[50%] w-[28%] h-[13%] flex items-center justify-center text-center px-2">
+                                                    {conversationStep >= 3 && (
+                                                        <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center break-words">
+                                                            {list[currentIndex]?.conversation_lines?.find(
+                                                                (line: any) => line.step_no === 3
+                                                            )?.text || ""}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Meera Final */}
+                                                <div className="absolute left-[50%] top-[50%] w-[28%] h-[13%] flex items-center justify-center text-center px-2">
+                                                    {conversationStep >= 4 && (
+                                                        <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center break-words">
+                                                            {list[currentIndex]?.conversation_lines?.find(
+                                                                (line: any) => line.step_no === 4
+                                                            )?.text || ""}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             ) : visible.length === 0 ? (
-
                                 <div className="h-full flex items-center justify-center text-gray-400 text-xs">
                                     Click Next to start practice
                                 </div>
-
                             ) : (
-
                                 visible.map((item: any, i: number) => {
-
                                     const isVocabulary =
                                         item.hindi !== undefined;
 
@@ -337,7 +517,6 @@ function TranslationPracticeContent() {
                                                 .join(" - ");
 
                                     return (
-
                                         <div
                                             key={item.id || i}
                                             id={`practice-sentence-${i}`}
@@ -346,36 +525,25 @@ function TranslationPracticeContent() {
                                                 : ""
                                                 }`}
                                         >
-
-                                            {/* NUMBER */}
-
                                             <div className="w-10">
                                                 {i + 1}.
                                             </div>
-
-                                            {/* HINDI */}
 
                                             <div className="w-1/2 text-base leading-[1.25rem] text-red-600 pr-2">
                                                 {hindi}
                                             </div>
 
-                                            {/* ENGLISH */}
-
                                             <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600 pl-2">
-
                                                 {showAll ||
                                                     revealedAnswers.includes(i)
                                                     ? english
                                                     : ""}
-
                                             </div>
-
                                         </div>
-
                                     );
                                 })
-
                             )}
+
 
                         </div>
 

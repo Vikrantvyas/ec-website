@@ -70,9 +70,9 @@ export default function GrammarTable({
         const cellRect = firstCell.getBoundingClientRect();
 
         positions[rowKey] = {
-  left: cellRect.left + cellRect.width / 2,
-  top: rowRect.top
-};
+          left: cellRect.left + cellRect.width / 2,
+          top: rowRect.top
+        };
       });
 
       setHiddenRowPositions(positions);

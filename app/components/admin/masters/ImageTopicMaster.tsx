@@ -306,10 +306,10 @@ export default function ImageTopicMaster({
 
     setTopicName(topic.name || "");
     setMediaType(
-  topic.media_type === "video"
-    ? "video"
-    : "image"
-);
+      topic.media_type === "video"
+        ? "video"
+        : "image"
+    );
 
     setSortOrder(
       topic.sort_order !== null &&
