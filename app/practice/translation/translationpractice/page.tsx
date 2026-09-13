@@ -428,68 +428,68 @@ function TranslationPracticeContent() {
                                             </div>
 
                                             {/* Conversation Image + Dialogue */}
-<div className="relative flex-1 min-h-0 overflow-hidden bg-white flex items-center justify-center">
+                                            <div className="relative flex-1 min-h-0 overflow-hidden bg-white flex items-center justify-center">
 
-    <div className="relative w-full max-w-[650px] aspect-square">
+                                                <div className="relative w-full max-w-[650px] aspect-square">
 
-        {conversationImageUrl ? (
-            <img
-                src={conversationImageUrl}
-                alt="Conversation"
-                className="absolute inset-0 w-full h-full object-contain"
-            />
-        ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
-                Conversation Image URL नहीं मिला
-            </div>
-        )}
+                                                    {conversationImageUrl ? (
+                                                        <img
+                                                            src={conversationImageUrl}
+                                                            alt="Conversation"
+                                                            className="absolute inset-0 w-full h-full object-contain"
+                                                        />
+                                                    ) : (
+                                                        <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
+                                                            Conversation Image URL नहीं मिला
+                                                        </div>
+                                                    )}
 
-        {/* Arjun */}
-        <div className="absolute left-[22%] top-[2%] w-[22%] h-[13%] flex items-center justify-center text-center px-2">
-            {conversationStep >= 1 && (
-                <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center break-words">
-                    {list[currentIndex]?.conversation_lines?.find(
-                        (line: any) => line.step_no === 1
-                    )?.text || ""}
-                </div>
-            )}
-        </div>
+                                                    {/* Arjun */}
+                                                    <div className="absolute left-[12%] top-[15%] w-[22%] h-[13%] flex items-center justify-center text-center px-2">
+                                                        {conversationStep >= 1 && (
+                                                            <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                                                {list[currentIndex]?.conversation_lines?.find(
+                                                                    (line: any) => line.step_no === 1
+                                                                )?.text || ""}
+                                                            </div>
+                                                        )}
+                                                    </div>
 
-        {/* Meera */}
-        <div className="absolute left-[55%] top-[2%] w-[22%] h-[13%] flex items-center justify-center text-center px-2">
-            {conversationStep >= 2 && (
-                <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center break-words">
-                    {list[currentIndex]?.conversation_lines?.find(
-                        (line: any) => line.step_no === 2
-                    )?.text || ""}
-                </div>
-            )}
-        </div>
+                                                    {/* Meera */}
+                                                    <div className="absolute left-[56%] top-[15%] w-[22%] h-[13%] flex items-center justify-center text-center px-2">
+                                                        {conversationStep >= 2 && (
+                                                            <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                                                {list[currentIndex]?.conversation_lines?.find(
+                                                                    (line: any) => line.step_no === 2
+                                                                )?.text || ""}
+                                                            </div>
+                                                        )}
+                                                    </div>
 
-        {/* Rohan */}
-        <div className="absolute left-[22%] top-[50%] w-[28%] h-[13%] flex items-center justify-center text-center px-2">
-            {conversationStep >= 3 && (
-                <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center break-words">
-                    {list[currentIndex]?.conversation_lines?.find(
-                        (line: any) => line.step_no === 3
-                    )?.text || ""}
-                </div>
-            )}
-        </div>
+                                                    {/* Rohan */}
+                                                    <div className="absolute left-[12%] top-[47%] w-[28%] h-[13%] flex items-center justify-center text-center px-2">
+                                                        {conversationStep >= 3 && (
+                                                            <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                                                {list[currentIndex]?.conversation_lines?.find(
+                                                                    (line: any) => line.step_no === 3
+                                                                )?.text || ""}
+                                                            </div>
+                                                        )}
+                                                    </div>
 
-        {/* Meera Final */}
-        <div className="absolute left-[50%] top-[50%] w-[28%] h-[13%] flex items-center justify-center text-center px-2">
-            {conversationStep >= 4 && (
-                <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center break-words">
-                    {list[currentIndex]?.conversation_lines?.find(
-                        (line: any) => line.step_no === 4
-                    )?.text || ""}
-                </div>
-            )}
-        </div>
+                                                    {/* Meera Final */}
+                                                    <div className="absolute left-[56%] top-[47%] w-[28%] h-[13%] flex items-center justify-center text-center px-2">
+                                                        {conversationStep >= 4 && (
+                                                            <div className="w-full text-black text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                                                {list[currentIndex]?.conversation_lines?.find(
+                                                                    (line: any) => line.step_no === 4
+                                                                )?.text || ""}
+                                                            </div>
+                                                        )}
+                                                    </div>
 
-    </div>
-</div>
+                                                </div>
+                                            </div>
                                         </>
                                     )}
                                 </div>
