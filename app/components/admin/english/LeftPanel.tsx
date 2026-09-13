@@ -808,13 +808,12 @@ export default function LeftPanel({
                               <div className="flex items-center gap-2 min-w-0">
 
                                 <input
-                                  type="checkbox"
-                                  className="w-3.5 h-3.5 shrink-0"
-                                  checked={isTopicSelected}
-                                  onChange={() =>
-                                    toggleTopic(t.id)
-                                  }
-                                />
+  type="checkbox"
+  className="w-3.5 h-3.5 shrink-0"
+  checked={isTopicSelected}
+  onClick={(e) => e.stopPropagation()}
+  onChange={() => toggleTopic(t.id)}
+/>
 
                                 <span className="truncate">
                                   {t.topic_name}
