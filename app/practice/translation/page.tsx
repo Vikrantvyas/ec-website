@@ -104,10 +104,10 @@ export default function TranslationPracticePage() {
             }
 
             const { data: topicsData, error: topicsError } = await supabase
-    .from("topics")
-    .select("id, topic_name, day_id, order_no")
-    .in("day_id", dayIds)
-    .order("order_no");
+                .from("topics")
+                .select("id, topic_name, day_id, order_no")
+                .in("day_id", dayIds)
+                .order("order_no");
 
             if (topicsError) {
                 console.error("TOPICS ERROR:", topicsError.message);
@@ -177,7 +177,7 @@ export default function TranslationPracticePage() {
                                 }}
                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
                             >
-                                Start Practice
+                                Start
                             </button>
                         )}
 

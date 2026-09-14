@@ -450,7 +450,7 @@ function TranslationPracticeContent() {
                                                 {/* Arjun */}
                                                 <div className="absolute left-[20%] top-[1%] w-[64%] h-[16%] md:left-[22%] md:top-[3%] md:w-[22%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
                                                     {conversationStep >= 0 && (
-                                                        <div className="w-full text-[11px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
+                                                        <div className="w-full text-[12px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
                                                             <div className="text-red-600">
                                                                 {list[currentIndex]?.hindi1 || ""}
                                                             </div>
@@ -468,7 +468,7 @@ function TranslationPracticeContent() {
                                                 {/* Meera */}
                                                 <div className="absolute left-[20%] top-[26%] w-[64%] h-[16%] md:left-[57%] md:top-[3%] md:w-[22%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
                                                     {conversationStep >= 2 && (
-                                                        <div className="w-full text-[11px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
+                                                        <div className="w-full text-[12px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
                                                             <div className="text-red-600">
                                                                 {list[currentIndex]?.hindi2 || ""}
                                                             </div>
@@ -485,7 +485,7 @@ function TranslationPracticeContent() {
                                                 {/* Rohan */}
                                                 <div className="absolute left-[20%] top-[51%] w-[64%] h-[16%] md:left-[20%] md:top-[52%] md:w-[28%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
                                                     {conversationStep >= 4 && (
-                                                        <div className="w-full text-[11px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
+                                                        <div className="w-full text-[12px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
                                                             <div className="text-red-600">
                                                                 {list[currentIndex]?.hindi3 || ""}
                                                             </div>
@@ -502,7 +502,7 @@ function TranslationPracticeContent() {
                                                 {/* Meera Final */}
                                                 <div className="absolute left-[20%] top-[76%] w-[64%] h-[16%] md:left-[54%] md:top-[52%] md:w-[28%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
                                                     {conversationStep >= 6 && (
-                                                        <div className="w-full text-[11px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
+                                                        <div className="w-full text-[12px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
                                                             <div className="text-red-600">
                                                                 {list[currentIndex]?.hindi4 || ""}
                                                             </div>
