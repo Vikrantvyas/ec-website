@@ -431,7 +431,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                 {/* Arjun */}
                                 <div className="absolute left-[22%] top-[2%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
                                     {conversationStep >= 0 && (
-                                        <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                        <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
                                             <div className="text-red-600">
                                                 {conversationData[currentIndex]?.hindi1 || ""}
                                             </div>
@@ -448,7 +448,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                 {/* Meera */}
                                 <div className="absolute left-[57%] top-[2%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
                                     {conversationStep >= 2 && (
-                                        <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                        <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
                                             <div className="text-red-600">
                                                 {conversationData[currentIndex]?.hindi2 || ""}
                                             </div>
@@ -465,7 +465,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                 {/* Rohan */}
                                 <div className="absolute left-[20%] top-[51%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
                                     {conversationStep >= 4 && (
-                                        <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                        <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
                                             <div className="text-red-600">
                                                 {conversationData[currentIndex]?.hindi3 || ""}
                                             </div>
@@ -482,7 +482,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                 {/* Meera Final */}
                                 <div className="absolute left-[54%] top-[51%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
                                     {conversationStep >= 6 && (
-                                        <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                        <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
                                             <div className="text-red-600">
                                                 {conversationData[currentIndex]?.hindi4 || ""}
                                             </div>
