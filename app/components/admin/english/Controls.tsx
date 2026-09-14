@@ -5,6 +5,7 @@ export default function Controls({
   nextSentence,
   currentIndex,
   sentences,
+  isConversation,
   showAll,
   toggleShowAll,
   setShowAll,
@@ -39,11 +40,11 @@ export default function Controls({
     <div className={groupBox}>
 
       <button
-  onClick={prevSentence}
-  className={toolBtn}
->
-  Prev
-</button>
+        onClick={prevSentence}
+        className={toolBtn}
+      >
+        Prev
+      </button>
 
       <button
         onClick={nextSentence}
@@ -53,12 +54,14 @@ export default function Controls({
         Next
       </button>
 
-      <button
-        onClick={toggleShowAll}
-        className={`${toolBtn} font-medium text-red-600`}
-      >
-        {showAll ? "Hide All" : "Show All"}
-      </button>
+      {!isConversation && (
+        <button
+          onClick={toggleShowAll}
+          className={`${toolBtn} font-medium text-red-600`}
+        >
+          {showAll ? "Hide All" : "Show All"}
+        </button>
+      )}
 
       <button
         onClick={() => setRandomMode((p: any) => !p)}
@@ -67,19 +70,23 @@ export default function Controls({
         {randomMode ? "Normal" : "Random"}
       </button>
 
-      <button
-        onClick={prevTopic}
-        className={`${toolBtn} font-medium text-indigo-700`}
-      >
-        ← Topic
-      </button>
+      {!isConversation && (
+        <button
+          onClick={prevTopic}
+          className={`${toolBtn} font-medium text-indigo-700`}
+        >
+          ← Topic
+        </button>
+      )}
 
-      <button
-        onClick={nextTopic}
-        className={`${toolBtn} font-medium text-orange-700`}
-      >
-        Topic →
-      </button>
+      {!isConversation && (
+  <button
+    onClick={nextTopic}
+    className={`${toolBtn} font-medium text-orange-700`}
+  >
+    Topic →
+  </button>
+)}
 
       {/* CHECKBOX GROUP */}
       <div className="flex items-center gap-3 pl-4 border-l border-gray-300">

@@ -19,6 +19,7 @@ function TranslationPracticeContent() {
         courseName.trim().toLowerCase() === "conversation";
 
     const [sentences, setSentences] = useState<any[]>([]);
+    const [topicNames, setTopicNames] = useState<string[]>([]);
     const [list, setList] = useState<any[]>([]);
 
     const [currentIndex, setCurrentIndex] = useState(-1);
@@ -78,7 +79,20 @@ function TranslationPracticeContent() {
             }
 
             setLoading(true);
+            const { data: topicData, error: topicError } = await supabase
+                .from("topics")
+                .select("id, topic_name")
+                .in("id", topicIds);
 
+            if (topicError) {
+                console.error("TOPIC NAMES ERROR:", topicError.message);
+            }
+
+            setTopicNames(
+                topicIds.map(
+                    (id) => topicData?.find((topic: any) => topic.id === id)?.topic_name || ""
+                ).filter(Boolean)
+            );
 
 
 
@@ -391,8 +405,7 @@ function TranslationPracticeContent() {
                     </span>
 
                     <span className="bg-green-300 px-2 rounded font-normal ml-1">
-                        {topicIds.length} Topic
-                        {topicIds.length !== 1 ? "s" : ""}
+                        {topicNames.join(" | ")}
                     </span>
 
                     <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
@@ -420,111 +433,107 @@ function TranslationPracticeContent() {
                                 </div>
                             ) : isConversation ? (
                                 <div className="flex-1 min-h-0 flex flex-col">
-                                    {currentIndex < 0 ? (
-                                        <div className="h-full flex items-center justify-center text-gray-400 text-xs">
-                                            Click Next to start practice
-                                        </div>
-                                    ) : (
-                                        <>
+
+                                    <>
 
 
-                                            {/* Conversation Image + Dialogue */}
-                                            <div className="relative flex-1 min-h-0 overflow-hidden bg-white flex items-center justify-center">
+                                        {/* Conversation Image + Dialogue */}
+                                        <div className="relative flex-1 min-h-0 overflow-hidden bg-white flex items-center justify-center">
 
-                                                <div className="relative w-full h-full">
+                                            <div className="relative w-full h-full">
 
-                                                    {conversationImageUrl || conversationMobileImageUrl ? (
-                                                        <picture>
-                                                            <source
-                                                                media="(max-width: 767px)"
-                                                                srcSet={conversationMobileImageUrl}
-                                                            />
+                                                {conversationImageUrl || conversationMobileImageUrl ? (
+                                                    <picture>
+                                                        <source
+                                                            media="(max-width: 767px)"
+                                                            srcSet={conversationMobileImageUrl}
+                                                        />
 
-                                                            <img
-                                                                src={conversationImageUrl}
-                                                                alt="Conversation"
-                                                                className="absolute inset-0 w-full h-full object-contain"
-                                                            />
-                                                        </picture>
-                                                    ) : (
-                                                        <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
-                                                            Conversation Image URL नहीं मिला
+                                                        <img
+                                                            src={conversationImageUrl}
+                                                            alt="Conversation"
+                                                            className="absolute inset-0 w-full h-full object-contain"
+                                                        />
+                                                    </picture>
+                                                ) : (
+                                                    <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
+                                                        Conversation Image URL नहीं मिला
+                                                    </div>
+                                                )}
+
+                                                {/* Arjun */}
+                                                <div className="absolute left-[20%] top-[1%] w-[64%] h-[16%] md:left-[22%] md:top-[3%] md:w-[22%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
+                                                    {conversationStep >= 0 && (
+                                                        <div className="w-full text-[11px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
+                                                            <div className="text-red-600">
+                                                                {list[currentIndex]?.hindi1 || ""}
+                                                            </div>
+
+                                                            {conversationStep >= 1 && (
+                                                                <div className="text-green-600">
+                                                                    {list[currentIndex]?.english1 || ""}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
 
-                                                    {/* Arjun */}
-                                                    <div className="absolute left-[20%] top-[1%] w-[64%] h-[16%] md:left-[22%] md:top-[3%] md:w-[22%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
-                                                        {conversationStep >= 0 && (
-                                                            <div className="w-full text-[11px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
-                                                                <div className="text-red-600">
-                                                                    {list[currentIndex]?.hindi1 || ""}
-                                                                </div>
-
-                                                                {conversationStep >= 1 && (
-                                                                    <div className="text-green-600">
-                                                                        {list[currentIndex]?.english1 || ""}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-
-                                                    </div>
-
-                                                    {/* Meera */}
-                                                    <div className="absolute left-[20%] top-[26%] w-[64%] h-[16%] md:left-[57%] md:top-[3%] md:w-[22%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
-                                                        {conversationStep >= 2 && (
-                                                            <div className="w-full text-[11px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
-                                                                <div className="text-red-600">
-                                                                    {list[currentIndex]?.hindi2 || ""}
-                                                                </div>
-
-                                                                {conversationStep >= 3 && (
-                                                                    <div className="text-green-600">
-                                                                        {list[currentIndex]?.english2 || ""}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Rohan */}
-                                                    <div className="absolute left-[20%] top-[51%] w-[64%] h-[16%] md:left-[20%] md:top-[52%] md:w-[28%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
-                                                        {conversationStep >= 4 && (
-                                                            <div className="w-full text-[11px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
-                                                                <div className="text-red-600">
-                                                                    {list[currentIndex]?.hindi3 || ""}
-                                                                </div>
-
-                                                                {conversationStep >= 5 && (
-                                                                    <div className="text-green-600">
-                                                                        {list[currentIndex]?.english3 || ""}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Meera Final */}
-                                                    <div className="absolute left-[20%] top-[76%] w-[64%] h-[16%] md:left-[54%] md:top-[52%] md:w-[28%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
-                                                        {conversationStep >= 6 && (
-                                                            <div className="w-full text-[11px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
-                                                                <div className="text-red-600">
-                                                                    {list[currentIndex]?.hindi4 || ""}
-                                                                </div>
-
-                                                                {conversationStep >= 7 && (
-                                                                    <div className="text-green-600">
-                                                                        {list[currentIndex]?.english4 || ""}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-
                                                 </div>
+
+                                                {/* Meera */}
+                                                <div className="absolute left-[20%] top-[26%] w-[64%] h-[16%] md:left-[57%] md:top-[3%] md:w-[22%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
+                                                    {conversationStep >= 2 && (
+                                                        <div className="w-full text-[11px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
+                                                            <div className="text-red-600">
+                                                                {list[currentIndex]?.hindi2 || ""}
+                                                            </div>
+
+                                                            {conversationStep >= 3 && (
+                                                                <div className="text-green-600">
+                                                                    {list[currentIndex]?.english2 || ""}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Rohan */}
+                                                <div className="absolute left-[20%] top-[51%] w-[64%] h-[16%] md:left-[20%] md:top-[52%] md:w-[28%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
+                                                    {conversationStep >= 4 && (
+                                                        <div className="w-full text-[11px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
+                                                            <div className="text-red-600">
+                                                                {list[currentIndex]?.hindi3 || ""}
+                                                            </div>
+
+                                                            {conversationStep >= 5 && (
+                                                                <div className="text-green-600">
+                                                                    {list[currentIndex]?.english3 || ""}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Meera Final */}
+                                                <div className="absolute left-[20%] top-[76%] w-[64%] h-[16%] md:left-[54%] md:top-[52%] md:w-[28%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
+                                                    {conversationStep >= 6 && (
+                                                        <div className="w-full text-[11px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
+                                                            <div className="text-red-600">
+                                                                {list[currentIndex]?.hindi4 || ""}
+                                                            </div>
+
+                                                            {conversationStep >= 7 && (
+                                                                <div className="text-green-600">
+                                                                    {list[currentIndex]?.english4 || ""}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+
                                             </div>
-                                        </>
-                                    )}
+                                        </div>
+                                    </>
+
                                 </div>
                             ) : visible.length === 0 ? (
                                 <div className="h-full flex items-center justify-center text-gray-400 text-xs">

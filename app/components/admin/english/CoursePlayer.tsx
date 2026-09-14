@@ -51,6 +51,9 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
     const [conversationStep, setConversationStep] = useState(-1);
     const [list, setList] = useState<any[]>([]);
+
+    const currentConversationItem =
+        list[currentIndex] || conversationData[currentIndex];
     const [marks, setMarks] = useState<{ [key: number]: string }>({});
 
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -94,58 +97,58 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         currentItem: conversationData[currentIndex],
     });
     const handleNext = () => {
-    if (isConversation) {
+        if (isConversation) {
+            if (showAll) return;
+
+            // First Next → Arjun Hindi
+            if (currentIndex === -1) {
+                setCurrentIndex(0);
+                setConversationStep(0);
+                return;
+            }
+
+            // Same question: move through all 8 dialogue steps
+            if (conversationStep < 7) {
+                setConversationStep((prev) => prev + 1);
+                return;
+            }
+
+            // 8 steps complete → next question
+            if (currentIndex < list.length - 1) {
+                setCurrentIndex((prev) => prev + 1);
+                setConversationStep(0);
+            }
+
+            return;
+        }
+
+        // NORMAL COURSE
         if (showAll) return;
 
-        // First Next → Arjun Hindi
+        // First Next → first Hindi
         if (currentIndex === -1) {
             setCurrentIndex(0);
-            setConversationStep(0);
+            setShowEnglish(false);
             return;
         }
 
-        // Same question: move through all 8 dialogue steps
-        if (conversationStep < 7) {
-            setConversationStep((prev) => prev + 1);
+        // Hindi visible → English reveal
+        if (!showEnglish) {
+            setShowEnglish(true);
+            setRevealedAnswers((prev) =>
+                prev.includes(currentIndex)
+                    ? prev
+                    : [...prev, currentIndex]
+            );
             return;
         }
 
-        // 8 steps complete → next question
+        // English visible → next Hindi
         if (currentIndex < list.length - 1) {
             setCurrentIndex((prev) => prev + 1);
-            setConversationStep(0);
+            setShowEnglish(false);
         }
-
-        return;
-    }
-
-    // NORMAL COURSE
-    if (showAll) return;
-
-    // First Next → first Hindi
-    if (currentIndex === -1) {
-        setCurrentIndex(0);
-        setShowEnglish(false);
-        return;
-    }
-
-    // Hindi visible → English reveal
-    if (!showEnglish) {
-        setShowEnglish(true);
-        setRevealedAnswers((prev) =>
-            prev.includes(currentIndex)
-                ? prev
-                : [...prev, currentIndex]
-        );
-        return;
-    }
-
-    // English visible → next Hindi
-    if (currentIndex < list.length - 1) {
-        setCurrentIndex((prev) => prev + 1);
-        setShowEnglish(false);
-    }
-};
+    };
     // =========================================================
     // SCORE NAVIGATION
     //
@@ -407,7 +410,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
             {isConversation ? (
                 <div className="flex-1 min-h-0 flex flex-col">
 
-                    {conversationData.length > 0 && currentIndex >= 0 && (
+                    {conversationData.length > 0 && (
                         <>
 
                             {/* Fixed Conversation Image */}
@@ -433,12 +436,12 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                     {conversationStep >= 0 && (
                                         <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
                                             <div className="text-red-600">
-                                                {conversationData[currentIndex]?.hindi1 || ""}
+                                                {currentConversationItem?.hindi1 || ""}
                                             </div>
 
                                             {conversationStep >= 1 && (
                                                 <div className="text-green-600">
-                                                    {conversationData[currentIndex]?.english1 || ""}
+                                                    {currentConversationItem?.english1 || ""}
                                                 </div>
                                             )}
                                         </div>
@@ -450,12 +453,12 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                     {conversationStep >= 2 && (
                                         <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
                                             <div className="text-red-600">
-                                                {conversationData[currentIndex]?.hindi2 || ""}
+                                                {currentConversationItem?.hindi2 || ""}
                                             </div>
 
                                             {conversationStep >= 3 && (
                                                 <div className="text-green-600">
-                                                    {conversationData[currentIndex]?.english2 || ""}
+                                                    {currentConversationItem?.english2 || ""}
                                                 </div>
                                             )}
                                         </div>
@@ -467,12 +470,12 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                     {conversationStep >= 4 && (
                                         <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
                                             <div className="text-red-600">
-                                                {conversationData[currentIndex]?.hindi3 || ""}
+                                                {currentConversationItem?.hindi3 || ""}
                                             </div>
 
                                             {conversationStep >= 5 && (
                                                 <div className="text-green-600">
-                                                    {conversationData[currentIndex]?.english3 || ""}
+                                                    {currentConversationItem?.english3 || ""}
                                                 </div>
                                             )}
                                         </div>
@@ -484,12 +487,12 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                     {conversationStep >= 6 && (
                                         <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
                                             <div className="text-red-600">
-                                                {conversationData[currentIndex]?.hindi4 || ""}
+                                                {currentConversationItem?.hindi4 || ""}
                                             </div>
 
                                             {conversationStep >= 7 && (
                                                 <div className="text-green-600">
-                                                    {conversationData[currentIndex]?.english4 || ""}
+                                                    {currentConversationItem?.english4 || ""}
                                                 </div>
                                             )}
                                         </div>

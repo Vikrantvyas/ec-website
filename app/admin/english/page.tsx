@@ -538,6 +538,7 @@ export default function EnglishPage() {
           nextSentence={nextSentence}
           currentIndex={currentIndex}
           sentences={sentences}
+            isConversation={isConversation}
           showAll={showAll}
           toggleShowAll={toggleShowAll}
           setShowAll={setShowAll}
