@@ -398,21 +398,7 @@ function TranslationPracticeContent() {
                     HEADING BAR
                 ===================================================== */}
 
-                <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center shrink-0">
-
-                    <span className="bg-yellow-300 px-2 rounded">
-                        Translation Practice
-                    </span>
-
-                    <span className="bg-green-300 px-2 rounded font-normal ml-1">
-                        {topicNames.join(" | ")}
-                    </span>
-
-                    <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
-                        {currentTime}
-                    </div>
-
-                </div>
+                
 
                 {/* =====================================================
                     SENTENCE AREA
