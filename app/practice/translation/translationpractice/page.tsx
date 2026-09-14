@@ -453,9 +453,9 @@ function TranslationPracticeContent() {
                                                     )}
 
                                                     {/* Arjun */}
-                                                    <div className="absolute left-[22%] top-[3%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                                    <div className="absolute left-[30%] top-[1%] w-[32%] h-[16%] md:left-[22%] md:top-[3%] md:w-[22%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
                                                         {conversationStep >= 0 && (
-                                                            <div className="w-full text-sm md:text-base font-normal leading-tight text-center whitespace-nowrap">
+                                                            <div className="w-full text-[10px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
                                                                 <div className="text-red-600">
                                                                     {list[currentIndex]?.hindi1 || ""}
                                                                 </div>
@@ -471,9 +471,9 @@ function TranslationPracticeContent() {
                                                     </div>
 
                                                     {/* Meera */}
-                                                    <div className="absolute left-[57%] top-[3%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                                    <div className="absolute left-[30%] top-[25%] w-[32%] h-[16%] md:left-[57%] md:top-[3%] md:w-[22%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
                                                         {conversationStep >= 2 && (
-                                                            <div className="w-full text-sm md:text-base font-normal leading-tight text-center whitespace-nowrap">
+                                                            <div className="w-full text-[10px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
                                                                 <div className="text-red-600">
                                                                     {list[currentIndex]?.hindi2 || ""}
                                                                 </div>
@@ -488,9 +488,9 @@ function TranslationPracticeContent() {
                                                     </div>
 
                                                     {/* Rohan */}
-                                                    <div className="absolute left-[20%] top-[52%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                                    <div className="absolute left-[30%] top-[50%] w-[36%] h-[16%] md:left-[20%] md:top-[52%] md:w-[28%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
                                                         {conversationStep >= 4 && (
-                                                            <div className="w-full text-sm md:text-base font-normal leading-tight text-center whitespace-nowrap">
+                                                            <div className="w-full text-[10px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
                                                                 <div className="text-red-600">
                                                                     {list[currentIndex]?.hindi3 || ""}
                                                                 </div>
@@ -505,9 +505,9 @@ function TranslationPracticeContent() {
                                                     </div>
 
                                                     {/* Meera Final */}
-                                                    <div className="absolute left-[54%] top-[52%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                                    <div className="absolute left-[30%] top-[75%] w-[36%] h-[16%] md:left-[54%] md:top-[52%] md:w-[28%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
                                                         {conversationStep >= 6 && (
-                                                            <div className="w-full text-sm md:text-base font-normal leading-tight text-center whitespace-nowrap">
+                                                            <div className="w-full text-[10px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
                                                                 <div className="text-red-600">
                                                                     {list[currentIndex]?.hindi4 || ""}
                                                                 </div>
