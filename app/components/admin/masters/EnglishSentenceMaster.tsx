@@ -109,14 +109,14 @@ export default function EnglishSentenceMaster({
   };
 
   const fetchSentences = async () => {
-  const selectedCourseName =
-    courses.find((c: any) => c.id === selectedCourse)?.name;
+    const selectedCourseName =
+      courses.find((c: any) => c.id === selectedCourse)?.name;
 
-  // Conversation
-  if (selectedCourseName === "Conversation") {
-    const { data, error } = await supabase
-      .from("conversation_questions")
-      .select(`
+    // Conversation
+    if (selectedCourseName === "Conversation") {
+      const { data, error } = await supabase
+        .from("conversation_questions")
+        .select(`
         id,
         topic_id,
         question_text,
@@ -129,57 +129,57 @@ export default function EnglishSentenceMaster({
         answer_english_4,
         order_no
       `)
-      .eq("topic_id", selectedTopic)
-      .order("order_no");
+        .eq("topic_id", selectedTopic)
+        .order("order_no");
 
-    if (error) {
-      console.error("Conversation fetch failed:", error);
+      if (error) {
+        console.error("Conversation fetch failed:", error);
+        return;
+      }
+
+      if (data) {
+        const formatted = data.map((d: any) => ({
+          id: d.id,
+          sentence: [
+            d.question_text,
+            d.question_english,
+            d.question_hindi_2,
+            d.question_english_2,
+            d.answer_hindi_3,
+            d.answer_english_3,
+            d.answer_hindi_4,
+            d.answer_english_4,
+          ]
+            .filter(Boolean)
+            .join(" - "),
+          order_no: d.order_no,
+        }));
+
+        setSentences(formatted);
+      }
+
       return;
     }
+
+    // Existing courses
+    const { data } = await supabase
+      .from("vocabulary")
+      .select("*")
+      .eq("topic_id", selectedTopic)
+      .order("order_no");
 
     if (data) {
       const formatted = data.map((d: any) => ({
         id: d.id,
-        sentence: [
-          d.question_text,
-          d.question_english,
-          d.question_hindi_2,
-          d.question_english_2,
-          d.answer_hindi_3,
-          d.answer_english_3,
-          d.answer_hindi_4,
-          d.answer_english_4,
-        ]
-          .filter(Boolean)
-          .join(" - "),
+        hindi: d.hindi,
+        english: d.english,
+        sentence: `${d.hindi} - ${d.english}`,
         order_no: d.order_no,
       }));
 
       setSentences(formatted);
     }
-
-    return;
-  }
-
-  // Existing courses
-  const { data } = await supabase
-    .from("vocabulary")
-    .select("*")
-    .eq("topic_id", selectedTopic)
-    .order("order_no");
-
-  if (data) {
-    const formatted = data.map((d: any) => ({
-      id: d.id,
-      hindi: d.hindi,
-      english: d.english,
-      sentence: `${d.hindi} - ${d.english}`,
-      order_no: d.order_no,
-    }));
-
-    setSentences(formatted);
-  }
-};
+  };
 
   const addCourse = async () => {
     if (!newCourse) return;

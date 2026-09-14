@@ -34,6 +34,7 @@ function TranslationPracticeContent() {
     const [conversationStep, setConversationStep] = useState(-1);
     const [conversationImageUrl, setConversationImageUrl] =
         useState("");
+    const [conversationMobileImageUrl, setConversationMobileImageUrl] = useState("");
 
     // =========================================================
     // CLOCK
@@ -157,7 +158,7 @@ function TranslationPracticeContent() {
                 if (dayId) {
                     const { data: dayData, error: dayError } = await supabase
                         .from("days")
-                        .select("conversation_image_url")
+                        .select("conversation_image_url, conversation_mobile_image_url")
                         .eq("id", dayId)
                         .single();
 
@@ -170,6 +171,10 @@ function TranslationPracticeContent() {
 
                     setConversationImageUrl(
                         dayData?.conversation_image_url || ""
+                    );
+
+                    setConversationMobileImageUrl(
+                        dayData?.conversation_mobile_image_url || ""
                     );
                 } else {
                     setConversationImageUrl("");
@@ -428,12 +433,19 @@ function TranslationPracticeContent() {
 
                                                 <div className="relative w-full h-full">
 
-                                                    {conversationImageUrl ? (
-                                                        <img
-                                                            src={conversationImageUrl}
-                                                            alt="Conversation"
-                                                            className="absolute inset-0 w-full h-full object-contain"
-                                                        />
+                                                    {conversationImageUrl || conversationMobileImageUrl ? (
+                                                        <picture>
+                                                            <source
+                                                                media="(max-width: 767px)"
+                                                                srcSet={conversationMobileImageUrl}
+                                                            />
+
+                                                            <img
+                                                                src={conversationImageUrl}
+                                                                alt="Conversation"
+                                                                className="absolute inset-0 w-full h-full object-contain"
+                                                            />
+                                                        </picture>
                                                     ) : (
                                                         <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
                                                             Conversation Image URL नहीं मिला
@@ -443,7 +455,7 @@ function TranslationPracticeContent() {
                                                     {/* Arjun */}
                                                     <div className="absolute left-[22%] top-[3%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
                                                         {conversationStep >= 0 && (
-                                                            <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                                            <div className="w-full text-sm md:text-base font-normal leading-tight text-center whitespace-nowrap">
                                                                 <div className="text-red-600">
                                                                     {list[currentIndex]?.hindi1 || ""}
                                                                 </div>
@@ -461,7 +473,7 @@ function TranslationPracticeContent() {
                                                     {/* Meera */}
                                                     <div className="absolute left-[57%] top-[3%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
                                                         {conversationStep >= 2 && (
-                                                            <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                                            <div className="w-full text-sm md:text-base font-normal leading-tight text-center whitespace-nowrap">
                                                                 <div className="text-red-600">
                                                                     {list[currentIndex]?.hindi2 || ""}
                                                                 </div>
@@ -478,7 +490,7 @@ function TranslationPracticeContent() {
                                                     {/* Rohan */}
                                                     <div className="absolute left-[20%] top-[52%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
                                                         {conversationStep >= 4 && (
-                                                            <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                                            <div className="w-full text-sm md:text-base font-normal leading-tight text-center whitespace-nowrap">
                                                                 <div className="text-red-600">
                                                                     {list[currentIndex]?.hindi3 || ""}
                                                                 </div>
@@ -495,7 +507,7 @@ function TranslationPracticeContent() {
                                                     {/* Meera Final */}
                                                     <div className="absolute left-[54%] top-[52%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
                                                         {conversationStep >= 6 && (
-                                                            <div className="w-full text-sm md:text-base font-semibold leading-tight text-center whitespace-nowrap">
+                                                            <div className="w-full text-sm md:text-base font-normal leading-tight text-center whitespace-nowrap">
                                                                 <div className="text-red-600">
                                                                     {list[currentIndex]?.hindi4 || ""}
                                                                 </div>
@@ -565,62 +577,10 @@ function TranslationPracticeContent() {
                                                 </div>
                                             </div>
                                         );
-                                                                   })}
-                            </div>
+                                    })}
+                                </div>
                             )}
 
-
-                                </div>
-
-                    </div>
-
-                    </div>
-
-                    {/* =====================================================
-                    BOTTOM CONTROL BAR
-                ===================================================== */}
-
-                    <div className="flex items-center justify-center shrink-0 py-1">
-
-                        <div className="inline-flex items-center gap-2">
-
-                            <button
-                                onClick={prevSentence}
-                                disabled={currentIndex < 0}
-                                className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors disabled:opacity-40"
-                            >
-                                Prev
-                            </button>
-
-                            <button
-                                onClick={nextSentence}
-                                disabled={
-                                    list.length === 0 ||
-                                    (
-                                        currentIndex >= list.length - 1 &&
-                                        showEnglish
-                                    )
-                                }
-                                className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-blue-700 disabled:opacity-40"
-                            >
-                                Next
-                            </button>
-
-                            <button
-                                onClick={toggleShowAll}
-                                className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-red-600"
-                            >
-                                {showAll ? "Hide All" : "Show All"}
-                            </button>
-
-                            <button
-                                onClick={() =>
-                                    setRandomMode((prev) => !prev)
-                                }
-                                className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-green-700"
-                            >
-                                {randomMode ? "Normal" : "Random"}
-                            </button>
 
                         </div>
 
@@ -628,19 +588,71 @@ function TranslationPracticeContent() {
 
                 </div>
 
-            </div >
-            );
-}
-            export default function TranslationPracticePage() {
-    return (
-            <Suspense
-                fallback={
-                    <div className="h-screen bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
-                        Loading...
+                {/* =====================================================
+                    BOTTOM CONTROL BAR
+                ===================================================== */}
+
+                <div className="flex items-center justify-center shrink-0 py-1">
+
+                    <div className="inline-flex items-center gap-2">
+
+                        <button
+                            onClick={prevSentence}
+                            disabled={currentIndex < 0}
+                            className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors disabled:opacity-40"
+                        >
+                            Prev
+                        </button>
+
+                        <button
+                            onClick={nextSentence}
+                            disabled={
+                                list.length === 0 ||
+                                (
+                                    currentIndex >= list.length - 1 &&
+                                    showEnglish
+                                )
+                            }
+                            className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-blue-700 disabled:opacity-40"
+                        >
+                            Next
+                        </button>
+
+                        <button
+                            onClick={toggleShowAll}
+                            className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-red-600"
+                        >
+                            {showAll ? "Hide All" : "Show All"}
+                        </button>
+
+                        <button
+                            onClick={() =>
+                                setRandomMode((prev) => !prev)
+                            }
+                            className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-green-700"
+                        >
+                            {randomMode ? "Normal" : "Random"}
+                        </button>
+
                     </div>
-                }
-            >
-                <TranslationPracticeContent />
-            </Suspense>
-            );
+
+                </div>
+
+            </div>
+
+        </div >
+    );
+}
+export default function TranslationPracticePage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="h-screen bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                    Loading...
+                </div>
+            }
+        >
+            <TranslationPracticeContent />
+        </Suspense>
+    );
 }
