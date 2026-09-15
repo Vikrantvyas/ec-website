@@ -1,7 +1,7 @@
 "use client";
 
 import { supabase } from "@/lib/supabaseClient";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import WhiteBoard from "./WhiteBoard";
 import CoursePlayer from "./CoursePlayer";
 import ScoreCard from "./ScoreCard";
@@ -45,6 +45,67 @@ export default function MainBoard({
 
 
   const [panelOrder, setPanelOrder] = useState<string[]>([]);
+    const [isHighlighting, setIsHighlighting] = useState(false);
+  const [highlightPaths, setHighlightPaths] = useState<string[]>([]);
+  const isDrawingRef = useRef(false);
+  const currentPathRef = useRef("");
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Alt") {
+        setIsHighlighting(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Alt") {
+        setIsHighlighting(false);
+        isDrawingRef.current = false;
+        currentPathRef.current = "";
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
+  const handleHighlightStart = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isHighlighting) return;
+
+    isDrawingRef.current = true;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    currentPathRef.current = `M ${x} ${y}`;
+  };
+
+  const handleHighlightMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isHighlighting || !isDrawingRef.current) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    currentPathRef.current += ` L ${x} ${y}`;
+
+    setHighlightPaths(prev => {
+      const paths = [...prev];
+      paths[paths.length - 1] = currentPathRef.current;
+      return paths;
+    });
+  };
+
+  const handleHighlightEnd = () => {
+    isDrawingRef.current = false;
+    currentPathRef.current = "";
+  };
   const [imageList, setImageList] = useState<any[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
   const [selectedImage, setSelectedImage] = useState<any>(null);
@@ -274,30 +335,30 @@ export default function MainBoard({
         >
 
           {!isConversation && !isImageExplanation && (
-  <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center">
+            <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center">
 
-    <span className="bg-yellow-300 px-2 rounded">
-      Day {selectedDays?.map((id: any) => {
-        const d = days?.find((x: any) => x.id === id);
-        return d?.day_number;
-      }).join(", ")}
-    </span>
+              <span className="bg-yellow-300 px-2 rounded">
+                Day {selectedDays?.map((id: any) => {
+                  const d = days?.find((x: any) => x.id === id);
+                  return d?.day_number;
+                }).join(", ")}
+              </span>
 
-    <span className="bg-green-300 px-2 rounded font-normal">
-      {selectedTopics?.length > 0
-        ? selectedTopics.map((id: any) => {
-          const t = topics?.find((x: any) => x.id === id);
-          return t?.topic_name;
-        }).join(", ")
-        : "All Topics"}
-    </span>
+              <span className="bg-green-300 px-2 rounded font-normal">
+                {selectedTopics?.length > 0
+                  ? selectedTopics.map((id: any) => {
+                    const t = topics?.find((x: any) => x.id === id);
+                    return t?.topic_name;
+                  }).join(", ")
+                  : "All Topics"}
+              </span>
 
-    <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
-      {currentTime}
-    </div>
+              <div className="ml-auto text-blue-800 font-bold whitespace-nowrap">
+                {currentTime}
+              </div>
 
-  </div>
-)}
+            </div>
+          )}
 
           <div
             ref={scrollRef}
@@ -459,12 +520,35 @@ export default function MainBoard({
     if (panel === "board" && showBoard) {
       return (
         <div
-          key="board"
-          className={`${widthClass} ${isVertical ? "border-t" : "border-l"
-            } flex`}
-        >
-          <WhiteBoard />
-        </div>
+  key="board"
+  className={`${widthClass} ${isVertical ? "border-t" : "border-l"
+    } flex relative`}
+  onMouseDown={handleHighlightStart}
+  onMouseMove={handleHighlightMove}
+  onMouseUp={handleHighlightEnd}
+  onMouseLeave={handleHighlightEnd}
+>
+  <WhiteBoard />
+
+  {isHighlighting && (
+    <svg
+      className="absolute inset-0 w-full h-full pointer-events-none z-50"
+    >
+      {highlightPaths.map((path, index) => (
+        <path
+          key={index}
+          d={path}
+          fill="none"
+          stroke="red"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.7"
+        />
+      ))}
+    </svg>
+  )}
+</div>
       );
     }
 
