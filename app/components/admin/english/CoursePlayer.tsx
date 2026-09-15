@@ -7,7 +7,7 @@ import {
     forwardRef,
     useImperativeHandle,
 } from "react";
-
+import { supabase } from "@/lib/supabaseClient";
 const shuffleArray = (arr: any[]) => {
     return [...arr].sort(() => Math.random() - 0.5);
 };
@@ -30,6 +30,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         setHighlightIndex,
         isConversation,
         conversationImageUrl,
+        isImageExplanation,
     } = props;
     const conversationData = (data || []).map((item: any) => ({
         ...item,
@@ -46,10 +47,19 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         hindi4: item.answer_hindi_4 || "",
         english4: item.answer_english_4 || "",
     }));
+    const imageExplanationData = (data || []).map((item: any) => ({
+        ...item,
+        hindiQuestion: item.hindi_question || "",
+        englishQuestion: item.english_question || "",
+        hindiAnswer: item.hindi_answer || "",
+        englishAnswer: item.english_answer || "",
+    }));
     const [currentIndex, setCurrentIndex] = useState(-1);
     const [showEnglish, setShowEnglish] = useState(false);
     const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
     const [conversationStep, setConversationStep] = useState(-1);
+    const [imageExplanationStep, setImageExplanationStep] = useState(-1);
+    const [imageExplanationUrl, setImageExplanationUrl] = useState("");
     const [list, setList] = useState<any[]>([]);
 
     const currentConversationItem =
@@ -77,13 +87,15 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         setList(newList);
         setCurrentIndex(-1);
         setConversationStep(-1);
+        setImageExplanationStep(-1);
         setShowEnglish(false);
         setRevealedAnswers([]);
         setMarks({});
 
     }, [data, random]);
 
-
+    const imageExplanationDisplayUrl =
+    isImageExplanation ? conversationImageUrl : "";
     // =========================================================
     // NORMAL NEXT
     //
@@ -97,6 +109,30 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         currentItem: conversationData[currentIndex],
     });
     const handleNext = () => {
+        if (isImageExplanation) {
+            if (showAll) return;
+
+            // First Next → Hindi Question
+            if (currentIndex === -1) {
+                setCurrentIndex(0);
+                setImageExplanationStep(0);
+                return;
+            }
+
+            // Hindi Question → English Question
+            if (imageExplanationStep < 3) {
+                setImageExplanationStep((prev) => prev + 1);
+                return;
+            }
+
+            // English Answer → Next Image/Question
+            if (currentIndex < list.length - 1) {
+                setCurrentIndex((prev) => prev + 1);
+                setImageExplanationStep(0);
+            }
+
+            return;
+        }
         if (isConversation) {
             if (showAll) return;
 
@@ -216,6 +252,24 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     // =========================================================
 
     const handlePrev = () => {
+        if (isImageExplanation) {
+            if (currentIndex === -1) return;
+
+            if (imageExplanationStep > 0) {
+                setImageExplanationStep((prev) => prev - 1);
+                return;
+            }
+
+            if (currentIndex > 0) {
+                setCurrentIndex((prev) => prev - 1);
+                setImageExplanationStep(3);
+                return;
+            }
+
+            setCurrentIndex(-1);
+            setImageExplanationStep(-1);
+            return;
+        }
         if (isConversation) {
             if (currentIndex === -1) return;
 
@@ -313,6 +367,8 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     const handleReset = () => {
 
         setCurrentIndex(-1);
+        setImageExplanationStep(-1);
+        
         setConversationStep(-1);
         setShowEnglish(false);
         setRevealedAnswers([]);
@@ -407,101 +463,150 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     return (
 
         <div className="flex flex-col h-full min-h-0">
-            {isConversation ? (
+            {isImageExplanation ? (
                 <div className="flex-1 min-h-0 flex flex-col">
+                    {imageExplanationData.length > 0 && (
+                        <div className="relative flex-1 min-h-0 overflow-hidden bg-white">
+                            {imageExplanationUrl ? (
+                                <img
+                                    src={imageExplanationDisplayUrl}
+                                    alt="Image Explanation"
+                                    className="absolute inset-0 w-full h-full object-contain"
+                                />
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
+                                    Image नहीं मिली
+                                </div>
+                            )}
 
-                    {conversationData.length > 0 && (
-                        <>
+                            {imageExplanationStep >= 0 && (
+                                <div className="absolute bottom-0 left-0 right-0 bg-white/95 p-4 text-center">
+                                    {imageExplanationStep === 0 && (
+                                        <div className="text-2xl font-semibold text-red-600">
+                                            {imageExplanationData[currentIndex]?.hindiQuestion || ""}
+                                        </div>
+                                    )}
 
-                            {/* Fixed Conversation Image */}
-                            <div
-                                className="relative flex-1 min-h-0 overflow-hidden bg-white"
-                                style={{ containerType: "inline-size" }}
-                            >
+                                    {imageExplanationStep === 1 && (
+                                        <div className="text-2xl font-semibold text-green-600">
+                                            {imageExplanationData[currentIndex]?.englishQuestion || ""}
+                                        </div>
+                                    )}
 
-                                {conversationImageUrl ? (
-                                    <img
-                                        src={conversationImageUrl}
-                                        alt="Conversation"
-                                        className="absolute inset-0 w-full h-full object-contain"
-                                    />
-                                ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
-                                        Conversation Image URL नहीं मिला
-                                    </div>
-                                )}
+                                    {imageExplanationStep === 2 && (
+                                        <div className="text-2xl font-semibold text-red-600">
+                                            {imageExplanationData[currentIndex]?.hindiAnswer || ""}
+                                        </div>
+                                    )}
 
-                                {/* Arjun */}
-                                <div className="absolute left-[22%] top-[2%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
-                                    {conversationStep >= 0 && (
-                                        <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
-                                            <div className="text-red-600">
-                                                {currentConversationItem?.hindi1 || ""}
-                                            </div>
-
-                                            {conversationStep >= 1 && (
-                                                <div className="text-green-600">
-                                                    {currentConversationItem?.english1 || ""}
-                                                </div>
-                                            )}
+                                    {imageExplanationStep === 3 && (
+                                        <div className="text-2xl font-semibold text-green-600">
+                                            {imageExplanationData[currentIndex]?.englishAnswer || ""}
                                         </div>
                                     )}
                                 </div>
-
-                                {/* Meera */}
-                                <div className="absolute left-[57%] top-[2%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
-                                    {conversationStep >= 2 && (
-                                        <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
-                                            <div className="text-red-600">
-                                                {currentConversationItem?.hindi2 || ""}
-                                            </div>
-
-                                            {conversationStep >= 3 && (
-                                                <div className="text-green-600">
-                                                    {currentConversationItem?.english2 || ""}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Rohan */}
-                                <div className="absolute left-[20%] top-[51%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
-                                    {conversationStep >= 4 && (
-                                        <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
-                                            <div className="text-red-600">
-                                                {currentConversationItem?.hindi3 || ""}
-                                            </div>
-
-                                            {conversationStep >= 5 && (
-                                                <div className="text-green-600">
-                                                    {currentConversationItem?.english3 || ""}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Meera Final */}
-                                <div className="absolute left-[54%] top-[51%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
-                                    {conversationStep >= 6 && (
-                                        <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
-                                            <div className="text-red-600">
-                                                {currentConversationItem?.hindi4 || ""}
-                                            </div>
-
-                                            {conversationStep >= 7 && (
-                                                <div className="text-green-600">
-                                                    {currentConversationItem?.english4 || ""}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                            </div>
-                        </>
+                            )}
+                        </div>
                     )}
+                </div>
+            ) : isConversation ? (
+
+                <div className="flex-1 min-h-0 flex flex-col" >
+
+                    {
+                        conversationData.length > 0 && (
+                            <>
+
+                                {/* Fixed Conversation Image */}
+                                <div
+                                    className="relative flex-1 min-h-0 overflow-hidden bg-white"
+                                    style={{ containerType: "inline-size" }}
+                                >
+
+                                    {conversationImageUrl ? (
+                                        <img
+                                            src={conversationImageUrl}
+                                            alt="Conversation"
+                                            className="absolute inset-0 w-full h-full object-contain"
+                                        />
+                                    ) : (
+                                        <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
+                                            Conversation Image URL नहीं मिला
+                                        </div>
+                                    )}
+
+                                    {/* Arjun */}
+                                    <div className="absolute left-[22%] top-[2%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                        {conversationStep >= 0 && (
+                                            <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
+                                                <div className="text-red-600">
+                                                    {currentConversationItem?.hindi1 || ""}
+                                                </div>
+
+                                                {conversationStep >= 1 && (
+                                                    <div className="text-green-600">
+                                                        {currentConversationItem?.english1 || ""}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Meera */}
+                                    <div className="absolute left-[57%] top-[2%] w-[22%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                        {conversationStep >= 2 && (
+                                            <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
+                                                <div className="text-red-600">
+                                                    {currentConversationItem?.hindi2 || ""}
+                                                </div>
+
+                                                {conversationStep >= 3 && (
+                                                    <div className="text-green-600">
+                                                        {currentConversationItem?.english2 || ""}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Rohan */}
+                                    <div className="absolute left-[20%] top-[51%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                        {conversationStep >= 4 && (
+                                            <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
+                                                <div className="text-red-600">
+                                                    {currentConversationItem?.hindi3 || ""}
+                                                </div>
+
+                                                {conversationStep >= 5 && (
+                                                    <div className="text-green-600">
+                                                        {currentConversationItem?.english3 || ""}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Meera Final */}
+                                    <div className="absolute left-[54%] top-[51%] w-[28%] h-[13%] flex items-start justify-center text-center px-2 pt-2">
+                                        {conversationStep >= 6 && (
+                                            <div className="w-full text-sm md:text-sm font-normal leading-tight text-center whitespace-nowrap">
+                                                <div className="text-red-600">
+                                                    {currentConversationItem?.hindi4 || ""}
+                                                </div>
+
+                                                {conversationStep >= 7 && (
+                                                    <div className="text-green-600">
+                                                        {currentConversationItem?.english4 || ""}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                </div>
+                            </>
+                        )
+                    }
 
                 </div>
             ) : (
@@ -587,8 +692,9 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                     })}
 
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
 
     );
 

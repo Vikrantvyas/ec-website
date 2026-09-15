@@ -38,8 +38,9 @@ export default function MainBoard({
   selectedImageId,
   setSelectedImageId,
   showImages,
-isConversation,
-conversationImageUrl,
+  isConversation,
+  conversationImageUrl,
+  isImageExplanation,
 }: any) {
 
 
@@ -362,6 +363,7 @@ conversationImageUrl,
                 setHighlightIndex={setHighlightIndex}
                 isConversation={isConversation}
                 conversationImageUrl={conversationImageUrl}
+                isImageExplanation={isImageExplanation}
               />
             </div>
 

@@ -62,20 +62,26 @@ export default function EnglishPage() {
 
   const isGrammar = selectedCourseName === "Grammar";
   const isConversation = selectedCourseName === "Conversation";
+  const isImageExplanation =
+    selectedCourseName === "Image Explanation";
 
   const conversationDay =
-    days.find((d: any) =>
-      selectedTopics.some((topicId: string) =>
-        topics.some(
-          (t: any) =>
-            t.id === topicId &&
-            t.day_id === d.id
-        )
+  days.find((d: any) =>
+    selectedTopics.some((topicId: string) =>
+      topics.some(
+        (t: any) =>
+          t.id === topicId &&
+          t.day_id === d.id
       )
-    );
+    )
+  ) ||
+  days.find((d: any) =>
+    selectedDays.includes(d.id)
+  );
 
-  const conversationImageUrl =
-    conversationDay?.conversation_image_url || "";
+const conversationImageUrl =
+  conversationDay?.conversation_image_url || "";
+
   console.log("CONVERSATION DEBUG:", {
     selectedDays,
     days,
@@ -173,14 +179,41 @@ export default function EnglishPage() {
   }, [currentIndex, showAll]);
 
   const fetchCourses = async () => {
-    const { data } = await supabase.from("english_courses").select("*").order("name");
-    if (data) setCourses(data);
+    const { data, error } = await supabase
+      .from("english_courses")
+      .select("*")
+      .order("name");
+
+    if (error) {
+      console.error("FETCH COURSES ERROR:", error);
+      return;
+    }
+
+    setCourses(data || []);
   };
 
   const fetchDays = async () => {
-    const { data } = await supabase.from("days")
-      .select("*").eq("course_id", selectedCourse).order("day_number");
-    if (data) setDays(data);
+    let courseId = selectedCourse;
+
+
+    if (!courseId) {
+      setDays([]);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("days")
+      .select("*")
+      .eq("course_id", courseId)
+      .order("day_number");
+
+    if (error) {
+      console.error("FETCH DAYS ERROR:", error);
+      setDays([]);
+      return;
+    }
+
+    setDays(data || []);
   };
 
   const fetchTopics = async () => {
@@ -222,15 +255,35 @@ export default function EnglishPage() {
     );
   };
   const fetchSentences = async () => {
-  if (isConversation) {
-    if (selectedTopics.length === 0) {
-      setSentences([]);
+    if (isImageExplanation) {
+      const { data: imageExplanationData, error: imageExplanationError } =
+        await supabase
+          .from("image_explanation_questions")
+          .select(
+            "id, topic_id, image_id, hindi_question, english_question, hindi_answer, english_answer, order_no"
+          )
+          .in("topic_id", selectedTopics)
+          .order("order_no", { ascending: true });
+
+      if (imageExplanationError) {
+        console.error(
+          "IMAGE EXPLANATION ERROR:",
+          imageExplanationError.message
+        );
+      }
+
+      setSentences(imageExplanationData || []);
       return;
     }
+    if (isConversation) {
+      if (selectedTopics.length === 0) {
+        setSentences([]);
+        return;
+      }
 
-    const { data: questions, error } = await supabase
-      .from("conversation_questions")
-      .select(`
+      const { data: questions, error } = await supabase
+        .from("conversation_questions")
+        .select(`
         id,
         topic_id,
         question_text,
@@ -243,30 +296,30 @@ export default function EnglishPage() {
         answer_english_4,
         order_no
       `)
-      .in("topic_id", selectedTopics)
-      .order("topic_id")
-      .order("order_no");
+        .in("topic_id", selectedTopics)
+        .order("topic_id")
+        .order("order_no");
 
-    if (error) {
-      console.error("CONVERSATION QUESTIONS ERROR:", error);
-      setSentences([]);
-      return;
-    }
-
-    const sorted = (questions || []).sort((a: any, b: any) => {
-      const indexA = selectedTopics.indexOf(a.topic_id);
-      const indexB = selectedTopics.indexOf(b.topic_id);
-
-      if (indexA === indexB) {
-        return (a.order_no ?? 0) - (b.order_no ?? 0);
+      if (error) {
+        console.error("CONVERSATION QUESTIONS ERROR:", error);
+        setSentences([]);
+        return;
       }
 
-      return indexA - indexB;
-    });
+      const sorted = (questions || []).sort((a: any, b: any) => {
+        const indexA = selectedTopics.indexOf(a.topic_id);
+        const indexB = selectedTopics.indexOf(b.topic_id);
 
-    setSentences(sorted);
-    setShowAll(false);
-    return;
+        if (indexA === indexB) {
+          return (a.order_no ?? 0) - (b.order_no ?? 0);
+        }
+
+        return indexA - indexB;
+      });
+
+      setSentences(sorted);
+      setShowAll(false);
+      return;
 
     }
     let topicIds = selectedTopics;
@@ -528,6 +581,7 @@ export default function EnglishPage() {
             showImages={showImages}
             setShowImages={setShowImages}
             isConversation={isConversation}
+            isImageExplanation={isImageExplanation}
             conversationImageUrl={conversationImageUrl}
             setSelectedImageId={setSelectedImageId}
           />
@@ -538,7 +592,7 @@ export default function EnglishPage() {
           nextSentence={nextSentence}
           currentIndex={currentIndex}
           sentences={sentences}
-            isConversation={isConversation}
+          isConversation={isConversation}
           showAll={showAll}
           toggleShowAll={toggleShowAll}
           setShowAll={setShowAll}

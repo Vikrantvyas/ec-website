@@ -63,14 +63,35 @@ export default function EnglishDayMaster({
       setSelectedCourse(initialCourseId);
     }
   }, [initialCourseId]);
-
   useEffect(() => {
     if (selectedCourse) fetchDays();
   }, [selectedCourse]);
 
   const fetchCourses = async () => {
-    const { data } = await supabase.from("english_courses").select("*").order("name");
-    if (data) setCourses(data);
+    const { data, error } = await supabase
+      .from("english_courses")
+      .select("*")
+      .order("name");
+
+    if (error) {
+      console.error("Fetch Courses failed:", error);
+      return;
+    }
+
+    const allCourses = data || [];
+
+    setCourses(allCourses);
+
+    // पुराने Image Explanation ID को actual database UUID में बदलें
+    if (initialCourseId === "image-explanation") {
+      const imageExplanationCourse = allCourses.find(
+        (c: any) => c.name === "Image Explanation"
+      );
+
+      if (imageExplanationCourse) {
+        setSelectedCourse(imageExplanationCourse.id);
+      }
+    }
   };
   const uploadConversationImage = async () => {
     if (!conversationImageFile) return null;
@@ -95,9 +116,40 @@ export default function EnglishDayMaster({
     return data.publicUrl;
   };
   const fetchDays = async () => {
-    const { data } = await supabase.from("days")
-      .select("*").eq("course_id", selectedCourse).order("day_number");
-    if (data) setDays(data);
+    const courseId = selectedCourse;
+
+    if (!courseId) {
+      setDays([]);
+      return;
+    }
+
+    setDays([]);
+
+    const { data, error } = await supabase
+      .from("days")
+      .select("*")
+      .eq("course_id", courseId)
+      .order("day_number");
+
+    if (error) {
+      console.error("Fetch Days failed:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+
+      alert(
+        `Fetch Days failed:\n${error.message}\n\nCode: ${error.code || ""}`
+      );
+
+      return;
+    }
+
+    // पुराने course की request का result नए course को overwrite न करे
+    if (courseId !== selectedCourse) return;
+
+    setDays(data || []);
   };
 
   // ✅ BULK ADD (MAIN FEATURE)
@@ -115,9 +167,16 @@ export default function EnglishDayMaster({
 
     let conversationImageUrl: string | null = null;
 
-    if (selectedCourseName === "Conversation") {
+    if (
+      selectedCourseName === "Conversation" ||
+      selectedCourseName === "Image Explanation"
+    ) {
       if (!conversationImageFile) {
-        alert("Please select a Conversation background image.");
+        alert(
+          selectedCourseName === "Conversation"
+            ? "Please select a Conversation background image."
+            : "Please select an Image Explanation image."
+        );
         return;
       }
 
@@ -213,7 +272,8 @@ export default function EnglishDayMaster({
           .insert([{
             course_id: selectedCourse,
             day_number: nextDayNumber,
-            title: oldDay.title || ""
+            title: oldDay.title || "",
+            conversation_image_url: oldDay.conversation_image_url || null
           }])
           .select()
           .single();
@@ -251,32 +311,85 @@ export default function EnglishDayMaster({
           const newTopic = newTopicData;
 
           // 4. Get Sentences
-          const { data: oldVocabulary, error: vocabularyError } =
-            await supabase
-              .from("vocabulary")
-              .select("*")
-              .eq("topic_id", oldTopic.id)
-              .order("order_no");
+          const selectedCourseName =
+  courses.find((c: any) => c.id === selectedCourse)?.name;
 
-          if (vocabularyError) throw vocabularyError;
+if (
+  selectedCourseName === "Conversation" ||
+  selectedCourseName === "Image Explanation"
+) {
+  const questionTable =
+    selectedCourseName === "Image Explanation"
+      ? "image_explanation_questions"
+      : "conversation_questions";
 
-          // 5. Copy Sentences
-          if (oldVocabulary && oldVocabulary.length > 0) {
+  const { data: oldQuestions, error: questionsError } =
+    await supabase
+      .from(questionTable)
+      .select("*")
+      .eq("topic_id", oldTopic.id)
+      .order("order_no");
 
-            const vocabularyData = oldVocabulary.map((v: any) => ({
-              topic_id: newTopic.id,
-              hindi: v.hindi,
-              english: v.english,
-              order_no: v.order_no
-            }));
+  if (questionsError) throw questionsError;
 
-            const { error: insertVocabularyError } =
-              await supabase
-                .from("vocabulary")
-                .insert(vocabularyData);
+  if (oldQuestions && oldQuestions.length > 0) {
+    const questionsData =
+      selectedCourseName === "Image Explanation"
+        ? oldQuestions.map((q: any) => ({
+            topic_id: newTopic.id,
+            image_id: q.image_id,
+            hindi_question: q.hindi_question,
+            english_question: q.english_question,
+            hindi_answer: q.hindi_answer,
+            english_answer: q.english_answer,
+            order_no: q.order_no
+          }))
+        : oldQuestions.map((q: any) => ({
+            topic_id: newTopic.id,
+            question_text: q.question_text,
+            question_english: q.question_english,
+            question_hindi_2: q.question_hindi_2,
+            question_english_2: q.question_english_2,
+            answer_hindi_3: q.answer_hindi_3,
+            answer_english_3: q.answer_english_3,
+            answer_hindi_4: q.answer_hindi_4,
+            answer_english_4: q.answer_english_4,
+            order_no: q.order_no
+          }));
 
-            if (insertVocabularyError) throw insertVocabularyError;
-          }
+    const { error: insertQuestionsError } =
+      await supabase
+        .from(questionTable)
+        .insert(questionsData);
+
+    if (insertQuestionsError) throw insertQuestionsError;
+  }
+} else {
+  const { data: oldVocabulary, error: vocabularyError } =
+    await supabase
+      .from("vocabulary")
+      .select("*")
+      .eq("topic_id", oldTopic.id)
+      .order("order_no");
+
+  if (vocabularyError) throw vocabularyError;
+
+  if (oldVocabulary && oldVocabulary.length > 0) {
+    const vocabularyData = oldVocabulary.map((v: any) => ({
+      topic_id: newTopic.id,
+      hindi: v.hindi,
+      english: v.english,
+      order_no: v.order_no
+    }));
+
+    const { error: insertVocabularyError } =
+      await supabase
+        .from("vocabulary")
+        .insert(vocabularyData);
+
+    if (insertVocabularyError) throw insertVocabularyError;
+  }
+}
         }
       }
 
@@ -414,30 +527,32 @@ export default function EnglishDayMaster({
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
-        {courses.find((c: any) => c.id === selectedCourse)?.name === "Conversation" && (
-          <>
-            {(() => {
-              const currentDay = days.find((day: any) => day.id === editId);
+        {["Conversation", "Image Explanation"].includes(
+          courses.find((c: any) => c.id === selectedCourse)?.name
+        ) && (
+            <>
+              {(() => {
+                const currentDay = days.find((day: any) => day.id === editId);
 
-              return currentDay?.conversation_image_url ? (
-                <img
-                  src={currentDay.conversation_image_url}
-                  alt="Current Conversation background"
-                  className="w-16 h-10 object-cover rounded border"
-                />
-              ) : null;
-            })()}
+                return currentDay?.conversation_image_url ? (
+                  <img
+                    src={currentDay.conversation_image_url}
+                    alt="Current Conversation background"
+                    className="w-16 h-10 object-cover rounded border"
+                  />
+                ) : null;
+              })()}
 
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) =>
-                setConversationImageFile(e.target.files?.[0] || null)
-              }
-              className="border px-2 py-1 rounded"
-            />
-          </>
-        )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setConversationImageFile(e.target.files?.[0] || null)
+                }
+                className="border px-2 py-1 rounded"
+              />
+            </>
+          )}
         <input
           type="number"
           value={dayNumber}
@@ -520,16 +635,18 @@ export default function EnglishDayMaster({
                             placeholder="Title"
                             className="border px-2 py-1 rounded flex-1"
                           />
-                          {courses.find((c: any) => c.id === selectedCourse)?.name === "Conversation" && (
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) =>
-                                setConversationImageFile(e.target.files?.[0] || null)
-                              }
-                              className="border px-2 py-1 rounded"
-                            />
-                          )}
+                          {["Conversation", "Image Explanation"].includes(
+                            courses.find((c: any) => c.id === selectedCourse)?.name
+                          ) && (
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) =>
+                                  setConversationImageFile(e.target.files?.[0] || null)
+                                }
+                                className="border px-2 py-1 rounded"
+                              />
+                            )}
                           <button onClick={saveEdit}>Save</button>
                         </>
                       ) : (
@@ -546,7 +663,12 @@ export default function EnglishDayMaster({
                           {d.conversation_image_url && (
                             <img
                               src={d.conversation_image_url}
-                              alt="Conversation background"
+                              alt={
+                                courses.find((c: any) => c.id === selectedCourse)?.name ===
+                                  "Image Explanation"
+                                  ? "Image Explanation"
+                                  : "Conversation background"
+                              }
                               className="w-16 h-10 object-cover rounded border"
                             />
                           )}

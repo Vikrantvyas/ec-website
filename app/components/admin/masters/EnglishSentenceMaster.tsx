@@ -92,8 +92,25 @@ export default function EnglishSentenceMaster({
   useEffect(() => { if (selectedTopic) fetchSentences(); }, [selectedTopic]);
 
   const fetchCourses = async () => {
-    const { data } = await supabase.from("english_courses").select("*").order("name");
-    if (data) setCourses(data);
+    const { data } = await supabase
+      .from("english_courses")
+      .select("*")
+      .order("name");
+
+    const allCourses = data || [];
+
+setCourses(allCourses);
+
+// पुराने Image Explanation ID को actual database UUID में बदलें
+if (initialCourseId === "image-explanation") {
+  const imageExplanationCourse = allCourses.find(
+    (c: any) => c.name === "Image Explanation"
+  );
+
+  if (imageExplanationCourse) {
+    setSelectedCourse(imageExplanationCourse.id);
+  }
+}
   };
 
   const fetchDays = async () => {
@@ -113,7 +130,50 @@ export default function EnglishSentenceMaster({
       courses.find((c: any) => c.id === selectedCourse)?.name;
 
     // Conversation
-    if (selectedCourseName === "Conversation") {
+    // Conversation + Image Explanation
+    if (
+      selectedCourseName === "Conversation" ||
+      selectedCourseName === "Image Explanation"
+    ) {
+      if (selectedCourseName === "Image Explanation") {
+        const { data, error } = await supabase
+          .from("image_explanation_questions")
+          .select(`
+      id,
+      topic_id,
+      hindi_question,
+      english_question,
+      hindi_answer,
+      english_answer,
+      order_no
+    `)
+          .eq("topic_id", selectedTopic)
+          .order("order_no");
+
+        if (error) {
+          console.error("Image Explanation fetch failed:", error);
+          return;
+        }
+
+        if (data) {
+          const formatted = data.map((d: any) => ({
+            id: d.id,
+            sentence: [
+              d.hindi_question,
+              d.english_question,
+              d.hindi_answer,
+              d.english_answer,
+            ]
+              .filter(Boolean)
+              .join(" - "),
+            order_no: d.order_no,
+          }));
+
+          setSentences(formatted);
+        }
+
+        return;
+      }
       const { data, error } = await supabase
         .from("conversation_questions")
         .select(`
@@ -232,7 +292,46 @@ export default function EnglishSentenceMaster({
       : 0;
 
     // Conversation
-    if (selectedCourseName === "Conversation") {
+    if (
+      selectedCourseName === "Conversation" ||
+      selectedCourseName === "Image Explanation"
+    ) {
+      if (selectedCourseName === "Image Explanation") {
+        const parts = text
+          .split("-")
+          .map((p: string) => p.trim())
+          .filter((p: string) => p);
+
+        if (parts.length !== 4) {
+          alert(
+            "Image Explanation data में कुल 4 parts होने चाहिए, और उन्हें - से अलग करें."
+          );
+          return;
+        }
+
+        const { error: questionError } = await supabase
+          .from("image_explanation_questions")
+          .insert([
+            {
+              topic_id: selectedTopic,
+              hindi_question: parts[0],
+              english_question: parts[1],
+              hindi_answer: parts[2],
+              english_answer: parts[3],
+              order_no: Number(orderNo || maxOrder + 1),
+            },
+          ]);
+
+        if (questionError) {
+          alert("Image Explanation save failed: " + questionError.message);
+          return;
+        }
+
+        setText("");
+        setOrderNo("");
+        fetchSentences();
+        return;
+      }
       const parts = text
         .split("-")
         .map((p: string) => p.trim())
@@ -304,8 +403,58 @@ export default function EnglishSentenceMaster({
       : 0;
 
     // Conversation
-    if (selectedCourseName === "Conversation") {
+    if (
+      selectedCourseName === "Conversation" ||
+      selectedCourseName === "Image Explanation"
+    ) {
+      if (selectedCourseName === "Image Explanation") {
+
+        
+
+        const questionsData = [];
+
+        for (let i = 0; i < lines.length; i++) {
+
+          const parts = lines[i]
+            .split("-")
+            .map((p: string) => p.trim())
+            .filter((p: string) => p);
+
+          if (parts.length !== 4) {
+            alert(
+              `Line ${i + 1} में 4 parts होने चाहिए:\nHindi Question - English Question - Hindi Answer - English Answer`
+            );
+            return;
+          }
+
+          questionsData.push({
+            topic_id: selectedTopic,
+            hindi_question: parts[0],
+            english_question: parts[1],
+            hindi_answer: parts[2],
+            english_answer: parts[3],
+            order_no: maxOrder + i + 1,
+          });
+        }
+
+        const { error: questionError } = await supabase
+          .from("image_explanation_questions")
+          .insert(questionsData);
+
+        if (questionError) {
+          alert(
+            "Image Explanation Bulk Save failed: " +
+            questionError.message
+          );
+          return;
+        }
+
+        setBulkText("");
+        fetchSentences();
+        return;
+      }
       for (let i = 0; i < lines.length; i++) {
+
         const parts = lines[i]
           .split("-")
           .map((p: string) => p.trim())
@@ -410,7 +559,53 @@ export default function EnglishSentenceMaster({
       const maxOrder = sentences.length > 0
         ? Math.max(...sentences.map(s => s.order_no || 0))
         : 0;
+      const selectedCourseName =
+        courses.find((c: any) => c.id === selectedCourse)?.name;
 
+      if (selectedCourseName === "Image Explanation") {
+        const data = clipboardSentences.map((s, i) => {
+          const parts = s.sentence
+            .split("-")
+            .map((p: string) => p.trim())
+            .filter((p: string) => p);
+
+          return {
+            topic_id: selectedTopic,
+            hindi_question: parts[0] || "",
+            english_question: parts[1] || "",
+            hindi_answer: parts[2] || "",
+            english_answer: parts[3] || "",
+            order_no: maxOrder + i + 1
+          };
+        });
+
+        const { data: insertedData, error: insertError } = await supabase
+          .from("image_explanation_questions")
+          .insert(data)
+          .select("id");
+
+        if (insertError) throw insertError;
+
+        insertedIds = (insertedData || []).map((row: any) => row.id);
+
+        if (clipboardMode === "cut") {
+          const originalIds = clipboardSentences.map((s) => s.id);
+
+          const { error: deleteError } = await supabase
+            .from("image_explanation_questions")
+            .delete()
+            .in("id", originalIds);
+
+          if (deleteError) throw deleteError;
+        }
+
+        setClipboardSentences([]);
+        setClipboardMode(null);
+        setSelectedSentenceIds([]);
+
+        fetchSentences();
+        return;
+      }
       const data = clipboardSentences.map((s, i) => ({
         topic_id: selectedTopic,
         hindi: s.hindi,
@@ -473,8 +668,18 @@ export default function EnglishSentenceMaster({
 
     if (!confirmed) return;
 
+    const selectedCourseName =
+      courses.find((c: any) => c.id === selectedCourse)?.name;
+
+    const tableName =
+      selectedCourseName === "Image Explanation"
+        ? "image_explanation_questions"
+        : selectedCourseName === "Conversation"
+          ? "conversation_questions"
+          : "vocabulary";
+
     const { error } = await supabase
-      .from("vocabulary")
+      .from(tableName)
       .delete()
       .in("id", selectedSentenceIds);
 
@@ -489,10 +694,25 @@ export default function EnglishSentenceMaster({
   };
   const deleteSentence = async (id: string) => {
 
-    await supabase
-      .from("vocabulary")
+    const selectedCourseName =
+      courses.find((c: any) => c.id === selectedCourse)?.name;
+
+    const tableName =
+      selectedCourseName === "Image Explanation"
+        ? "image_explanation_questions"
+        : selectedCourseName === "Conversation"
+          ? "conversation_questions"
+          : "vocabulary";
+
+    const { error } = await supabase
+      .from(tableName)
       .delete()
       .eq("id", id);
+
+    if (error) {
+      alert("Delete failed: " + error.message);
+      return;
+    }
 
     fetchSentences();
   };
@@ -502,19 +722,76 @@ export default function EnglishSentenceMaster({
     setEditOrder(String(s.order_no));
   };
   const saveEdit = async () => {
-
     if (!editId) return;
 
-    const parts = editText.split("-");
+    const selectedCourseName =
+      courses.find((c: any) => c.id === selectedCourse)?.name;
 
-    await supabase
-      .from("vocabulary")
-      .update({
-        hindi: parts[0]?.trim() || "",
-        english: parts.slice(1).join(" ").trim() || "",
-        order_no: Number(editOrder)
-      })
-      .eq("id", editId);
+    const parts = editText
+      .split("-")
+      .map((p: string) => p.trim())
+      .filter((p: string) => p);
+
+    if (selectedCourseName === "Image Explanation") {
+      if (parts.length !== 4) {
+        alert(
+          "Image Explanation data में कुल 4 parts होने चाहिए, और उन्हें - से अलग करें."
+        );
+        return;
+      }
+
+      const { error } = await supabase
+        .from("image_explanation_questions")
+        .update({
+          hindi_question: parts[0],
+          english_question: parts[1],
+          hindi_answer: parts[2],
+          english_answer: parts[3],
+          order_no: Number(editOrder),
+        })
+        .eq("id", editId);
+
+      if (error) {
+        alert("Image Explanation update failed: " + error.message);
+        return;
+      }
+    } else if (selectedCourseName === "Conversation") {
+      if (parts.length !== 8) {
+        alert(
+          "Conversation data में कुल 8 parts होने चाहिए, और उन्हें - से अलग करें."
+        );
+        return;
+      }
+
+      const { error } = await supabase
+        .from("conversation_questions")
+        .update({
+          question_text: parts[0],
+          question_english: parts[1],
+          question_hindi_2: parts[2],
+          question_english_2: parts[3],
+          answer_hindi_3: parts[4],
+          answer_english_3: parts[5],
+          answer_hindi_4: parts[6],
+          answer_english_4: parts[7],
+          order_no: Number(editOrder),
+        })
+        .eq("id", editId);
+
+      if (error) {
+        alert("Conversation update failed: " + error.message);
+        return;
+      }
+    } else {
+      await supabase
+        .from("vocabulary")
+        .update({
+          hindi: parts[0] || "",
+          english: parts.slice(1).join(" ").trim() || "",
+          order_no: Number(editOrder)
+        })
+        .eq("id", editId);
+    }
 
     setEditId(null);
     fetchSentences();
@@ -532,10 +809,20 @@ export default function EnglishSentenceMaster({
 
   const saveOrder = async () => {
 
+    const selectedCourseName =
+      courses.find((c: any) => c.id === selectedCourse)?.name;
+
+    const tableName =
+      selectedCourseName === "Image Explanation"
+        ? "image_explanation_questions"
+        : selectedCourseName === "Conversation"
+          ? "conversation_questions"
+          : "vocabulary";
+
     for (let i = 0; i < sentences.length; i++) {
 
       await supabase
-        .from("vocabulary")
+        .from(tableName)
         .update({ order_no: i + 1 })
         .eq("id", sentences[i].id);
 
