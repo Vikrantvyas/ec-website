@@ -76,13 +76,17 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
     useEffect(() => {
 
-        const newList = isConversation
+        const newList = isImageExplanation
             ? (random
-                ? shuffleArray(conversationData)
-                : conversationData)
-            : (random
-                ? shuffleArray(safeData)
-                : safeData);
+                ? shuffleArray(imageExplanationData)
+                : imageExplanationData)
+            : isConversation
+                ? (random
+                    ? shuffleArray(conversationData)
+                    : conversationData)
+                : (random
+                    ? shuffleArray(safeData)
+                    : safeData);
 
         setList(newList);
         setCurrentIndex(-1);
@@ -95,7 +99,9 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     }, [data, random]);
 
     const imageExplanationDisplayUrl =
-    isImageExplanation ? conversationImageUrl : "";
+        isImageExplanation
+            ? conversationImageUrl || ""
+            : "";
     // =========================================================
     // NORMAL NEXT
     //
@@ -368,7 +374,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
         setCurrentIndex(-1);
         setImageExplanationStep(-1);
-        
+
         setConversationStep(-1);
         setShowEnglish(false);
         setRevealedAnswers([]);
@@ -467,7 +473,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                 <div className="flex-1 min-h-0 flex flex-col">
                     {imageExplanationData.length > 0 && (
                         <div className="relative flex-1 min-h-0 overflow-hidden bg-white">
-                            {imageExplanationUrl ? (
+                            {imageExplanationDisplayUrl ? (
                                 <img
                                     src={imageExplanationDisplayUrl}
                                     alt="Image Explanation"
@@ -480,30 +486,34 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                             )}
 
                             {imageExplanationStep >= 0 && (
-                                <div className="absolute bottom-0 left-0 right-0 bg-white/95 p-4 text-center">
-                                    {imageExplanationStep === 0 && (
-                                        <div className="text-2xl font-semibold text-red-600">
-                                            {imageExplanationData[currentIndex]?.hindiQuestion || ""}
-                                        </div>
-                                    )}
+                                <div className="absolute bottom-0 left-0 right-0 bg-white/95 p-4">
+                                    <div className="grid grid-cols-2 grid-rows-2 gap-x-8 gap-y-2">
 
-                                    {imageExplanationStep === 1 && (
-                                        <div className="text-2xl font-semibold text-green-600">
-                                            {imageExplanationData[currentIndex]?.englishQuestion || ""}
+                                        {/* Question Row */}
+                                        <div className="text-base leading-[1.25rem] font-normal text-red-600 text-left">
+                                            {list[currentIndex]?.hindiQuestion || ""}
                                         </div>
-                                    )}
 
-                                    {imageExplanationStep === 2 && (
-                                        <div className="text-2xl font-semibold text-red-600">
-                                            {imageExplanationData[currentIndex]?.hindiAnswer || ""}
+                                        <div className="text-base leading-[1.25rem] font-normal text-green-600 text-left">
+                                            {imageExplanationStep >= 1
+                                                ? list[currentIndex]?.englishQuestion || ""
+                                                : ""}
                                         </div>
-                                    )}
 
-                                    {imageExplanationStep === 3 && (
-                                        <div className="text-2xl font-semibold text-green-600">
-                                            {imageExplanationData[currentIndex]?.englishAnswer || ""}
+                                        {/* Answer Row */}
+                                        <div className="text-base leading-[1.25rem] font-normal text-red-600 text-left">
+                                            {imageExplanationStep >= 2
+                                                ? list[currentIndex]?.hindiAnswer || ""
+                                                : ""}
                                         </div>
-                                    )}
+
+                                        <div className="text-base leading-[1.25rem] font-normal text-green-600 text-left">
+                                            {imageExplanationStep >= 3
+                                                ? list[currentIndex]?.englishAnswer || ""
+                                                : ""}
+                                        </div>
+
+                                    </div>
                                 </div>
                             )}
                         </div>

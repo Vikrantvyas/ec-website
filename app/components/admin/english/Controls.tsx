@@ -6,6 +6,7 @@ export default function Controls({
   currentIndex,
   sentences,
   isConversation,
+  isImageExplanation,
   showAll,
   toggleShowAll,
   setShowAll,
@@ -54,7 +55,7 @@ export default function Controls({
         Next
       </button>
 
-      {!isConversation && (
+      {!isConversation && !isImageExplanation && (
         <button
           onClick={toggleShowAll}
           className={`${toolBtn} font-medium text-red-600`}
@@ -70,7 +71,7 @@ export default function Controls({
         {randomMode ? "Normal" : "Random"}
       </button>
 
-      {!isConversation && (
+      {!isConversation && !isImageExplanation && (
         <button
           onClick={prevTopic}
           className={`${toolBtn} font-medium text-indigo-700`}
@@ -79,14 +80,14 @@ export default function Controls({
         </button>
       )}
 
-      {!isConversation && (
-  <button
-    onClick={nextTopic}
-    className={`${toolBtn} font-medium text-orange-700`}
-  >
-    Topic →
-  </button>
-)}
+      {!isConversation && !isImageExplanation && (
+        <button
+          onClick={nextTopic}
+          className={`${toolBtn} font-medium text-orange-700`}
+        >
+          Topic →
+        </button>
+      )}
 
       {/* CHECKBOX GROUP */}
       <div className="flex items-center gap-3 pl-4 border-l border-gray-300">

@@ -66,21 +66,21 @@ export default function EnglishPage() {
     selectedCourseName === "Image Explanation";
 
   const conversationDay =
-  days.find((d: any) =>
-    selectedTopics.some((topicId: string) =>
-      topics.some(
-        (t: any) =>
-          t.id === topicId &&
-          t.day_id === d.id
+    days.find((d: any) =>
+      selectedTopics.some((topicId: string) =>
+        topics.some(
+          (t: any) =>
+            t.id === topicId &&
+            t.day_id === d.id
+        )
       )
-    )
-  ) ||
-  days.find((d: any) =>
-    selectedDays.includes(d.id)
-  );
+    ) ||
+    days.find((d: any) =>
+      selectedDays.includes(d.id)
+    );
 
-const conversationImageUrl =
-  conversationDay?.conversation_image_url || "";
+  const conversationImageUrl =
+    conversationDay?.conversation_image_url || "";
 
   console.log("CONVERSATION DEBUG:", {
     selectedDays,
@@ -593,7 +593,8 @@ const conversationImageUrl =
           currentIndex={currentIndex}
           sentences={sentences}
           isConversation={isConversation}
-          showAll={showAll}
+isImageExplanation={isImageExplanation}
+showAll={showAll}
           toggleShowAll={toggleShowAll}
           setShowAll={setShowAll}
           setCurrentIndex={setCurrentIndex}
