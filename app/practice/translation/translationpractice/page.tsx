@@ -398,7 +398,13 @@ function TranslationPracticeContent() {
                     HEADING BAR
                 ===================================================== */}
 
-                
+                {!isConversation && (
+                    <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center shrink-0">
+                        <span className="bg-green-300 px-2 rounded font-normal">
+                            {topicNames.join(", ")}
+                        </span>
+                    </div>
+                )}
 
                 {/* =====================================================
                     SENTENCE AREA
@@ -410,7 +416,7 @@ function TranslationPracticeContent() {
 
                         <div
                             ref={sentenceAreaRef}
-                            className="flex-1 min-h-0 overflow-y-auto flex flex-col"
+                            className="flex-1 min-h-0 overflow-y-auto flex flex-col pt-2 pl-4 pr-2"
                         >
 
                             {loading ? (
