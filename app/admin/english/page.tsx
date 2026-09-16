@@ -65,15 +65,17 @@ export default function EnglishPage() {
   const isImageExplanation =
     selectedCourseName === "Image Explanation";
 
+  const activeTopicId =
+    selectedTopics[selectedTopics.length - 1];
+
+  const activeTopic =
+    topics.find(
+      (t: any) => t.id === activeTopicId
+    );
+
   const conversationDay =
-    days.find((d: any) =>
-      selectedTopics.some((topicId: string) =>
-        topics.some(
-          (t: any) =>
-            t.id === topicId &&
-            t.day_id === d.id
-        )
-      )
+    days.find(
+      (d: any) => d.id === activeTopic?.day_id
     ) ||
     days.find((d: any) =>
       selectedDays.includes(d.id)
@@ -219,7 +221,7 @@ export default function EnglishPage() {
   const fetchTopics = async () => {
     const { data, error } = await supabase
       .from("topics")
-      .select("*, vocabulary(count)")
+      .select("*")
       .order("order_no");
 
     if (error) {
@@ -227,7 +229,109 @@ export default function EnglishPage() {
       return;
     }
 
-    if (data) setTopics(data);
+    if (!data) {
+      setTopics([]);
+      return;
+    }
+if (isConversation) {
+  const { data: counts, error: countError } = await supabase
+    .from("conversation_questions")
+    .select("topic_id")
+    .in(
+      "topic_id",
+      data.map((topic: any) => topic.id)
+    );
+
+  if (countError) {
+    console.error(
+      "CONVERSATION COUNT ERROR:",
+      countError
+    );
+    setTopics(data);
+    return;
+  }
+
+  const countMap: Record<string, number> = {};
+
+  (counts || []).forEach((row: any) => {
+    countMap[row.topic_id] =
+      (countMap[row.topic_id] || 0) + 1;
+  });
+
+  setTopics(
+    data.map((topic: any) => ({
+      ...topic,
+      sentence_count: countMap[topic.id] || 0,
+    }))
+  );
+
+  return;
+}
+    if (isImageExplanation) {
+      const { data: counts, error: countError } = await supabase
+        .from("image_explanation_questions")
+        .select("topic_id")
+        .in(
+          "topic_id",
+          data.map((topic: any) => topic.id)
+        );
+
+      if (countError) {
+        console.error(
+          "IMAGE EXPLANATION COUNT ERROR:",
+          countError
+        );
+        setTopics(data);
+        return;
+      }
+
+      const countMap: Record<string, number> = {};
+
+      (counts || []).forEach((row: any) => {
+        countMap[row.topic_id] =
+          (countMap[row.topic_id] || 0) + 1;
+      });
+
+      setTopics(
+        data.map((topic: any) => ({
+          ...topic,
+          sentence_count: countMap[topic.id] || 0,
+        }))
+      );
+
+      return;
+    }
+
+    const { data: vocabularyCounts, error: vocabularyError } =
+      await supabase
+        .from("topics")
+        .select("id, vocabulary(count)")
+        .in(
+          "id",
+          data.map((topic: any) => topic.id)
+        );
+
+    if (vocabularyError) {
+      console.error(
+        "VOCABULARY COUNT ERROR:",
+        vocabularyError
+      );
+      setTopics(data);
+      return;
+    }
+
+    const countMap: Record<string, any> = {};
+
+    (vocabularyCounts || []).forEach((topic: any) => {
+      countMap[topic.id] = topic.vocabulary;
+    });
+
+    setTopics(
+      data.map((topic: any) => ({
+        ...topic,
+        vocabulary: countMap[topic.id] || [],
+      }))
+    );
   };
   const refreshTopicCount = async (topicId: string) => {
     const { data, error } = await supabase
@@ -255,6 +359,7 @@ export default function EnglishPage() {
     );
   };
   const fetchSentences = async () => {
+    
     if (isImageExplanation) {
       const { data: imageExplanationData, error: imageExplanationError } =
         await supabase
@@ -593,8 +698,8 @@ export default function EnglishPage() {
           currentIndex={currentIndex}
           sentences={sentences}
           isConversation={isConversation}
-isImageExplanation={isImageExplanation}
-showAll={showAll}
+          isImageExplanation={isImageExplanation}
+          showAll={showAll}
           toggleShowAll={toggleShowAll}
           setShowAll={setShowAll}
           setCurrentIndex={setCurrentIndex}

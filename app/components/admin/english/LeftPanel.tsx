@@ -758,11 +758,11 @@ export default function LeftPanel({
                 const hasTopics = dayTopics.length > 0;
 
                 return (
-                 <div
-  key={d.id}
-  id={`day-item-${d.id}`}
-  className="flex flex-col w-full"
->
+                  <div
+                    key={d.id}
+                    id={`day-item-${d.id}`}
+                    className="flex flex-col w-full"
+                  >
 
                     {/* DAY ROW */}
                     <div
@@ -814,7 +814,9 @@ export default function LeftPanel({
                         {dayTopics.map((t: any) => {
 
                           const count =
-                            t.vocabulary?.[0]?.count || 0;
+  t.sentence_count !== undefined
+    ? t.sentence_count
+    : t.vocabulary?.[0]?.count || 0;
 
                           const isTopicSelected =
                             selectedTopics.includes(t.id);

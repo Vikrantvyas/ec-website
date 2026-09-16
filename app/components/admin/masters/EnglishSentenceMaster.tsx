@@ -89,7 +89,11 @@ export default function EnglishSentenceMaster({
   }, [initialDayId]);
   useEffect(() => { if (selectedCourse) fetchDays(); }, [selectedCourse]);
   useEffect(() => { if (selectedDay) fetchTopics(); }, [selectedDay]);
-  useEffect(() => { if (selectedTopic) fetchSentences(); }, [selectedTopic]);
+  useEffect(() => {
+  if (selectedTopic && selectedCourse && courses.length > 0) {
+    fetchSentences();
+  }
+}, [selectedTopic, selectedCourse, courses]);
 
   const fetchCourses = async () => {
     const { data } = await supabase
