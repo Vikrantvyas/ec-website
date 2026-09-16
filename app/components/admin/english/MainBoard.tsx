@@ -45,7 +45,7 @@ export default function MainBoard({
 
 
   const [panelOrder, setPanelOrder] = useState<string[]>([]);
-    const [isHighlighting, setIsHighlighting] = useState(false);
+  const [isHighlighting, setIsHighlighting] = useState(false);
   const [highlightPaths, setHighlightPaths] = useState<string[]>([]);
   const isDrawingRef = useRef(false);
   const currentPathRef = useRef("");
@@ -366,56 +366,7 @@ export default function MainBoard({
           >
 
             <div className="text-xs h-full min-h-0">
-              {showAll && selectedTopics?.length > 0 && (
-                <div className="flex items-center justify-center gap-3 py-1 border-b bg-white">
-
-                  <button
-                    type="button"
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700 text-lg"
-                    onClick={() => {
-
-                      const currentIndex = topics.findIndex(
-                        (topic: any) => topic.id === selectedTopics[0]
-                      );
-
-                      if (currentIndex <= 0) return;
-
-                      setSelectedTopics([
-                        topics[currentIndex - 1].id
-                      ]);
-                    }}
-                  >
-                    ←
-                  </button>
-
-                  <span className="text-xs font-medium text-gray-600">
-                    Topic
-                  </span>
-
-                  <button
-                    type="button"
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-700 text-lg"
-                    onClick={() => {
-
-                      const currentIndex = topics.findIndex(
-                        (topic: any) => topic.id === selectedTopics[0]
-                      );
-
-                      if (
-                        currentIndex < 0 ||
-                        currentIndex >= topics.length - 1
-                      ) return;
-
-                      setSelectedTopics([
-                        topics[currentIndex + 1].id
-                      ]);
-                    }}
-                  >
-                    →
-                  </button>
-
-                </div>
-              )}
+              
               <CoursePlayer
                 ref={vocabRef}
                 data={sentences}
@@ -520,35 +471,35 @@ export default function MainBoard({
     if (panel === "board" && showBoard) {
       return (
         <div
-  key="board"
-  className={`${widthClass} ${isVertical ? "border-t" : "border-l"
-    } flex relative`}
-  onMouseDown={handleHighlightStart}
-  onMouseMove={handleHighlightMove}
-  onMouseUp={handleHighlightEnd}
-  onMouseLeave={handleHighlightEnd}
->
-  <WhiteBoard />
+          key="board"
+          className={`${widthClass} ${isVertical ? "border-t" : "border-l"
+            } flex relative`}
+          onMouseDown={handleHighlightStart}
+          onMouseMove={handleHighlightMove}
+          onMouseUp={handleHighlightEnd}
+          onMouseLeave={handleHighlightEnd}
+        >
+          <WhiteBoard />
 
-  {isHighlighting && (
-    <svg
-      className="absolute inset-0 w-full h-full pointer-events-none z-50"
-    >
-      {highlightPaths.map((path, index) => (
-        <path
-          key={index}
-          d={path}
-          fill="none"
-          stroke="red"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.7"
-        />
-      ))}
-    </svg>
-  )}
-</div>
+          {isHighlighting && (
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none z-50"
+            >
+              {highlightPaths.map((path, index) => (
+                <path
+                  key={index}
+                  d={path}
+                  fill="none"
+                  stroke="red"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity="0.7"
+                />
+              ))}
+            </svg>
+          )}
+        </div>
       );
     }
 
