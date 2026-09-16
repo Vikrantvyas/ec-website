@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function LeftPanel({
@@ -31,6 +31,7 @@ export default function LeftPanel({
     useState<any[]>([]);
   const [expandedGrammarTopics, setExpandedGrammarTopics] = useState<string[]>([]);
   const [expandedDays, setExpandedDays] = useState<string[]>([]);
+  const daysContainerRef = useRef<HTMLDivElement>(null);
   const [showImages, setShowImages] = useState(false);
 
   const [imageTopics, setImageTopics] =
@@ -198,6 +199,27 @@ export default function LeftPanel({
     return () => clearTimeout(timer);
 
   }, [selectedImageId]);
+  useEffect(() => {
+    if (!selectedCourse || expandedDays.length === 0) return;
+
+    const lastExpandedDayId =
+      expandedDays[expandedDays.length - 1];
+
+    const timer = setTimeout(() => {
+      const element = document.getElementById(
+        `day-item-${lastExpandedDayId}`
+      );
+
+      if (!element) return;
+
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [expandedDays, selectedCourse]);
   const toggleGrammarTopic = (id: string) => {
 
     setExpandedGrammarTopics(prev =>
@@ -560,8 +582,8 @@ export default function LeftPanel({
                           key={video.id}
                           id={`image-item-${video.id}`}
                           className={`flex items-center gap-2 w-full text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === video.id
-                              ? "bg-blue-100 text-blue-700 font-semibold"
-                              : "hover:bg-gray-100"
+                            ? "bg-blue-100 text-blue-700 font-semibold"
+                            : "hover:bg-gray-100"
                             }`}
                         >
 
@@ -708,7 +730,10 @@ export default function LeftPanel({
       {selectedCourse && (
         <>
           {/* DAYS + TOPICS */}
-          <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-1 pb-3">
+          <div
+            ref={daysContainerRef}
+            className="flex-1 min-h-0 overflow-y-auto px-3 pt-1 pb-3"
+          >
 
             <div className="flex flex-col">
 
@@ -733,10 +758,11 @@ export default function LeftPanel({
                 const hasTopics = dayTopics.length > 0;
 
                 return (
-                  <div
-                    key={d.id}
-                    className="flex flex-col w-full"
-                  >
+                 <div
+  key={d.id}
+  id={`day-item-${d.id}`}
+  className="flex flex-col w-full"
+>
 
                     {/* DAY ROW */}
                     <div
@@ -808,12 +834,12 @@ export default function LeftPanel({
                               <div className="flex items-center gap-2 min-w-0">
 
                                 <input
-  type="checkbox"
-  className="w-3.5 h-3.5 shrink-0"
-  checked={isTopicSelected}
-  onClick={(e) => e.stopPropagation()}
-  onChange={() => toggleTopic(t.id)}
-/>
+                                  type="checkbox"
+                                  className="w-3.5 h-3.5 shrink-0"
+                                  checked={isTopicSelected}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={() => toggleTopic(t.id)}
+                                />
 
                                 <span className="truncate">
                                   {t.topic_name}
