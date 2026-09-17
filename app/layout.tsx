@@ -7,6 +7,7 @@ import MobileHeader from "./components/MobileHeader";
 import DesktopHeader from "./components/DesktopHeader";
 import MobileBottomNav from "./components/MobileBottomNav";
 import StickyButtons from "./components/StickyButtons";
+import AltPointer from "./components/admin/common/AltPointer";
 
 export default function RootLayout({
   children,
@@ -21,11 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`overflow-x-hidden ${
-          isLanding ? "landing-body" : ""
-        }`}
+        className={`overflow-x-hidden ${isLanding ? "landing-body" : ""
+          }`}
       >
-
+        <AltPointer />
         {!isAdmin && !isLanding && (
           <>
             <MobileHeader />
