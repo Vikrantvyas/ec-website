@@ -449,14 +449,17 @@ function TranslationPracticeContent() {
         <div className="fixed inset-0 z-40 bg-gray-100 overflow-hidden">
             <div className="w-full h-full flex items-center justify-center">
                 <div
-                    style={{ width: "25cm" }}
+                    style={{ width: "min(25cm, 100vw)" }}
                     className="flex flex-col"
                 >
 
                     {/* MAIN BOARD */}
                     <div
                         className="bg-white border shadow overflow-hidden flex flex-col"
-                        style={{ width: "25cm", height: "11cm" }}
+                        style={{
+    width: "min(25cm, 100vw)",
+    height: "min(11cm, calc(100vh - 140px))",
+}}
                     >
                         <MainBoard
                             isGrammar={isGrammar}
