@@ -458,7 +458,7 @@ function TranslationPracticeContent() {
                         className="bg-white border shadow overflow-hidden flex flex-col"
                         style={{
     width: "min(25cm, 100vw)",
-    height: "min(11cm, calc(100vh - 140px))",
+    height: "min(11cm, calc(100vh - 80px))",
 }}
                     >
                         <MainBoard
@@ -530,7 +530,7 @@ function TranslationPracticeContent() {
                         </button>
 
                         <Controls
-                            
+
                             prevSentence={prevSentence}
                             nextSentence={nextSentence}
                             currentIndex={currentIndex}
