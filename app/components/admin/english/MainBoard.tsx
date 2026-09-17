@@ -41,6 +41,7 @@ export default function MainBoard({
   isConversation,
   conversationImageUrl,
   isImageExplanation,
+  studentMode = false,
 }: any) {
 
 
@@ -331,18 +332,20 @@ export default function MainBoard({
         <div
           key="left"
           className={`${isVertical && showGrammar ? "w-full h-[30%]" : widthClass
-            } flex flex-col border-l`}
+  } flex flex-col ${studentMode ? "" : "border-l"}`}
         >
 
           {!isConversation && !isImageExplanation && (
             <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center">
 
-              <span className="bg-yellow-300 px-2 rounded">
-                Day {selectedDays?.map((id: any) => {
-                  const d = days?.find((x: any) => x.id === id);
-                  return d?.day_number;
-                }).join(", ")}
-              </span>
+              {!studentMode && (
+                <span className="bg-yellow-300 px-2 rounded">
+                  Day {selectedDays?.map((id: any) => {
+                    const d = days?.find((x: any) => x.id === id);
+                    return d?.day_number;
+                  }).join(", ")}
+                </span>
+              )}
 
               <span className="bg-green-300 px-2 rounded font-normal">
                 {selectedTopics?.length > 0
@@ -366,7 +369,7 @@ export default function MainBoard({
           >
 
             <div className="text-xs h-full min-h-0">
-              
+
               <CoursePlayer
                 ref={vocabRef}
                 data={sentences}

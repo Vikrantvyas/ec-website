@@ -91,31 +91,31 @@ export default function EnglishTopicMaster({
   }, [selectedDay]);
 
   const fetchCourses = async () => {
-  const { data, error } = await supabase
-    .from("english_courses")
-    .select("*")
-    .order("name");
+    const { data, error } = await supabase
+      .from("english_courses")
+      .select("*")
+      .order("name");
 
-  if (error) {
-    console.error("Fetch Courses failed:", error);
-    return;
-  }
-
-  const allCourses = data || [];
-
-  setCourses(allCourses);
-
-  // पुराने Image Explanation ID को actual database UUID में बदलें
-  if (initialCourseId === "image-explanation") {
-    const imageExplanationCourse = allCourses.find(
-      (c: any) => c.name === "Image Explanation"
-    );
-
-    if (imageExplanationCourse) {
-      setSelectedCourse(imageExplanationCourse.id);
+    if (error) {
+      console.error("Fetch Courses failed:", error);
+      return;
     }
-  }
-};
+
+    const allCourses = data || [];
+
+    setCourses(allCourses);
+
+    // पुराने Image Explanation ID को actual database UUID में बदलें
+    if (initialCourseId === "image-explanation") {
+      const imageExplanationCourse = allCourses.find(
+        (c: any) => c.name === "Image Explanation"
+      );
+
+      if (imageExplanationCourse) {
+        setSelectedCourse(imageExplanationCourse.id);
+      }
+    }
+  };
   const fetchDays = async () => {
     const { data } = await supabase.from("days")
       .select("*").eq("course_id", selectedCourse).order("day_number");

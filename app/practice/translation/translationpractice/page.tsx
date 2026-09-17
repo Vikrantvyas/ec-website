@@ -1,41 +1,61 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-
-const shuffleArray = (arr: any[]) => {
-    return [...arr].sort(() => Math.random() - 0.5);
-};
+import MainBoard from "@/app/components/admin/english/MainBoard";
+import Controls from "@/app/components/admin/english/Controls";
 
 function TranslationPracticeContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
+    const courseName = searchParams.get("course") || "";
 
     const topicIds =
         searchParams.get("topics")?.split(",").filter(Boolean) || [];
-    const courseName = searchParams.get("course") || "";
+
+    const [courseId, setCourseId] = useState("");
+    const [days, setDays] = useState<any[]>([]);
+    const [topics, setTopics] = useState<any[]>([]);
+    const [sentences, setSentences] = useState<any[]>([]);
+
+    const [selectedDays, setSelectedDays] = useState<string[]>([]);
+    const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+
+    const [showBoard, setShowBoard] = useState(false);
+    const [showScore, setShowScore] = useState(false);
+    const [showLeft, setShowLeft] = useState(true);
+    const [showGrammar, setShowGrammar] = useState(false);
+    const [showImages, setShowImages] = useState(false);
+
+    const [selectedGrammarTableId, setSelectedGrammarTableId] =
+        useState("");
+
+    const [selectedImageId, setSelectedImageId] = useState("");
+
+    const [highlightIndex, setHighlightIndex] = useState(-1);
+
+    const [randomMode, setRandomMode] = useState(false);
+    const [showAll, setShowAll] = useState(false);
+
+    const [layout] =
+        useState<"horizontal" | "vertical">("horizontal");
+
+    const [currentTime, setCurrentTime] = useState("");
+
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const vocabRef = useRef<any>(null);
+
+    const selectedCourseName = courseName.trim();
+
+    const isGrammar =
+        selectedCourseName.toLowerCase() === "grammar";
 
     const isConversation =
-        courseName.trim().toLowerCase() === "conversation";
+        selectedCourseName.toLowerCase() === "conversation";
 
-    const [sentences, setSentences] = useState<any[]>([]);
-    const [topicNames, setTopicNames] = useState<string[]>([]);
-    const [list, setList] = useState<any[]>([]);
-
-    const [currentIndex, setCurrentIndex] = useState(-1);
-    const [showEnglish, setShowEnglish] = useState(false);
-    const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
-
-    const [showAll, setShowAll] = useState(false);
-    const [randomMode, setRandomMode] = useState(false);
-
-    const [loading, setLoading] = useState(true);
-    const sentenceAreaRef = useRef<HTMLDivElement>(null);
-    const [currentTime, setCurrentTime] = useState("");
-    const [conversationStep, setConversationStep] = useState(-1);
-    const [conversationImageUrl, setConversationImageUrl] =
-        useState("");
-    const [conversationMobileImageUrl, setConversationMobileImageUrl] = useState("");
+    const isImageExplanation =
+        selectedCourseName.toLowerCase() === "image explanation";
 
     // =========================================================
     // CLOCK
@@ -62,588 +82,481 @@ function TranslationPracticeContent() {
     }, []);
 
     // =========================================================
+    // FETCH COURSE
+    // =========================================================
+
+    useEffect(() => {
+        const fetchCourse = async () => {
+            if (!courseName) return;
+
+            const { data, error } = await supabase
+                .from("english_courses")
+                .select("id, name")
+                .eq("name", courseName)
+                .single();
+
+            if (error) {
+                console.error("COURSE ERROR:", error.message);
+                return;
+            }
+
+            setCourseId(data?.id || "");
+        };
+
+        fetchCourse();
+    }, [courseName]);
+
+    // =========================================================
+    // FETCH DAYS + TOPICS
+    // =========================================================
+
+    useEffect(() => {
+        const fetchDaysTopics = async () => {
+            if (!courseId) return;
+
+            const { data: dayData, error: dayError } =
+                await supabase
+                    .from("days")
+                    .select("*")
+                    .eq("course_id", courseId)
+                    .order("day_number");
+
+            if (dayError) {
+                console.error("DAYS ERROR:", dayError.message);
+                return;
+            }
+
+            const loadedDays = dayData || [];
+
+            setDays(loadedDays);
+
+
+            const dayIds = loadedDays.map(
+                (day: any) => day.id
+            );
+
+            if (dayIds.length === 0) {
+                setTopics([]);
+                setSelectedTopics([]);
+                return;
+            }
+
+            const { data: topicData, error: topicError } =
+                await supabase
+                    .from("topics")
+                    .select("*")
+                    .in("day_id", dayIds)
+                    .order("day_id")
+                    .order("topic_name");
+
+            if (topicError) {
+                console.error(
+                    "TOPICS ERROR:",
+                    topicError.message
+                );
+                return;
+            }
+
+            const loadedTopics = topicData || [];
+
+            setTopics(loadedTopics);
+
+            // Use topics selected on the previous page.
+            // If no topics are present in URL, use all topics.
+            const initialTopics =
+                topicIds.length > 0
+                    ? loadedTopics
+                        .filter((topic: any) =>
+                            topicIds.includes(topic.id)
+                        )
+                        .map((topic: any) => topic.id)
+                    : loadedTopics.map(
+                        (topic: any) => topic.id
+                    );
+
+            setSelectedTopics(initialTopics);
+            const initialDays =
+                topicIds.length > 0
+                    ? loadedDays
+                        .filter((day: any) =>
+                            loadedTopics.some(
+                                (topic: any) =>
+                                    initialTopics.includes(topic.id) &&
+                                    topic.day_id === day.id
+                            )
+                        )
+                        .map((day: any) => day.id)
+                    : loadedDays.map((day: any) => day.id);
+
+            setSelectedDays(initialDays);
+        };
+
+        fetchDaysTopics();
+    }, [courseId]);
+
+    // =========================================================
     // FETCH SENTENCES
     // =========================================================
 
     useEffect(() => {
         const fetchSentences = async () => {
-            if (topicIds.length === 0) {
+            if (selectedTopics.length === 0) {
                 setSentences([]);
-                setList([]);
-                setCurrentIndex(-1);
-                setShowEnglish(false);
-                setRevealedAnswers([]);
-                setLoading(false);
-                setConversationStep(-1);
                 return;
             }
 
-            setLoading(true);
-            const { data: topicData, error: topicError } = await supabase
-                .from("topics")
-                .select("id, topic_name")
-                .in("id", topicIds);
+            // IMAGE EXPLANATION
+            if (isImageExplanation) {
+                const { data, error } = await supabase
+                    .from("image_explanation_questions")
+                    .select(
+                        "id, topic_id, image_id, hindi_question, english_question, hindi_answer, english_answer, order_no"
+                    )
+                    .in("topic_id", selectedTopics)
+                    .order("order_no", {
+                        ascending: true,
+                    });
 
-            if (topicError) {
-                console.error("TOPIC NAMES ERROR:", topicError.message);
+                if (error) {
+                    console.error(
+                        "IMAGE EXPLANATION ERROR:",
+                        error.message
+                    );
+                }
+
+                setSentences(data || []);
+                return;
             }
 
-            setTopicNames(
-                topicIds.map(
-                    (id) => topicData?.find((topic: any) => topic.id === id)?.topic_name || ""
-                ).filter(Boolean)
-            );
-
-
-
-            const { data, error } = isConversation
-                ? await supabase
+            // CONVERSATION
+            if (isConversation) {
+                const { data, error } = await supabase
                     .from("conversation_questions")
                     .select(`
-        id,
-        topic_id,
-        question_text,
-        question_english,
-        question_hindi_2,
-        question_english_2,
-        answer_hindi_3,
-        answer_english_3,
-        answer_hindi_4,
-        answer_english_4,
-        order_no
-      `)
-                    .in("topic_id", topicIds)
-                    .order("topic_id")
-                    .order("order_no")
-                : await supabase
-                    .from("vocabulary")
-                    .select("*")
-                    .in("topic_id", topicIds)
+                        id,
+                        topic_id,
+                        question_text,
+                        question_english,
+                        question_hindi_2,
+                        question_english_2,
+                        answer_hindi_3,
+                        answer_english_3,
+                        answer_hindi_4,
+                        answer_english_4,
+                        order_no
+                    `)
+                    .in("topic_id", selectedTopics)
                     .order("topic_id")
                     .order("order_no");
 
-            // Selected Topics जिस order में आए हैं,
-            // उसी order में sentences रखेंगे।
-            const sorted = (data || []).sort((a: any, b: any) => {
-                const indexA = topicIds.indexOf(a.topic_id);
-                const indexB = topicIds.indexOf(b.topic_id);
-
-                if (indexA === indexB) {
-                    return (a.order_no ?? 0) - (b.order_no ?? 0);
-                }
-
-                return indexA - indexB;
-            });
-
-            const practiceItems = isConversation
-                ? sorted.map((item: any) => ({
-                    ...item,
-
-                    hindi1: item.question_text || "",
-                    english1: item.question_english || "",
-
-                    hindi2: item.question_hindi_2 || "",
-                    english2: item.question_english_2 || "",
-
-                    hindi3: item.answer_hindi_3 || "",
-                    english3: item.answer_english_3 || "",
-
-                    hindi4: item.answer_hindi_4 || "",
-                    english4: item.answer_english_4 || "",
-                }))
-                : sorted;
-
-            setSentences(practiceItems);
-            if (isConversation) {
-                const { data: topicData, error: topicError } = await supabase
-                    .from("topics")
-                    .select("id, day_id")
-                    .in("id", topicIds);
-
-                if (topicError) {
+                if (error) {
                     console.error(
-                        "CONVERSATION TOPICS ERROR:",
-                        topicError.message
+                        "CONVERSATION ERROR:",
+                        error.message
                     );
                 }
 
-                const dayId = topicData?.[0]?.day_id;
+                const sorted = (data || []).sort(
+                    (a: any, b: any) => {
+                        const indexA =
+                            selectedTopics.indexOf(
+                                a.topic_id
+                            );
 
-                if (dayId) {
-                    const { data: dayData, error: dayError } = await supabase
-                        .from("days")
-                        .select("conversation_image_url, conversation_mobile_image_url")
-                        .eq("id", dayId)
-                        .single();
+                        const indexB =
+                            selectedTopics.indexOf(
+                                b.topic_id
+                            );
 
-                    if (dayError) {
-                        console.error(
-                            "CONVERSATION IMAGE ERROR:",
-                            dayError.message
+                        if (indexA === indexB) {
+                            return (
+                                (a.order_no ?? 0) -
+                                (b.order_no ?? 0)
+                            );
+                        }
+
+                        return indexA - indexB;
+                    }
+                );
+
+                setSentences(sorted);
+                return;
+            }
+
+            // NORMAL VOCABULARY
+            const { data, error } = await supabase
+                .from("vocabulary")
+                .select("*")
+                .in("topic_id", selectedTopics)
+                .order("topic_id")
+                .order("order_no");
+
+            if (error) {
+                console.error(
+                    "VOCABULARY ERROR:",
+                    error.message
+                );
+            }
+
+            const sorted = (data || []).sort(
+                (a: any, b: any) => {
+                    const indexA =
+                        selectedTopics.indexOf(
+                            a.topic_id
+                        );
+
+                    const indexB =
+                        selectedTopics.indexOf(
+                            b.topic_id
+                        );
+
+                    if (indexA === indexB) {
+                        return (
+                            (a.order_no ?? 0) -
+                            (b.order_no ?? 0)
                         );
                     }
 
-                    setConversationImageUrl(
-                        dayData?.conversation_image_url || ""
-                    );
-
-                    setConversationMobileImageUrl(
-                        dayData?.conversation_mobile_image_url || ""
-                    );
-                } else {
-                    setConversationImageUrl("");
+                    return indexA - indexB;
                 }
-            }
-            const newList = randomMode
-                ? shuffleArray(practiceItems)
-                : practiceItems;
+            );
 
-            setList(newList);
-
-            setCurrentIndex(-1);
-            setShowEnglish(false);
-            setRevealedAnswers([]);
-            setShowAll(false);
-
-            setLoading(false);
+            setSentences(sorted);
         };
 
         fetchSentences();
-    }, [searchParams]);
+    }, [
+        selectedTopics,
+        isConversation,
+        isImageExplanation,
+    ]);
 
     // =========================================================
-    // RANDOM / NORMAL
+    // CONVERSATION / IMAGE EXPLANATION IMAGE
     // =========================================================
 
-    useEffect(() => {
-        if (sentences.length === 0) {
-            setList([]);
-            return;
-        }
+    const conversationDay =
+        days.find((d: any) =>
+            selectedTopics.some((topicId: string) =>
+                topics.some(
+                    (t: any) =>
+                        t.id === topicId &&
+                        t.day_id === d.id
+                )
+            )
+        ) ||
+        days.find((d: any) =>
+            selectedDays.includes(d.id)
+        );
 
-        const newList = randomMode
-            ? shuffleArray(sentences)
-            : sentences;
-
-        setList(newList);
-
-        setCurrentIndex(-1);
-        setShowEnglish(false);
-        setRevealedAnswers([]);
-        setShowAll(false);
-    }, [randomMode, sentences]);
-
+    const conversationImageUrl =
+        conversationDay?.conversation_image_url || "";
     // =========================================================
-    // NEXT
+    // MAINBOARD DATA
     // =========================================================
 
+    const [currentIndex, setCurrentIndex] = useState(-1);
+
+    const visible: any[] = [];
+
+    const leftCol: any[] = [];
+
+    const rightCol: any[] = [];
     const nextSentence = () => {
-        if (showAll) return;
-        if (list.length === 0) return;
+        vocabRef.current?.next();
 
-        // =========================================================
-        // CONVERSATION NEXT
-        // Same logic as CoursePlayer / VocabularyPlayer
-        // =========================================================
-        if (isConversation) {
-
-            // First Next → Arjun Hindi
-            if (currentIndex === -1) {
-                setCurrentIndex(0);
-                setConversationStep(0);
-                return;
-            }
-
-            // Next dialogue step
-            if (conversationStep < 7) {
-                setConversationStep((prev) => prev + 1);
-                return;
-            }
-
-            // All 8 steps completed → next Question
-            if (currentIndex < list.length - 1) {
-                setCurrentIndex((prev) => prev + 1);
-                setConversationStep(0);
-            }
-
-            return;
-        }
-
-        // =========================================================
-        // NORMAL COURSES
-        // =========================================================
-
-        // First click → first Hindi
-        if (currentIndex === -1) {
-            setCurrentIndex(0);
-            setShowEnglish(false);
-            return;
-        }
-
-        // Hindi visible → show English
-        if (!showEnglish) {
-            setShowEnglish(true);
-
-            setRevealedAnswers((prev) => {
-                if (prev.includes(currentIndex)) {
-                    return prev;
-                }
-
-                return [...prev, currentIndex];
-            });
-
-            return;
-        }
-
-        // English visible → next Hindi
-        if (currentIndex < list.length - 1) {
-            setCurrentIndex((prev) => prev + 1);
-            setShowEnglish(false);
-        }
+        setCurrentIndex((prev) =>
+            prev < sentences.length - 1 ? prev + 1 : prev
+        );
     };
-    // =========================================================
-    // PREVIOUS
-    // =========================================================
 
     const prevSentence = () => {
-        if (showAll) return;
-        if (currentIndex < 0) return;
+        vocabRef.current?.prev();
 
-        // English visible → hide current English
-        if (showEnglish) {
-            setRevealedAnswers((prev) =>
-                prev.filter((index) => index !== currentIndex)
-            );
-
-            setShowEnglish(false);
-            return;
-        }
-
-        // Hindi visible → previous sentence का English
-        if (currentIndex > 0) {
-            const previousIndex = currentIndex - 1;
-
-            setCurrentIndex(previousIndex);
-
-            setRevealedAnswers((prev) =>
-                prev.filter((index) => index <= previousIndex)
-            );
-
-            setShowEnglish(true);
-            return;
-        }
-
-        // First Hindi → Blank
-        setCurrentIndex(-1);
-        setShowEnglish(false);
-        setRevealedAnswers([]);
+        setCurrentIndex((prev) =>
+            prev > -1 ? prev - 1 : prev
+        );
     };
-
-    // =========================================================
-    // SHOW ALL / HIDE ALL
-    // =========================================================
 
     const toggleShowAll = () => {
-        if (showAll) {
-            setShowAll(false);
-            setCurrentIndex(-1);
-            setShowEnglish(false);
-            setRevealedAnswers([]);
+        setShowAll((prev) => !prev);
+    };
+
+    const prevTopic = () => {
+        if (selectedTopics.length === 0) return;
+
+        const currentTopicIndex = topics.findIndex(
+            (topic: any) => topic.id === selectedTopics[0]
+        );
+
+        if (currentTopicIndex <= 0) return;
+
+        setSelectedTopics([
+            topics[currentTopicIndex - 1].id,
+        ]);
+
+        setCurrentIndex(-1);
+        setShowAll(false);
+    };
+
+    const nextTopic = () => {
+        if (selectedTopics.length === 0) return;
+
+        const currentTopicIndex = topics.findIndex(
+            (topic: any) => topic.id === selectedTopics[0]
+        );
+
+        if (
+            currentTopicIndex < 0 ||
+            currentTopicIndex >= topics.length - 1
+        ) {
             return;
         }
 
-        setShowAll(true);
-        setCurrentIndex(list.length);
-        setShowEnglish(true);
-        setRevealedAnswers(
-            list.map((_, index) => index)
-        );
+        setSelectedTopics([
+            topics[currentTopicIndex + 1].id,
+        ]);
+
+        setCurrentIndex(-1);
+        setShowAll(false);
+    };
+    const handleNext = () => {
+        vocabRef.current?.next();
+    };
+
+    const handlePrevious = () => {
+        vocabRef.current?.prev();
+    };
+
+    const handleReset = () => {
+        vocabRef.current?.reset();
+    };
+
+    const handleShowAll = () => {
+        setShowAll((prev) => !prev);
+    };
+
+    const handleRandom = () => {
+        setRandomMode((prev) => !prev);
     };
 
     // =========================================================
-    // VISIBLE SENTENCES
-    // =========================================================
-
-    const visible = showAll
-        ? list
-        : currentIndex === -1
-            ? []
-            : list.slice(0, currentIndex + 1);
-    useEffect(() => {
-        if (currentIndex < 0 || showAll) return;
-
-        const sentenceArea = sentenceAreaRef.current;
-        const sentence = document.getElementById(
-            `practice-sentence-${currentIndex}`
-        );
-
-        if (sentenceArea && sentence) {
-            sentenceArea.scrollTo({
-                top: sentence.offsetTop - sentenceArea.offsetTop,
-                behavior: "smooth",
-            });
-        }
-    }, [currentIndex, showAll]);
-
     // =========================================================
     // UI
     // =========================================================
 
     return (
-        <div className="fixed inset-0 z-40 bg-gray-100 overflow-hidden px-4 pb-4 pt-0">
+        <div className="fixed inset-0 z-40 bg-gray-100 overflow-hidden">
+            <div className="w-full h-full flex items-center justify-center">
+                <div
+                    style={{ width: "25cm" }}
+                    className="flex flex-col"
+                >
 
-            <div className="max-w-6xl mx-auto w-full h-full flex flex-col">
-
-                {/* =====================================================
-                    HEADING BAR
-                ===================================================== */}
-
-                {!isConversation && (
-                    <div className="bg-blue-200 font-bold px-3 py-2 text-xs border-b flex items-center shrink-0">
-                        <span className="bg-green-300 px-2 rounded font-normal">
-                            {topicNames.join(", ")}
-                        </span>
+                    {/* MAIN BOARD */}
+                    <div
+    className="bg-white border shadow overflow-hidden flex flex-col"
+    style={{ width: "25cm", height: "11cm" }}
+>
+                        <MainBoard
+                            isGrammar={isGrammar}
+                            showGrammar={showGrammar}
+                            sentences={sentences}
+                            visible={visible}
+                            leftCol={leftCol}
+                            rightCol={rightCol}
+                            highlightIndex={highlightIndex}
+                            setHighlightIndex={
+                                setHighlightIndex
+                            }
+                            showBoard={false}
+                            showScore={showScore}
+                            showLeft={showLeft}
+                            scrollRef={scrollRef}
+                            vocabRef={vocabRef}
+                            randomMode={randomMode}
+                            showAll={showAll}
+                            currentIndex={currentIndex}
+                            selectedDays={selectedDays}
+                            selectedTopics={selectedTopics}
+                            setSelectedTopics={
+                                setSelectedTopics
+                            }
+                            topics={topics}
+                            layout={layout}
+                            days={days}
+                            currentTime=""
+                            studentMode={true}
+                            selectedGrammarTableId={
+                                selectedGrammarTableId
+                            }
+                            setSelectedGrammarTableId={
+                                setSelectedGrammarTableId
+                            }
+                            selectedImageId={selectedImageId}
+                            setSelectedImageId={
+                                setSelectedImageId
+                            }
+                            showImages={showImages}
+                            isConversation={isConversation}
+                            conversationImageUrl={
+                                conversationImageUrl
+                            }
+                            isImageExplanation={
+                                isImageExplanation
+                            }
+                        />
                     </div>
-                )}
 
-                {/* =====================================================
-                    SENTENCE AREA
-                ===================================================== */}
+                    {/* CONTROLS - MAIN BOARD KE NICHE */}
+                    <div className="flex justify-center mt-2">
+                        <Controls
 
-                <div className="flex-1 min-h-0 md:flex-none md:h-[520px] bg-white border-l border-r border-b shadow overflow-hidden">
-
-                    <div className="flex flex-col h-full min-h-0">
-
-                        <div
-                            ref={sentenceAreaRef}
-                            className="flex-1 min-h-0 overflow-y-auto flex flex-col pt-2 pl-4 pr-2"
-                        >
-
-                            {loading ? (
-                                <div className="h-full flex items-center justify-center text-gray-400 text-xs">
-                                    Loading...
-                                </div>
-                            ) : isConversation ? (
-                                <div className="flex-1 min-h-0 flex flex-col">
-
-                                    <>
-
-
-                                        {/* Conversation Image + Dialogue */}
-                                        <div className="relative flex-1 min-h-0 overflow-hidden bg-white flex items-center justify-center">
-
-                                            <div className="relative w-full h-full">
-
-                                                {conversationImageUrl || conversationMobileImageUrl ? (
-                                                    <picture>
-                                                        <source
-                                                            media="(max-width: 767px)"
-                                                            srcSet={conversationMobileImageUrl}
-                                                        />
-
-                                                        <img
-                                                            src={conversationImageUrl}
-                                                            alt="Conversation"
-                                                            className="absolute inset-0 w-full h-full object-contain"
-                                                        />
-                                                    </picture>
-                                                ) : (
-                                                    <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
-                                                        Conversation Image URL नहीं मिला
-                                                    </div>
-                                                )}
-
-                                                {/* Arjun */}
-                                                <div className="absolute left-[20%] top-[1%] w-[64%] h-[16%] md:left-[22%] md:top-[3%] md:w-[22%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
-                                                    {conversationStep >= 0 && (
-                                                        <div className="w-full text-[12px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
-                                                            <div className="text-red-600">
-                                                                {list[currentIndex]?.hindi1 || ""}
-                                                            </div>
-
-                                                            {conversationStep >= 1 && (
-                                                                <div className="text-green-600">
-                                                                    {list[currentIndex]?.english1 || ""}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-
-                                                </div>
-
-                                                {/* Meera */}
-                                                <div className="absolute left-[20%] top-[26%] w-[64%] h-[16%] md:left-[57%] md:top-[3%] md:w-[22%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
-                                                    {conversationStep >= 2 && (
-                                                        <div className="w-full text-[12px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
-                                                            <div className="text-red-600">
-                                                                {list[currentIndex]?.hindi2 || ""}
-                                                            </div>
-
-                                                            {conversationStep >= 3 && (
-                                                                <div className="text-green-600">
-                                                                    {list[currentIndex]?.english2 || ""}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Rohan */}
-                                                <div className="absolute left-[20%] top-[50%] w-[64%] h-[16%] md:left-[20%] md:top-[52%] md:w-[28%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
-                                                    {conversationStep >= 4 && (
-                                                        <div className="w-full text-[12px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
-                                                            <div className="text-red-600">
-                                                                {list[currentIndex]?.hindi3 || ""}
-                                                            </div>
-
-                                                            {conversationStep >= 5 && (
-                                                                <div className="text-green-600">
-                                                                    {list[currentIndex]?.english3 || ""}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Meera Final */}
-                                                <div className="absolute left-[20%] top-[75%] w-[64%] h-[16%] md:left-[54%] md:top-[52%] md:w-[28%] md:h-[13%] flex items-start justify-center text-center px-1 pt-1 md:px-2 md:pt-2">
-                                                    {conversationStep >= 6 && (
-                                                        <div className="w-full text-[12px] md:text-base font-normal leading-tight text-center whitespace-normal md:whitespace-nowrap">
-                                                            <div className="text-red-600">
-                                                                {list[currentIndex]?.hindi4 || ""}
-                                                            </div>
-
-                                                            {conversationStep >= 7 && (
-                                                                <div className="text-green-600">
-                                                                    {list[currentIndex]?.english4 || ""}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                            </div>
-                                        </div>
-                                    </>
-
-                                </div>
-                            ) : visible.length === 0 ? (
-                                <div className="h-full flex items-center justify-center text-gray-400 text-xs">
-                                    Click Next to start practice
-                                </div>
-                            ) : (
-                                <div className="space-y-2">
-                                    {visible.map((item: any, i: number) => {
-                                        const isVocabulary =
-                                            item.hindi !== undefined;
-
-                                        const sentenceText =
-                                            item.sentence?.replace(/^\d+\.\s*/, "") || "";
-
-                                        const hindi =
-                                            isVocabulary
-                                                ? item.hindi
-                                                : sentenceText.split(" - ")[0];
-
-                                        const english =
-                                            isVocabulary
-                                                ? item.english
-                                                : sentenceText
-                                                    .split(" - ")
-                                                    .slice(1)
-                                                    .join(" - ");
-
-                                        return (
-                                            <div
-                                                key={item.id || i}
-                                                id={`practice-sentence-${i}`}
-                                                className={`flex text-base ${i === currentIndex && !showAll
-                                                    ? "bg-yellow-100"
-                                                    : ""
-                                                    }`}
-                                            >
-                                                <div className="w-10">
-                                                    {i + 1}.
-                                                </div>
-
-                                                <div className="w-1/2 text-base leading-[1.25rem] text-red-600 pr-2">
-                                                    {hindi}
-                                                </div>
-
-                                                <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600 pl-2">
-                                                    {showAll ||
-                                                        revealedAnswers.includes(i)
-                                                        ? english
-                                                        : ""}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-
-
-                        </div>
-
+                            prevSentence={prevSentence}
+                            nextSentence={nextSentence}
+                            onBack={() => {
+                                router.push(
+                                    `/practice/translation?course=${encodeURIComponent(
+                                        courseName
+                                    )}&topics=${encodeURIComponent(
+                                        topicIds.join(",")
+                                    )}`
+                                );
+                            }}
+                            currentIndex={currentIndex}
+                            sentences={sentences}
+                            isConversation={isConversation}
+                            isImageExplanation={isImageExplanation}
+                            showAll={showAll}
+                            toggleShowAll={toggleShowAll}
+                            setShowAll={setShowAll}
+                            setCurrentIndex={setCurrentIndex}
+                            showBoard={showBoard}
+                            setShowBoard={setShowBoard}
+                            prevTopic={prevTopic}
+                            nextTopic={nextTopic}
+                            showScore={showScore}
+                            setShowScore={setShowScore}
+                            randomMode={randomMode}
+                            setRandomMode={setRandomMode}
+                            showLeft={showLeft}
+                            setShowLeft={setShowLeft}
+                            showGrammar={showGrammar}
+                            setShowGrammar={setShowGrammar}
+                            showImages={showImages}
+                            setShowImages={setShowImages}
+                            layout={layout}
+                            setLayout={() => { }}
+                            studentMode={true}
+                        />
                     </div>
 
                 </div>
-
-                {/* =====================================================
-                    BOTTOM CONTROL BAR
-                ===================================================== */}
-
-                <div className="flex items-center justify-center shrink-0 py-1">
-
-                    <div className="inline-flex items-center gap-2">
-
-                        <button
-                            onClick={prevSentence}
-                            disabled={currentIndex < 0}
-                            className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors disabled:opacity-40"
-                        >
-                            Prev
-                        </button>
-
-                        <button
-                            onClick={nextSentence}
-                            disabled={
-                                list.length === 0 ||
-                                (
-                                    currentIndex >= list.length - 1 &&
-                                    showEnglish
-                                )
-                            }
-                            className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-blue-700 disabled:opacity-40"
-                        >
-                            Next
-                        </button>
-
-                        <button
-                            onClick={toggleShowAll}
-                            className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-red-600"
-                        >
-                            {showAll ? "Hide All" : "Show All"}
-                        </button>
-
-                        <button
-                            onClick={() =>
-                                setRandomMode((prev) => !prev)
-                            }
-                            className="h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors font-medium text-green-700"
-                        >
-                            {randomMode ? "Normal" : "Random"}
-                        </button>
-
-                    </div>
-
-                </div>
-
             </div>
-
-        </div >
+        </div>
     );
 }
+
 export default function TranslationPracticePage() {
     return (
         <Suspense

@@ -3,6 +3,7 @@
 export default function Controls({
   prevSentence,
   nextSentence,
+  onBack,
   currentIndex,
   sentences,
   isConversation,
@@ -26,7 +27,8 @@ export default function Controls({
   showImages,
   setShowImages,
   layout,
-  setLayout
+  setLayout,
+  studentMode = false
 }: any) {
 
   const baseBtn =
@@ -70,8 +72,16 @@ export default function Controls({
       >
         {randomMode ? "Normal" : "Random"}
       </button>
+      {studentMode && onBack && (
+        <button
+          onClick={onBack}
+          className={`${toolBtn} font-medium text-gray-700`}
+        >
+          ← Back
+        </button>
+      )}
 
-      {!isConversation && !isImageExplanation && (
+      {!studentMode && !isConversation && !isImageExplanation && (
         <button
           onClick={prevTopic}
           className={`${toolBtn} font-medium text-indigo-700`}
@@ -80,7 +90,7 @@ export default function Controls({
         </button>
       )}
 
-      {!isConversation && !isImageExplanation && (
+      {!studentMode && !isConversation && !isImageExplanation && (
         <button
           onClick={nextTopic}
           className={`${toolBtn} font-medium text-orange-700`}
@@ -89,78 +99,85 @@ export default function Controls({
         </button>
       )}
 
-      {/* CHECKBOX GROUP */}
-      <div className="flex items-center gap-3 pl-4 border-l border-gray-300">
+      {!studentMode && (
+        <>
+          {/* CHECKBOX GROUP */}
+          <div className="flex items-center gap-3 pl-4 border-l border-gray-300">
 
-        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
-          <input
-            type="checkbox"
-            checked={showLeft}
-            onChange={() => setShowLeft((p: any) => !p)}
-          />
-          Left
-        </label>
+            <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
+              <input
+                type="checkbox"
+                checked={showLeft}
+                onChange={() => setShowLeft((p: any) => !p)}
+              />
+              Left
+            </label>
 
-        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
-          <input
-            type="checkbox"
-            checked={showBoard}
-            onChange={() => setShowBoard((p: any) => !p)}
-          />
-          Board
-        </label>
+            <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
+              <input
+                type="checkbox"
+                checked={showBoard}
+                onChange={() => setShowBoard((p: any) => !p)}
+              />
+              Board
+            </label>
 
-        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
-          <input
-            type="checkbox"
-            checked={showScore}
-            onChange={() => setShowScore((p: any) => !p)}
-          />
-          Score
-        </label>
+            <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
+              <input
+                type="checkbox"
+                checked={showScore}
+                onChange={() => setShowScore((p: any) => !p)}
+              />
+              Score
+            </label>
 
-        {/* 🔥 FORCE SHOW */}
-        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
-          <input
-            type="checkbox"
-            checked={showGrammar}
-            onChange={() => setShowGrammar((p: any) => !p)}
-          />
-          Grammar
-        </label>
-        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
-          <input
-            type="checkbox"
-            checked={showImages}
-            onChange={() => setShowImages((p: any) => !p)}
-          />
-          Images
-        </label>
-      </div>
-      <div className="flex items-center gap-3 pl-4 border-l border-gray-300">
+            <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
+              <input
+                type="checkbox"
+                checked={showGrammar}
+                onChange={() => setShowGrammar((p: any) => !p)}
+              />
+              Grammar
+            </label>
 
-        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
-          <input
-            type="radio"
-            name="layout"
-            checked={layout === "horizontal"}
-            onChange={() => setLayout("horizontal")}
-          />
-          Left-Right
-        </label>
+            <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
+              <input
+                type="checkbox"
+                checked={showImages}
+                onChange={() => setShowImages((p: any) => !p)}
+              />
+              Images
+            </label>
 
-        <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
-          <input
-            type="radio"
-            name="layout"
-            checked={layout === "vertical"}
-            onChange={() => setLayout("vertical")}
-          />
-          Up-Down
-        </label>
+          </div>
 
-      </div>
+          {/* LAYOUT GROUP */}
+          <div className="flex items-center gap-3 pl-4 border-l border-gray-300">
+
+            <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
+              <input
+                type="radio"
+                name="layout"
+                checked={layout === "horizontal"}
+                onChange={() => setLayout("horizontal")}
+              />
+              Left-Right
+            </label>
+
+            <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
+              <input
+                type="radio"
+                name="layout"
+                checked={layout === "vertical"}
+                onChange={() => setLayout("vertical")}
+              />
+              Up-Down
+            </label>
+
+          </div>
+        </>
+      )}
+
     </div>
-
   );
 }

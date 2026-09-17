@@ -312,84 +312,84 @@ export default function EnglishDayMaster({
 
           // 4. Get Sentences
           const selectedCourseName =
-  courses.find((c: any) => c.id === selectedCourse)?.name;
+            courses.find((c: any) => c.id === selectedCourse)?.name;
 
-if (
-  selectedCourseName === "Conversation" ||
-  selectedCourseName === "Image Explanation"
-) {
-  const questionTable =
-    selectedCourseName === "Image Explanation"
-      ? "image_explanation_questions"
-      : "conversation_questions";
+          if (
+            selectedCourseName === "Conversation" ||
+            selectedCourseName === "Image Explanation"
+          ) {
+            const questionTable =
+              selectedCourseName === "Image Explanation"
+                ? "image_explanation_questions"
+                : "conversation_questions";
 
-  const { data: oldQuestions, error: questionsError } =
-    await supabase
-      .from(questionTable)
-      .select("*")
-      .eq("topic_id", oldTopic.id)
-      .order("order_no");
+            const { data: oldQuestions, error: questionsError } =
+              await supabase
+                .from(questionTable)
+                .select("*")
+                .eq("topic_id", oldTopic.id)
+                .order("order_no");
 
-  if (questionsError) throw questionsError;
+            if (questionsError) throw questionsError;
 
-  if (oldQuestions && oldQuestions.length > 0) {
-    const questionsData =
-      selectedCourseName === "Image Explanation"
-        ? oldQuestions.map((q: any) => ({
-            topic_id: newTopic.id,
-            image_id: q.image_id,
-            hindi_question: q.hindi_question,
-            english_question: q.english_question,
-            hindi_answer: q.hindi_answer,
-            english_answer: q.english_answer,
-            order_no: q.order_no
-          }))
-        : oldQuestions.map((q: any) => ({
-            topic_id: newTopic.id,
-            question_text: q.question_text,
-            question_english: q.question_english,
-            question_hindi_2: q.question_hindi_2,
-            question_english_2: q.question_english_2,
-            answer_hindi_3: q.answer_hindi_3,
-            answer_english_3: q.answer_english_3,
-            answer_hindi_4: q.answer_hindi_4,
-            answer_english_4: q.answer_english_4,
-            order_no: q.order_no
-          }));
+            if (oldQuestions && oldQuestions.length > 0) {
+              const questionsData =
+                selectedCourseName === "Image Explanation"
+                  ? oldQuestions.map((q: any) => ({
+                    topic_id: newTopic.id,
+                    image_id: q.image_id,
+                    hindi_question: q.hindi_question,
+                    english_question: q.english_question,
+                    hindi_answer: q.hindi_answer,
+                    english_answer: q.english_answer,
+                    order_no: q.order_no
+                  }))
+                  : oldQuestions.map((q: any) => ({
+                    topic_id: newTopic.id,
+                    question_text: q.question_text,
+                    question_english: q.question_english,
+                    question_hindi_2: q.question_hindi_2,
+                    question_english_2: q.question_english_2,
+                    answer_hindi_3: q.answer_hindi_3,
+                    answer_english_3: q.answer_english_3,
+                    answer_hindi_4: q.answer_hindi_4,
+                    answer_english_4: q.answer_english_4,
+                    order_no: q.order_no
+                  }));
 
-    const { error: insertQuestionsError } =
-      await supabase
-        .from(questionTable)
-        .insert(questionsData);
+              const { error: insertQuestionsError } =
+                await supabase
+                  .from(questionTable)
+                  .insert(questionsData);
 
-    if (insertQuestionsError) throw insertQuestionsError;
-  }
-} else {
-  const { data: oldVocabulary, error: vocabularyError } =
-    await supabase
-      .from("vocabulary")
-      .select("*")
-      .eq("topic_id", oldTopic.id)
-      .order("order_no");
+              if (insertQuestionsError) throw insertQuestionsError;
+            }
+          } else {
+            const { data: oldVocabulary, error: vocabularyError } =
+              await supabase
+                .from("vocabulary")
+                .select("*")
+                .eq("topic_id", oldTopic.id)
+                .order("order_no");
 
-  if (vocabularyError) throw vocabularyError;
+            if (vocabularyError) throw vocabularyError;
 
-  if (oldVocabulary && oldVocabulary.length > 0) {
-    const vocabularyData = oldVocabulary.map((v: any) => ({
-      topic_id: newTopic.id,
-      hindi: v.hindi,
-      english: v.english,
-      order_no: v.order_no
-    }));
+            if (oldVocabulary && oldVocabulary.length > 0) {
+              const vocabularyData = oldVocabulary.map((v: any) => ({
+                topic_id: newTopic.id,
+                hindi: v.hindi,
+                english: v.english,
+                order_no: v.order_no
+              }));
 
-    const { error: insertVocabularyError } =
-      await supabase
-        .from("vocabulary")
-        .insert(vocabularyData);
+              const { error: insertVocabularyError } =
+                await supabase
+                  .from("vocabulary")
+                  .insert(vocabularyData);
 
-    if (insertVocabularyError) throw insertVocabularyError;
-  }
-}
+              if (insertVocabularyError) throw insertVocabularyError;
+            }
+          }
         }
       }
 

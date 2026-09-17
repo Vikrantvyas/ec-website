@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function TranslationPracticePage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    const returnCourse = searchParams.get("course") || "";
+    const returnTopics =
+        searchParams.get("topics")?.split(",").filter(Boolean) || [];
     const [courses, setCourses] = useState<any[]>([]);
     const [selectedCourse, setSelectedCourse] = useState("");
     const [days, setDays] = useState<any[]>([]);
@@ -65,6 +72,15 @@ export default function TranslationPracticePage() {
             }
 
             setCourses(data || []);
+            if (returnCourse) {
+                const matchedCourse = (data || []).find(
+                    (course: any) => course.name === returnCourse
+                );
+
+                if (matchedCourse) {
+                    setSelectedCourse(matchedCourse.id);
+                }
+            }
         };
 
         fetchCourses();
@@ -115,8 +131,22 @@ export default function TranslationPracticePage() {
             }
 
             setTopics(topicsData || []);
-            setSelectedTopics([]);
-            setExpandedDays([]);
+
+const restoredTopics = (topicsData || [])
+    .filter((topic: any) =>
+        returnTopics.includes(topic.id)
+    )
+    .map((topic: any) => topic.id);
+
+setSelectedTopics(restoredTopics);
+
+const restoredDayIds = (topicsData || [])
+    .filter((topic: any) =>
+        returnTopics.includes(topic.id)
+    )
+    .map((topic: any) => topic.day_id);
+
+setExpandedDays([...new Set(restoredDayIds)]);
         };
 
         fetchDaysAndTopics();
@@ -177,7 +207,7 @@ export default function TranslationPracticePage() {
                                 }}
                                 className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
                             >
-                                Start
+                                Start Practice
                             </button>
                         )}
 
