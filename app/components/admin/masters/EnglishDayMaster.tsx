@@ -45,7 +45,7 @@ export default function EnglishDayMaster({
   const [conversationMobileImageFile, setConversationMobileImageFile] = useState<File | null>(null);
 
   const [days, setDays] = useState<any[]>([]);
-  const [dayNumber, setDayNumber] = useState("");
+  const [newDayName, setNewDayName] = useState("");
 
   const [editId, setEditId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -158,16 +158,15 @@ export default function EnglishDayMaster({
 
   // ✅ BULK ADD (MAIN FEATURE)
   const addDay = async () => {
-    if (!selectedCourse || !dayNumber) return;
+    if (!selectedCourse || !newDayName.trim()) return;
 
     const selectedCourseName =
       courses.find((c: any) => c.id === selectedCourse)?.name;
 
-    const count = Number(dayNumber);
-
-    const maxDay = days.length > 0
-      ? Math.max(...days.map(d => d.day_number))
-      : 0;
+    const maxDay =
+      days.length > 0
+        ? Math.max(...days.map(d => Number(d.day_number) || 0))
+        : 0;
 
     let conversationImageUrl: string | null = null;
     let conversationMobileImageUrl: string | null = null;
@@ -176,52 +175,57 @@ export default function EnglishDayMaster({
       selectedCourseName === "Conversation" ||
       selectedCourseName === "Image Explanation"
     ) {
-      if (!conversationImageFile || !conversationMobileImageFile) {
-        alert(
-          "Please select both Desktop/Wide and Mobile (9:16) images."
+      if (conversationImageFile) {
+        conversationImageUrl = await uploadConversationImage(
+          conversationImageFile,
+          "desktop"
         );
-        return;
+
+        if (!conversationImageUrl) {
+          return;
+        }
       }
 
-      conversationImageUrl = await uploadConversationImage(
-        conversationImageFile,
-        "desktop"
-      );
+      if (conversationMobileImageFile) {
+        conversationMobileImageUrl = await uploadConversationImage(
+          conversationMobileImageFile,
+          "mobile"
+        );
 
-      conversationMobileImageUrl = await uploadConversationImage(
-        conversationMobileImageFile,
-        "mobile"
-      );
-
-      if (!conversationImageUrl || !conversationMobileImageUrl) {
-        return;
+        if (!conversationMobileImageUrl) {
+          return;
+        }
       }
     }
 
-    const data = [];
-
-    for (let i = 1; i <= count; i++) {
-      data.push({
-        course_id: selectedCourse,
-        day_number: maxDay + i,
-        conversation_image_url: conversationImageUrl,
-        conversation_mobile_image_url: conversationMobileImageUrl
-      });
-    }
-
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("days")
-      .insert(data);
+      .insert([
+        {
+          course_id: selectedCourse,
+          day_number: maxDay + 1,
+          title: newDayName.trim(),
+          conversation_image_url: conversationImageUrl,
+          conversation_mobile_image_url: conversationMobileImageUrl
+        }
+      ])
+      .select()
+      .single();
 
     if (error) {
       alert("Day save failed: " + error.message);
       return;
     }
 
-    setDayNumber("");
+    setNewDayName("");
     setConversationImageFile(null);
     setConversationMobileImageFile(null);
+
     fetchDays();
+
+    if (data) {
+      setSelectedDayIds([]);
+    }
   };
   const copySelectedDays = () => {
     const selected = days.filter(d =>
@@ -472,18 +476,33 @@ export default function EnglishDayMaster({
     setEditValue(String(d.day_number));
     setEditTitle(d.title || "");
     setConversationImageFile(null);
+    setConversationMobileImageFile(null);
   };
 
   const saveEdit = async () => {
+    if (!editId) return;
+
     let conversationImageUrl: string | null = null;
+    let conversationMobileImageUrl: string | null = null;
 
     if (conversationImageFile) {
       conversationImageUrl = await uploadConversationImage(
-  conversationImageFile,
-  "desktop"
-);
+        conversationImageFile,
+        "desktop"
+      );
 
       if (!conversationImageUrl) {
+        return;
+      }
+    }
+
+    if (conversationMobileImageFile) {
+      conversationMobileImageUrl = await uploadConversationImage(
+        conversationMobileImageFile,
+        "mobile"
+      );
+
+      if (!conversationMobileImageUrl) {
         return;
       }
     }
@@ -494,16 +513,29 @@ export default function EnglishDayMaster({
     };
 
     if (conversationImageUrl) {
-      updateData.conversation_image_url = conversationImageUrl;
+      updateData.conversation_image_url =
+        conversationImageUrl;
     }
 
-    await supabase
+    if (conversationMobileImageUrl) {
+      updateData.conversation_mobile_image_url =
+        conversationMobileImageUrl;
+    }
+
+    const { error } = await supabase
       .from("days")
       .update(updateData)
       .eq("id", editId);
 
+    if (error) {
+      alert("Day update failed: " + error.message);
+      return;
+    }
+
     setEditId(null);
     setConversationImageFile(null);
+    setConversationMobileImageFile(null);
+
     fetchDays();
   };
 
@@ -549,8 +581,8 @@ export default function EnglishDayMaster({
           courses.find((c: any) => c.id === selectedCourse)?.name
         ) && (
             <>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium">
+              <div className="relative flex items-center">
+                <span className="absolute -top-4 left-0 text-xs font-medium">
                   Desktop / Wide
                 </span>
 
@@ -558,39 +590,42 @@ export default function EnglishDayMaster({
                   type="file"
                   accept="image/*"
                   onChange={(e) =>
-                    setConversationImageFile(e.target.files?.[0] || null)
-                  }
-                  className="border px-2 py-1 rounded"
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium">
-                  Mobile (9:16)
-                </span>
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    setConversationMobileImageFile(
+                    setConversationImageFile(
                       e.target.files?.[0] || null
                     )
                   }
-                  className="border px-2 py-1 rounded"
+                  className="border px-2 py-1 rounded w-32"
                 />
-              </div>
+              </div><div className="relative flex items-center">
+  <span className="absolute -top-4 left-0 text-xs font-medium">
+    Mobile (9:16)
+  </span>
+
+  <input
+    type="file"
+    accept="image/*"
+    onChange={(e) =>
+      setConversationMobileImageFile(
+        e.target.files?.[0] || null
+      )
+    }
+    className="border px-2 py-1 rounded w-32"
+  />
+</div>
             </>
           )}
+
         <input
-          type="number"
-          value={dayNumber}
-          onChange={(e) => setDayNumber(e.target.value)}
-          placeholder="Enter number (e.g. 10)"
+          value={newDayName}
+          onChange={(e) => setNewDayName(e.target.value)}
+          placeholder="Day Name"
           className="border px-2 py-1 rounded w-40"
         />
 
-        <button onClick={addDay} className="bg-blue-600 text-white px-3 py-1 rounded">
+        <button
+          onClick={addDay}
+          className="bg-blue-600 text-white px-3 py-1 rounded"
+        >
           Add
         </button>
 
@@ -667,16 +702,56 @@ export default function EnglishDayMaster({
                           {["Conversation", "Image Explanation"].includes(
                             courses.find((c: any) => c.id === selectedCourse)?.name
                           ) && (
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) =>
-                                  setConversationImageFile(e.target.files?.[0] || null)
-                                }
-                                className="border px-2 py-1 rounded"
-                              />
+                              <>
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-xs font-medium">
+                                    Desktop / Wide
+                                  </span>
+
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) =>
+                                      setConversationImageFile(
+                                        e.target.files?.[0] || null
+                                      )
+                                    }
+                                    className="border px-2 py-1 rounded w-32"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-xs font-medium">
+                                    Mobile (9:16)
+                                  </span>
+
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) =>
+                                      setConversationMobileImageFile(
+                                        e.target.files?.[0] || null
+                                      )
+                                    }
+                                    className="border px-2 py-1 rounded w-32"
+                                  />
+                                </div>
+                              </>
                             )}
-                          <button onClick={saveEdit}>Save</button>
+
+                          <button onClick={saveEdit}>
+                            Save
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setEditId(null);
+                              setConversationImageFile(null);
+                              setConversationMobileImageFile(null);
+                            }}
+                          >
+                            Cancel
+                          </button>
                         </>
                       ) : (
                         <>
@@ -689,18 +764,28 @@ export default function EnglishDayMaster({
                               : ""}
 
                           </div>
-                          {d.conversation_image_url && (
-                            <img
-                              src={d.conversation_image_url}
-                              alt={
-                                courses.find((c: any) => c.id === selectedCourse)?.name ===
-                                  "Image Explanation"
-                                  ? "Image Explanation"
-                                  : "Conversation background"
-                              }
-                              className="w-16 h-10 object-cover rounded border"
-                            />
-                          )}
+                          {(d.conversation_image_url ||
+                            d.conversation_mobile_image_url) && (
+                              <div className="flex items-center gap-2">
+                                {d.conversation_image_url && (
+                                  <img
+                                    src={d.conversation_image_url}
+                                    alt="Desktop / Wide"
+                                    title="Desktop / Wide"
+                                    className="w-16 h-10 object-cover rounded border"
+                                  />
+                                )}
+
+                                {d.conversation_mobile_image_url && (
+                                  <img
+                                    src={d.conversation_mobile_image_url}
+                                    alt="Mobile (9:16)"
+                                    title="Mobile (9:16)"
+                                    className="w-10 h-14 object-cover rounded border"
+                                  />
+                                )}
+                              </div>
+                            )}
                           <button onClick={() => onManageTopics(d.id)}>
                             Manage Topics →
                           </button>
