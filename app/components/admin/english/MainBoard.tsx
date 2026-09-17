@@ -40,8 +40,9 @@ export default function MainBoard({
   showImages,
   isConversation,
   conversationImageUrl,
+  conversationMobileImageUrl,
   isImageExplanation,
-  studentMode = false,
+  studentMode,
 }: any) {
 
 
@@ -332,7 +333,7 @@ export default function MainBoard({
         <div
           key="left"
           className={`${isVertical && showGrammar ? "w-full h-[30%]" : widthClass
-  } flex flex-col ${studentMode ? "" : "border-l"}`}
+            } flex flex-col ${studentMode ? "" : "border-l"}`}
         >
 
           {!isConversation && !isImageExplanation && (
@@ -380,6 +381,7 @@ export default function MainBoard({
                 setHighlightIndex={setHighlightIndex}
                 isConversation={isConversation}
                 conversationImageUrl={conversationImageUrl}
+                conversationMobileImageUrl={conversationMobileImageUrl}
                 isImageExplanation={isImageExplanation}
               />
             </div>

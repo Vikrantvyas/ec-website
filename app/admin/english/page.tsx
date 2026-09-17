@@ -83,6 +83,8 @@ export default function EnglishPage() {
 
   const conversationImageUrl =
     conversationDay?.conversation_image_url || "";
+  const conversationMobileImageUrl =
+    conversationDay?.conversation_mobile_image_url || "";
 
   console.log("CONVERSATION DEBUG:", {
     selectedDays,
@@ -233,40 +235,40 @@ export default function EnglishPage() {
       setTopics([]);
       return;
     }
-if (isConversation) {
-  const { data: counts, error: countError } = await supabase
-    .from("conversation_questions")
-    .select("topic_id")
-    .in(
-      "topic_id",
-      data.map((topic: any) => topic.id)
-    );
+    if (isConversation) {
+      const { data: counts, error: countError } = await supabase
+        .from("conversation_questions")
+        .select("topic_id")
+        .in(
+          "topic_id",
+          data.map((topic: any) => topic.id)
+        );
 
-  if (countError) {
-    console.error(
-      "CONVERSATION COUNT ERROR:",
-      countError
-    );
-    setTopics(data);
-    return;
-  }
+      if (countError) {
+        console.error(
+          "CONVERSATION COUNT ERROR:",
+          countError
+        );
+        setTopics(data);
+        return;
+      }
 
-  const countMap: Record<string, number> = {};
+      const countMap: Record<string, number> = {};
 
-  (counts || []).forEach((row: any) => {
-    countMap[row.topic_id] =
-      (countMap[row.topic_id] || 0) + 1;
-  });
+      (counts || []).forEach((row: any) => {
+        countMap[row.topic_id] =
+          (countMap[row.topic_id] || 0) + 1;
+      });
 
-  setTopics(
-    data.map((topic: any) => ({
-      ...topic,
-      sentence_count: countMap[topic.id] || 0,
-    }))
-  );
+      setTopics(
+        data.map((topic: any) => ({
+          ...topic,
+          sentence_count: countMap[topic.id] || 0,
+        }))
+      );
 
-  return;
-}
+      return;
+    }
     if (isImageExplanation) {
       const { data: counts, error: countError } = await supabase
         .from("image_explanation_questions")
@@ -359,7 +361,7 @@ if (isConversation) {
     );
   };
   const fetchSentences = async () => {
-    
+
     if (isImageExplanation) {
       const { data: imageExplanationData, error: imageExplanationError } =
         await supabase
@@ -688,6 +690,7 @@ if (isConversation) {
             isConversation={isConversation}
             isImageExplanation={isImageExplanation}
             conversationImageUrl={conversationImageUrl}
+            conversationMobileImageUrl={conversationMobileImageUrl}
             setSelectedImageId={setSelectedImageId}
           />
         </div>

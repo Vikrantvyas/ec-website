@@ -90,10 +90,10 @@ export default function EnglishSentenceMaster({
   useEffect(() => { if (selectedCourse) fetchDays(); }, [selectedCourse]);
   useEffect(() => { if (selectedDay) fetchTopics(); }, [selectedDay]);
   useEffect(() => {
-  if (selectedTopic && selectedCourse && courses.length > 0) {
-    fetchSentences();
-  }
-}, [selectedTopic, selectedCourse, courses]);
+    if (selectedTopic && selectedCourse && courses.length > 0) {
+      fetchSentences();
+    }
+  }, [selectedTopic, selectedCourse, courses]);
 
   const fetchCourses = async () => {
     const { data } = await supabase
@@ -103,18 +103,18 @@ export default function EnglishSentenceMaster({
 
     const allCourses = data || [];
 
-setCourses(allCourses);
+    setCourses(allCourses);
 
-// पुराने Image Explanation ID को actual database UUID में बदलें
-if (initialCourseId === "image-explanation") {
-  const imageExplanationCourse = allCourses.find(
-    (c: any) => c.name === "Image Explanation"
-  );
+    // पुराने Image Explanation ID को actual database UUID में बदलें
+    if (initialCourseId === "image-explanation") {
+      const imageExplanationCourse = allCourses.find(
+        (c: any) => c.name === "Image Explanation"
+      );
 
-  if (imageExplanationCourse) {
-    setSelectedCourse(imageExplanationCourse.id);
-  }
-}
+      if (imageExplanationCourse) {
+        setSelectedCourse(imageExplanationCourse.id);
+      }
+    }
   };
 
   const fetchDays = async () => {
@@ -379,16 +379,37 @@ if (initialCourseId === "image-explanation") {
     // Existing courses
     const parts = text.split("-");
 
-    await supabase.from("vocabulary").insert([{
-      topic_id: selectedTopic,
-      hindi: parts[0]?.trim() || "",
-      english: parts.slice(1).join("-").trim() || "",
-      order_no: Number(orderNo || maxOrder + 1)
-    }]);
+const { data: newSentence, error: saveError } = await supabase
+  .from("vocabulary")
+  .insert([{
+    topic_id: selectedTopic,
+    hindi: parts[0]?.trim() || "",
+    english: parts.slice(1).join("-").trim() || "",
+    order_no: Number(orderNo || maxOrder + 1)
+  }])
+  .select()
+  .single();
 
-    setText("");
-    setOrderNo("");
-    fetchSentences();
+if (saveError) {
+  alert("Sentence save failed: " + saveError.message);
+  return;
+}
+
+if (newSentence) {
+  setSentences(prev => [
+    ...prev,
+    {
+      id: newSentence.id,
+      hindi: newSentence.hindi,
+      english: newSentence.english,
+      sentence: `${newSentence.hindi} - ${newSentence.english}`,
+      order_no: newSentence.order_no,
+    }
+  ]);
+}
+
+setText("");
+setOrderNo("");
   };
 
   const addBulk = async () => {
@@ -413,7 +434,7 @@ if (initialCourseId === "image-explanation") {
     ) {
       if (selectedCourseName === "Image Explanation") {
 
-        
+
 
         const questionsData = [];
 

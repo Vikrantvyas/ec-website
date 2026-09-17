@@ -30,6 +30,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         setHighlightIndex,
         isConversation,
         conversationImageUrl,
+        conversationMobileImageUrl,
         isImageExplanation,
     } = props;
     const conversationData = (data || []).map((item: any) => ({
@@ -99,9 +100,9 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     }, [data, random]);
 
     const imageExplanationDisplayUrl =
-        isImageExplanation
-            ? conversationImageUrl || ""
-            : "";
+    isImageExplanation
+        ? conversationMobileImageUrl || conversationImageUrl || ""
+        : "";
     // =========================================================
     // NORMAL NEXT
     //
@@ -473,17 +474,24 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                 <div className="flex-1 min-h-0 flex flex-col">
                     {imageExplanationData.length > 0 && (
                         <div className="relative flex-1 min-h-0 overflow-hidden bg-white">
-                            {imageExplanationDisplayUrl ? (
-                                <img
-                                    src={imageExplanationDisplayUrl}
-                                    alt="Image Explanation"
-                                    className="absolute inset-0 w-full h-full object-contain"
-                                />
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
-                                    Image नहीं मिली
-                                </div>
-                            )}
+                            <picture>
+    <source
+        media="(max-width: 767px)"
+        srcSet={conversationMobileImageUrl || conversationImageUrl}
+    />
+
+    {conversationImageUrl ? (
+        <img
+            src={conversationImageUrl}
+            alt="Image Explanation"
+            className="absolute inset-0 w-full h-full object-contain"
+        />
+    ) : (
+        <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
+            Image नहीं मिली
+        </div>
+    )}
+</picture>
 
                             {imageExplanationStep >= 0 && (
                                 <div className="absolute bottom-0 left-0 right-0 bg-white/95 p-4">
@@ -533,17 +541,24 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                     style={{ containerType: "inline-size" }}
                                 >
 
-                                    {conversationImageUrl ? (
-                                        <img
-                                            src={conversationImageUrl}
-                                            alt="Conversation"
-                                            className="absolute inset-0 w-full h-full object-contain"
+                                    <picture>
+                                        <source
+                                            media="(max-width: 767px)"
+                                            srcSet={conversationMobileImageUrl || conversationImageUrl}
                                         />
-                                    ) : (
-                                        <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
-                                            Conversation Image URL नहीं मिला
-                                        </div>
-                                    )}
+
+                                        {conversationImageUrl ? (
+                                            <img
+                                                src={conversationImageUrl}
+                                                alt="Conversation"
+                                                className="absolute inset-0 w-full h-full object-contain"
+                                            />
+                                        ) : (
+                                            <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
+                                                Conversation Image URL नहीं मिला
+                                            </div>
+                                        )}
+                                    </picture>
 
                                     {/* Arjun */}
                                     <div className="absolute left-[16%] top-[2%] w-[22%] h-[13%] flex items-start justify-start text-left px-2 pt-2">
