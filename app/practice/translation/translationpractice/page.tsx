@@ -455,11 +455,11 @@ function TranslationPracticeContent() {
 
                     {/* MAIN BOARD */}
                     <div
-                        className="bg-white border shadow overflow-hidden flex flex-col"
+                        className="bg-white border shadow overflow-hidden flex flex-col h-[70vh] md:h-[11cm]"
                         style={{
-    width: "min(25cm, 100vw)",
-    height: "min(11cm, calc(100vh - 80px))",
-}}
+                            width: "min(25cm, 100vw)",
+                            height: "min(11cm, calc(100vh - 80px))",
+                        }}
                     >
                         <MainBoard
                             isGrammar={isGrammar}
