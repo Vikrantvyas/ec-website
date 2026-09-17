@@ -229,7 +229,7 @@ function TranslationPracticeContent() {
             }
 
             // CONVERSATION
-            if (isConversation) {
+            if (isConversation || isImageExplanation) {
                 const { data, error } = await supabase
                     .from("conversation_questions")
                     .select(`
@@ -351,6 +351,8 @@ function TranslationPracticeContent() {
 
     const conversationImageUrl =
         conversationDay?.conversation_image_url || "";
+        const conversationMobileImageUrl =
+    conversationDay?.conversation_mobile_image_url || "";
     // =========================================================
     // MAINBOARD DATA
     // =========================================================
@@ -457,8 +459,8 @@ function TranslationPracticeContent() {
                     <div
                         className="bg-white border shadow overflow-hidden flex flex-col h-[82vh] md:h-[11cm]"
                         style={{
-    width: "min(25cm, 100vw)",
-}}
+                            width: "min(25cm, 100vw)",
+                        }}
                     >
                         <MainBoard
                             isGrammar={isGrammar}
@@ -503,6 +505,9 @@ function TranslationPracticeContent() {
                             isConversation={isConversation}
                             conversationImageUrl={
                                 conversationImageUrl
+                            }
+                            conversationMobileImageUrl={
+                                conversationMobileImageUrl
                             }
                             isImageExplanation={
                                 isImageExplanation

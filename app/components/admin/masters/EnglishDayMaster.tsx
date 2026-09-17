@@ -42,6 +42,7 @@ export default function EnglishDayMaster({
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState("");
   const [conversationImageFile, setConversationImageFile] = useState<File | null>(null);
+  const [conversationMobileImageFile, setConversationMobileImageFile] = useState<File | null>(null);
 
   const [days, setDays] = useState<any[]>([]);
   const [dayNumber, setDayNumber] = useState("");
@@ -93,16 +94,19 @@ export default function EnglishDayMaster({
       }
     }
   };
-  const uploadConversationImage = async () => {
-    if (!conversationImageFile) return null;
+  const uploadConversationImage = async (
+    file: File | null,
+    type: "desktop" | "mobile"
+  ) => {
+    if (!file) return null;
 
-    const fileExt = conversationImageFile.name.split(".").pop();
-    const fileName = `conversation-${Date.now()}.${fileExt}`;
+    const fileExt = file.name.split(".").pop();
+    const fileName = `conversation-${type}-${Date.now()}.${fileExt}`;
     const filePath = `backgrounds/${fileName}`;
 
     const { error } = await supabase.storage
       .from("conversation")
-      .upload(filePath, conversationImageFile);
+      .upload(filePath, file);
 
     if (error) {
       alert("Image upload failed: " + error.message);
@@ -166,23 +170,30 @@ export default function EnglishDayMaster({
       : 0;
 
     let conversationImageUrl: string | null = null;
+    let conversationMobileImageUrl: string | null = null;
 
     if (
       selectedCourseName === "Conversation" ||
       selectedCourseName === "Image Explanation"
     ) {
-      if (!conversationImageFile) {
+      if (!conversationImageFile || !conversationMobileImageFile) {
         alert(
-          selectedCourseName === "Conversation"
-            ? "Please select a Conversation background image."
-            : "Please select an Image Explanation image."
+          "Please select both Desktop/Wide and Mobile (9:16) images."
         );
         return;
       }
 
-      conversationImageUrl = await uploadConversationImage();
+      conversationImageUrl = await uploadConversationImage(
+        conversationImageFile,
+        "desktop"
+      );
 
-      if (!conversationImageUrl) {
+      conversationMobileImageUrl = await uploadConversationImage(
+        conversationMobileImageFile,
+        "mobile"
+      );
+
+      if (!conversationImageUrl || !conversationMobileImageUrl) {
         return;
       }
     }
@@ -193,7 +204,8 @@ export default function EnglishDayMaster({
       data.push({
         course_id: selectedCourse,
         day_number: maxDay + i,
-        conversation_image_url: conversationImageUrl
+        conversation_image_url: conversationImageUrl,
+        conversation_mobile_image_url: conversationMobileImageUrl
       });
     }
 
@@ -208,6 +220,7 @@ export default function EnglishDayMaster({
 
     setDayNumber("");
     setConversationImageFile(null);
+    setConversationMobileImageFile(null);
     fetchDays();
   };
   const copySelectedDays = () => {
@@ -273,7 +286,9 @@ export default function EnglishDayMaster({
             course_id: selectedCourse,
             day_number: nextDayNumber,
             title: oldDay.title || "",
-            conversation_image_url: oldDay.conversation_image_url || null
+            conversation_image_url: oldDay.conversation_image_url || null,
+            conversation_mobile_image_url:
+              oldDay.conversation_mobile_image_url || null
           }])
           .select()
           .single();
@@ -528,31 +543,42 @@ export default function EnglishDayMaster({
           ))}
         </select>
         {["Conversation", "Image Explanation"].includes(
-          courses.find((c: any) => c.id === selectedCourse)?.name
-        ) && (
-            <>
-              {(() => {
-                const currentDay = days.find((day: any) => day.id === editId);
+  courses.find((c: any) => c.id === selectedCourse)?.name
+) && (
+  <>
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-medium">
+        Desktop / Wide
+      </span>
 
-                return currentDay?.conversation_image_url ? (
-                  <img
-                    src={currentDay.conversation_image_url}
-                    alt="Current Conversation background"
-                    className="w-16 h-10 object-cover rounded border"
-                  />
-                ) : null;
-              })()}
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) =>
+          setConversationImageFile(e.target.files?.[0] || null)
+        }
+        className="border px-2 py-1 rounded"
+      />
+    </div>
 
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) =>
-                  setConversationImageFile(e.target.files?.[0] || null)
-                }
-                className="border px-2 py-1 rounded"
-              />
-            </>
-          )}
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-medium">
+        Mobile (9:16)
+      </span>
+
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) =>
+          setConversationMobileImageFile(
+            e.target.files?.[0] || null
+          )
+        }
+        className="border px-2 py-1 rounded"
+      />
+    </div>
+  </>
+)}
         <input
           type="number"
           value={dayNumber}
