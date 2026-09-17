@@ -455,9 +455,9 @@ function TranslationPracticeContent() {
 
                     {/* MAIN BOARD */}
                     <div
-    className="bg-white border shadow overflow-hidden flex flex-col"
-    style={{ width: "25cm", height: "11cm" }}
->
+                        className="bg-white border shadow overflow-hidden flex flex-col"
+                        style={{ width: "25cm", height: "11cm" }}
+                    >
                         <MainBoard
                             isGrammar={isGrammar}
                             showGrammar={showGrammar}
@@ -509,12 +509,10 @@ function TranslationPracticeContent() {
                     </div>
 
                     {/* CONTROLS - MAIN BOARD KE NICHE */}
-                    <div className="flex justify-center mt-2">
-                        <Controls
-
-                            prevSentence={prevSentence}
-                            nextSentence={nextSentence}
-                            onBack={() => {
+                    <div className="relative flex justify-center mt-2">
+                        <button
+                            type="button"
+                            onClick={() => {
                                 router.push(
                                     `/practice/translation?course=${encodeURIComponent(
                                         courseName
@@ -523,6 +521,15 @@ function TranslationPracticeContent() {
                                     )}`
                                 );
                             }}
+                            className="absolute left-0 top-0 h-8 px-2 text-sm rounded hover:bg-gray-100 transition-colors"
+                        >
+                            ← Back
+                        </button>
+
+                        <Controls
+                            
+                            prevSentence={prevSentence}
+                            nextSentence={nextSentence}
                             currentIndex={currentIndex}
                             sentences={sentences}
                             isConversation={isConversation}

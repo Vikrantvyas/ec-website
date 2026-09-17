@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function TranslationPracticePage() {
+function TranslationPracticeContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -132,21 +132,21 @@ export default function TranslationPracticePage() {
 
             setTopics(topicsData || []);
 
-const restoredTopics = (topicsData || [])
-    .filter((topic: any) =>
-        returnTopics.includes(topic.id)
-    )
-    .map((topic: any) => topic.id);
+            const restoredTopics = (topicsData || [])
+                .filter((topic: any) =>
+                    returnTopics.includes(topic.id)
+                )
+                .map((topic: any) => topic.id);
 
-setSelectedTopics(restoredTopics);
+            setSelectedTopics(restoredTopics);
 
-const restoredDayIds = (topicsData || [])
-    .filter((topic: any) =>
-        returnTopics.includes(topic.id)
-    )
-    .map((topic: any) => topic.day_id);
+            const restoredDayIds = (topicsData || [])
+                .filter((topic: any) =>
+                    returnTopics.includes(topic.id)
+                )
+                .map((topic: any) => topic.day_id);
 
-setExpandedDays([...new Set(restoredDayIds)]);
+            setExpandedDays([...new Set(restoredDayIds)]);
         };
 
         fetchDaysAndTopics();
@@ -386,4 +386,17 @@ setExpandedDays([...new Set(restoredDayIds)]);
         </div>
     );
 
+}
+export default function TranslationPracticePage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="min-h-screen bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                    Loading...
+                </div>
+            }
+        >
+            <TranslationPracticeContent />
+        </Suspense>
+    );
 }
