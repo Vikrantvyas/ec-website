@@ -478,7 +478,10 @@ export default function EnglishDayMaster({
     let conversationImageUrl: string | null = null;
 
     if (conversationImageFile) {
-      conversationImageUrl = await uploadConversationImage();
+      conversationImageUrl = await uploadConversationImage(
+  conversationImageFile,
+  "desktop"
+);
 
       if (!conversationImageUrl) {
         return;
@@ -543,42 +546,42 @@ export default function EnglishDayMaster({
           ))}
         </select>
         {["Conversation", "Image Explanation"].includes(
-  courses.find((c: any) => c.id === selectedCourse)?.name
-) && (
-  <>
-    <div className="flex items-center gap-2">
-      <span className="text-xs font-medium">
-        Desktop / Wide
-      </span>
+          courses.find((c: any) => c.id === selectedCourse)?.name
+        ) && (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium">
+                  Desktop / Wide
+                </span>
 
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) =>
-          setConversationImageFile(e.target.files?.[0] || null)
-        }
-        className="border px-2 py-1 rounded"
-      />
-    </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setConversationImageFile(e.target.files?.[0] || null)
+                  }
+                  className="border px-2 py-1 rounded"
+                />
+              </div>
 
-    <div className="flex items-center gap-2">
-      <span className="text-xs font-medium">
-        Mobile (9:16)
-      </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium">
+                  Mobile (9:16)
+                </span>
 
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) =>
-          setConversationMobileImageFile(
-            e.target.files?.[0] || null
-          )
-        }
-        className="border px-2 py-1 rounded"
-      />
-    </div>
-  </>
-)}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setConversationMobileImageFile(
+                      e.target.files?.[0] || null
+                    )
+                  }
+                  className="border px-2 py-1 rounded"
+                />
+              </div>
+            </>
+          )}
         <input
           type="number"
           value={dayNumber}
