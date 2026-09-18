@@ -44,14 +44,15 @@ export default function Controls({
 
       <button
         onClick={prevSentence}
-        className={toolBtn}
+        disabled={currentIndex < 0}
+        className={`${toolBtn} font-medium text-blue-700 disabled:opacity-40`}
       >
         Prev
       </button>
 
       <button
         onClick={nextSentence}
-        disabled={currentIndex >= sentences.length}
+        disabled={showAll || currentIndex >= sentences.length - 1}
         className={`${toolBtn} font-medium text-blue-700 disabled:opacity-40`}
       >
         Next
@@ -59,11 +60,18 @@ export default function Controls({
 
       {!isConversation && !isImageExplanation && (
         <button
-          onClick={toggleShowAll}
-          className={`${toolBtn} font-medium text-red-600`}
-        >
-          {showAll ? "Hide All" : "Show All"}
-        </button>
+  onClick={() => {
+    if (showAll) {
+      setShowAll(false);
+      setCurrentIndex(-1);
+    } else {
+      setShowAll(true);
+    }
+  }}
+  className={`${toolBtn} font-medium text-red-600`}
+>
+  {showAll ? "Hide All" : "Show All"}
+</button>
       )}
 
       <button

@@ -814,9 +814,9 @@ export default function LeftPanel({
                         {dayTopics.map((t: any) => {
 
                           const count =
-  t.sentence_count !== undefined
-    ? t.sentence_count
-    : t.vocabulary?.[0]?.count || 0;
+                            t.sentence_count !== undefined
+                              ? t.sentence_count
+                              : t.vocabulary?.[0]?.count || 0;
 
                           const isTopicSelected =
                             selectedTopics.includes(t.id);

@@ -20,7 +20,7 @@ export default function EnglishPage() {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [topicNavIndex, setTopicNavIndex] = useState(0);
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(-1);
   const [showAll, setShowAll] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
 
@@ -176,13 +176,7 @@ export default function EnglishPage() {
       setSelectedTopics(filteredTopics);
     }
   }, [selectedDays, topics]);
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = showAll
-        ? 0
-        : scrollRef.current.scrollHeight;
-    }
-  }, [currentIndex, showAll]);
+  
 
   const fetchCourses = async () => {
     const { data, error } = await supabase
@@ -676,7 +670,8 @@ export default function EnglishPage() {
               showLeft={showLeft}
               showAll={showAll}
               currentIndex={currentIndex}
-              layout={layout}
+setCurrentIndex={setCurrentIndex}
+layout={layout}
               currentTime={currentTime}
 
               // 🔥 NEW

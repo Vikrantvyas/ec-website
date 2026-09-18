@@ -26,6 +26,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         random,
         showAll,
         compact,
+        onCurrentIndexChange,
         highlightIndex,
         setHighlightIndex,
         isConversation,
@@ -56,7 +57,12 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         englishAnswer: item.english_answer || "",
     }));
     const [currentIndex, setCurrentIndex] = useState(-1);
+    const [showAllPrevEnglish, setShowAllPrevEnglish] = useState(true);
     const [showEnglish, setShowEnglish] = useState(false);
+    const updateCurrentIndex = (index: number) => {
+        setCurrentIndex(index);
+        onCurrentIndexChange?.(index);
+    };
     const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
     const [conversationStep, setConversationStep] = useState(-1);
     const [imageExplanationStep, setImageExplanationStep] = useState(-1);
@@ -90,7 +96,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                     : safeData);
 
         setList(newList);
-        setCurrentIndex(-1);
+        updateCurrentIndex(-1);
         setConversationStep(-1);
         setImageExplanationStep(-1);
         setShowEnglish(false);
@@ -98,11 +104,23 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         setMarks({});
 
     }, [data, random]);
+    useEffect(() => {
+        if (showAll) {
+            updateCurrentIndex(list.length - 1);
+            setShowAllPrevEnglish(true);
+            return;
+        }
+
+        updateCurrentIndex(-1);
+        setShowAllPrevEnglish(true);
+        setShowEnglish(false);
+        setRevealedAnswers([]);
+    }, [showAll, list.length]);
 
     const imageExplanationDisplayUrl =
-    isImageExplanation
-        ? conversationMobileImageUrl || conversationImageUrl || ""
-        : "";
+        isImageExplanation
+            ? conversationMobileImageUrl || conversationImageUrl || ""
+            : "";
     // =========================================================
     // NORMAL NEXT
     //
@@ -121,7 +139,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
             // First Next → Hindi Question
             if (currentIndex === -1) {
-                setCurrentIndex(0);
+                updateCurrentIndex(0);
                 setImageExplanationStep(0);
                 return;
             }
@@ -134,7 +152,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
             // English Answer → Next Image/Question
             if (currentIndex < list.length - 1) {
-                setCurrentIndex((prev) => prev + 1);
+                updateCurrentIndex(currentIndex + 1);
                 setImageExplanationStep(0);
             }
 
@@ -145,7 +163,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
             // First Next → Arjun Hindi
             if (currentIndex === -1) {
-                setCurrentIndex(0);
+                updateCurrentIndex(0);
                 setConversationStep(0);
                 return;
             }
@@ -158,7 +176,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
             // 8 steps complete → next question
             if (currentIndex < list.length - 1) {
-                setCurrentIndex((prev) => prev + 1);
+                updateCurrentIndex(currentIndex + 1);
                 setConversationStep(0);
             }
 
@@ -170,7 +188,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
         // First Next → first Hindi
         if (currentIndex === -1) {
-            setCurrentIndex(0);
+            updateCurrentIndex(0);
             setShowEnglish(false);
             return;
         }
@@ -188,7 +206,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
         // English visible → next Hindi
         if (currentIndex < list.length - 1) {
-            setCurrentIndex((prev) => prev + 1);
+            updateCurrentIndex(currentIndex + 1);
             setShowEnglish(false);
         }
     };
@@ -216,7 +234,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         // तो पहला Hindi question दिखाएँ।
         if (currentIndex === -1) {
 
-            setCurrentIndex(0);
+            updateCurrentIndex(0);
             setShowEnglish(false);
 
             return;
@@ -243,7 +261,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         }
 
         // Current answer के साथ अगला Hindi question दिखाएँ।
-        setCurrentIndex((prev) => prev + 1);
+        updateCurrentIndex(currentIndex + 1);
         setShowEnglish(false);
 
     };
@@ -268,15 +286,16 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
             }
 
             if (currentIndex > 0) {
-                setCurrentIndex((prev) => prev - 1);
+                updateCurrentIndex(currentIndex - 1);
                 setImageExplanationStep(3);
                 return;
             }
 
-            setCurrentIndex(-1);
+            updateCurrentIndex(-1);
             setImageExplanationStep(-1);
             return;
         }
+
         if (isConversation) {
             if (currentIndex === -1) return;
 
@@ -286,35 +305,83 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
             }
 
             if (currentIndex > 0) {
-                setCurrentIndex((prev) => prev - 1);
+                updateCurrentIndex(currentIndex - 1);
                 setConversationStep(7);
                 return;
             }
 
-            setCurrentIndex(-1);
+            updateCurrentIndex(-1);
             setConversationStep(-1);
             return;
         }
+        // SHOW ALL → एक-एक sentence hide करें
+        if (showAll) {
+            // पहले English sentence hide होगा
+            if (showAllPrevEnglish) {
+                setShowAllPrevEnglish(false);
+                return;
+            }
+
+            // उसके बाद अगली पूरी row पर जाएँ
+            if (currentIndex <= 0) {
+                setShowAll(false);
+                updateCurrentIndex(-1);
+                setShowEnglish(false);
+                setRevealedAnswers([]);
+                return;
+            }
+
+            updateCurrentIndex(currentIndex - 1);
+            setShowAllPrevEnglish(true);
+
+            return;
+        }
+        // SHOW ALL → एक-एक sentence hide करें
+        if (showAll) {
+            if (currentIndex <= 0) {
+                updateCurrentIndex(-1);
+                setShowEnglish(false);
+                setRevealedAnswers([]);
+                return;
+            }
+
+            updateCurrentIndex(currentIndex - 1);
+
+            setRevealedAnswers((prev) =>
+                prev.filter((i) => i < currentIndex)
+            );
+
+            return;
+        }
+
+
+        // NORMAL COURSE
+        if (currentIndex === -1) return;
 
         if (showEnglish) {
             setShowEnglish(false);
+
             setRevealedAnswers((prev) =>
                 prev.filter((i) => i !== currentIndex)
             );
+
             return;
         }
 
         if (currentIndex > 0) {
             const prevIndex = currentIndex - 1;
-            setCurrentIndex(prevIndex);
+
+            updateCurrentIndex(prevIndex);
             setShowEnglish(true);
+
             setRevealedAnswers((prev) =>
                 prev.filter((i) => i <= prevIndex)
             );
+
             return;
         }
 
-        setCurrentIndex(-1);
+        updateCurrentIndex(-1);
     };
 
     // =========================================================
@@ -373,7 +440,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
     const handleReset = () => {
 
-        setCurrentIndex(-1);
+        updateCurrentIndex(-1);
         setImageExplanationStep(-1);
 
         setConversationStep(-1);
@@ -415,7 +482,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
     const visible =
         showAll
-            ? list
+            ? list.slice(0, currentIndex + 1)
             : currentIndex === -1
                 ? []
                 : list.slice(0, currentIndex + 1);
@@ -427,7 +494,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
     useEffect(() => {
 
-        if (!compact || showAll || currentIndex < 0) {
+        if (!compact || currentIndex < 0) {
             return;
         }
 
@@ -439,8 +506,12 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
         requestAnimationFrame(() => {
 
+            const targetIndex = showAll
+                ? visible.length - 1
+                : currentIndex;
+
             const currentRow = container.children[
-                currentIndex
+                targetIndex
             ] as HTMLElement | undefined;
 
             if (!currentRow) {
@@ -475,23 +546,23 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                     {imageExplanationData.length > 0 && (
                         <div className="relative flex-1 min-h-0 overflow-hidden bg-white">
                             <picture>
-    <source
-        media="(max-width: 767px)"
-        srcSet={conversationMobileImageUrl || conversationImageUrl}
-    />
+                                <source
+                                    media="(max-width: 767px)"
+                                    srcSet={conversationMobileImageUrl || conversationImageUrl}
+                                />
 
-    {conversationImageUrl ? (
-        <img
-            src={conversationImageUrl}
-            alt="Image Explanation"
-            className="absolute inset-0 w-full h-full object-contain"
-        />
-    ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
-            Image नहीं मिली
-        </div>
-    )}
-</picture>
+                                {conversationImageUrl ? (
+                                    <img
+                                        src={conversationImageUrl}
+                                        alt="Image Explanation"
+                                        className="absolute inset-0 w-full h-full object-contain"
+                                    />
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center text-red-600 font-bold">
+                                        Image नहीं मिली
+                                    </div>
+                                )}
+                            </picture>
 
                             {imageExplanationStep >= 0 && (
                                 <div className="absolute bottom-0 left-0 right-0 bg-white/95 p-4">
@@ -703,10 +774,16 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
                                 <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600">
 
-                                    {showAll ||
-                                        revealedAnswers.includes(i)
-                                        ? english
-                                        : ""}
+                                    {showAll
+    ? (
+        i < currentIndex ||
+        (i === currentIndex && showAllPrevEnglish)
+    )
+        ? english
+        : ""
+    : revealedAnswers.includes(i)
+        ? english
+        : ""}
 
                                 </div>
 

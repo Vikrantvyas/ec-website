@@ -24,6 +24,9 @@ export default function MainBoard({
   randomMode,
   showAll,
   currentIndex,
+  setCurrentIndex,
+
+  // 🔥 NEW PROPS
 
   // 🔥 NEW PROPS
   selectedDays,
@@ -411,6 +414,8 @@ export default function MainBoard({
                 data={sentences}
                 random={randomMode}
                 showAll={showAll}
+                onCurrentIndexChange={setCurrentIndex}
+                setCurrentIndex={setCurrentIndex}
                 compact={true}
                 highlightIndex={highlightIndex}
                 setHighlightIndex={setHighlightIndex}
@@ -582,10 +587,10 @@ export default function MainBoard({
 
             {selectedReactionMeme.media_type === "video" && (
               <video
-    src={selectedReactionMeme.mediaUrl}
-    controls
-    autoPlay
-    playsInline
+                src={selectedReactionMeme.mediaUrl}
+                controls
+                autoPlay
+                playsInline
                 onEnded={() => setShowReactionMeme(false)}
                 className="w-1/2 h-1/2 object-contain pointer-events-auto"
               />
