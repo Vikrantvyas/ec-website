@@ -25,6 +25,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         data,
         random,
         showAll,
+        setShowAll,
         compact,
         onCurrentIndexChange,
         highlightIndex,
@@ -108,13 +109,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         if (showAll) {
             updateCurrentIndex(list.length - 1);
             setShowAllPrevEnglish(true);
-            return;
         }
-
-        updateCurrentIndex(-1);
-        setShowAllPrevEnglish(true);
-        setShowEnglish(false);
-        setRevealedAnswers([]);
     }, [showAll, list.length]);
 
     const imageExplanationDisplayUrl =
@@ -315,27 +310,37 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
             return;
         }
         // SHOW ALL → एक-एक sentence hide करें
-        if (showAll) {
-            // पहले English sentence hide होगा
-            if (showAllPrevEnglish) {
-                setShowAllPrevEnglish(false);
-                return;
-            }
+if (showAll) {
+    // पहला Prev → सिर्फ आखिरी English sentence hide होगा
+    if (showAllPrevEnglish) {
+        setShowAllPrevEnglish(false);
+        setShowAll(false);
+        setShowEnglish(false);
 
-            // उसके बाद अगली पूरी row पर जाएँ
-            if (currentIndex <= 0) {
-                
-                updateCurrentIndex(-1);
-                setShowEnglish(false);
-                setRevealedAnswers([]);
-                return;
-            }
+        setRevealedAnswers(
+            list.slice(0, currentIndex).map((_, index) => index)
+        );
 
-            updateCurrentIndex(currentIndex - 1);
-            setShowAllPrevEnglish(true);
+        return;
+    }
 
-            return;
-        }
+    // उसके बाद हर Prev → एक पूरी row कम होगी
+    if (currentIndex <= 0) {
+        updateCurrentIndex(-1);
+        setShowEnglish(false);
+        setRevealedAnswers([]);
+        return;
+    }
+
+    updateCurrentIndex(currentIndex - 1);
+    setShowEnglish(true);
+
+    setRevealedAnswers((prev) =>
+        prev.filter((index) => index <= currentIndex - 1)
+    );
+
+    return;
+}
         // SHOW ALL → एक-एक sentence hide करें
         if (showAll) {
             if (currentIndex <= 0) {

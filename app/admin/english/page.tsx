@@ -176,7 +176,7 @@ export default function EnglishPage() {
       setSelectedTopics(filteredTopics);
     }
   }, [selectedDays, topics]);
-  
+
 
   const fetchCourses = async () => {
     const { data, error } = await supabase
@@ -669,9 +669,10 @@ export default function EnglishPage() {
               randomMode={randomMode}
               showLeft={showLeft}
               showAll={showAll}
+              setShowAll={setShowAll}
               currentIndex={currentIndex}
-setCurrentIndex={setCurrentIndex}
-layout={layout}
+              setCurrentIndex={setCurrentIndex}
+              layout={layout}
               currentTime={currentTime}
 
               // 🔥 NEW

@@ -23,6 +23,7 @@ export default function MainBoard({
   vocabRef,
   randomMode,
   showAll,
+  setShowAll,
   currentIndex,
   setCurrentIndex,
 
@@ -414,6 +415,7 @@ export default function MainBoard({
                 data={sentences}
                 random={randomMode}
                 showAll={showAll}
+                setShowAll={setShowAll}
                 onCurrentIndexChange={setCurrentIndex}
                 setCurrentIndex={setCurrentIndex}
                 compact={true}

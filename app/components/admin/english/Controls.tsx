@@ -12,6 +12,7 @@ export default function Controls({
   toggleShowAll,
   setShowAll,
   setCurrentIndex,
+  showEnglish,
   showBoard,
   setShowBoard,
   prevTopic,
@@ -52,7 +53,10 @@ export default function Controls({
 
       <button
         onClick={nextSentence}
-        disabled={showAll || currentIndex >= sentences.length - 1}
+        disabled={
+  showAll ||
+  (currentIndex >= sentences.length - 1 && showEnglish)
+}
         className={`${toolBtn} font-medium text-blue-700 disabled:opacity-40`}
       >
         Next
@@ -60,18 +64,18 @@ export default function Controls({
 
       {!isConversation && !isImageExplanation && (
         <button
-  onClick={() => {
-    if (showAll) {
-      setShowAll(false);
-      setCurrentIndex(-1);
-    } else {
-      setShowAll(true);
-    }
-  }}
-  className={`${toolBtn} font-medium text-red-600`}
->
-  {showAll ? "Hide All" : "Show All"}
-</button>
+          onClick={() => {
+            if (showAll) {
+              setShowAll(false);
+              setCurrentIndex(-1);
+            } else {
+              setShowAll(true);
+            }
+          }}
+          className={`${toolBtn} font-medium text-red-600`}
+        >
+          {showAll ? "Hide All" : "Show All"}
+        </button>
       )}
 
       <button
