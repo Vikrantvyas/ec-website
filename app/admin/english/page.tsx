@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import LeftPanel from "@/app/components/admin/english/LeftPanel";
 import MainBoard from "@/app/components/admin/english/MainBoard";
 import Controls from "@/app/components/admin/english/Controls";
+import MemePanel from "@/app/components/admin/english/MemePanel";
 
 export default function EnglishPage() {
 
@@ -31,6 +32,7 @@ export default function EnglishPage() {
   const [showImages, setShowImages] = useState(false);
   const [selectedGrammarTableId, setSelectedGrammarTableId] = useState("");
   const [selectedImageId, setSelectedImageId] = useState("");
+  const [selectedReactionMeme, setSelectedReactionMeme] = useState<any>(null);
   const [layout, setLayout] = useState<"horizontal" | "vertical">("horizontal");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState("");
@@ -642,88 +644,100 @@ export default function EnglishPage() {
         setSelectedGrammarTableId={setSelectedGrammarTableId}
         selectedImageId={selectedImageId}
         setSelectedImageId={setSelectedImageId}
+        selectedReactionMeme={selectedReactionMeme}
         refreshData={refreshData}
 
       />
-      <div className="flex-1 flex flex-col items-start pl-3 pt-1 gap-2">
-        <div
-          className="bg-white border shadow flex flex-col overflow-hidden"
-          style={{ width: "25cm", height: "12cm" }}
-        >
+      <div className="flex-1 flex items-start pl-3 pt-1 gap-3 min-w-0 overflow-hidden">
 
+        <div className="flex flex-col gap-2 shrink-0">
 
+          <div
+            className="bg-white border shadow flex flex-col overflow-hidden"
+            style={{ width: "25cm", height: "12cm" }}
+          >
 
-          <MainBoard
+            <MainBoard
+              isGrammar={isGrammar}
+              showGrammar={showGrammar}
+              prevTopic={prevTopic}
+              nextTopic={nextTopic}
+              sentences={sentences}
+              visible={visible}
+              leftCol={leftCol}
+              rightCol={rightCol}
+              highlightIndex={highlightIndex}
+              setHighlightIndex={setHighlightIndex}
+              showBoard={showBoard}
+              showScore={showScore}
+              scrollRef={scrollRef}
+              vocabRef={vocabRef}
+              randomMode={randomMode}
+              showLeft={showLeft}
+              showAll={showAll}
+              currentIndex={currentIndex}
+              layout={layout}
+              currentTime={currentTime}
 
-            isGrammar={isGrammar}
-            showGrammar={showGrammar}
-            prevTopic={prevTopic}
-            nextTopic={nextTopic}
-            sentences={sentences}
-            visible={visible}
-            leftCol={leftCol}
-            rightCol={rightCol}
-            highlightIndex={highlightIndex}
-            setHighlightIndex={setHighlightIndex}
-            showBoard={showBoard}
-            showScore={showScore}
-            scrollRef={scrollRef}
-            vocabRef={vocabRef}
-            randomMode={randomMode}
-            showLeft={showLeft}
-            showAll={showAll}
+              // 🔥 NEW
+              selectedDays={selectedDays}
+              selectedTopics={selectedTopics}
+              topics={topics}
+              days={days}
+              selectedGrammarTableId={selectedGrammarTableId}
+              setSelectedGrammarTableId={setSelectedGrammarTableId}
+              selectedImageId={selectedImageId}
+              selectedReactionMeme={selectedReactionMeme}
+              showImages={showImages}
+              setShowImages={setShowImages}
+              isConversation={isConversation}
+              isImageExplanation={isImageExplanation}
+              conversationImageUrl={conversationImageUrl}
+              conversationMobileImageUrl={conversationMobileImageUrl}
+              setSelectedImageId={setSelectedImageId}
+            />
+
+          </div>
+
+          <Controls
+            prevSentence={prevSentence}
+            nextSentence={nextSentence}
             currentIndex={currentIndex}
-            layout={layout}
-            currentTime={currentTime}
-
-            // 🔥 NEW
-            selectedDays={selectedDays}
-            selectedTopics={selectedTopics}
-            topics={topics}
-            days={days}
-            selectedGrammarTableId={selectedGrammarTableId}
-            setSelectedGrammarTableId={setSelectedGrammarTableId}
-            selectedImageId={selectedImageId}
-            showImages={showImages}
-            setShowImages={setShowImages}
+            sentences={sentences}
             isConversation={isConversation}
             isImageExplanation={isImageExplanation}
-            conversationImageUrl={conversationImageUrl}
-            conversationMobileImageUrl={conversationMobileImageUrl}
-            setSelectedImageId={setSelectedImageId}
+            showAll={showAll}
+            toggleShowAll={toggleShowAll}
+            setShowAll={setShowAll}
+            setCurrentIndex={setCurrentIndex}
+            showBoard={showBoard}
+            setShowBoard={setShowBoard}
+            showScore={showScore}
+            setShowScore={setShowScore}
+            randomMode={randomMode}
+            setRandomMode={setRandomMode}
+            showLeft={showLeft}
+            setShowLeft={setShowLeft}
+            showGrammar={showGrammar}
+            setShowGrammar={setShowGrammar}
+            isGrammar={isGrammar}
+            layout={layout}
+            setLayout={setLayout}
+            showImages={showImages}
+            setShowImages={setShowImages}
           />
+
         </div>
 
-        <Controls
-          prevSentence={prevSentence}
-          nextSentence={nextSentence}
-          currentIndex={currentIndex}
-          sentences={sentences}
-          isConversation={isConversation}
-          isImageExplanation={isImageExplanation}
-          showAll={showAll}
-          toggleShowAll={toggleShowAll}
-          setShowAll={setShowAll}
-          setCurrentIndex={setCurrentIndex}
-          showBoard={showBoard}
-          setShowBoard={setShowBoard}
-          showScore={showScore}
-          setShowScore={setShowScore}
-          randomMode={randomMode}
-          setRandomMode={setRandomMode}
-          showLeft={showLeft}
-          setShowLeft={setShowLeft}
-          showGrammar={showGrammar}
-          setShowGrammar={setShowGrammar}
-          isGrammar={isGrammar}
-          layout={layout}
-          setLayout={setLayout}
-          showImages={showImages}
-          setShowImages={setShowImages}
+        <MemePanel
+          onSelectMeme={(meme: any) => {
+            setSelectedReactionMeme((prev: any) =>
+              prev?.id === meme.id ? null : meme
+            );
+          }}
         />
 
       </div>
-
     </div>
   );
 }

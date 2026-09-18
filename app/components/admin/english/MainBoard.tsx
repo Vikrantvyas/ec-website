@@ -43,6 +43,7 @@ export default function MainBoard({
   conversationMobileImageUrl,
   isImageExplanation,
   studentMode,
+  selectedReactionMeme,
 }: any) {
 
 
@@ -485,7 +486,45 @@ export default function MainBoard({
           onMouseLeave={handleHighlightEnd}
         >
           <WhiteBoard />
+          {selectedReactionMeme?.mediaUrl && (
+            <div className="absolute inset-0 z-[60] bg-white flex items-center justify-center p-3 pointer-events-auto">
+              {selectedReactionMeme.media_type === "image" && (
+                <img
+                  src={selectedReactionMeme.mediaUrl}
+                  alt={selectedReactionMeme.name}
+                  className="max-w-full max-h-full object-contain"
+                />
+              )}
 
+              {selectedReactionMeme.media_type === "video" && (
+              <video
+    src={selectedReactionMeme.mediaUrl}
+    controls
+    autoPlay
+    playsInline
+    className="w-full h-full object-contain"
+/>
+              )}
+
+              {selectedReactionMeme.media_type === "audio" && (
+                <div className="w-full max-w-md flex flex-col items-center gap-4">
+                  <div className="text-3xl">
+                    🔊
+                  </div>
+
+                  <div className="font-semibold text-lg text-center">
+                    {selectedReactionMeme.name}
+                  </div>
+
+                  <audio
+                    src={selectedReactionMeme.mediaUrl}
+                    controls
+                    className="w-full"
+                  />
+                </div>
+              )}
+            </div>
+          )}
           {isHighlighting && (
             <svg
               className="absolute inset-0 w-full h-full pointer-events-none z-50"
