@@ -112,6 +112,40 @@ export default function MainBoard({
   const [imageList, setImageList] = useState<any[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
   const [selectedImage, setSelectedImage] = useState<any>(null);
+  const [showReactionMeme, setShowReactionMeme] = useState(false);
+  const reactionVideoRef = useRef<HTMLVideoElement | null>(null);
+  useEffect(() => {
+    if (
+      showReactionMeme &&
+      selectedReactionMeme?.media_type === "video" &&
+      reactionVideoRef.current
+    ) {
+      const video = reactionVideoRef.current;
+
+      video.currentTime = 0;
+      video.muted = true;
+
+      video.play().catch((error) => {
+        console.log("Reaction video autoplay error:", error);
+      });
+    }
+  }, [showReactionMeme, selectedReactionMeme]);
+  useEffect(() => {
+    if (!selectedReactionMeme?.mediaUrl) {
+      setShowReactionMeme(false);
+      return;
+    }
+
+    setShowReactionMeme(true);
+
+    if (selectedReactionMeme.media_type === "image") {
+      const timer = setTimeout(() => {
+        setShowReactionMeme(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [selectedReactionMeme]);
 
   useEffect(() => {
     const fetchSelectedMedia = async () => {
@@ -536,43 +570,44 @@ export default function MainBoard({
       >
         {panelOrder.map(renderPanel)}
 
-{selectedReactionMeme?.mediaUrl && (
-  <div className="absolute top-0 left-0 right-0 bottom-0 z-[9990] pointer-events-none flex items-center justify-center">
-    {selectedReactionMeme.media_type === "image" && (
-      <img
-        src={selectedReactionMeme.mediaUrl}
-        alt={selectedReactionMeme.name}
-        className="w-1/2 h-1/2 object-contain pointer-events-auto"
-      />
-    )}
+        {showReactionMeme && selectedReactionMeme?.mediaUrl && (
+          <div className="absolute top-0 left-0 right-0 bottom-0 z-[9990] pointer-events-none flex items-center justify-center">
+            {selectedReactionMeme.media_type === "image" && (
+              <img
+                src={selectedReactionMeme.mediaUrl}
+                alt={selectedReactionMeme.name}
+                className="w-1/2 h-1/2 object-contain pointer-events-auto"
+              />
+            )}
 
-    {selectedReactionMeme.media_type === "video" && (
-      <video
-        src={selectedReactionMeme.mediaUrl}
-        controls
-        autoPlay
-        playsInline
-        className="w-1/2 h-1/2 object-contain pointer-events-auto"
-      />
-    )}
+            {selectedReactionMeme.media_type === "video" && (
+              <video
+    src={selectedReactionMeme.mediaUrl}
+    controls
+    autoPlay
+    playsInline
+                onEnded={() => setShowReactionMeme(false)}
+                className="w-1/2 h-1/2 object-contain pointer-events-auto"
+              />
+            )}
 
-    {selectedReactionMeme.media_type === "audio" && (
-      <div className="w-[500px] p-6 bg-white flex flex-col items-center gap-4 pointer-events-auto">
-        <div className="text-3xl">🔊</div>
+            {selectedReactionMeme.media_type === "audio" && (
+              <div className="w-[500px] p-6 bg-white flex flex-col items-center gap-4 pointer-events-auto">
+                <div className="text-3xl">🔊</div>
 
-        <div className="font-semibold text-lg text-center">
-          {selectedReactionMeme.name}
-        </div>
+                <div className="font-semibold text-lg text-center">
+                  {selectedReactionMeme.name}
+                </div>
 
-        <audio
-          src={selectedReactionMeme.mediaUrl}
-          controls
-          className="w-full"
-        />
-      </div>
-              )}
-  </div>
-)}
+                <audio
+                  src={selectedReactionMeme.mediaUrl}
+                  controls
+                  className="w-full"
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </>
   );

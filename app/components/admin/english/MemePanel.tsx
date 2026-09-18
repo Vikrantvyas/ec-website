@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Film, Image as ImageIcon, Volume2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
 type MemeType = "image" | "video" | "audio";
@@ -110,10 +111,10 @@ export default function MemePanel({
             return (
                 <video
                     src={mediaUrl}
-                    controls
+                    muted
                     playsInline
                     preload="metadata"
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain pointer-events-none"
                 />
             );
         }
@@ -136,7 +137,7 @@ export default function MemePanel({
         <div
             className="
                 w-[180px]
-                h-[12cm]
+                h-full
                 shrink-0
                 bg-white
                 border
@@ -146,12 +147,7 @@ export default function MemePanel({
                 overflow-hidden
             "
         >
-            {/* Header */}
-            <div className="px-3 py-2 border-b bg-gray-50">
-                <div className="font-semibold text-sm">
-                    Reaction Memes
-                </div>
-            </div>
+           
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-2">
@@ -164,62 +160,65 @@ export default function MemePanel({
                         No Reaction Memes
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 gap-1">
+                    <div className="grid grid-cols-1 gap-1">
                         {memes.map((meme) => (
                             <div
-    key={meme.id}
-    className="
-        border
-        rounded
-        overflow-hidden
-        bg-white
-    "
->
-    <div className="h-[65px] bg-gray-50 pointer-events-none">
-        {renderPreview(meme)}
-    </div>
+                                key={meme.id}
+                                className="overflow-hidden"
+                            >
+                                <div
+                                    className="relative h-[95px] bg-gray-50 cursor-pointer hover:ring-2 hover:ring-blue-400"
+                                    onClick={() => {
+                                        const mediaPath = getMediaPath(meme);
+                                        const mediaUrl = getPublicUrl(mediaPath);
 
-    <div
-        className="
-            px-1
-            py-1
-            text-[10px]
-            font-medium
-            text-center
-            truncate
-        "
-        title={meme.name}
-    >
-        {meme.name}
-    </div>
+                                        if (!mediaUrl) return;
 
-    <button
-        type="button"
-        onClick={() => {
-            const mediaPath = getMediaPath(meme);
-            const mediaUrl = getPublicUrl(mediaPath);
+                                        onSelectMeme({
+                                            ...meme,
+                                            mediaUrl,
+                                            toggle: true,
+                                        });
+                                    }}
+                                >
+                                    {renderPreview(meme)}
 
-            if (!mediaUrl) return;
+                                    <div
+                                        className={`
+    absolute
+    bottom-1
+    right-1
+    w-6
+    h-6
+    rounded-full
+    text-white
+    flex
+    items-center
+    justify-center
+    shadow
+    ${
+        meme.media_type === "video"
+            ? "bg-red-600"
+            : meme.media_type === "image"
+                ? "bg-blue-600"
+                : "bg-green-600"
+    }
+`}
+                                    >
+                                        {meme.media_type === "video" && (
+                                            <Film size={14} strokeWidth={2.5} />
+                                        )}
 
-            onSelectMeme({
-                ...meme,
-                mediaUrl,
-            });
-        }}
-        className="
-            w-full
-            py-1
-            text-[10px]
-            font-semibold
-            bg-blue-50
-            text-blue-700
-            hover:bg-blue-100
-            border-t
-        "
-    >
-        ▶ Show
-    </button>
-</div>
+                                        {meme.media_type === "image" && (
+                                            <ImageIcon size={14} strokeWidth={2.5} />
+                                        )}
+
+                                        {meme.media_type === "audio" && (
+                                            <Volume2 size={14} strokeWidth={2.5} />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 )}
