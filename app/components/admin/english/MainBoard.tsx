@@ -486,45 +486,7 @@ export default function MainBoard({
           onMouseLeave={handleHighlightEnd}
         >
           <WhiteBoard />
-          {selectedReactionMeme?.mediaUrl && (
-            <div className="absolute inset-0 z-[60] bg-white flex items-center justify-center p-3 pointer-events-auto">
-              {selectedReactionMeme.media_type === "image" && (
-                <img
-                  src={selectedReactionMeme.mediaUrl}
-                  alt={selectedReactionMeme.name}
-                  className="max-w-full max-h-full object-contain"
-                />
-              )}
 
-              {selectedReactionMeme.media_type === "video" && (
-              <video
-    src={selectedReactionMeme.mediaUrl}
-    controls
-    autoPlay
-    playsInline
-    className="w-full h-full object-contain"
-/>
-              )}
-
-              {selectedReactionMeme.media_type === "audio" && (
-                <div className="w-full max-w-md flex flex-col items-center gap-4">
-                  <div className="text-3xl">
-                    🔊
-                  </div>
-
-                  <div className="font-semibold text-lg text-center">
-                    {selectedReactionMeme.name}
-                  </div>
-
-                  <audio
-                    src={selectedReactionMeme.mediaUrl}
-                    controls
-                    className="w-full"
-                  />
-                </div>
-              )}
-            </div>
-          )}
           {isHighlighting && (
             <svg
               className="absolute inset-0 w-full h-full pointer-events-none z-50"
@@ -569,12 +531,49 @@ export default function MainBoard({
   return (
     <>
       <div
-        className={`flex flex-1 overflow-hidden ${isVertical ? "flex-col" : "flex-row"
+        className={`relative flex flex-1 overflow-hidden ${isVertical ? "flex-col" : "flex-row"
           }`}
       >
         {panelOrder.map(renderPanel)}
+
+{selectedReactionMeme?.mediaUrl && (
+  <div className="absolute top-0 left-0 right-0 bottom-0 z-[9990] pointer-events-none flex items-center justify-center">
+    {selectedReactionMeme.media_type === "image" && (
+      <img
+        src={selectedReactionMeme.mediaUrl}
+        alt={selectedReactionMeme.name}
+        className="w-1/2 h-1/2 object-contain pointer-events-auto"
+      />
+    )}
+
+    {selectedReactionMeme.media_type === "video" && (
+      <video
+        src={selectedReactionMeme.mediaUrl}
+        controls
+        autoPlay
+        playsInline
+        className="w-1/2 h-1/2 object-contain pointer-events-auto"
+      />
+    )}
+
+    {selectedReactionMeme.media_type === "audio" && (
+      <div className="w-[500px] p-6 bg-white flex flex-col items-center gap-4 pointer-events-auto">
+        <div className="text-3xl">🔊</div>
+
+        <div className="font-semibold text-lg text-center">
+          {selectedReactionMeme.name}
+        </div>
+
+        <audio
+          src={selectedReactionMeme.mediaUrl}
+          controls
+          className="w-full"
+        />
+      </div>
+              )}
+  </div>
+)}
       </div>
     </>
   );
 }
-
