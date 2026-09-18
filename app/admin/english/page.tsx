@@ -645,8 +645,7 @@ export default function EnglishPage() {
         refreshData={refreshData}
 
       />
-      <div className="flex-1 flex flex-col items-center pt-4 gap-2">
-
+      <div className="flex-1 flex flex-col items-start pl-3 pt-1 gap-2">
         <div
           className="bg-white border shadow flex flex-col overflow-hidden"
           style={{ width: "25cm", height: "12cm" }}

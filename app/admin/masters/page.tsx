@@ -1,9 +1,13 @@
 "use client";
+
 import ImageTopicMaster from "@/app/components/admin/masters/ImageTopicMaster";
 import ImageMaster from "@/app/components/admin/masters/ImageMaster";
+import ReactionMemeMaster from "@/app/components/admin/masters/ReactionMemeMaster";
+
 import EnglishCourseMaster from "@/app/components/admin/masters/EnglishCourseMaster";
 import EnglishDayMaster from "@/app/components/admin/masters/EnglishDayMaster";
 import EnglishTopicMaster from "@/app/components/admin/masters/EnglishTopicMaster";
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -31,16 +35,28 @@ import FeeMaster from "@/app/components/admin/masters/FeeMaster";
 /* 🔥 ENGLISH MODULE */
 import EnglishSentenceMaster from "@/app/components/admin/masters/EnglishSentenceMaster";
 import GrammarTableMaster from "@/app/components/admin/masters/GrammarTableMaster";
+
 export default function MastersPage() {
 
   const searchParams = useSearchParams();
 
-  const [selectedCategory, setSelectedCategory] = useState("leads");
-  const [selectedMaster, setSelectedMaster] = useState("");
-  const [selectedEnglishCourseId, setSelectedEnglishCourseId] = useState("");
-  const [selectedEnglishDayId, setSelectedEnglishDayId] = useState("");
-  const [selectedEnglishTopicId, setSelectedEnglishTopicId] = useState("");
-  const [selectedImageTopicId, setSelectedImageTopicId] = useState("");
+  const [selectedCategory, setSelectedCategory] =
+    useState("leads");
+
+  const [selectedMaster, setSelectedMaster] =
+    useState("");
+
+  const [selectedEnglishCourseId, setSelectedEnglishCourseId] =
+    useState("");
+
+  const [selectedEnglishDayId, setSelectedEnglishDayId] =
+    useState("");
+
+  const [selectedEnglishTopicId, setSelectedEnglishTopicId] =
+    useState("");
+
+  const [selectedImageTopicId, setSelectedImageTopicId] =
+    useState("");
 
   const leadMasters = [
     { label: "Branches", value: "branches" },
@@ -65,7 +81,8 @@ export default function MastersPage() {
     { label: "Sentences", value: "english_sentences" },
     { label: "Grammar Tables", value: "grammar_tables" },
     { label: "Image Topics", value: "image_topics" },
-    { label: "Images", value: "images" }
+    { label: "Images", value: "images" },
+    { label: "Reaction Memes", value: "reaction_memes" }
   ];
 
   const staffMasters = [
@@ -99,12 +116,18 @@ export default function MastersPage() {
   }
 
   const mapOptions = (arr: any[]) =>
-    arr.map((v: any) => ({ label: v.label, value: v.value }));
+    arr.map((v: any) => ({
+      label: v.label,
+      value: v.value
+    }));
 
   useEffect(() => {
 
-    const tab = searchParams.get("tab");
-    const editTableId = searchParams.get("editTable");
+    const tab =
+      searchParams.get("tab");
+
+    const editTableId =
+      searchParams.get("editTable");
 
     if (tab === "batches") {
 
@@ -112,7 +135,6 @@ export default function MastersPage() {
       setSelectedMaster("batches");
 
       return;
-
     }
 
     if (editTableId) {
@@ -142,11 +164,26 @@ export default function MastersPage() {
                 label="Category"
                 value={selectedCategory}
                 options={[
-                  { label: "Leads", value: "leads" },
-                  { label: "English", value: "english" },  // 🔥 NEW
-                  { label: "Staff", value: "staff" },
-                  { label: "Batches", value: "batches" },
-                  { label: "Fees", value: "fees" }
+                  {
+                    label: "Leads",
+                    value: "leads"
+                  },
+                  {
+                    label: "English",
+                    value: "english"
+                  },
+                  {
+                    label: "Staff",
+                    value: "staff"
+                  },
+                  {
+                    label: "Batches",
+                    value: "batches"
+                  },
+                  {
+                    label: "Fees",
+                    value: "fees"
+                  }
                 ]}
                 onChange={(val: string) => {
                   setSelectedCategory(val);
@@ -158,7 +195,9 @@ export default function MastersPage() {
                 label="Master"
                 value={selectedMaster}
                 options={mapOptions(masters)}
-                onChange={(val: string) => setSelectedMaster(val)}
+                onChange={(val: string) =>
+                  setSelectedMaster(val)
+                }
               />
 
             </div>
@@ -174,82 +213,180 @@ export default function MastersPage() {
           <div className="bg-white rounded-xl shadow-sm p-6">
 
             {/* LEADS */}
-            {selectedMaster === "branches" && <BranchMaster />}
-            {selectedMaster === "method" && <MethodMaster />}
-            {selectedMaster === "channel" && <ChannelMaster />}
-            {selectedMaster === "for" && <ForMaster />}
-            {selectedMaster === "city" && <CityMaster />}
-            {selectedMaster === "area" && <AreaMaster />}
-            {selectedMaster === "education" && <EducationMaster />}
-            {selectedMaster === "department" && <DepartmentMaster />}
-            {selectedMaster === "courses" && <CourseMaster />}
-            {selectedMaster === "lead_chances" && <LeadChanceMaster />}
-            {selectedMaster === "lead_stage" && <LeadStageMaster />}
-            {selectedMaster === "action" && <ActionMaster />}
-            {selectedMaster === "counsellor" && <CounsellorMaster />}
+
+            {selectedMaster === "branches" && (
+              <BranchMaster />
+            )}
+
+            {selectedMaster === "method" && (
+              <MethodMaster />
+            )}
+
+            {selectedMaster === "channel" && (
+              <ChannelMaster />
+            )}
+
+            {selectedMaster === "for" && (
+              <ForMaster />
+            )}
+
+            {selectedMaster === "city" && (
+              <CityMaster />
+            )}
+
+            {selectedMaster === "area" && (
+              <AreaMaster />
+            )}
+
+            {selectedMaster === "education" && (
+              <EducationMaster />
+            )}
+
+            {selectedMaster === "department" && (
+              <DepartmentMaster />
+            )}
+
+            {selectedMaster === "courses" && (
+              <CourseMaster />
+            )}
+
+            {selectedMaster === "lead_chances" && (
+              <LeadChanceMaster />
+            )}
+
+            {selectedMaster === "lead_stage" && (
+              <LeadStageMaster />
+            )}
+
+            {selectedMaster === "action" && (
+              <ActionMaster />
+            )}
+
+            {selectedMaster === "counsellor" && (
+              <CounsellorMaster />
+            )}
 
             {/* STAFF */}
-            {selectedMaster === "teachers" && <TeacherMaster />}
+
+            {selectedMaster === "teachers" && (
+              <TeacherMaster />
+            )}
 
             {/* BATCH */}
-            {selectedMaster === "batches" && <BatchMaster />}
+
+            {selectedMaster === "batches" && (
+              <BatchMaster />
+            )}
 
             {/* FEES */}
-            {selectedMaster === "fee_schemes" && <FeeMaster />}
 
-            {/* 🔥 ENGLISH */}
+            {selectedMaster === "fee_schemes" && (
+              <FeeMaster />
+            )}
 
+            {/* ENGLISH */}
 
             {selectedMaster === "english_courses" && (
               <EnglishCourseMaster
                 onManageDays={(courseId: string) => {
-                  setSelectedEnglishCourseId(courseId);
-                  setSelectedMaster("english_days");
+                  setSelectedEnglishCourseId(
+                    courseId
+                  );
+
+                  setSelectedMaster(
+                    "english_days"
+                  );
                 }}
               />
             )}
-
 
             {selectedMaster === "english_days" && (
               <EnglishDayMaster
-                initialCourseId={selectedEnglishCourseId}
+                initialCourseId={
+                  selectedEnglishCourseId
+                }
                 onManageTopics={(dayId: string) => {
-                  setSelectedEnglishDayId(dayId);
-                  setSelectedMaster("english_topics");
+
+                  setSelectedEnglishDayId(
+                    dayId
+                  );
+
+                  setSelectedMaster(
+                    "english_topics"
+                  );
+
                 }}
               />
             )}
+
             {selectedMaster === "english_topics" && (
               <EnglishTopicMaster
-                initialDayId={selectedEnglishDayId}
-                initialCourseId={selectedEnglishCourseId}
+                initialDayId={
+                  selectedEnglishDayId
+                }
+                initialCourseId={
+                  selectedEnglishCourseId
+                }
                 onManageSentences={(topicId: string) => {
-                  setSelectedEnglishTopicId(topicId);
-                  setSelectedMaster("english_sentences");
+
+                  setSelectedEnglishTopicId(
+                    topicId
+                  );
+
+                  setSelectedMaster(
+                    "english_sentences"
+                  );
+
                 }}
               />
             )}
+
             {selectedMaster === "english_sentences" && (
               <EnglishSentenceMaster
-                initialTopicId={selectedEnglishTopicId}
-                initialDayId={selectedEnglishDayId}
-                initialCourseId={selectedEnglishCourseId}
+                initialTopicId={
+                  selectedEnglishTopicId
+                }
+                initialDayId={
+                  selectedEnglishDayId
+                }
+                initialCourseId={
+                  selectedEnglishCourseId
+                }
               />
             )}
-            {selectedMaster === "grammar_tables" && <GrammarTableMaster />}
+
+            {selectedMaster === "grammar_tables" && (
+              <GrammarTableMaster />
+            )}
+
             {selectedMaster === "image_topics" && (
               <ImageTopicMaster
                 onOpenImages={(topicId: string) => {
-                  setSelectedImageTopicId(topicId);
-                  setSelectedMaster("images");
+
+                  setSelectedImageTopicId(
+                    topicId
+                  );
+
+                  setSelectedMaster(
+                    "images"
+                  );
+
                 }}
               />
             )}
 
             {selectedMaster === "images" && (
               <ImageMaster
-                initialTopicId={selectedImageTopicId}
+                initialTopicId={
+                  selectedImageTopicId
+                }
               />
+            )}
+
+            {/* REACTION MEMES */}
+
+            {selectedMaster === "reaction_memes" && (
+              <ReactionMemeMaster />
             )}
 
           </div>
@@ -261,5 +398,4 @@ export default function MastersPage() {
     </PermissionGuard>
 
   );
-
 }
