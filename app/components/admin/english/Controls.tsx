@@ -54,8 +54,9 @@ export default function Controls({
       <button
         onClick={nextSentence}
         disabled={
-  showAll ||
-  (currentIndex >= sentences.length - 1 && showEnglish)
+  showAll
+    ? currentIndex >= sentences.length - 1
+    : currentIndex >= sentences.length - 1 && showEnglish
 }
         className={`${toolBtn} font-medium text-blue-700 disabled:opacity-40`}
       >

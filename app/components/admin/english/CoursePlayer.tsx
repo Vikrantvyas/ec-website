@@ -58,6 +58,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         englishAnswer: item.english_answer || "",
     }));
     const [currentIndex, setCurrentIndex] = useState(-1);
+
     const [showAllPrevEnglish, setShowAllPrevEnglish] = useState(true);
     const [showEnglish, setShowEnglish] = useState(false);
     const updateCurrentIndex = (index: number) => {
@@ -109,8 +110,16 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         if (showAll) {
             updateCurrentIndex(list.length - 1);
             setShowAllPrevEnglish(true);
+            return;
         }
+
+        updateCurrentIndex(-1);
+        setShowEnglish(false);
+        setRevealedAnswers([]);
+        setShowAllPrevEnglish(true);
     }, [showAll, list.length]);
+
+
 
     const imageExplanationDisplayUrl =
         isImageExplanation
@@ -130,9 +139,18 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     });
     const handleNext = () => {
         if (isImageExplanation) {
-            if (showAll) return;
+            // SHOW ALL → Prev के बाद Next से sentence वापस दिखाएँ
+            if (showAll) {
+                if (currentIndex < list.length - 1) {
+                    updateCurrentIndex(currentIndex + 1);
+                }
 
-            // First Next → Hindi Question
+                return;
+            }
+
+            // NORMAL COURSE
+
+            // First Next → first Hindi
             if (currentIndex === -1) {
                 updateCurrentIndex(0);
                 setImageExplanationStep(0);
@@ -178,8 +196,17 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
             return;
         }
 
+        // SHOW ALL → Next से एक-एक sentence वापस दिखाएँ
+        if (showAll) {
+            if (currentIndex < list.length - 1) {
+                updateCurrentIndex(currentIndex + 1);
+                setShowAllPrevEnglish(true);
+            }
+
+            return;
+        }
+
         // NORMAL COURSE
-        if (showAll) return;
 
         // First Next → first Hindi
         if (currentIndex === -1) {
@@ -309,51 +336,27 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
             setConversationStep(-1);
             return;
         }
-        // SHOW ALL → एक-एक sentence hide करें
-if (showAll) {
-    // पहला Prev → सिर्फ आखिरी English sentence hide होगा
-    if (showAllPrevEnglish) {
-        setShowAllPrevEnglish(false);
-        setShowAll(false);
-        setShowEnglish(false);
 
-        setRevealedAnswers(
-            list.slice(0, currentIndex).map((_, index) => index)
-        );
-
-        return;
-    }
-
-    // उसके बाद हर Prev → एक पूरी row कम होगी
-    if (currentIndex <= 0) {
-        updateCurrentIndex(-1);
-        setShowEnglish(false);
-        setRevealedAnswers([]);
-        return;
-    }
-
-    updateCurrentIndex(currentIndex - 1);
-    setShowEnglish(true);
-
-    setRevealedAnswers((prev) =>
-        prev.filter((index) => index <= currentIndex - 1)
-    );
-
-    return;
-}
         // SHOW ALL → एक-एक sentence hide करें
         if (showAll) {
             if (currentIndex <= 0) {
+              
                 updateCurrentIndex(-1);
                 setShowEnglish(false);
                 setRevealedAnswers([]);
                 return;
             }
 
-            updateCurrentIndex(currentIndex - 1);
+            const newIndex = currentIndex - 1;
 
-            setRevealedAnswers((prev) =>
-                prev.filter((i) => i < currentIndex)
+            updateCurrentIndex(newIndex);
+
+            setShowAllPrevEnglish(false);
+
+            setRevealedAnswers(
+                list
+                    .slice(0, newIndex + 1)
+                    .map((_, index) => index)
             );
 
             return;
