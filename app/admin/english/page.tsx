@@ -693,6 +693,7 @@ return (
         <Controls
           prevSentence={prevSentence}
           nextSentence={nextSentence}
+                    onSwitch={() => vocabRef.current?.switchLanguage()}
           currentIndex={currentIndex}
           sentences={sentences}
           isConversation={isConversation}

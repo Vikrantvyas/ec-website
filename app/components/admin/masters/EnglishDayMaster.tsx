@@ -597,21 +597,21 @@ export default function EnglishDayMaster({
                   className="border px-2 py-1 rounded w-32"
                 />
               </div><div className="relative flex items-center">
-  <span className="absolute -top-4 left-0 text-xs font-medium">
-    Mobile (9:16)
-  </span>
+                <span className="absolute -top-4 left-0 text-xs font-medium">
+                  Mobile (9:16)
+                </span>
 
-  <input
-    type="file"
-    accept="image/*"
-    onChange={(e) =>
-      setConversationMobileImageFile(
-        e.target.files?.[0] || null
-      )
-    }
-    className="border px-2 py-1 rounded w-32"
-  />
-</div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setConversationMobileImageFile(
+                      e.target.files?.[0] || null
+                    )
+                  }
+                  className="border px-2 py-1 rounded w-32"
+                />
+              </div>
             </>
           )}
 

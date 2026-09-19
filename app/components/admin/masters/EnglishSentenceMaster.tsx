@@ -379,37 +379,37 @@ export default function EnglishSentenceMaster({
     // Existing courses
     const parts = text.split("-");
 
-const { data: newSentence, error: saveError } = await supabase
-  .from("vocabulary")
-  .insert([{
-    topic_id: selectedTopic,
-    hindi: parts[0]?.trim() || "",
-    english: parts.slice(1).join("-").trim() || "",
-    order_no: Number(orderNo || maxOrder + 1)
-  }])
-  .select()
-  .single();
+    const { data: newSentence, error: saveError } = await supabase
+      .from("vocabulary")
+      .insert([{
+        topic_id: selectedTopic,
+        hindi: parts[0]?.trim() || "",
+        english: parts.slice(1).join("-").trim() || "",
+        order_no: Number(orderNo || maxOrder + 1)
+      }])
+      .select()
+      .single();
 
-if (saveError) {
-  alert("Sentence save failed: " + saveError.message);
-  return;
-}
-
-if (newSentence) {
-  setSentences(prev => [
-    ...prev,
-    {
-      id: newSentence.id,
-      hindi: newSentence.hindi,
-      english: newSentence.english,
-      sentence: `${newSentence.hindi} - ${newSentence.english}`,
-      order_no: newSentence.order_no,
+    if (saveError) {
+      alert("Sentence save failed: " + saveError.message);
+      return;
     }
-  ]);
-}
 
-setText("");
-setOrderNo("");
+    if (newSentence) {
+      setSentences(prev => [
+        ...prev,
+        {
+          id: newSentence.id,
+          hindi: newSentence.hindi,
+          english: newSentence.english,
+          sentence: `${newSentence.hindi} - ${newSentence.english}`,
+          order_no: newSentence.order_no,
+        }
+      ]);
+    }
+
+    setText("");
+    setOrderNo("");
   };
 
   const addBulk = async () => {

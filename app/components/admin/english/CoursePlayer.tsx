@@ -61,6 +61,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
     const [showAllPrevEnglish, setShowAllPrevEnglish] = useState(true);
     const [showEnglish, setShowEnglish] = useState(false);
+    const [switchLanguageMode, setSwitchLanguageMode] = useState(false);
     const updateCurrentIndex = (index: number) => {
         setCurrentIndex(index);
         onCurrentIndexChange?.(index);
@@ -74,6 +75,12 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     const currentConversationItem =
         list[currentIndex] || conversationData[currentIndex];
     const [marks, setMarks] = useState<{ [key: number]: string }>({});
+    const switchLanguage = () => {
+        setSwitchLanguageMode(prev => !prev);
+        setShowEnglish(false);
+        setRevealedAnswers([]);
+        updateCurrentIndex(-1);
+    };
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const preserveEnglishAfterTopicAdd = useRef(false);
@@ -367,7 +374,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                 return;
             }
 
-            // NORMAL COURSE
+
 
             // First Next → first Hindi
             if (currentIndex === -1) {
@@ -438,17 +445,46 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
         // NORMAL COURSE
 
-        // First Next → first Hindi
+        // NORMAL COURSE
+
+        // NORMAL COURSE
+
+        // First Next
         if (currentIndex === -1) {
             updateCurrentIndex(0);
-            setShowEnglish(false);
+            setShowEnglish(switchLanguageMode);
             return;
         }
 
-        // Hindi visible → English reveal
+        // SWITCH MODE
+        // English → Hindi → Next English
+        if (switchLanguageMode) {
+
+            // English visible → Hindi reveal
+            if (showEnglish) {
+                setShowEnglish(false);
+                setRevealedAnswers(prev =>
+                    prev.includes(currentIndex)
+                        ? prev
+                        : [...prev, currentIndex]
+                );
+                return;
+            }
+
+            // Hindi visible → next sentence English
+            if (currentIndex < list.length - 1) {
+                updateCurrentIndex(currentIndex + 1);
+                setShowEnglish(true);
+            }
+
+            return;
+        }
+
+        // NORMAL MODE
+        // Hindi → English → Next Hindi
         if (!showEnglish) {
             setShowEnglish(true);
-            setRevealedAnswers((prev) =>
+            setRevealedAnswers(prev =>
                 prev.includes(currentIndex)
                     ? prev
                     : [...prev, currentIndex]
@@ -456,7 +492,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
             return;
         }
 
-        // English visible → next Hindi
+        // English visible → next sentence Hindi
         if (currentIndex < list.length - 1) {
             updateCurrentIndex(currentIndex + 1);
             setShowEnglish(false);
@@ -698,7 +734,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         next: handleNext,
         prev: handlePrev,
         reset: handleReset,
-
+        switchLanguage,
         markCorrect,
         markWrong,
 
@@ -1006,24 +1042,58 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                     {i + 1}.
                                 </div>
 
-                                <div className="w-1/2 text-base leading-[1.25rem] text-red-600">
-                                    {hindi}
-                                </div>
+                                {switchLanguageMode ? (
+    <>
+        <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600">
+            {showAll
+                ? (
+                    i < currentIndex ||
+                    (i === currentIndex && showAllPrevEnglish)
+                )
+                    ? english
+                    : ""
+                : i < currentIndex
+                    ? english
+                    : i === currentIndex
+                        ? english
+                        : ""}
+        </div>
 
-                                <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600">
+        <div className="w-1/2 text-base leading-[1.25rem] text-red-600">
+            {showAll
+                ? (
+                    i < currentIndex ||
+                    (i === currentIndex && showAllPrevEnglish)
+                )
+                    ? hindi
+                    : ""
+                : i < currentIndex
+                    ? hindi
+                    : i === currentIndex && !showEnglish
+                        ? hindi
+                        : ""}
+        </div>
+    </>
+) : (
+                                    <>
+                                        <div className="w-1/2 text-base leading-[1.25rem] text-red-600">
+                                            {hindi}
+                                        </div>
 
-                                    {showAll
-                                        ? (
-                                            i < currentIndex ||
-                                            (i === currentIndex && showAllPrevEnglish)
-                                        )
-                                            ? english
-                                            : ""
-                                        : revealedAnswers.includes(i)
-                                            ? english
-                                            : ""}
-
-                                </div>
+                                        <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600">
+                                            {showAll
+                                                ? (
+                                                    i < currentIndex ||
+                                                    (i === currentIndex && showAllPrevEnglish)
+                                                )
+                                                    ? english
+                                                    : ""
+                                                : revealedAnswers.includes(i)
+                                                    ? english
+                                                    : ""}
+                                        </div>
+                                    </>
+                                )}
 
                             </div>
 

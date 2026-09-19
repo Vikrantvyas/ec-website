@@ -23,6 +23,7 @@ export default function Controls({
   setRandomMode,
   showLeft,
   setShowLeft,
+  onSwitch,
   showGrammar,
   setShowGrammar,
   showImages,
@@ -79,7 +80,12 @@ export default function Controls({
           {showAll ? "Hide All" : "Show All"}
         </button>
       )}
-
+<button
+  onClick={onSwitch}
+  className="px-3 py-1 rounded bg-purple-600 text-white text-sm font-medium hover:bg-purple-700"
+>
+  Switch
+</button>
       <button
         onClick={() => setRandomMode((p: any) => !p)}
         className={`${toolBtn} font-medium text-green-700`}
@@ -100,7 +106,7 @@ export default function Controls({
           onClick={prevTopic}
           className={`${toolBtn} font-medium text-indigo-700`}
         >
-          ← Topic
+          ← T
         </button>
       )}
 
@@ -109,7 +115,7 @@ export default function Controls({
           onClick={nextTopic}
           className={`${toolBtn} font-medium text-orange-700`}
         >
-          Topic →
+          T →
         </button>
       )}
 
@@ -151,7 +157,7 @@ export default function Controls({
                 checked={showGrammar}
                 onChange={() => setShowGrammar((p: any) => !p)}
               />
-              Grammar
+              Gra
             </label>
 
             <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
@@ -160,7 +166,7 @@ export default function Controls({
                 checked={showImages}
                 onChange={() => setShowImages((p: any) => !p)}
               />
-              Images
+              Img
             </label>
 
           </div>
@@ -175,7 +181,7 @@ export default function Controls({
                 checked={layout === "horizontal"}
                 onChange={() => setLayout("horizontal")}
               />
-              Left-Right
+              L-R
             </label>
 
             <label className="flex items-center gap-1 text-[13px] font-normal text-gray-700">
@@ -185,7 +191,7 @@ export default function Controls({
                 checked={layout === "vertical"}
                 onChange={() => setLayout("vertical")}
               />
-              Up-Down
+              Up-D
             </label>
 
           </div>
