@@ -108,16 +108,28 @@ export default function MemePanel({
         }
 
         if (meme.media_type === "video") {
-            return (
-                <video
-                    src={mediaUrl}
-                    muted
-                    playsInline
-                    preload="metadata"
-                    className="w-full h-full object-contain pointer-events-none"
-                />
-            );
-        }
+    const thumbnailUrl = getPublicUrl(meme.thumbnail_path || "");
+
+    if (thumbnailUrl) {
+        return (
+            <img
+                src={thumbnailUrl}
+                alt={meme.name}
+                className="w-full h-full object-contain"
+            />
+        );
+    }
+
+    return (
+        <video
+            src={mediaUrl}
+            muted
+            playsInline
+            preload="metadata"
+            className="w-full h-full object-contain pointer-events-none"
+        />
+    );
+}
 
         return (
             <div className="w-full h-full flex flex-col items-center justify-center gap-2 px-1">
@@ -168,6 +180,7 @@ export default function MemePanel({
                             >
                                 <div
                                     className="relative h-[95px] bg-gray-50 cursor-pointer hover:ring-2 hover:ring-blue-400"
+                                    title={meme.name}
                                     onClick={() => {
                                         const mediaPath = getMediaPath(meme);
                                         const mediaUrl = getPublicUrl(mediaPath);
