@@ -24,6 +24,7 @@ export default function Controls({
   showLeft,
   setShowLeft,
   onSwitch,
+  switchLanguageMode,
   showGrammar,
   setShowGrammar,
   showImages,
@@ -80,12 +81,12 @@ export default function Controls({
           {showAll ? "Hide All" : "Show All"}
         </button>
       )}
-<button
-  onClick={onSwitch}
-  className="px-3 py-1 rounded bg-purple-600 text-white text-sm font-medium hover:bg-purple-700"
->
-  Switch
-</button>
+      <button
+        onClick={onSwitch}
+        className="px-3 py-1 rounded bg-purple-600 text-white text-sm font-medium hover:bg-purple-700"
+      >
+        {switchLanguageMode ? "Eng | Hi" : "Hi | Eng"}
+      </button>
       <button
         onClick={() => setRandomMode((p: any) => !p)}
         className={`${toolBtn} font-medium text-green-700`}
