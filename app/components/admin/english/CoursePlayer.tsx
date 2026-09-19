@@ -196,15 +196,26 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
             return;
         }
 
+        
         // SHOW ALL → Next से एक-एक sentence वापस दिखाएँ
-        if (showAll) {
-            if (currentIndex < list.length - 1) {
-                updateCurrentIndex(currentIndex + 1);
-                setShowAllPrevEnglish(true);
-            }
+if (showAll) {
 
-            return;
-        }
+    // Show All के बाद Prev करने पर
+    // current sentence का English hidden रहता है।
+    // पहला Next केवल उसी sentence का English दिखाएगा।
+    if (!showAllPrevEnglish) {
+        setShowAllPrevEnglish(true);
+        return;
+    }
+
+    // उसके बाद Next केवल अगला sentence दिखाएगा।
+    if (currentIndex < list.length - 1) {
+        updateCurrentIndex(currentIndex + 1);
+        setShowAllPrevEnglish(false);
+    }
+
+    return;
+}
 
         // NORMAL COURSE
 
@@ -340,7 +351,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         // SHOW ALL → एक-एक sentence hide करें
         if (showAll) {
             if (currentIndex <= 0) {
-              
+
                 updateCurrentIndex(-1);
                 setShowEnglish(false);
                 setRevealedAnswers([]);
