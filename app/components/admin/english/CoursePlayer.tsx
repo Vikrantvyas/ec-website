@@ -76,15 +76,16 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     const [marks, setMarks] = useState<{ [key: number]: string }>({});
 
     const scrollRef = useRef<HTMLDivElement>(null);
+    const preserveEnglishAfterTopicAdd = useRef(false);
 
     const safeData = data || [];
 
+    // =========================================================
     // =========================================================
     // RESET ON DATA CHANGE
     // =========================================================
 
     useEffect(() => {
-
         const newList = isImageExplanation
             ? (random
                 ? shuffleArray(imageExplanationData)
@@ -97,27 +98,108 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                     ? shuffleArray(safeData)
                     : safeData);
 
+        const oldLength = list.length;
+        const newLength = newList.length;
+
+        // पुराने और नए data में common sentences हैं
+        const oldIds = new Set(
+            list.map((item: any) => item.id)
+        );
+
+        const isTopicChange =
+            oldLength > 0 &&
+            newLength > 0 &&
+            newList.some(
+                (item: any) => oldIds.has(item.id)
+            );
+
+        if (isTopicChange) {
+
+            // Topic add हुआ और Show All ON था
+            if (showAll && newLength > oldLength) {
+                setShowAll?.(false);
+
+                setCurrentIndex(
+                    oldLength > 0
+                        ? oldLength - 1
+                        : -1
+                );
+            } else {
+                // जितने sentences पहले visible थे,
+                // उतने ही रखें
+                setCurrentIndex(prev => {
+                    if (prev < 0) return prev;
+
+                    return Math.min(
+                        prev,
+                        newLength - 1
+                    );
+                });
+            }
+
+            // जिन sentences का English पहले दिख चुका है,
+            // उन्हें उनके ID से नए list में फिर से map करें
+            setRevealedAnswers(prev => {
+                const revealedIds = new Set(
+                    prev
+                        .filter(index => list[index])
+                        .map(index => list[index].id)
+                );
+
+                return newList
+                    .map((item: any, index: number) =>
+                        revealedIds.has(item.id)
+                            ? index
+                            : -1
+                    )
+                    .filter(index => index !== -1);
+            });
+
+            // अगला effect English को clear न करे
+            preserveEnglishAfterTopicAdd.current = true;
+
+        } else {
+            // बिल्कुल नया course/data
+            setCurrentIndex(-1);
+            setShowEnglish(false);
+            setRevealedAnswers([]);
+            setShowAllPrevEnglish(true);
+        }
+
         setList(newList);
-        updateCurrentIndex(-1);
+
         setConversationStep(-1);
         setImageExplanationStep(-1);
-        setShowEnglish(false);
-        setRevealedAnswers([]);
         setMarks({});
 
     }, [data, random]);
-    useEffect(() => {
-        if (showAll) {
-            updateCurrentIndex(list.length - 1);
-            setShowAllPrevEnglish(true);
-            return;
-        }
 
-        updateCurrentIndex(-1);
-        setShowEnglish(false);
-        setRevealedAnswers([]);
+
+    // =========================================================
+    // SHOW ALL / HIDE ALL
+    // =========================================================
+
+    useEffect(() => {
+    if (showAll) {
+        updateCurrentIndex(list.length - 1);
         setShowAllPrevEnglish(true);
-    }, [showAll, list.length]);
+        return;
+    }
+
+    // Topic add होने पर visible sentences को hide नहीं करना है
+    if (preserveEnglishAfterTopicAdd.current) {
+        preserveEnglishAfterTopicAdd.current = false;
+        setShowAllPrevEnglish(true);
+        return;
+    }
+
+    // Normal Hide All
+    updateCurrentIndex(-1);
+    setShowEnglish(false);
+    setRevealedAnswers([]);
+    setShowAllPrevEnglish(true);
+
+}, [showAll, list.length]);
 
 
 
@@ -196,26 +278,26 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
             return;
         }
 
-        
+
         // SHOW ALL → Next से एक-एक sentence वापस दिखाएँ
-if (showAll) {
+        if (showAll) {
 
-    // Show All के बाद Prev करने पर
-    // current sentence का English hidden रहता है।
-    // पहला Next केवल उसी sentence का English दिखाएगा।
-    if (!showAllPrevEnglish) {
-        setShowAllPrevEnglish(true);
-        return;
-    }
+            // Show All के बाद Prev करने पर
+            // current sentence का English hidden रहता है।
+            // पहला Next केवल उसी sentence का English दिखाएगा।
+            if (!showAllPrevEnglish) {
+                setShowAllPrevEnglish(true);
+                return;
+            }
 
-    // उसके बाद Next केवल अगला sentence दिखाएगा।
-    if (currentIndex < list.length - 1) {
-        updateCurrentIndex(currentIndex + 1);
-        setShowAllPrevEnglish(false);
-    }
+            // उसके बाद Next केवल अगला sentence दिखाएगा।
+            if (currentIndex < list.length - 1) {
+                updateCurrentIndex(currentIndex + 1);
+                setShowAllPrevEnglish(false);
+            }
 
-    return;
-}
+            return;
+        }
 
         // NORMAL COURSE
 
@@ -351,7 +433,7 @@ if (showAll) {
         // SHOW ALL → एक-एक sentence hide करें
         if (showAll) {
             if (currentIndex <= 0) {
-
+                setShowAll?.(false);
                 updateCurrentIndex(-1);
                 setShowEnglish(false);
                 setRevealedAnswers([]);
@@ -489,10 +571,10 @@ if (showAll) {
     /*
       SHOW ALL:
       All sentences.
- 
+     
       NORMAL:
       All sentences shown so far.
- 
+     
       COMPACT:
       All sentences shown so far,
       but the latest sentence is automatically

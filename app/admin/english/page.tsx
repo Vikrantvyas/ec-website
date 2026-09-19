@@ -162,7 +162,6 @@ export default function EnglishPage() {
   }, [selectedDays]);
 
   useEffect(() => {
-    setCurrentIndex(-1);
     setHighlightIndex(null);
     fetchSentences();
   }, [selectedTopics, selectedDays]);
@@ -357,36 +356,36 @@ export default function EnglishPage() {
     );
   };
   const fetchSentences = async () => {
+  if (isImageExplanation) {
+    const { data: imageExplanationData, error: imageExplanationError } =
+      await supabase
+        .from("image_explanation_questions")
+        .select(
+          "id, topic_id, image_id, hindi_question, english_question, hindi_answer, english_answer, order_no"
+        )
+        .in("topic_id", selectedTopics)
+        .order("order_no", { ascending: true });
 
-    if (isImageExplanation) {
-      const { data: imageExplanationData, error: imageExplanationError } =
-        await supabase
-          .from("image_explanation_questions")
-          .select(
-            "id, topic_id, image_id, hindi_question, english_question, hindi_answer, english_answer, order_no"
-          )
-          .in("topic_id", selectedTopics)
-          .order("order_no", { ascending: true });
+    if (imageExplanationError) {
+      console.error(
+        "IMAGE EXPLANATION ERROR:",
+        imageExplanationError.message
+      );
+    }
 
-      if (imageExplanationError) {
-        console.error(
-          "IMAGE EXPLANATION ERROR:",
-          imageExplanationError.message
-        );
-      }
+    setSentences(imageExplanationData || []);
+    return;
+  }
 
-      setSentences(imageExplanationData || []);
+  if (isConversation) {
+    if (selectedTopics.length === 0) {
+      setSentences([]);
       return;
     }
-    if (isConversation) {
-      if (selectedTopics.length === 0) {
-        setSentences([]);
-        return;
-      }
 
-      const { data: questions, error } = await supabase
-        .from("conversation_questions")
-        .select(`
+    const { data: questions, error } = await supabase
+      .from("conversation_questions")
+      .select(`
         id,
         topic_id,
         question_text,
@@ -399,155 +398,123 @@ export default function EnglishPage() {
         answer_english_4,
         order_no
       `)
-        .in("topic_id", selectedTopics)
-        .order("topic_id")
-        .order("order_no");
-
-      if (error) {
-        console.error("CONVERSATION QUESTIONS ERROR:", error);
-        setSentences([]);
-        return;
-      }
-
-      const sorted = (questions || []).sort((a: any, b: any) => {
-        const indexA = selectedTopics.indexOf(a.topic_id);
-        const indexB = selectedTopics.indexOf(b.topic_id);
-
-        if (indexA === indexB) {
-          return (a.order_no ?? 0) - (b.order_no ?? 0);
-        }
-
-        return indexA - indexB;
-      });
-
-      setSentences(sorted);
-      setShowAll(false);
-      return;
-
-    }
-    let topicIds = selectedTopics;
-
-
-
-    if (topicIds.length === 0) return;
-
-    const { data } = await supabase
-      .from("vocabulary")
-      .select("*")
-      .in("topic_id", topicIds)
+      .in("topic_id", selectedTopics)
       .order("topic_id")
       .order("order_no");
 
-    if (data) {
-
-      // Manual sort by selectedTopics order
-      const sorted = data.sort((a: any, b: any) => {
-
-        const indexA = selectedTopics.indexOf(a.topic_id);
-        const indexB = selectedTopics.indexOf(b.topic_id);
-
-        if (indexA === indexB) {
-          return a.order_no - b.order_no;
-        }
-
-        return indexA - indexB;
-      });
-
-      setSentences(sorted);
-
-      setShowAll(false);
-    }
-  };
-  const refreshData = async () => {
-    await fetchTopics();
-    await fetchSentences();
-  };
-  // ---------------- NAV ----------------
-
-  const nextSentence = () => {
-
-    if (vocabRef.current) {
-      vocabRef.current.next();
+    if (error) {
+      console.error("CONVERSATION QUESTIONS ERROR:", error);
+      setSentences([]);
       return;
     }
 
-    if (currentIndex < sentences.length) {
-      setCurrentIndex(prev => prev + 1);
-    }
+    const sorted = (questions || []).sort((a: any, b: any) => {
+      const indexA = selectedTopics.indexOf(a.topic_id);
+      const indexB = selectedTopics.indexOf(b.topic_id);
 
-  };
+      if (indexA === indexB) {
+        return (a.order_no ?? 0) - (b.order_no ?? 0);
+      }
 
-  const prevSentence = () => {
+      return indexA - indexB;
+    });
 
-    if (vocabRef.current) {
-      vocabRef.current.prev();
-      return;
-    }
+    setSentences(sorted);
+    return;
+  }
 
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-    }
+  const topicIds = selectedTopics;
 
-  };
+  if (topicIds.length === 0) {
+    setSentences([]);
+    return;
+  }
+
+  const { data } = await supabase
+    .from("vocabulary")
+    .select("*")
+    .in("topic_id", topicIds)
+    .order("topic_id")
+    .order("order_no");
+
+  if (data) {
+    const sorted = data.sort((a: any, b: any) => {
+      const indexA = selectedTopics.indexOf(a.topic_id);
+      const indexB = selectedTopics.indexOf(b.topic_id);
+
+      if (indexA === indexB) {
+        return a.order_no - b.order_no;
+      }
+
+      return indexA - indexB;
+    });
+
+    setSentences(sorted);
+  }
+};
+
+const refreshData = async () => {
+  await fetchTopics();
+  await fetchSentences();
+};
+// ---------------- NAV ----------------
+
+const nextSentence = () => {
+
+  if (vocabRef.current) {
+    vocabRef.current.next();
+    return;
+  }
+
+  if (currentIndex < sentences.length) {
+    setCurrentIndex(prev => prev + 1);
+  }
+
+};
+
+const prevSentence = () => {
+
+  if (vocabRef.current) {
+    vocabRef.current.prev();
+    return;
+  }
+
+  if (currentIndex > 0) {
+    setCurrentIndex(prev => prev - 1);
+  }
+
+};
 
 
-  const nextTopic = () => {
+const nextTopic = () => {
 
-    if (selectedDays.length === 0) return;
+  if (selectedDays.length === 0) return;
 
-    const dayTopics = topics
-      .filter(
-        (topic: any) =>
-          selectedDays.includes(topic.day_id)
-      )
-      .sort(
-        (a: any, b: any) =>
-          (a.order_no ?? 0) - (b.order_no ?? 0)
-      );
+  const dayTopics = topics
+    .filter(
+      (topic: any) =>
+        selectedDays.includes(topic.day_id)
+    )
+    .sort(
+      (a: any, b: any) =>
+        (a.order_no ?? 0) - (b.order_no ?? 0)
+    );
 
-    if (dayTopics.length === 0) return;
+  if (dayTopics.length === 0) return;
 
-    // अगर एक ही Topic selected है,
-    // तो उसी के बाद वाला Topic लें
-    if (selectedTopics.length === 1) {
+  // अगर एक ही Topic selected है,
+  // तो उसी के बाद वाला Topic लें
+  if (selectedTopics.length === 1) {
 
-      const currentIndex =
-        dayTopics.findIndex(
-          (topic: any) =>
-            topic.id === selectedTopics[0]
-        );
-
-      if (currentIndex < 0) return;
-
-      const nextIndex = currentIndex + 1;
-
-      if (nextIndex >= dayTopics.length) return;
-
-      const nextTopicId =
-        dayTopics[nextIndex].id;
-
-      setSelectedTopics([nextTopicId]);
-
-      setCurrentIndex(0);
-      setShowAll(false);
-      setHighlightIndex(null);
-
-      return;
-    }
-
-    // अगर कई Topics selected हैं
-    // (जैसे Day checkbox से सभी Topics)
-    // तो पहले Topic को current मानकर अगला दिखाएँ
-    const firstSelectedIndex =
+    const currentIndex =
       dayTopics.findIndex(
         (topic: any) =>
-          selectedTopics.includes(topic.id)
+          topic.id === selectedTopics[0]
       );
 
-    if (firstSelectedIndex < 0) return;
+    if (currentIndex < 0) return;
 
-    const nextIndex =
-      firstSelectedIndex + 1;
+    const nextIndex = currentIndex + 1;
 
     if (nextIndex >= dayTopics.length) return;
 
@@ -559,181 +526,209 @@ export default function EnglishPage() {
     setCurrentIndex(0);
     setShowAll(false);
     setHighlightIndex(null);
-  };
 
-  const prevTopic = () => {
+    return;
+  }
 
-    if (selectedDays.length === 0) return;
-
-    const dayTopics = topics
-      .filter((topic: any) =>
-        selectedDays.includes(topic.day_id)
-      )
-      .sort(
-        (a: any, b: any) =>
-          (a.order_no ?? 0) - (b.order_no ?? 0)
-      );
-
-    if (dayTopics.length === 0) return;
-
-    const currentTopicId = selectedTopics[0];
-
-    const currentIndex = dayTopics.findIndex(
+  // अगर कई Topics selected हैं
+  // (जैसे Day checkbox से सभी Topics)
+  // तो पहले Topic को current मानकर अगला दिखाएँ
+  const firstSelectedIndex =
+    dayTopics.findIndex(
       (topic: any) =>
-        topic.id === currentTopicId
+        selectedTopics.includes(topic.id)
     );
 
-    if (currentIndex <= 0) return;
+  if (firstSelectedIndex < 0) return;
 
-    const previousIndex =
-      currentIndex - 1;
+  const nextIndex =
+    firstSelectedIndex + 1;
 
-    const previousTopicId =
-      dayTopics[previousIndex].id;
+  if (nextIndex >= dayTopics.length) return;
 
-    setTopicNavIndex(previousIndex);
+  const nextTopicId =
+    dayTopics[nextIndex].id;
 
-    setSelectedTopics([
-      previousTopicId
-    ]);
+  setSelectedTopics([nextTopicId]);
 
-  };
+  setCurrentIndex(0);
+  setShowAll(false);
+  setHighlightIndex(null);
+};
 
-  const toggleShowAll = () => {
-    if (showAll) {
-      setShowAll(false);
-      setCurrentIndex(0);
-    } else {
-      setShowAll(true);
-      setCurrentIndex(sentences.length);
-    }
-  };
+const prevTopic = () => {
 
-  // ---------------- DATA ----------------
+  if (selectedDays.length === 0) return;
 
-  const visible = showAll
-    ? sentences
-    : sentences.slice(0, currentIndex);
+  const dayTopics = topics
+    .filter((topic: any) =>
+      selectedDays.includes(topic.day_id)
+    )
+    .sort(
+      (a: any, b: any) =>
+        (a.order_no ?? 0) - (b.order_no ?? 0)
+    );
 
-  const leftCol = visible.slice(0, 10);
-  const rightCol = visible.slice(10);
+  if (dayTopics.length === 0) return;
 
-  // ---------------- UI ----------------
+  const currentTopicId = selectedTopics[0];
 
-  return (
+  const currentIndex = dayTopics.findIndex(
+    (topic: any) =>
+      topic.id === currentTopicId
+  );
 
-    <div className="english-page flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden">
+  if (currentIndex <= 0) return;
 
-      <LeftPanel
-        courses={courses}
-        days={days}
-        topics={topics}
-        selectedCourse={selectedCourse}
-        selectedDays={selectedDays}
-        selectedTopics={selectedTopics}
-        setSelectedTopics={setSelectedTopics}
-        setSelectedCourse={setSelectedCourse}
-        setSelectedDays={setSelectedDays}
-        selectedGrammarTableId={selectedGrammarTableId}
-        setSelectedGrammarTableId={setSelectedGrammarTableId}
-        selectedImageId={selectedImageId}
-        setSelectedImageId={setSelectedImageId}
-        selectedReactionMeme={selectedReactionMeme}
-        refreshData={refreshData}
+  const previousIndex =
+    currentIndex - 1;
 
-      />
-      <div className="flex-1 flex items-start pl-3 pt-1 gap-3 min-w-0 overflow-hidden">
+  const previousTopicId =
+    dayTopics[previousIndex].id;
 
-        <div className="flex flex-col gap-2 shrink-0">
+  setTopicNavIndex(previousIndex);
 
-          <div
-            className="bg-white border shadow flex flex-col overflow-hidden"
-            style={{ width: "25cm", height: "12cm" }}
-          >
+  setSelectedTopics([
+    previousTopicId
+  ]);
 
-            <MainBoard
-              isGrammar={isGrammar}
-              showGrammar={showGrammar}
-              prevTopic={prevTopic}
-              nextTopic={nextTopic}
-              sentences={sentences}
-              visible={visible}
-              leftCol={leftCol}
-              rightCol={rightCol}
-              highlightIndex={highlightIndex}
-              setHighlightIndex={setHighlightIndex}
-              showBoard={showBoard}
-              showScore={showScore}
-              scrollRef={scrollRef}
-              vocabRef={vocabRef}
-              randomMode={randomMode}
-              showLeft={showLeft}
-              showAll={showAll}
-              setShowAll={setShowAll}
-              currentIndex={currentIndex}
-              setCurrentIndex={setCurrentIndex}
-              layout={layout}
-              currentTime={currentTime}
+};
 
-              // 🔥 NEW
-              selectedDays={selectedDays}
-              selectedTopics={selectedTopics}
-              topics={topics}
-              days={days}
-              selectedGrammarTableId={selectedGrammarTableId}
-              setSelectedGrammarTableId={setSelectedGrammarTableId}
-              selectedImageId={selectedImageId}
-              selectedReactionMeme={selectedReactionMeme}
-              showImages={showImages}
-              setShowImages={setShowImages}
-              isConversation={isConversation}
-              isImageExplanation={isImageExplanation}
-              conversationImageUrl={conversationImageUrl}
-              conversationMobileImageUrl={conversationMobileImageUrl}
-              setSelectedImageId={setSelectedImageId}
-            />
+const toggleShowAll = () => {
+  if (showAll) {
+    setShowAll(false);
+    setCurrentIndex(0);
+  } else {
+    setShowAll(true);
+    setCurrentIndex(sentences.length);
+  }
+};
 
-          </div>
+// ---------------- DATA ----------------
 
-          <Controls
-            prevSentence={prevSentence}
-            nextSentence={nextSentence}
-            currentIndex={currentIndex}
-            sentences={sentences}
-            isConversation={isConversation}
-            isImageExplanation={isImageExplanation}
-            showAll={showAll}
-            toggleShowAll={toggleShowAll}
-            setShowAll={setShowAll}
-            setCurrentIndex={setCurrentIndex}
-            showBoard={showBoard}
-            setShowBoard={setShowBoard}
-            showScore={showScore}
-            setShowScore={setShowScore}
-            randomMode={randomMode}
-            setRandomMode={setRandomMode}
-            showLeft={showLeft}
-            setShowLeft={setShowLeft}
-            showGrammar={showGrammar}
-            setShowGrammar={setShowGrammar}
+const visible = showAll
+  ? sentences
+  : sentences.slice(0, currentIndex);
+
+const leftCol = visible.slice(0, 10);
+const rightCol = visible.slice(10);
+
+// ---------------- UI ----------------
+
+return (
+
+  <div className="english-page flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden">
+
+    <LeftPanel
+      courses={courses}
+      days={days}
+      topics={topics}
+      selectedCourse={selectedCourse}
+      selectedDays={selectedDays}
+      selectedTopics={selectedTopics}
+      setSelectedTopics={setSelectedTopics}
+      setSelectedCourse={setSelectedCourse}
+      setSelectedDays={setSelectedDays}
+      selectedGrammarTableId={selectedGrammarTableId}
+      setSelectedGrammarTableId={setSelectedGrammarTableId}
+      selectedImageId={selectedImageId}
+      setSelectedImageId={setSelectedImageId}
+      selectedReactionMeme={selectedReactionMeme}
+      refreshData={refreshData}
+
+    />
+    <div className="flex-1 flex items-start pl-3 pt-1 gap-3 min-w-0 overflow-hidden">
+
+      <div className="flex flex-col gap-2 shrink-0">
+
+        <div
+          className="bg-white border shadow flex flex-col overflow-hidden"
+          style={{ width: "25cm", height: "12cm" }}
+        >
+
+          <MainBoard
             isGrammar={isGrammar}
+            showGrammar={showGrammar}
+            prevTopic={prevTopic}
+            nextTopic={nextTopic}
+            sentences={sentences}
+            visible={visible}
+            leftCol={leftCol}
+            rightCol={rightCol}
+            highlightIndex={highlightIndex}
+            setHighlightIndex={setHighlightIndex}
+            showBoard={showBoard}
+            showScore={showScore}
+            scrollRef={scrollRef}
+            vocabRef={vocabRef}
+            randomMode={randomMode}
+            showLeft={showLeft}
+            showAll={showAll}
+            setShowAll={setShowAll}
+            currentIndex={currentIndex}
+            setCurrentIndex={setCurrentIndex}
             layout={layout}
-            setLayout={setLayout}
+            currentTime={currentTime}
+
+            // 🔥 NEW
+            selectedDays={selectedDays}
+            selectedTopics={selectedTopics}
+            topics={topics}
+            days={days}
+            selectedGrammarTableId={selectedGrammarTableId}
+            setSelectedGrammarTableId={setSelectedGrammarTableId}
+            selectedImageId={selectedImageId}
+            selectedReactionMeme={selectedReactionMeme}
             showImages={showImages}
             setShowImages={setShowImages}
+            isConversation={isConversation}
+            isImageExplanation={isImageExplanation}
+            conversationImageUrl={conversationImageUrl}
+            conversationMobileImageUrl={conversationMobileImageUrl}
+            setSelectedImageId={setSelectedImageId}
           />
 
         </div>
 
-        <MemePanel
-          onSelectMeme={(meme: any) => {
-            setSelectedReactionMeme((prev: any) =>
-              prev?.id === meme.id ? null : meme
-            );
-          }}
+        <Controls
+          prevSentence={prevSentence}
+          nextSentence={nextSentence}
+          currentIndex={currentIndex}
+          sentences={sentences}
+          isConversation={isConversation}
+          isImageExplanation={isImageExplanation}
+          showAll={showAll}
+          toggleShowAll={toggleShowAll}
+          setShowAll={setShowAll}
+          setCurrentIndex={setCurrentIndex}
+          showBoard={showBoard}
+          setShowBoard={setShowBoard}
+          showScore={showScore}
+          setShowScore={setShowScore}
+          randomMode={randomMode}
+          setRandomMode={setRandomMode}
+          showLeft={showLeft}
+          setShowLeft={setShowLeft}
+          showGrammar={showGrammar}
+          setShowGrammar={setShowGrammar}
+          isGrammar={isGrammar}
+          layout={layout}
+          setLayout={setLayout}
+          showImages={showImages}
+          setShowImages={setShowImages}
         />
 
       </div>
+
+      <MemePanel
+        onSelectMeme={(meme: any) => {
+          setSelectedReactionMeme((prev: any) =>
+            prev?.id === meme.id ? null : meme
+          );
+        }}
+      />
+
     </div>
-  );
+  </div>
+);
 }

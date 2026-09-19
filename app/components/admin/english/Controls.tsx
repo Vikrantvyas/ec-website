@@ -54,10 +54,10 @@ export default function Controls({
       <button
         onClick={nextSentence}
         disabled={
-  showAll
-    ? currentIndex >= sentences.length - 1
-    : currentIndex >= sentences.length - 1 && showEnglish
-}
+          showAll
+            ? currentIndex >= sentences.length - 1
+            : currentIndex >= sentences.length - 1 && showEnglish
+        }
         className={`${toolBtn} font-medium text-blue-700 disabled:opacity-40`}
       >
         Next
@@ -73,7 +73,8 @@ export default function Controls({
               setShowAll(true);
             }
           }}
-          className={`${toolBtn} font-medium text-red-600`}
+          disabled={sentences.length === 0 || (showAll && currentIndex < 0)}
+          className={`${toolBtn} font-medium text-red-600 disabled:opacity-40`}
         >
           {showAll ? "Hide All" : "Show All"}
         </button>
