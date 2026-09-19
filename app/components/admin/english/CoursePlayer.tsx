@@ -101,10 +101,21 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         const oldLength = list.length;
         const newLength = newList.length;
 
-        // पुराने और नए data में common sentences हैं
         const oldIds = new Set(
             list.map((item: any) => item.id)
         );
+
+        const newIds = new Set(
+            newList.map((item: any) => item.id)
+        );
+
+        const isRandomChange =
+            oldLength > 0 &&
+            list.length === newList.length &&
+            list.some(
+                (item: any, index: number) =>
+                    item.id !== newList[index]?.id
+            );
 
         const isTopicChange =
             oldLength > 0 &&
@@ -113,10 +124,109 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                 (item: any) => oldIds.has(item.id)
             );
 
+        // =========================================================
+        // RANDOM CHANGE
+        // =========================================================
+        if (isRandomChange) {
+
+            // Show All में सिर्फ order बदलेगा।
+            // सभी sentences visible रहेंगे।
+            if (showAll) {
+                setList(newList);
+                setCurrentIndex(newLength - 1);
+                setShowAllPrevEnglish(true);
+            } else {
+
+                // अभी जितने sentences visible हैं,
+                // उतने ही visible रखें।
+                const visibleCount =
+                    currentIndex < 0
+                        ? 0
+                        : currentIndex + 1;
+
+                const visibleIds = new Set(
+                    list
+                        .slice(0, visibleCount)
+                        .map((item: any) => item.id)
+                );
+
+                // पहले पुराने visible sentences को random order में रखें।
+                const visibleItems = newList.filter(
+                    (item: any) => visibleIds.has(item.id)
+                );
+
+                // बाकी sentences उसके बाद रखें।
+                const hiddenItems = newList.filter(
+                    (item: any) => !visibleIds.has(item.id)
+                );
+
+                const randomList = [
+                    ...shuffleArray(visibleItems),
+                    ...shuffleArray(hiddenItems),
+                ];
+
+                setList(randomList);
+
+                setCurrentIndex(
+                    visibleCount > 0
+                        ? visibleCount - 1
+                        : -1
+                );
+
+                // पहले से दिखाई जा चुकी English को ID से preserve करें।
+                setRevealedAnswers((prev) => {
+                    const revealedIds = new Set(
+                        prev
+                            .filter((index: number) => list[index])
+                            .map((index: number) => list[index].id)
+                    );
+
+                    return randomList
+                        .map((item: any, index: number) =>
+                            revealedIds.has(item.id)
+                                ? index
+                                : -1
+                        )
+                        .filter(
+                            (index: number) => index !== -1
+                        );
+                });
+            }
+
+            setConversationStep(-1);
+            setImageExplanationStep(-1);
+            setMarks({});
+
+            return;
+        }
+
+        // =========================================================
+        // TOPIC CHANGE
+        // =========================================================
         if (isTopicChange) {
 
-            // Topic add हुआ और Show All ON था
+            // पुराने sentences को उनकी current order में रखें।
+            // नए sentences को उसके बाद random order में रखें।
+            const existingItems = list.filter(
+                (item: any) => newIds.has(item.id)
+            );
+
+            const addedItems = newList.filter(
+                (item: any) => !oldIds.has(item.id)
+            );
+
+            const topicList = [
+                ...existingItems,
+                ...shuffleArray(addedItems),
+            ];
+
+            // -----------------------------------------------------
+            // Show All ON + नया Topic
+            // -----------------------------------------------------
             if (showAll && newLength > oldLength) {
+
+                // नया topic तुरंत visible नहीं होगा।
+                // पुराने सारे sentences visible रहेंगे।
                 setShowAll?.(false);
 
                 setCurrentIndex(
@@ -124,49 +234,74 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                         ? oldLength - 1
                         : -1
                 );
-            } else {
-                // जितने sentences पहले visible थे,
-                // उतने ही रखें
-                setCurrentIndex(prev => {
-                    if (prev < 0) return prev;
 
-                    return Math.min(
-                        prev,
-                        newLength - 1
+                // पुराने सभी sentences का English preserve करें।
+                setRevealedAnswers(
+                    Array.from(
+                        { length: oldLength },
+                        (_, index) => index
+                    )
+                );
+
+            } else {
+
+                // जितने sentences पहले visible थे,
+                // उतने ही visible रखें।
+                const visibleCount =
+                    currentIndex < 0
+                        ? 0
+                        : Math.min(
+                            currentIndex + 1,
+                            topicList.length
+                        );
+
+                setCurrentIndex(
+                    visibleCount > 0
+                        ? visibleCount - 1
+                        : -1
+                );
+
+                // पहले से revealed English को ID से preserve करें।
+                setRevealedAnswers((prev) => {
+                    const revealedIds = new Set(
+                        prev
+                            .filter((index: number) => list[index])
+                            .map((index: number) => list[index].id)
                     );
+
+                    return topicList
+                        .map((item: any, index: number) =>
+                            revealedIds.has(item.id)
+                                ? index
+                                : -1
+                        )
+                        .filter(
+                            (index: number) => index !== -1
+                        );
                 });
             }
 
-            // जिन sentences का English पहले दिख चुका है,
-            // उन्हें उनके ID से नए list में फिर से map करें
-            setRevealedAnswers(prev => {
-                const revealedIds = new Set(
-                    prev
-                        .filter(index => list[index])
-                        .map(index => list[index].id)
-                );
+            setList(topicList);
 
-                return newList
-                    .map((item: any, index: number) =>
-                        revealedIds.has(item.id)
-                            ? index
-                            : -1
-                    )
-                    .filter(index => index !== -1);
-            });
-
-            // अगला effect English को clear न करे
+            // अगला Show All effect English को clear न करे।
             preserveEnglishAfterTopicAdd.current = true;
 
-        } else {
-            // बिल्कुल नया course/data
-            setCurrentIndex(-1);
-            setShowEnglish(false);
-            setRevealedAnswers([]);
-            setShowAllPrevEnglish(true);
+            setConversationStep(-1);
+            setImageExplanationStep(-1);
+            setMarks({});
+
+            return;
         }
 
+        // =========================================================
+        // COMPLETELY NEW DATA / COURSE
+        // =========================================================
+
         setList(newList);
+        setCurrentIndex(-1);
+        setShowEnglish(false);
+        setRevealedAnswers([]);
+        setShowAllPrevEnglish(true);
 
         setConversationStep(-1);
         setImageExplanationStep(-1);
@@ -180,27 +315,29 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     // =========================================================
 
     useEffect(() => {
-    if (showAll) {
-        updateCurrentIndex(list.length - 1);
+        // Topic add होने के बाद:
+        // पुराने visible sentences और उनके English को
+        // बिल्कुल preserve रखना है।
+        if (preserveEnglishAfterTopicAdd.current) {
+            preserveEnglishAfterTopicAdd.current = false;
+            setShowAllPrevEnglish(true);
+            return;
+        }
+
+        // Show All
+        if (showAll) {
+            updateCurrentIndex(list.length - 1);
+            setShowAllPrevEnglish(true);
+            return;
+        }
+
+        // Normal Hide All
+        updateCurrentIndex(-1);
+        setShowEnglish(false);
+        setRevealedAnswers([]);
         setShowAllPrevEnglish(true);
-        return;
-    }
 
-    // Topic add होने पर visible sentences को hide नहीं करना है
-    if (preserveEnglishAfterTopicAdd.current) {
-        preserveEnglishAfterTopicAdd.current = false;
-        setShowAllPrevEnglish(true);
-        return;
-    }
-
-    // Normal Hide All
-    updateCurrentIndex(-1);
-    setShowEnglish(false);
-    setRevealedAnswers([]);
-    setShowAllPrevEnglish(true);
-
-}, [showAll, list.length]);
-
+    }, [showAll, list.length]);
 
 
     const imageExplanationDisplayUrl =
