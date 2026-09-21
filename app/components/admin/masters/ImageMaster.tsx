@@ -44,7 +44,8 @@ export default function ImageMaster({
 
   const [loading, setLoading] =
     useState(false);
-
+  const [draggedImageId, setDraggedImageId] =
+    useState<string | null>(null);
 
   // =========================================================
   // LOAD TOPICS
@@ -985,7 +986,162 @@ export default function ImageMaster({
     setLoading(false);
 
   };
+  // =========================================================
+  // DRAG START
+  // =========================================================
 
+  const handleImageDragStart = (
+    e: React.DragEvent<HTMLTableRowElement>,
+    id: string
+  ) => {
+    setDraggedImageId(id);
+
+    e.dataTransfer.effectAllowed = "move";
+
+    e.dataTransfer.setData(
+      "text/plain",
+      id
+    );
+  };
+
+  // =========================================================
+  // DRAG OVER
+  // =========================================================
+
+  const handleImageDragOver = (
+    e: React.DragEvent<HTMLTableRowElement>
+  ) => {
+    e.preventDefault();
+
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  // =========================================================
+  // DROP / AUTO SAVE ORDER
+  // =========================================================
+
+  const handleImageDrop = async (
+    e: React.DragEvent<HTMLTableRowElement>,
+    targetId: string
+  ) => {
+    e.preventDefault();
+
+    const sourceId =
+      e.dataTransfer.getData("text/plain") ||
+      draggedImageId;
+
+    if (
+      !sourceId ||
+      sourceId === targetId
+    ) {
+      setDraggedImageId(null);
+      return;
+    }
+
+    const oldList = [...filteredImages];
+
+    const sourceIndex =
+      oldList.findIndex(
+        (item: any) =>
+          String(item.id) ===
+          String(sourceId)
+      );
+
+    const targetIndex =
+      oldList.findIndex(
+        (item: any) =>
+          String(item.id) ===
+          String(targetId)
+      );
+
+    if (
+      sourceIndex === -1 ||
+      targetIndex === -1
+    ) {
+      setDraggedImageId(null);
+      return;
+    }
+
+    const newList = [...oldList];
+
+    const [movedItem] =
+      newList.splice(sourceIndex, 1);
+
+    newList.splice(
+      targetIndex,
+      0,
+      movedItem
+    );
+
+    const reorderedList =
+      newList.map(
+        (item: any, index: number) => ({
+          ...item,
+          sort_order: index + 1,
+        })
+      );
+
+    // Update UI immediately
+    setImages((prev) =>
+      prev.map((item: any) => {
+        const updated =
+          reorderedList.find(
+            (row: any) =>
+              row.id === item.id
+          );
+
+        return updated || item;
+      })
+    );
+
+    setDraggedImageId(null);
+
+    try {
+      const updates =
+        reorderedList.map(
+          (item: any) =>
+            supabase
+              .from("images")
+              .update({
+                sort_order:
+                  item.sort_order,
+              })
+              .eq("id", item.id)
+        );
+
+      const results =
+        await Promise.all(updates);
+
+      const failed =
+        results.find(
+          (result) => result.error
+        );
+
+      if (failed?.error) {
+        throw failed.error;
+      }
+    } catch (error: any) {
+      console.error(
+        "IMAGE DRAG ORDER SAVE ERROR:",
+        error
+      );
+
+      alert(
+        error?.message ||
+        "Unable to save new image order."
+      );
+
+      await loadImages();
+    }
+  };
+
+  // =========================================================
+  // DRAG END
+  // =========================================================
+
+  const handleImageDragEnd = () => {
+    setDraggedImageId(null);
+  };
 
   // =========================================================
   // GET TOPIC NAME
@@ -1394,12 +1550,38 @@ export default function ImageMaster({
 
                         <tr
                           key={image.id}
-                          className="hover:bg-gray-50"
+                          draggable
+                          onDragStart={(e) =>
+                            handleImageDragStart(
+                              e,
+                              String(image.id)
+                            )
+                          }
+                          onDragOver={handleImageDragOver}
+                          onDrop={(e) =>
+                            handleImageDrop(
+                              e,
+                              String(image.id)
+                            )
+                          }
+                          onDragEnd={handleImageDragEnd}
+                          className={`hover:bg-gray-50 cursor-move ${draggedImageId === String(image.id)
+                              ? "opacity-40"
+                              : ""
+                            }`}
                         >
 
                           <td className="border border-gray-300 px-3 py-2">
-                            {index + 1}
-                          </td>
+  <div className="flex items-center gap-2">
+    <span className="text-gray-400 text-lg">
+      ⋮⋮
+    </span>
+
+    <span>
+      {index + 1}
+    </span>
+  </div>
+</td>
                           <td className="border border-gray-300 px-3 py-2">
                             Image
                           </td>

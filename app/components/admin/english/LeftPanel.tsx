@@ -33,6 +33,8 @@ export default function LeftPanel({
   const [expandedDays, setExpandedDays] = useState<string[]>([]);
   const daysContainerRef = useRef<HTMLDivElement>(null);
   const [showImages, setShowImages] = useState(false);
+  const [imageMediaType, setImageMediaType] =
+    useState<"images" | "videos">("images");
 
   const [imageTopics, setImageTopics] =
     useState<any[]>([]);
@@ -481,6 +483,14 @@ export default function LeftPanel({
     };
 
   }, [showPopup, editText]);
+    const filteredImageTopics =
+    imageTopics.filter((topic: any) => {
+      if (imageMediaType === "images") {
+        return (topic.images?.length || 0) > 0;
+      }
+
+      return (topic.videos?.length || 0) > 0;
+    });
   return (
 
     <div className="w-[270px] bg-white border-r flex flex-col relative">
@@ -495,20 +505,47 @@ export default function LeftPanel({
           }`}
       >
 
-        <button
-          onClick={() =>
-            setShowImages(prev => !prev)
-          }
+        <div
           className="w-full flex justify-between items-center px-3 py-1.5 bg-blue-100 text-[13px] font-semibold"
         >
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setShowImages(true);
+                setImageMediaType("images");
+              }}
+              className={`px-2 py-0.5 rounded ${imageMediaType === "images"
+                ? "bg-blue-600 text-white"
+                : "bg-white text-gray-600"
+                }`}
+            >
+              Images
+            </button>
 
-          <span>Images</span>
+            <button
+              type="button"
+              onClick={() => {
+                setShowImages(true);
+                setImageMediaType("videos");
+              }}
+              className={`px-2 py-0.5 rounded ${imageMediaType === "videos"
+                ? "bg-red-600 text-white"
+                : "bg-white text-gray-600"
+                }`}
+            >
+              Videos
+            </button>
+          </div>
 
-          <span>
+          <button
+            type="button"
+            onClick={() => setShowImages(prev => !prev)}
+            className="ml-2 px-2 py-0.5"
+          >
             {showImages ? "−" : "+"}
-          </span>
-
-        </button>
+          </button>
+        </div>
 
 
         {showImages && (
@@ -517,7 +554,7 @@ export default function LeftPanel({
 
             <div className="flex flex-col">
 
-              {imageTopics.map((topic: any) => (
+              {filteredImageTopics.map((topic: any) => (
 
                 <div
                   key={topic.id}
@@ -548,62 +585,64 @@ export default function LeftPanel({
 
                     <div className="ml-4 mt-0.5 flex flex-col gap-0">
 
-                      {topic.images?.map((image: any) => (
+                      {imageMediaType === "images" &&
+                        topic.images?.map((image: any) => (
 
-                        <label
-                          key={image.id}
-                          id={`image-item-${image.id}`}
-                          className={`flex items-center gap-2 w-full text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === image.id
-                            ? "bg-blue-100 text-blue-700 font-semibold"
-                            : "hover:bg-gray-100"
-                            }`}
-                        >
+                          <label
+                            key={image.id}
+                            id={`image-item-${image.id}`}
+                            className={`flex items-center gap-2 w-full text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === image.id
+                              ? "bg-blue-100 text-blue-700 font-semibold"
+                              : "hover:bg-gray-100"
+                              }`}
+                          >
 
-                          <input
-                            type="radio"
-                            className="w-3.5 h-3.5 shrink-0"
-                            name="selectedImage"
-                            value={image.id}
-                            checked={selectedImageId === image.id}
-                            onChange={() =>
-                              setSelectedImageId(image.id)
-                            }
-                          />
+                            <input
+                              type="radio"
+                              className="w-3.5 h-3.5 shrink-0"
+                              name="selectedImage"
+                              value={image.id}
+                              checked={selectedImageId === image.id}
+                              onChange={() =>
+                                setSelectedImageId(image.id)
+                              }
+                            />
 
-                          <span className="truncate min-w-0">
-                            {image.name}
-                          </span>
+                            <span className="truncate min-w-0">
+                              {image.name}
+                            </span>
 
-                        </label>
+                          </label>
 
-                      ))}
-                      {topic.videos?.map((video: any) => (
-                        <label
-                          key={video.id}
-                          id={`image-item-${video.id}`}
-                          className={`flex items-center gap-2 w-full text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === video.id
-                            ? "bg-blue-100 text-blue-700 font-semibold"
-                            : "hover:bg-gray-100"
-                            }`}
-                        >
+                        ))}
+                      {imageMediaType === "videos" &&
+                        topic.videos?.map((video: any) => (
+                          <label
+                            key={video.id}
+                            id={`image-item-${video.id}`}
+                            className={`flex items-center gap-2 w-full text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === video.id
+                              ? "bg-blue-100 text-blue-700 font-semibold"
+                              : "hover:bg-gray-100"
+                              }`}
+                          >
 
-                          <input
-                            type="radio"
-                            className="w-3.5 h-3.5 shrink-0"
-                            name="selectedImage"
-                            value={video.id}
-                            checked={selectedImageId === video.id}
-                            onChange={() =>
-                              setSelectedImageId(video.id)
-                            }
-                          />
+                            <input
+                              type="radio"
+                              className="w-3.5 h-3.5 shrink-0"
+                              name="selectedImage"
+                              value={video.id}
+                              checked={selectedImageId === video.id}
+                              onChange={() =>
+                                setSelectedImageId(video.id)
+                              }
+                            />
 
-                          <span className="truncate min-w-0">
-                            {video.name}
-                          </span>
+                            <span className="truncate min-w-0">
+                              {video.name}
+                            </span>
 
-                        </label>
-                      ))}
+                          </label>
+                        ))}
                     </div>
 
                   )}
