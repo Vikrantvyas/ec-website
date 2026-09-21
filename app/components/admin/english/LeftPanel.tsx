@@ -483,7 +483,7 @@ export default function LeftPanel({
     };
 
   }, [showPopup, editText]);
-    const filteredImageTopics =
+  const filteredImageTopics =
     imageTopics.filter((topic: any) => {
       if (imageMediaType === "images") {
         return (topic.images?.length || 0) > 0;
@@ -749,10 +749,17 @@ export default function LeftPanel({
       <div className="p-3 shrink-0 bg-white">
 
         <select
-          value={selectedCourse}
-          onChange={(e) => setSelectedCourse(e.target.value)}
-          className="border px-2 py-1.5 rounded w-full text-[13px]"
-        >
+  value={selectedCourse}
+  onChange={(e) => {
+    const courseId = e.target.value;
+
+    setSelectedCourse(courseId);
+    setExpandedDays([]);
+    setSelectedDays([]);
+    setSelectedTopics([]);
+  }}
+  className="border px-2 py-1.5 rounded w-full text-[13px]"
+>
           <option value="">Select Course</option>
 
           {courses.map((c: any) => (

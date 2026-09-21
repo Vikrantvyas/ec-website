@@ -1,140 +1,124 @@
-  "use client";
+"use client";
 
-  import { useState, useEffect, useRef } from "react";
-  import { supabase } from "@/lib/supabaseClient";
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
-  import LeftPanel from "@/app/components/admin/english/LeftPanel";
-  import MainBoard from "@/app/components/admin/english/MainBoard";
-  import Controls from "@/app/components/admin/english/Controls";
-  import MemePanel from "@/app/components/admin/english/MemePanel";
-  import DemoShowcase from "@/app/components/admin/english/DemoShowcase";
+import LeftPanel from "@/app/components/admin/english/LeftPanel";
+import MainBoard from "@/app/components/admin/english/MainBoard";
+import Controls from "@/app/components/admin/english/Controls";
+import MemePanel from "@/app/components/admin/english/MemePanel";
+import DemoShowcase from "@/app/components/admin/english/DemoShowcase";
 
-  export default function EnglishPage() {
+export default function EnglishPage() {
 
-    const [courses, setCourses] = useState<any[]>([]);
-    const [days, setDays] = useState<any[]>([]);
-    const [topics, setTopics] = useState<any[]>([]);
-    const [sentences, setSentences] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [days, setDays] = useState<any[]>([]);
+  const [topics, setTopics] = useState<any[]>([]);
+  const [sentences, setSentences] = useState<any[]>([]);
 
-    const [selectedCourse, setSelectedCourse] = useState("");
-    const [selectedDays, setSelectedDays] = useState<string[]>([]);
-    const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
-    const [topicNavIndex, setTopicNavIndex] = useState(0);
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [topicNavIndex, setTopicNavIndex] = useState(0);
 
-    const [currentIndex, setCurrentIndex] = useState(-1);
-    const [showAll, setShowAll] = useState(false);
-    const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(-1);
+  const [showAll, setShowAll] = useState(false);
+  const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
 
-    const [showBoard, setShowBoard] = useState(true);
-    const [showScore, setShowScore] = useState(false);
-    const [randomMode, setRandomMode] = useState(false);
-    const [switchLanguageMode, setSwitchLanguageMode] = useState(false);
-    const [showLeft, setShowLeft] = useState(false);
-    const [showGrammar, setShowGrammar] = useState(false);
-    const [showImages, setShowImages] = useState(false);
-    const [selectedGrammarTableId, setSelectedGrammarTableId] = useState("");
-    const [selectedImageId, setSelectedImageId] = useState("");
-    const [selectedReactionMeme, setSelectedReactionMeme] = useState<any>(null);
-    const [layout, setLayout] = useState<"horizontal" | "vertical">("horizontal");
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const [currentTime, setCurrentTime] = useState("");
+  const [showBoard, setShowBoard] = useState(true);
+  const [showScore, setShowScore] = useState(false);
+  const [randomMode, setRandomMode] = useState(false);
+  const [switchLanguageMode, setSwitchLanguageMode] = useState(false);
+  const [showLeft, setShowLeft] = useState(false);
+  const [showGrammar, setShowGrammar] = useState(false);
+  const [showImages, setShowImages] = useState(false);
+  const [selectedGrammarTableId, setSelectedGrammarTableId] = useState("");
+  const [selectedImageId, setSelectedImageId] = useState("");
+  const [selectedReactionMeme, setSelectedReactionMeme] = useState<any>(null);
+  const [layout, setLayout] = useState<"horizontal" | "vertical">("horizontal");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [currentTime, setCurrentTime] = useState("");
 
-    useEffect(() => {
-      const updateTime = () => {
-        setCurrentTime(
-          new Date().toLocaleTimeString("en-IN", {
-            hour: "numeric",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: true,
-            timeZone: "Asia/Kolkata",
-          })
-        );
-      };
-
-      updateTime();
-
-      const timer = setInterval(updateTime, 1000);
-
-      return () => clearInterval(timer);
-    }, []);
-    const vocabRef = useRef<any>(null);
-    const demoCourseSelectionRef = useRef(false);
-
-    const handleDemoCourseSelect = (courseId: string) => {
-      demoCourseSelectionRef.current = true;
-      setSelectedCourse(courseId);
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(
+        new Date().toLocaleTimeString("en-IN", {
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+          timeZone: "Asia/Kolkata",
+        })
+      );
     };
 
-    const selectedCourseName =
-      courses.find(c => c.id === selectedCourse)?.name;
+    updateTime();
+
+    const timer = setInterval(updateTime, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+  const vocabRef = useRef<any>(null);
+  const demoCourseSelectionRef = useRef(false);
+
+  const handleDemoCourseSelect = (courseId: string) => {
+    demoCourseSelectionRef.current = true;
+    setSelectedCourse(courseId);
+  };
+
+  const selectedCourseName =
+    courses.find(c => c.id === selectedCourse)?.name;
 
 
-    const isGrammar = selectedCourseName === "Grammar";
-    const isConversation = selectedCourseName === "Conversation";
-    const isImageExplanation =
-      selectedCourseName === "Image Explanation";
+  const isGrammar = selectedCourseName === "Grammar";
+  const isConversation = selectedCourseName === "Conversation";
+  const isImageExplanation =
+    selectedCourseName === "Image Explanation";
 
-    const activeTopicId =
-      selectedTopics[selectedTopics.length - 1];
+  const activeTopicId =
+    selectedTopics[selectedTopics.length - 1];
 
-    const activeTopic =
-      topics.find(
-        (t: any) => t.id === activeTopicId
-      );
+  const activeTopic =
+    topics.find(
+      (t: any) => t.id === activeTopicId
+    );
 
-    const conversationDay =
-      days.find(
-        (d: any) => d.id === activeTopic?.day_id
-      ) ||
-      days.find((d: any) =>
-        selectedDays.includes(d.id)
-      );
+  const conversationDay =
+    days.find(
+      (d: any) => d.id === activeTopic?.day_id
+    ) ||
+    days.find((d: any) =>
+      selectedDays.includes(d.id)
+    );
 
-    const conversationImageUrl =
-      conversationDay?.conversation_image_url || "";
-    const conversationMobileImageUrl =
-      conversationDay?.conversation_mobile_image_url || "";
+  const conversationImageUrl =
+    conversationDay?.conversation_image_url || "";
+  const conversationMobileImageUrl =
+    conversationDay?.conversation_mobile_image_url || "";
 
-    console.log("CONVERSATION DEBUG:", {
-      selectedDays,
-      days,
-      conversationImageUrl,
-    });
-    useEffect(() => {
-      if (selectedGrammarTableId) {
-        setShowGrammar(true);
-      }
-    }, [selectedGrammarTableId]);
+  console.log("CONVERSATION DEBUG:", {
+    selectedDays,
+    days,
+    conversationImageUrl,
+  });
+  useEffect(() => {
+    if (selectedGrammarTableId) {
+      setShowGrammar(true);
+    }
+  }, [selectedGrammarTableId]);
 
 
-    // 🔥 AUTO PANEL CONTROL (IMPORTANT)
-    // 🔥 AUTO PANEL CONTROL
-    // सभी Courses के लिए same layout
-    useEffect(() => {
+  // 🔥 AUTO PANEL CONTROL (IMPORTANT)
+  // 🔥 AUTO PANEL CONTROL
+  // सभी Courses के लिए same layout
+  useEffect(() => {
 
-      if (!selectedCourse) return;
+    if (!selectedCourse) return;
 
-      // DemoShowcase से Course select हुआ है
-      // तो Left Panel automatically open नहीं होगा.
-      if (demoCourseSelectionRef.current) {
-        demoCourseSelectionRef.current = false;
-
-        if (selectedGrammarTableId) {
-          setShowGrammar(true);
-          setLayout("vertical");
-        } else {
-          setShowGrammar(false);
-          setLayout("horizontal");
-        }
-
-        return;
-      }
-
-      // Normal LeftPanel Course selection
-      setShowLeft(true);
-      setShowBoard(false);
-      setShowScore(false);
+    // DemoShowcase से Course select हुआ है
+    // तो Left Panel automatically open नहीं होगा.
+    if (demoCourseSelectionRef.current) {
+      demoCourseSelectionRef.current = false;
 
       if (selectedGrammarTableId) {
         setShowGrammar(true);
@@ -144,264 +128,280 @@
         setLayout("horizontal");
       }
 
-    }, [selectedCourse, selectedGrammarTableId]);
+      return;
+    }
 
-    // ---------------- FETCH ----------------
+    // Normal LeftPanel Course selection
+    setShowLeft(true);
+    setShowBoard(false);
+    setShowScore(false);
 
-    useEffect(() => { fetchCourses(); }, []);
+    if (selectedGrammarTableId) {
+      setShowGrammar(true);
+      setLayout("vertical");
+    } else {
+      setShowGrammar(false);
+      setLayout("horizontal");
+    }
 
-    useEffect(() => {
-      if (selectedCourse) {
-        fetchDays();
-        fetchTopics();
-      }
-    }, [selectedCourse]);
-    useEffect(() => {
-      if (!selectedCourse) return;
+  }, [selectedCourse, selectedGrammarTableId]);
 
-      // नया Course select होते ही
-      // पुराने Course की selections clear करें
-      setSelectedDays([]);
-      setSelectedTopics([]);
-      setTopicNavIndex(0);
+  // ---------------- FETCH ----------------
 
-      // Vocabulary display reset
-      setCurrentIndex(-1);
-      setShowAll(false);
-      setHighlightIndex(null);
+  useEffect(() => { fetchCourses(); }, []);
 
-      vocabRef.current?.reset();
-    }, [selectedCourse]);
-
-    useEffect(() => {
+  useEffect(() => {
+    if (selectedCourse) {
+      fetchDays();
       fetchTopics();
-    }, [selectedDays]);
+    }
+  }, [selectedCourse]);
+  useEffect(() => {
+    if (!selectedCourse) return;
 
-    useEffect(() => {
-      setHighlightIndex(null);
-      fetchSentences();
-    }, [selectedTopics, selectedDays]);
-    useEffect(() => {
-      const filteredTopics = selectedTopics.filter(topicId => {
-        const topic = topics.find(t => t.id === topicId);
-        return topic && selectedDays.includes(topic.day_id);
-      });
+    // नया Course select होते ही
+    // पुराने Course की selections clear करें
+    setSelectedDays([]);
+    setSelectedTopics([]);
+    setTopicNavIndex(0);
 
-      if (filteredTopics.length !== selectedTopics.length) {
-        setSelectedTopics(filteredTopics);
-      }
-    }, [selectedDays, topics]);
+    // Vocabulary display reset
+    setCurrentIndex(-1);
+    setShowAll(false);
+    setHighlightIndex(null);
+
+    vocabRef.current?.reset();
+  }, [selectedCourse]);
+
+  useEffect(() => {
+    fetchTopics();
+  }, [selectedDays]);
+
+  useEffect(() => {
+    setHighlightIndex(null);
+    fetchSentences();
+  }, [selectedTopics, selectedDays]);
+  useEffect(() => {
+    const filteredTopics = selectedTopics.filter(topicId => {
+      const topic = topics.find(t => t.id === topicId);
+      return topic && selectedDays.includes(topic.day_id);
+    });
+
+    if (filteredTopics.length !== selectedTopics.length) {
+      setSelectedTopics(filteredTopics);
+    }
+  }, [selectedDays, topics]);
 
 
-    const fetchCourses = async () => {
-      const { data, error } = await supabase
-        .from("english_courses")
-        .select("*")
-        .order("name");
+  const fetchCourses = async () => {
+    const { data, error } = await supabase
+      .from("english_courses")
+      .select("*")
+      .order("name");
 
-      if (error) {
-        console.error("FETCH COURSES ERROR:", error);
-        return;
-      }
+    if (error) {
+      console.error("FETCH COURSES ERROR:", error);
+      return;
+    }
 
-      setCourses(data || []);
-    };
+    setCourses(data || []);
+  };
 
-    const fetchDays = async () => {
-      let courseId = selectedCourse;
+  const fetchDays = async () => {
+    let courseId = selectedCourse;
 
 
-      if (!courseId) {
-        setDays([]);
-        return;
-      }
+    if (!courseId) {
+      setDays([]);
+      return;
+    }
 
-      const { data, error } = await supabase
-        .from("days")
-        .select("*")
-        .eq("course_id", courseId)
-        .order("day_number");
+    const { data, error } = await supabase
+      .from("days")
+      .select("*")
+      .eq("course_id", courseId)
+      .order("day_number");
 
-      if (error) {
-        console.error("FETCH DAYS ERROR:", error);
-        setDays([]);
-        return;
-      }
+    if (error) {
+      console.error("FETCH DAYS ERROR:", error);
+      setDays([]);
+      return;
+    }
 
-      setDays(data || []);
-    };
+    setDays(data || []);
+  };
 
-    const fetchTopics = async () => {
-      const { data, error } = await supabase
-        .from("topics")
-        .select("*")
-        .order("order_no");
+  const fetchTopics = async () => {
+    const { data, error } = await supabase
+      .from("topics")
+      .select("*")
+      .order("order_no");
 
-      if (error) {
-        console.error("TOPICS ERROR:", error);
-        return;
-      }
+    if (error) {
+      console.error("TOPICS ERROR:", error);
+      return;
+    }
 
-      if (!data) {
-        setTopics([]);
-        return;
-      }
-      if (isConversation) {
-        const { data: counts, error: countError } = await supabase
-          .from("conversation_questions")
-          .select("topic_id")
-          .in(
-            "topic_id",
-            data.map((topic: any) => topic.id)
-          );
-
-        if (countError) {
-          console.error(
-            "CONVERSATION COUNT ERROR:",
-            countError
-          );
-          setTopics(data);
-          return;
-        }
-
-        const countMap: Record<string, number> = {};
-
-        (counts || []).forEach((row: any) => {
-          countMap[row.topic_id] =
-            (countMap[row.topic_id] || 0) + 1;
-        });
-
-        setTopics(
-          data.map((topic: any) => ({
-            ...topic,
-            sentence_count: countMap[topic.id] || 0,
-          }))
+    if (!data) {
+      setTopics([]);
+      return;
+    }
+    if (isConversation) {
+      const { data: counts, error: countError } = await supabase
+        .from("conversation_questions")
+        .select("topic_id")
+        .in(
+          "topic_id",
+          data.map((topic: any) => topic.id)
         );
 
-        return;
-      }
-      if (isImageExplanation) {
-        const { data: counts, error: countError } = await supabase
-          .from("image_explanation_questions")
-          .select("topic_id")
-          .in(
-            "topic_id",
-            data.map((topic: any) => topic.id)
-          );
-
-        if (countError) {
-          console.error(
-            "IMAGE EXPLANATION COUNT ERROR:",
-            countError
-          );
-          setTopics(data);
-          return;
-        }
-
-        const countMap: Record<string, number> = {};
-
-        (counts || []).forEach((row: any) => {
-          countMap[row.topic_id] =
-            (countMap[row.topic_id] || 0) + 1;
-        });
-
-        setTopics(
-          data.map((topic: any) => ({
-            ...topic,
-            sentence_count: countMap[topic.id] || 0,
-          }))
-        );
-
-        return;
-      }
-
-      const { data: vocabularyCounts, error: vocabularyError } =
-        await supabase
-          .from("topics")
-          .select("id, vocabulary(count)")
-          .in(
-            "id",
-            data.map((topic: any) => topic.id)
-          );
-
-      if (vocabularyError) {
+      if (countError) {
         console.error(
-          "VOCABULARY COUNT ERROR:",
-          vocabularyError
+          "CONVERSATION COUNT ERROR:",
+          countError
         );
         setTopics(data);
         return;
       }
 
-      const countMap: Record<string, any> = {};
+      const countMap: Record<string, number> = {};
 
-      (vocabularyCounts || []).forEach((topic: any) => {
-        countMap[topic.id] = topic.vocabulary;
+      (counts || []).forEach((row: any) => {
+        countMap[row.topic_id] =
+          (countMap[row.topic_id] || 0) + 1;
       });
 
       setTopics(
         data.map((topic: any) => ({
           ...topic,
-          vocabulary: countMap[topic.id] || [],
+          sentence_count: countMap[topic.id] || 0,
         }))
       );
-    };
-    const refreshTopicCount = async (topicId: string) => {
-      const { data, error } = await supabase
+
+      return;
+    }
+    if (isImageExplanation) {
+      const { data: counts, error: countError } = await supabase
+        .from("image_explanation_questions")
+        .select("topic_id")
+        .in(
+          "topic_id",
+          data.map((topic: any) => topic.id)
+        );
+
+      if (countError) {
+        console.error(
+          "IMAGE EXPLANATION COUNT ERROR:",
+          countError
+        );
+        setTopics(data);
+        return;
+      }
+
+      const countMap: Record<string, number> = {};
+
+      (counts || []).forEach((row: any) => {
+        countMap[row.topic_id] =
+          (countMap[row.topic_id] || 0) + 1;
+      });
+
+      setTopics(
+        data.map((topic: any) => ({
+          ...topic,
+          sentence_count: countMap[topic.id] || 0,
+        }))
+      );
+
+      return;
+    }
+
+    const { data: vocabularyCounts, error: vocabularyError } =
+      await supabase
         .from("topics")
         .select("id, vocabulary(count)")
-        .eq("id", topicId)
-        .single();
+        .in(
+          "id",
+          data.map((topic: any) => topic.id)
+        );
 
-      if (error) {
-        console.error("TOPIC COUNT REFRESH ERROR:", error);
-        return;
-      }
-
-      if (!data) return;
-
-      setTopics(prev =>
-        prev.map(topic =>
-          topic.id === topicId
-            ? {
-              ...topic,
-              vocabulary: data.vocabulary,
-            }
-            : topic
-        )
+    if (vocabularyError) {
+      console.error(
+        "VOCABULARY COUNT ERROR:",
+        vocabularyError
       );
-    };
-    const fetchSentences = async () => {
-      if (isImageExplanation) {
-        const { data: imageExplanationData, error: imageExplanationError } =
-          await supabase
-            .from("image_explanation_questions")
-            .select(
-              "id, topic_id, image_id, hindi_question, english_question, hindi_answer, english_answer, order_no"
-            )
-            .in("topic_id", selectedTopics)
-            .order("order_no", { ascending: true });
+      setTopics(data);
+      return;
+    }
 
-        if (imageExplanationError) {
-          console.error(
-            "IMAGE EXPLANATION ERROR:",
-            imageExplanationError.message
-          );
-        }
+    const countMap: Record<string, any> = {};
 
-        setSentences(imageExplanationData || []);
+    (vocabularyCounts || []).forEach((topic: any) => {
+      countMap[topic.id] = topic.vocabulary;
+    });
+
+    setTopics(
+      data.map((topic: any) => ({
+        ...topic,
+        vocabulary: countMap[topic.id] || [],
+      }))
+    );
+  };
+  const refreshTopicCount = async (topicId: string) => {
+    const { data, error } = await supabase
+      .from("topics")
+      .select("id, vocabulary(count)")
+      .eq("id", topicId)
+      .single();
+
+    if (error) {
+      console.error("TOPIC COUNT REFRESH ERROR:", error);
+      return;
+    }
+
+    if (!data) return;
+
+    setTopics(prev =>
+      prev.map(topic =>
+        topic.id === topicId
+          ? {
+            ...topic,
+            vocabulary: data.vocabulary,
+          }
+          : topic
+      )
+    );
+  };
+  const fetchSentences = async () => {
+    if (isImageExplanation) {
+      const { data: imageExplanationData, error: imageExplanationError } =
+        await supabase
+          .from("image_explanation_questions")
+          .select(
+            "id, topic_id, image_id, hindi_question, english_question, hindi_answer, english_answer, order_no"
+          )
+          .in("topic_id", selectedTopics)
+          .order("order_no", { ascending: true });
+
+      if (imageExplanationError) {
+        console.error(
+          "IMAGE EXPLANATION ERROR:",
+          imageExplanationError.message
+        );
+      }
+
+      setSentences(imageExplanationData || []);
+      return;
+    }
+
+    if (isConversation) {
+      if (selectedTopics.length === 0) {
+        setSentences([]);
         return;
       }
 
-      if (isConversation) {
-        if (selectedTopics.length === 0) {
-          setSentences([]);
-          return;
-        }
-
-        const { data: questions, error } = await supabase
-          .from("conversation_questions")
-          .select(`
+      const { data: questions, error } = await supabase
+        .from("conversation_questions")
+        .select(`
           id,
           topic_id,
           question_text,
@@ -414,151 +414,123 @@
           answer_english_4,
           order_no
         `)
-          .in("topic_id", selectedTopics)
-          .order("topic_id")
-          .order("order_no");
+        .in("topic_id", selectedTopics)
+        .order("topic_id")
+        .order("order_no");
 
-        if (error) {
-          console.error("CONVERSATION QUESTIONS ERROR:", error);
-          setSentences([]);
-          return;
-        }
-
-        const sorted = (questions || []).sort((a: any, b: any) => {
-          const indexA = selectedTopics.indexOf(a.topic_id);
-          const indexB = selectedTopics.indexOf(b.topic_id);
-
-          if (indexA === indexB) {
-            return (a.order_no ?? 0) - (b.order_no ?? 0);
-          }
-
-          return indexA - indexB;
-        });
-
-        setSentences(sorted);
-        return;
-      }
-
-      const topicIds = selectedTopics;
-
-      if (topicIds.length === 0) {
+      if (error) {
+        console.error("CONVERSATION QUESTIONS ERROR:", error);
         setSentences([]);
         return;
       }
 
-      const { data } = await supabase
-        .from("vocabulary")
-        .select("*")
-        .in("topic_id", topicIds)
-        .order("topic_id")
-        .order("order_no");
+      const sorted = (questions || []).sort((a: any, b: any) => {
+        const indexA = selectedTopics.indexOf(a.topic_id);
+        const indexB = selectedTopics.indexOf(b.topic_id);
 
-      if (data) {
-        const sorted = data.sort((a: any, b: any) => {
-          const indexA = selectedTopics.indexOf(a.topic_id);
-          const indexB = selectedTopics.indexOf(b.topic_id);
+        if (indexA === indexB) {
+          return (a.order_no ?? 0) - (b.order_no ?? 0);
+        }
 
-          if (indexA === indexB) {
-            return a.order_no - b.order_no;
-          }
+        return indexA - indexB;
+      });
 
-          return indexA - indexB;
-        });
+      setSentences(sorted);
+      return;
+    }
 
-        setSentences(sorted);
-      }
-    };
+    const topicIds = selectedTopics;
 
-    const refreshData = async () => {
-      await fetchTopics();
-      await fetchSentences();
-    };
-    // ---------------- NAV ----------------
+    if (topicIds.length === 0) {
+      setSentences([]);
+      return;
+    }
 
-    const nextSentence = () => {
+    const { data } = await supabase
+      .from("vocabulary")
+      .select("*")
+      .in("topic_id", topicIds)
+      .order("topic_id")
+      .order("order_no");
 
-      if (vocabRef.current) {
-        vocabRef.current.next();
-        return;
-      }
+    if (data) {
+      const sorted = data.sort((a: any, b: any) => {
+        const indexA = selectedTopics.indexOf(a.topic_id);
+        const indexB = selectedTopics.indexOf(b.topic_id);
 
-      if (currentIndex < sentences.length) {
-        setCurrentIndex(prev => prev + 1);
-      }
+        if (indexA === indexB) {
+          return a.order_no - b.order_no;
+        }
 
-    };
+        return indexA - indexB;
+      });
 
-    const prevSentence = () => {
+      setSentences(sorted);
+    }
+  };
 
-      if (vocabRef.current) {
-        vocabRef.current.prev();
-        return;
-      }
+  const refreshData = async () => {
+    await fetchTopics();
+    await fetchSentences();
+  };
+  // ---------------- NAV ----------------
 
-      if (currentIndex > 0) {
-        setCurrentIndex(prev => prev - 1);
-      }
+  const nextSentence = () => {
 
-    };
+    if (vocabRef.current) {
+      vocabRef.current.next();
+      return;
+    }
+
+    if (currentIndex < sentences.length) {
+      setCurrentIndex(prev => prev + 1);
+    }
+
+  };
+
+  const prevSentence = () => {
+
+    if (vocabRef.current) {
+      vocabRef.current.prev();
+      return;
+    }
+
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    }
+
+  };
 
 
-    const nextTopic = () => {
+  const nextTopic = () => {
 
-      if (selectedDays.length === 0) return;
+    if (selectedDays.length === 0) return;
 
-      const dayTopics = topics
-        .filter(
-          (topic: any) =>
-            selectedDays.includes(topic.day_id)
-        )
-        .sort(
-          (a: any, b: any) =>
-            (a.order_no ?? 0) - (b.order_no ?? 0)
-        );
+    const dayTopics = topics
+      .filter(
+        (topic: any) =>
+          selectedDays.includes(topic.day_id)
+      )
+      .sort(
+        (a: any, b: any) =>
+          (a.order_no ?? 0) - (b.order_no ?? 0)
+      );
 
-      if (dayTopics.length === 0) return;
+    if (dayTopics.length === 0) return;
 
-      // अगर एक ही Topic selected है,
-      // तो उसी के बाद वाला Topic लें
-      if (selectedTopics.length === 1) {
+    // अगर एक ही Topic selected है,
+    // तो उसी के बाद वाला Topic लें
+    if (selectedTopics.length === 1) {
 
-        const currentIndex =
-          dayTopics.findIndex(
-            (topic: any) =>
-              topic.id === selectedTopics[0]
-          );
-
-        if (currentIndex < 0) return;
-
-        const nextIndex = currentIndex + 1;
-
-        if (nextIndex >= dayTopics.length) return;
-
-        const nextTopicId =
-          dayTopics[nextIndex].id;
-
-        setSelectedTopics([nextTopicId]);
-
-        setCurrentIndex(0);
-        setShowAll(false);
-        setHighlightIndex(null);
-
-        return;
-      }
-
-      // अगर कई Topics selected हैं
-      // (जैसे Day checkbox से सभी Topics)
-      // तो पहले Topic को current मानकर अगला दिखाएँ
-      const firstSelectedIndex =
+      const currentIndex =
         dayTopics.findIndex(
           (topic: any) =>
-            selectedTopics.includes(topic.id)
+            topic.id === selectedTopics[0]
         );
 
-      if (firstSelectedIndex < 0) return;
+      if (currentIndex < 0) return;
 
-      const nextIndex =
-        firstSelectedIndex + 1;
+      const nextIndex = currentIndex + 1;
 
       if (nextIndex >= dayTopics.length) return;
 
@@ -570,209 +542,239 @@
       setCurrentIndex(0);
       setShowAll(false);
       setHighlightIndex(null);
-    };
 
-    const prevTopic = () => {
+      return;
+    }
 
-      if (selectedDays.length === 0) return;
-
-      const dayTopics = topics
-        .filter((topic: any) =>
-          selectedDays.includes(topic.day_id)
-        )
-        .sort(
-          (a: any, b: any) =>
-            (a.order_no ?? 0) - (b.order_no ?? 0)
-        );
-
-      if (dayTopics.length === 0) return;
-
-      const currentTopicId = selectedTopics[0];
-
-      const currentIndex = dayTopics.findIndex(
+    // अगर कई Topics selected हैं
+    // (जैसे Day checkbox से सभी Topics)
+    // तो पहले Topic को current मानकर अगला दिखाएँ
+    const firstSelectedIndex =
+      dayTopics.findIndex(
         (topic: any) =>
-          topic.id === currentTopicId
+          selectedTopics.includes(topic.id)
       );
 
-      if (currentIndex <= 0) return;
+    if (firstSelectedIndex < 0) return;
 
-      const previousIndex =
-        currentIndex - 1;
+    const nextIndex =
+      firstSelectedIndex + 1;
 
-      const previousTopicId =
-        dayTopics[previousIndex].id;
+    if (nextIndex >= dayTopics.length) return;
 
-      setTopicNavIndex(previousIndex);
+    const nextTopicId =
+      dayTopics[nextIndex].id;
 
-      setSelectedTopics([
-        previousTopicId
-      ]);
+    setSelectedTopics([nextTopicId]);
 
-    };
+    setCurrentIndex(0);
+    setShowAll(false);
+    setHighlightIndex(null);
+  };
 
-    const toggleShowAll = () => {
-      if (showAll) {
-        setShowAll(false);
-        setCurrentIndex(0);
-      } else {
-        setShowAll(true);
-        setCurrentIndex(sentences.length);
-      }
-    };
+  const prevTopic = () => {
 
-    // ---------------- DATA ----------------
+    if (selectedDays.length === 0) return;
 
-    const visible = showAll
-      ? sentences
-      : sentences.slice(0, currentIndex);
+    const dayTopics = topics
+      .filter((topic: any) =>
+        selectedDays.includes(topic.day_id)
+      )
+      .sort(
+        (a: any, b: any) =>
+          (a.order_no ?? 0) - (b.order_no ?? 0)
+      );
 
-    const leftCol = visible.slice(0, 10);
-    const rightCol = visible.slice(10);
+    if (dayTopics.length === 0) return;
 
-    // ---------------- UI ----------------
+    const currentTopicId = selectedTopics[0];
 
-    return (
+    const currentIndex = dayTopics.findIndex(
+      (topic: any) =>
+        topic.id === currentTopicId
+    );
 
-      <div className="english-page flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden">
+    if (currentIndex <= 0) return;
 
-        <LeftPanel
-          courses={courses}
-          days={days}
-          topics={topics}
-          selectedCourse={selectedCourse}
-          selectedDays={selectedDays}
-          selectedTopics={selectedTopics}
-          setSelectedTopics={setSelectedTopics}
-          
-          setSelectedDays={setSelectedDays}
-          selectedGrammarTableId={selectedGrammarTableId}
-          setSelectedGrammarTableId={setSelectedGrammarTableId}
-          selectedImageId={selectedImageId}
-          setSelectedImageId={setSelectedImageId}
-          selectedReactionMeme={selectedReactionMeme}
-          refreshData={refreshData}
+    const previousIndex =
+      currentIndex - 1;
 
-        />
-        <div className="flex-1 flex items-start pl-3 pt-1 gap-3 min-w-0 overflow-hidden">
+    const previousTopicId =
+      dayTopics[previousIndex].id;
 
-          <div className="flex flex-col gap-2 shrink-0">
+    setTopicNavIndex(previousIndex);
 
-            <div
-              className="bg-white border shadow flex flex-col overflow-hidden"
-              style={{ width: "25cm", height: "12cm" }}
-            >
+    setSelectedTopics([
+      previousTopicId
+    ]);
 
-              <MainBoard
-                isGrammar={isGrammar}
-                showGrammar={showGrammar}
-                prevTopic={prevTopic}
-                nextTopic={nextTopic}
-                sentences={sentences}
-                visible={visible}
-                leftCol={leftCol}
-                rightCol={rightCol}
-                highlightIndex={highlightIndex}
-                setHighlightIndex={setHighlightIndex}
-                showBoard={showBoard}
-                showScore={showScore}
-                scrollRef={scrollRef}
-                vocabRef={vocabRef}
-                randomMode={randomMode}
-                showLeft={showLeft}
-                showAll={showAll}
-                setShowAll={setShowAll}
-                currentIndex={currentIndex}
-                setCurrentIndex={setCurrentIndex}
-                layout={layout}
-                currentTime={currentTime}
+  };
 
-                // 🔥 NEW
-                selectedDays={selectedDays}
-                selectedTopics={selectedTopics}
-                topics={topics}
-                days={days}
-                selectedGrammarTableId={selectedGrammarTableId}
-                setSelectedGrammarTableId={setSelectedGrammarTableId}
-                selectedImageId={selectedImageId}
-                selectedReactionMeme={selectedReactionMeme}
-                showImages={showImages}
-                setShowImages={setShowImages}
-                isConversation={isConversation}
-                isImageExplanation={isImageExplanation}
-                conversationImageUrl={conversationImageUrl}
-                conversationMobileImageUrl={conversationMobileImageUrl}
-                setSelectedImageId={setSelectedImageId}
-              />
-              {!showLeft &&
-                !showBoard &&
-                !showGrammar &&
-                !showImages &&
-                !showScore && (
-                 <DemoShowcase
-  courses={courses}
-  onDemoCourseSelect={handleDemoCourseSelect}
-  days={days}
-  topics={topics}
-  selectedCourse={selectedCourse}
-                    selectedDays={selectedDays}
-                    setSelectedDays={setSelectedDays}
-                    selectedTopics={selectedTopics}
-                    setSelectedTopics={setSelectedTopics}
-                    selectedGrammarTableId={selectedGrammarTableId}
-                    setSelectedGrammarTableId={
-                      setSelectedGrammarTableId
-                    }
-                    setSelectedImageId={setSelectedImageId}
-                    setShowImages={setShowImages}
-                    setShowGrammar={setShowGrammar}
-                  />
-                )}
-            </div>
+  const toggleShowAll = () => {
+    if (showAll) {
+      setShowAll(false);
+      setCurrentIndex(0);
+    } else {
+      setShowAll(true);
+      setCurrentIndex(sentences.length);
+    }
+  };
 
-            <Controls
-              prevSentence={prevSentence}
-              nextSentence={nextSentence}
-              onSwitch={() => {
-                vocabRef.current?.switchLanguage();
-                setSwitchLanguageMode(prev => !prev);
-              }}
-              switchLanguageMode={switchLanguageMode}
-              currentIndex={currentIndex}
-              sentences={sentences}
-              isConversation={isConversation}
-              isImageExplanation={isImageExplanation}
-              showAll={showAll}
-              toggleShowAll={toggleShowAll}
-              setShowAll={setShowAll}
-              setCurrentIndex={setCurrentIndex}
-              showBoard={showBoard}
-              setShowBoard={setShowBoard}
-              showScore={showScore}
-              setShowScore={setShowScore}
-              randomMode={randomMode}
-              setRandomMode={setRandomMode}
-              showLeft={showLeft}
-              setShowLeft={setShowLeft}
-              showGrammar={showGrammar}
-              setShowGrammar={setShowGrammar}
+  // ---------------- DATA ----------------
+
+  const visible = showAll
+    ? sentences
+    : sentences.slice(0, currentIndex);
+
+  const leftCol = visible.slice(0, 10);
+  const rightCol = visible.slice(10);
+
+  // ---------------- UI ----------------
+
+  return (
+
+    <div className="english-page flex h-[calc(100vh-56px)] bg-gray-100 overflow-hidden">
+
+      <LeftPanel
+        courses={courses}
+        days={days}
+        topics={topics}
+        selectedCourse={selectedCourse}
+        setSelectedCourse={setSelectedCourse}
+        selectedDays={selectedDays}
+        selectedTopics={selectedTopics}
+        setSelectedTopics={setSelectedTopics}
+
+        setSelectedDays={setSelectedDays}
+        selectedGrammarTableId={selectedGrammarTableId}
+        setSelectedGrammarTableId={setSelectedGrammarTableId}
+        selectedImageId={selectedImageId}
+        setSelectedImageId={setSelectedImageId}
+        selectedReactionMeme={selectedReactionMeme}
+        refreshData={refreshData}
+
+      />
+      <div className="flex-1 flex items-start pl-3 pt-1 gap-3 min-w-0 overflow-hidden">
+
+        <div className="flex flex-col gap-2 shrink-0">
+
+          <div
+            className="bg-white border shadow flex flex-col overflow-hidden"
+            style={{ width: "25cm", height: "12cm" }}
+          >
+
+            <MainBoard
               isGrammar={isGrammar}
+              showGrammar={showGrammar}
+              prevTopic={prevTopic}
+              nextTopic={nextTopic}
+              sentences={sentences}
+              visible={visible}
+              leftCol={leftCol}
+              rightCol={rightCol}
+              highlightIndex={highlightIndex}
+              setHighlightIndex={setHighlightIndex}
+              showBoard={showBoard}
+              showScore={showScore}
+              scrollRef={scrollRef}
+              vocabRef={vocabRef}
+              randomMode={randomMode}
+              showLeft={showLeft}
+              showAll={showAll}
+              setShowAll={setShowAll}
+              currentIndex={currentIndex}
+              setCurrentIndex={setCurrentIndex}
               layout={layout}
-              setLayout={setLayout}
+              currentTime={currentTime}
+
+              // 🔥 NEW
+              selectedDays={selectedDays}
+              selectedTopics={selectedTopics}
+              topics={topics}
+              days={days}
+              selectedGrammarTableId={selectedGrammarTableId}
+              setSelectedGrammarTableId={setSelectedGrammarTableId}
+              selectedImageId={selectedImageId}
+              selectedReactionMeme={selectedReactionMeme}
               showImages={showImages}
               setShowImages={setShowImages}
+              isConversation={isConversation}
+              isImageExplanation={isImageExplanation}
+              conversationImageUrl={conversationImageUrl}
+              conversationMobileImageUrl={conversationMobileImageUrl}
+              setSelectedImageId={setSelectedImageId}
             />
-
+            {!showLeft &&
+              !showBoard &&
+              !showGrammar &&
+              !showImages &&
+              !showScore && (
+                <DemoShowcase
+                  courses={courses}
+                  onDemoCourseSelect={handleDemoCourseSelect}
+                  days={days}
+                  topics={topics}
+                  selectedCourse={selectedCourse}
+                  setSelectedCourse={setSelectedCourse}
+                  selectedDays={selectedDays}
+                  setSelectedDays={setSelectedDays}
+                  selectedTopics={selectedTopics}
+                  setSelectedTopics={setSelectedTopics}
+                  selectedGrammarTableId={selectedGrammarTableId}
+                  setSelectedGrammarTableId={
+                    setSelectedGrammarTableId
+                  }
+                  setSelectedImageId={setSelectedImageId}
+                  setShowImages={setShowImages}
+                  setShowGrammar={setShowGrammar}
+                />
+              )}
           </div>
 
-          <MemePanel
-            onSelectMeme={(meme: any) => {
-              setSelectedReactionMeme((prev: any) =>
-                prev?.id === meme.id ? null : meme
-              );
+          <Controls
+            prevSentence={prevSentence}
+            nextSentence={nextSentence}
+            onSwitch={() => {
+              vocabRef.current?.switchLanguage();
+              setSwitchLanguageMode(prev => !prev);
             }}
+            switchLanguageMode={switchLanguageMode}
+            currentIndex={currentIndex}
+            sentences={sentences}
+            isConversation={isConversation}
+            isImageExplanation={isImageExplanation}
+            showAll={showAll}
+            toggleShowAll={toggleShowAll}
+            setShowAll={setShowAll}
+            setCurrentIndex={setCurrentIndex}
+            showBoard={showBoard}
+            setShowBoard={setShowBoard}
+            showScore={showScore}
+            setShowScore={setShowScore}
+            randomMode={randomMode}
+            setRandomMode={setRandomMode}
+            showLeft={showLeft}
+            setShowLeft={setShowLeft}
+            showGrammar={showGrammar}
+            setShowGrammar={setShowGrammar}
+            isGrammar={isGrammar}
+            layout={layout}
+            setLayout={setLayout}
+            showImages={showImages}
+            setShowImages={setShowImages}
           />
 
         </div>
+
+        <MemePanel
+          onSelectMeme={(meme: any) => {
+            setSelectedReactionMeme((prev: any) =>
+              prev?.id === meme.id ? null : meme
+            );
+          }}
+        />
+
       </div>
-    );
-  }
+    </div>
+  );
+}

@@ -239,7 +239,10 @@ export default function DemoShowcase({
 
             const { data, error } = await supabase
                 .from("topics")
-                .select("*")
+                .select(`
+        *,
+        vocabulary(count)
+    `)
                 .in("day_id", dayIds)
                 .order("order_no");
 
@@ -407,7 +410,7 @@ export default function DemoShowcase({
           IMAGES
       ===================================================== */}
 
-            <div className="flex-1 min-w-0 bg-white border rounded flex flex-col overflow-hidden">
+            <div className="flex-[1.25] min-w-0 bg-white border rounded flex flex-col overflow-hidden">
 
                 <div className="bg-blue-100 px-3 py-2 font-bold text-sm">
                     Images
@@ -718,10 +721,10 @@ export default function DemoShowcase({
                                                         );
 
                                                     const dayTopics =
-  demoTopics.filter(
-    (topic: any) =>
-      topic.day_id === day.id
-  );
+                                                        demoTopics.filter(
+                                                            (topic: any) =>
+                                                                topic.day_id === day.id
+                                                        );
 
                                                     return (
                                                         <div
