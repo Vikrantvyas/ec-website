@@ -7,6 +7,7 @@ import LeftPanel from "@/app/components/admin/english/LeftPanel";
 import MainBoard from "@/app/components/admin/english/MainBoard";
 import Controls from "@/app/components/admin/english/Controls";
 import MemePanel from "@/app/components/admin/english/MemePanel";
+import DemoShowcase from "@/app/components/admin/english/DemoShowcase";
 
 export default function EnglishPage() {
 
@@ -58,9 +59,15 @@ export default function EnglishPage() {
     return () => clearInterval(timer);
   }, []);
   const vocabRef = useRef<any>(null);
+const demoCourseSelectionRef = useRef(false);
 
-  const selectedCourseName =
-    courses.find(c => c.id === selectedCourse)?.name;
+const handleDemoCourseSelect = (courseId: string) => {
+  demoCourseSelectionRef.current = true;
+  setSelectedCourse(courseId);
+};
+
+const selectedCourseName =
+  courses.find(c => c.id === selectedCourse)?.name;
 
 
   const isGrammar = selectedCourseName === "Grammar";
@@ -108,25 +115,33 @@ export default function EnglishPage() {
 
     if (!selectedCourse) return;
 
-    // Course select होते ही:
-    // Left ON
-    // Board OFF
-    // Score OFF
+    // DemoShowcase से Course select हुआ है
+    // तो Left Panel automatically open नहीं होगा.
+    if (demoCourseSelectionRef.current) {
+      demoCourseSelectionRef.current = false;
+
+      if (selectedGrammarTableId) {
+        setShowGrammar(true);
+        setLayout("vertical");
+      } else {
+        setShowGrammar(false);
+        setLayout("horizontal");
+      }
+
+      return;
+    }
+
+    // Normal LeftPanel Course selection
     setShowLeft(true);
     setShowBoard(false);
     setShowScore(false);
 
-    // Grammar Table selected है
     if (selectedGrammarTableId) {
-
       setShowGrammar(true);
       setLayout("vertical");
-
     } else {
-
       setShowGrammar(false);
       setLayout("horizontal");
-
     }
 
   }, [selectedCourse, selectedGrammarTableId]);
@@ -688,7 +703,31 @@ export default function EnglishPage() {
               conversationMobileImageUrl={conversationMobileImageUrl}
               setSelectedImageId={setSelectedImageId}
             />
-
+            {!showLeft &&
+              !showBoard &&
+              !showGrammar &&
+              !showImages &&
+              !showScore && (
+                <DemoShowcase
+                  courses={courses}
+                  onDemoCourseSelect={handleDemoCourseSelect}
+                  days={days}
+                  topics={topics}
+                  selectedCourse={selectedCourse}
+                  setSelectedCourse={setSelectedCourse}
+                  selectedDays={selectedDays}
+                  setSelectedDays={setSelectedDays}
+                  selectedTopics={selectedTopics}
+                  setSelectedTopics={setSelectedTopics}
+                  selectedGrammarTableId={selectedGrammarTableId}
+                  setSelectedGrammarTableId={
+                    setSelectedGrammarTableId
+                  }
+                  setSelectedImageId={setSelectedImageId}
+                  setShowImages={setShowImages}
+                  setShowGrammar={setShowGrammar}
+                />
+              )}
           </div>
 
           <Controls
