@@ -715,7 +715,7 @@ export default function EnglishPage() {
                   days={days}
                   topics={topics}
                   selectedCourse={selectedCourse}
-                  setSelectedCourse={setSelectedCourse}
+                  
                   selectedDays={selectedDays}
                   setSelectedDays={setSelectedDays}
                   selectedTopics={selectedTopics}
