@@ -776,7 +776,7 @@ export default function GrammarTable({
                           cell: true
                         });
                       }}
-                      className={`border whitespace-nowrap text-left ${isRowHidden
+                      className={`border whitespace-nowrap ${col === "subject" ? "text-center" : "text-left"} ${isRowHidden
                         ? "w-0 h-0 min-h-0 p-0 border-0 overflow-hidden"
                         : hiddenColumns.includes(col)
                           ? "w-0 min-w-0 max-w-0 p-0 border-0 overflow-hidden"
@@ -790,7 +790,7 @@ export default function GrammarTable({
                         <div
                           contentEditable
                           suppressContentEditableWarning
-                          className="bg-transparent outline-none border-none p-0 m-0 text-left min-w-[20px]"
+                          className={`bg-transparent outline-none border-none p-0 m-0 min-w-[20px] ${col === "subject" ? "text-center" : "text-left"}`}
                           onInput={(e) => {
                             handleCellChange(
                               gIndex,

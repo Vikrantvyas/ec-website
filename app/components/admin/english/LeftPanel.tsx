@@ -222,6 +222,27 @@ export default function LeftPanel({
 
     return () => clearTimeout(timer);
   }, [expandedDays, selectedCourse]);
+  useEffect(() => {
+    if (expandedGrammarTopics.length === 0) return;
+
+    const lastExpandedGrammarTopicId =
+      expandedGrammarTopics[expandedGrammarTopics.length - 1];
+
+    const timer = setTimeout(() => {
+      const element = document.getElementById(
+        `grammar-topic-${lastExpandedGrammarTopicId}`
+      );
+
+      if (!element) return;
+
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [expandedGrammarTopics]);
   const toggleGrammarTopic = (id: string) => {
 
     setExpandedGrammarTopics(prev =>
@@ -506,12 +527,14 @@ export default function LeftPanel({
       >
 
         <div
-          className="w-full flex justify-between items-center px-3 py-1.5 bg-blue-100 text-[13px] font-semibold"
+          onClick={() => setShowImages(prev => !prev)}
+          className="w-full flex justify-between items-center px-3 py-1.5 bg-blue-100 text-[13px] font-semibold cursor-pointer"
         >
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setShowImages(true);
                 setImageMediaType("images");
               }}
@@ -525,7 +548,8 @@ export default function LeftPanel({
 
             <button
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setShowImages(true);
                 setImageMediaType("videos");
               }}
@@ -540,7 +564,10 @@ export default function LeftPanel({
 
           <button
             type="button"
-            onClick={() => setShowImages(prev => !prev)}
+            onClick={(e) => {
+  e.stopPropagation();
+  setShowImages(prev => !prev);
+}}
             className="ml-2 px-2 py-0.5"
           >
             {showImages ? "−" : "+"}
@@ -669,7 +696,7 @@ export default function LeftPanel({
 
         <button
           onClick={() => setShowGrammarTables(prev => !prev)}
-          className="w-full flex justify-between items-center px-3 py-1.5 bg-amber-100 text-[13px] font-semibold"
+          className="w-full flex justify-between items-center px-3 py-1.5 bg-amber-100 text-[13px] font-semibold cursor-pointer"
         >
           <span>Grammar Tables</span>
 
@@ -683,7 +710,11 @@ export default function LeftPanel({
 
             {grammarTopics.map((topic: any) => (
 
-              <div key={topic.id} className="mb-1">
+              <div
+                key={topic.id}
+                id={`grammar-topic-${topic.id}`}
+                className="mb-1"
+              >
 
                 <div
                   onClick={() => toggleGrammarTopic(topic.id)}
@@ -749,17 +780,17 @@ export default function LeftPanel({
       <div className="p-3 shrink-0 bg-white">
 
         <select
-  value={selectedCourse}
-  onChange={(e) => {
-    const courseId = e.target.value;
+          value={selectedCourse}
+          onChange={(e) => {
+            const courseId = e.target.value;
 
-    setSelectedCourse(courseId);
-    setExpandedDays([]);
-    setSelectedDays([]);
-    setSelectedTopics([]);
-  }}
-  className="border px-2 py-1.5 rounded w-full text-[13px]"
->
+            setSelectedCourse(courseId);
+            setExpandedDays([]);
+            setSelectedDays([]);
+            setSelectedTopics([]);
+          }}
+          className="border px-2 py-1.5 rounded w-full text-[13px]"
+        >
           <option value="">Select Course</option>
 
           {courses.map((c: any) => (
