@@ -443,7 +443,7 @@ export default function DemoShowcase({
                                                 setExpandedImages
                                             )
                                         }
-                                        className="flex justify-between items-center px-2 py-1.5 bg-gray-100 hover:bg-gray-200 cursor-pointer text-xs rounded"
+                                        className="sticky top-0 z-10 flex justify-between items-center px-2 py-1.5 bg-gray-100 hover:bg-gray-200 cursor-pointer text-xs rounded"
                                     >
                                         <span className="truncate">
                                             {topic.name}
@@ -690,7 +690,7 @@ export default function DemoShowcase({
                                                 course.id
                                             );
                                         }}
-                                        className={`flex justify-between items-center px-2 py-1.5 cursor-pointer rounded text-xs ${selectedCourse ===
+                                        className={`sticky top-0 z-10 flex justify-between items-center px-2 py-1.5 cursor-pointer rounded text-xs ${selectedCourse ===
                                             course.id
                                             ? "bg-green-200 font-semibold"
                                             : "bg-gray-100 hover:bg-gray-200"

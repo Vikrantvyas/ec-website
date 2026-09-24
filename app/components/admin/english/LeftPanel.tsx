@@ -565,9 +565,9 @@ export default function LeftPanel({
           <button
             type="button"
             onClick={(e) => {
-  e.stopPropagation();
-  setShowImages(prev => !prev);
-}}
+              e.stopPropagation();
+              setShowImages(prev => !prev);
+            }}
             className="ml-2 px-2 py-0.5"
           >
             {showImages ? "−" : "+"}
@@ -842,11 +842,11 @@ export default function LeftPanel({
                   >
 
                     {/* DAY ROW */}
-                    <div
-                      className={`flex shrink-0 items-center justify-between w-full py-1 px-1 text-[13px] cursor-pointer hover:bg-gray-100 ${isSelected
-                        ? "text-blue-700"
-                        : "text-gray-800"
-                        }`}
+                   <div
+  className={`sticky top-0 z-10 flex shrink-0 items-center justify-between w-full py-1 px-1 text-[13px] cursor-pointer bg-white hover:bg-gray-100 ${isSelected
+    ? "text-blue-700"
+    : "text-gray-800"
+  }`}
                       onClick={() => {
                         if (hasTopics) {
                           setExpandedDays((prev: string[]) =>
