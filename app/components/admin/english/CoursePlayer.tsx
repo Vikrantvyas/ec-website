@@ -65,6 +65,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     const [switchLanguageMode, setSwitchLanguageMode] = useState(false);
     const updateCurrentIndex = (index: number) => {
         setCurrentIndex(index);
+        setMcqAnswered(false);
         onCurrentIndexChange?.(index);
     };
     const [revealedAnswers, setRevealedAnswers] = useState<number[]>([]);
@@ -76,6 +77,8 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     const currentConversationItem =
         list[currentIndex] || conversationData[currentIndex];
     const [marks, setMarks] = useState<{ [key: number]: string }>({});
+    const [mcqAnswered, setMcqAnswered] = useState(false);
+    const [mcqSelectedOption, setMcqSelectedOption] = useState("");
     const switchLanguage = () => {
         setSwitchLanguageMode(prev => !prev);
         setShowEnglish(false);
@@ -204,6 +207,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
             setConversationStep(-1);
             setImageExplanationStep(-1);
             setMarks({});
+            setMcqAnswered(false);
 
             return;
         }
@@ -364,8 +368,25 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         conversationStep,
         currentItem: conversationData[currentIndex],
     });
-    const handleNext = () => {
-        if (isImageExplanation) {
+    const handleMcqNext = () => {
+
+        if (currentIndex < 0) {
+            updateCurrentIndex(0);
+            return;
+        }
+
+        if (currentIndex < list.length - 1) {
+            updateCurrentIndex(currentIndex + 1);
+            return;
+        }
+    };const handleNext = () => {
+
+    if (isMCQ) {
+        handleMcqNext();
+        return;
+    }
+
+    if (isImageExplanation) {
             // SHOW ALL → Prev के बाद Next से sentence वापस दिखाएँ
             if (showAll) {
                 if (currentIndex < list.length - 1) {
@@ -708,7 +729,14 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
     };
 
+    const handleMcqOptionClick = (selectedOption: string) => {
 
+        if (mcqAnswered) return;
+
+        setMcqSelectedOption(selectedOption);
+        setMcqAnswered(true);
+
+    };
     // =========================================================
     // RESET
     // =========================================================
@@ -722,6 +750,8 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         setShowEnglish(false);
         setRevealedAnswers([]);
         setMarks({});
+        setMcqAnswered(false);
+        setMcqSelectedOption("");
 
     };
 
@@ -817,49 +847,64 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
         <div className="flex flex-col h-full min-h-0">
             {isMCQ ? (
-    <div className="flex-1 min-h-0 overflow-y-auto bg-white p-6">
-        {list.length > 0 && currentIndex >= 0 ? (
-            <div className="max-w-5xl mx-auto">
+                <div className="flex-1 min-h-0 overflow-y-auto bg-white p-6">
+                    {list.length > 0 && currentIndex >= 0 ? (
+                        <div className="max-w-5xl mx-auto">
 
-                {/* Question */}
-                <div className="text-2xl font-semibold text-gray-800 mb-6">
-                    <span className="mr-3">
-                        {currentIndex + 1}.
-                    </span>
-                    {list[currentIndex]?.question || ""}
-                </div>
+                            {/* Question */}
+                            <div className="text-2xl font-semibold text-gray-800 mb-6">
+                                <span className="mr-3">
+                                    {currentIndex + 1}.
+                                </span>
+                                {list[currentIndex]?.question || ""}
+                            </div>
 
-                {/* Options */}
-                <div className="grid grid-cols-2 gap-4">
+                            {/* Options */}
+                            {/* Options */}
+                            <div className="grid grid-cols-2 gap-4">
 
-                    {[
-                        ["A", list[currentIndex]?.option_a],
-                        ["B", list[currentIndex]?.option_b],
-                        ["C", list[currentIndex]?.option_c],
-                        ["D", list[currentIndex]?.option_d],
-                    ].map(([letter, option]) => (
-                        <div
-                            key={letter}
-                            className="border-2 border-gray-300 rounded-xl p-4 text-lg bg-gray-50"
-                        >
-                            <span className="font-bold mr-3">
-                                {letter}.
-                            </span>
-                            {option}
+                                {[
+                                    ["A", list[currentIndex]?.option_a],
+                                    ["B", list[currentIndex]?.option_b],
+                                    ["C", list[currentIndex]?.option_c],
+                                    ["D", list[currentIndex]?.option_d],
+                                ].map(([letter, option]) => {
+
+                                    const isCorrect =
+                                        mcqAnswered &&
+                                        letter === list[currentIndex]?.correct_option;
+
+                                    return (
+                                        <div
+                                            key={letter}
+                                            onClick={() => handleMcqOptionClick(letter)}
+                                            className={`border-2 rounded-xl p-4 text-lg cursor-pointer transition-colors ${isCorrect
+                                                ? "border-green-500 bg-green-100"
+                                                : mcqAnswered && letter === mcqSelectedOption
+                                                    ? "border-red-500 bg-red-100"
+                                                    : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+                                                }`}
+                                        >
+                                            <span className="font-bold mr-3">
+                                                {letter}.
+                                            </span>
+
+                                            {option}
+                                        </div>
+                                    );
+                                })}
+
+                            </div>
+
                         </div>
-                    ))}
-
+                    ) : (
+                        <div className="flex h-full items-center justify-center text-gray-400 text-xl">
+                            Next दबाकर पहला Question दिखाएँ
+                        </div>
+                    )}
                 </div>
+            ) : isImageExplanation ? (
 
-            </div>
-        ) : (
-            <div className="flex h-full items-center justify-center text-gray-400 text-xl">
-                Next दबाकर पहला Question दिखाएँ
-            </div>
-        )}
-    </div>
-) : isImageExplanation ? (
-            
                 <div className="flex-1 min-h-0 flex flex-col">
                     {imageExplanationData.length > 0 && (
                         <div className="relative flex-1 min-h-0 overflow-hidden bg-white">
