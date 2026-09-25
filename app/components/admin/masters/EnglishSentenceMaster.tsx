@@ -418,6 +418,54 @@ export default function EnglishSentenceMaster({
     const selectedCourseName =
       courses.find((c: any) => c.id === selectedCourse)?.name;
 
+    // MCQ
+    if (selectedCourseName === "MCQ") {
+      const { data, error } = await supabase
+        .from("mcq_questions")
+        .select("*")
+        .eq("topic_id", selectedTopic)
+        .order("order_no");
+
+      if (error) {
+        console.error("MCQ fetch failed:", error);
+        return;
+      }
+
+      if (data) {
+        const formatted = data.map((q: any) => ({
+          id: q.id,
+          question: q.question,
+          option_a: q.option_a,
+          option_b: q.option_b,
+          option_c: q.option_c,
+          option_d: q.option_d,
+          correct_option: q.correct_option,
+          explanation: q.explanation,
+          sentence: [
+            q.question,
+            q.option_a,
+            q.option_b,
+            q.option_c,
+            q.option_d,
+            q.correct_option === "A"
+              ? q.option_a
+              : q.correct_option === "B"
+                ? q.option_b
+                : q.correct_option === "C"
+                  ? q.option_c
+                  : q.option_d,
+          ].join(" - "),
+          order_no: q.order_no,
+        }));
+
+        setSentences(formatted);
+      }
+
+      return;
+    }
+
+    // Conversation
+
     const lines = bulkText
       .split("\n")
       .map((l: string) => l.trim())
@@ -426,8 +474,72 @@ export default function EnglishSentenceMaster({
     const maxOrder = sentences.length > 0
       ? Math.max(...sentences.map(s => s.order_no || 0))
       : 0;
+    // MCQ
+    if (selectedCourseName === "MCQ") {
+      const parts = text
+        .split("-")
+        .map((p: string) => p.trim())
+        .filter((p: string) => p);
+
+      if (parts.length !== 6) {
+        alert(
+          "MCQ में कुल 6 parts होने चाहिए:\nQuestion - Option 1 - Option 2 - Option 3 - Option 4 - Correct Answer"
+        );
+        return;
+      }
+
+      const [
+        question,
+        optionA,
+        optionB,
+        optionC,
+        optionD,
+        correctAnswer,
+      ] = parts;
+
+      let correctOption = "";
+
+      if (correctAnswer === optionA) correctOption = "A";
+      else if (correctAnswer === optionB) correctOption = "B";
+      else if (correctAnswer === optionC) correctOption = "C";
+      else if (correctAnswer === optionD) correctOption = "D";
+
+      if (!correctOption) {
+        alert(
+          "Correct Answer चारों options में से किसी एक से बिल्कुल match होना चाहिए।"
+        );
+        return;
+      }
+
+      const { error } = await supabase
+        .from("mcq_questions")
+        .insert([
+          {
+            topic_id: selectedTopic,
+            question,
+            option_a: optionA,
+            option_b: optionB,
+            option_c: optionC,
+            option_d: optionD,
+            correct_option: correctOption,
+            order_no: Number(orderNo || maxOrder + 1),
+            status: true,
+          },
+        ]);
+
+      if (error) {
+        alert("MCQ save failed: " + error.message);
+        return;
+      }
+
+      setText("");
+      setOrderNo("");
+      fetchSentences();
+      return;
+    }
 
     // Conversation
+    
     if (
       selectedCourseName === "Conversation" ||
       selectedCourseName === "Image Explanation"
@@ -903,7 +1015,11 @@ export default function EnglishSentenceMaster({
           </>
         )}
 
-        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Sentence"
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder={
+  courses.find((c: any) => c.id === selectedCourse)?.name === "MCQ"
+    ? "Question - Option 1 - Option 2 - Option 3 - Option 4 - Correct Answer"
+    : "Sentence"
+}
           className="border px-2 py-1 rounded flex-1 min-w-[300px]" />
 
         <input value={orderNo} onChange={(e) => setOrderNo(e.target.value)}

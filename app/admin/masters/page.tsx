@@ -35,6 +35,7 @@ import FeeMaster from "@/app/components/admin/masters/FeeMaster";
 /* 🔥 ENGLISH MODULE */
 import EnglishSentenceMaster from "@/app/components/admin/masters/EnglishSentenceMaster";
 import GrammarTableMaster from "@/app/components/admin/masters/GrammarTableMaster";
+import EnglishMCQMaster from "@/app/components/admin/masters/EnglishMCQMaster";
 
 export default function MastersPage() {
 
@@ -79,6 +80,7 @@ export default function MastersPage() {
     { label: "Days", value: "english_days" },
     { label: "Topics", value: "english_topics" },
     { label: "Sentences", value: "english_sentences" },
+    { label: "MCQ", value: "english_mcq" },
     { label: "Grammar Tables", value: "grammar_tables" },
     { label: "Image Topics", value: "image_topics" },
     { label: "Images", value: "images" },
@@ -340,7 +342,19 @@ export default function MastersPage() {
                 }}
               />
             )}
-
+{selectedMaster === "english_mcq" && (
+  <EnglishMCQMaster
+    initialTopicId={
+      selectedEnglishTopicId
+    }
+    initialDayId={
+      selectedEnglishDayId
+    }
+    initialCourseId={
+      selectedEnglishCourseId
+    }
+  />
+)}
             {selectedMaster === "english_sentences" && (
               <EnglishSentenceMaster
                 initialTopicId={
