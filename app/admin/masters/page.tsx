@@ -342,19 +342,19 @@ export default function MastersPage() {
                 }}
               />
             )}
-{selectedMaster === "english_mcq" && (
-  <EnglishMCQMaster
-    initialTopicId={
-      selectedEnglishTopicId
-    }
-    initialDayId={
-      selectedEnglishDayId
-    }
-    initialCourseId={
-      selectedEnglishCourseId
-    }
-  />
-)}
+            {selectedMaster === "english_mcq" && (
+              <EnglishMCQMaster
+                initialTopicId={
+                  selectedEnglishTopicId
+                }
+                initialDayId={
+                  selectedEnglishDayId
+                }
+                initialCourseId={
+                  selectedEnglishCourseId
+                }
+              />
+            )}
             {selectedMaster === "english_sentences" && (
               <EnglishSentenceMaster
                 initialTopicId={

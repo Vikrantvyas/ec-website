@@ -314,7 +314,37 @@ export default function EnglishPage() {
 
       return;
     }
+    if (selectedCourseName === "MCQ") {
+      const { data: counts, error: countError } = await supabase
+        .from("mcq_questions")
+        .select("topic_id")
+        .in(
+          "topic_id",
+          data.map((topic: any) => topic.id)
+        );
 
+      if (countError) {
+        console.error("MCQ COUNT ERROR:", countError);
+        setTopics(data);
+        return;
+      }
+
+      const countMap: Record<string, number> = {};
+
+      (counts || []).forEach((row: any) => {
+        countMap[row.topic_id] =
+          (countMap[row.topic_id] || 0) + 1;
+      });
+
+      setTopics(
+        data.map((topic: any) => ({
+          ...topic,
+          sentence_count: countMap[topic.id] || 0,
+        }))
+      );
+
+      return;
+    }
     const { data: vocabularyCounts, error: vocabularyError } =
       await supabase
         .from("topics")
@@ -438,7 +468,50 @@ export default function EnglishPage() {
       setSentences(sorted);
       return;
     }
+    if (selectedCourseName === "MCQ") {
+      if (selectedTopics.length === 0) {
+        setSentences([]);
+        return;
+      }
 
+      const { data: questions, error } = await supabase
+        .from("mcq_questions")
+        .select(`
+      id,
+      topic_id,
+      question,
+      option_a,
+      option_b,
+      option_c,
+      option_d,
+      correct_option,
+      explanation,
+      order_no
+    `)
+        .in("topic_id", selectedTopics)
+        .order("topic_id")
+        .order("order_no");
+
+      if (error) {
+        console.error("MCQ QUESTIONS ERROR:", error);
+        setSentences([]);
+        return;
+      }
+
+      const sorted = (questions || []).sort((a: any, b: any) => {
+        const indexA = selectedTopics.indexOf(a.topic_id);
+        const indexB = selectedTopics.indexOf(b.topic_id);
+
+        if (indexA === indexB) {
+          return (a.order_no ?? 0) - (b.order_no ?? 0);
+        }
+
+        return indexA - indexB;
+      });
+
+      setSentences(sorted);
+      return;
+    }
     const topicIds = selectedTopics;
 
     if (topicIds.length === 0) {
@@ -698,8 +771,9 @@ export default function EnglishPage() {
               selectedReactionMeme={selectedReactionMeme}
               showImages={showImages}
               setShowImages={setShowImages}
-              isConversation={isConversation}
+                           isConversation={isConversation}
               isImageExplanation={isImageExplanation}
+              isMCQ={selectedCourseName === "MCQ"}
               conversationImageUrl={conversationImageUrl}
               conversationMobileImageUrl={conversationMobileImageUrl}
               setSelectedImageId={setSelectedImageId}
@@ -715,7 +789,7 @@ export default function EnglishPage() {
                   days={days}
                   topics={topics}
                   selectedCourse={selectedCourse}
-                  
+
                   selectedDays={selectedDays}
                   setSelectedDays={setSelectedDays}
                   selectedTopics={selectedTopics}
@@ -743,6 +817,7 @@ export default function EnglishPage() {
             sentences={sentences}
             isConversation={isConversation}
             isImageExplanation={isImageExplanation}
+            isMCQ={selectedCourseName === "MCQ"}
             showAll={showAll}
             toggleShowAll={toggleShowAll}
             setShowAll={setShowAll}

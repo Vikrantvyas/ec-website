@@ -34,6 +34,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         conversationImageUrl,
         conversationMobileImageUrl,
         isImageExplanation,
+        isMCQ,
     } = props;
     const conversationData = (data || []).map((item: any) => ({
         ...item,
@@ -742,16 +743,16 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
 
     /*
-      SHOW ALL:
-      All sentences.
-     
-      NORMAL:
-      All sentences shown so far.
-     
-      COMPACT:
-      All sentences shown so far,
-      but the latest sentence is automatically
-      brought into view.
+    SHOW ALL:
+    All sentences.
+    
+    NORMAL:
+    All sentences shown so far.
+    
+    COMPACT:
+    All sentences shown so far,
+    but the latest sentence is automatically
+    brought into view.
     */
 
     const visible =
@@ -815,7 +816,50 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     return (
 
         <div className="flex flex-col h-full min-h-0">
-            {isImageExplanation ? (
+            {isMCQ ? (
+    <div className="flex-1 min-h-0 overflow-y-auto bg-white p-6">
+        {list.length > 0 && currentIndex >= 0 ? (
+            <div className="max-w-5xl mx-auto">
+
+                {/* Question */}
+                <div className="text-2xl font-semibold text-gray-800 mb-6">
+                    <span className="mr-3">
+                        {currentIndex + 1}.
+                    </span>
+                    {list[currentIndex]?.question || ""}
+                </div>
+
+                {/* Options */}
+                <div className="grid grid-cols-2 gap-4">
+
+                    {[
+                        ["A", list[currentIndex]?.option_a],
+                        ["B", list[currentIndex]?.option_b],
+                        ["C", list[currentIndex]?.option_c],
+                        ["D", list[currentIndex]?.option_d],
+                    ].map(([letter, option]) => (
+                        <div
+                            key={letter}
+                            className="border-2 border-gray-300 rounded-xl p-4 text-lg bg-gray-50"
+                        >
+                            <span className="font-bold mr-3">
+                                {letter}.
+                            </span>
+                            {option}
+                        </div>
+                    ))}
+
+                </div>
+
+            </div>
+        ) : (
+            <div className="flex h-full items-center justify-center text-gray-400 text-xl">
+                Next दबाकर पहला Question दिखाएँ
+            </div>
+        )}
+    </div>
+) : isImageExplanation ? (
+            
                 <div className="flex-1 min-h-0 flex flex-col">
                     {imageExplanationData.length > 0 && (
                         <div className="relative flex-1 min-h-0 overflow-hidden bg-white">
@@ -1043,38 +1087,38 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                 </div>
 
                                 {switchLanguageMode ? (
-    <>
-        <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600">
-            {showAll
-                ? (
-                    i < currentIndex ||
-                    (i === currentIndex && showAllPrevEnglish)
-                )
-                    ? english
-                    : ""
-                : i < currentIndex
-                    ? english
-                    : i === currentIndex
-                        ? english
-                        : ""}
-        </div>
+                                    <>
+                                        <div className="w-1/2 text-base leading-[1.25rem] font-normal text-green-600">
+                                            {showAll
+                                                ? (
+                                                    i < currentIndex ||
+                                                    (i === currentIndex && showAllPrevEnglish)
+                                                )
+                                                    ? english
+                                                    : ""
+                                                : i < currentIndex
+                                                    ? english
+                                                    : i === currentIndex
+                                                        ? english
+                                                        : ""}
+                                        </div>
 
-        <div className="w-1/2 text-base leading-[1.25rem] text-red-600">
-            {showAll
-                ? (
-                    i < currentIndex ||
-                    (i === currentIndex && showAllPrevEnglish)
-                )
-                    ? hindi
-                    : ""
-                : i < currentIndex
-                    ? hindi
-                    : i === currentIndex && !showEnglish
-                        ? hindi
-                        : ""}
-        </div>
-    </>
-) : (
+                                        <div className="w-1/2 text-base leading-[1.25rem] text-red-600">
+                                            {showAll
+                                                ? (
+                                                    i < currentIndex ||
+                                                    (i === currentIndex && showAllPrevEnglish)
+                                                )
+                                                    ? hindi
+                                                    : ""
+                                                : i < currentIndex
+                                                    ? hindi
+                                                    : i === currentIndex && !showEnglish
+                                                        ? hindi
+                                                        : ""}
+                                        </div>
+                                    </>
+                                ) : (
                                     <>
                                         <div className="w-1/2 text-base leading-[1.25rem] text-red-600">
                                             {hindi}

@@ -1566,22 +1566,22 @@ export default function ImageMaster({
                           }
                           onDragEnd={handleImageDragEnd}
                           className={`hover:bg-gray-50 cursor-move ${draggedImageId === String(image.id)
-                              ? "opacity-40"
-                              : ""
+                            ? "opacity-40"
+                            : ""
                             }`}
                         >
 
                           <td className="border border-gray-300 px-3 py-2">
-  <div className="flex items-center gap-2">
-    <span className="text-gray-400 text-lg">
-      ⋮⋮
-    </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400 text-lg">
+                                ⋮⋮
+                              </span>
 
-    <span>
-      {index + 1}
-    </span>
-  </div>
-</td>
+                              <span>
+                                {index + 1}
+                              </span>
+                            </div>
+                          </td>
                           <td className="border border-gray-300 px-3 py-2">
                             Image
                           </td>

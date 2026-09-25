@@ -46,6 +46,7 @@ export default function MainBoard({
   conversationImageUrl,
   conversationMobileImageUrl,
   isImageExplanation,
+  isMCQ,
   studentMode,
   selectedReactionMeme,
 }: any) {
@@ -425,6 +426,7 @@ export default function MainBoard({
                 conversationImageUrl={conversationImageUrl}
                 conversationMobileImageUrl={conversationMobileImageUrl}
                 isImageExplanation={isImageExplanation}
+                isMCQ={isMCQ}
               />
             </div>
 

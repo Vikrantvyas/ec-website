@@ -108,28 +108,28 @@ export default function MemePanel({
         }
 
         if (meme.media_type === "video") {
-    const thumbnailUrl = getPublicUrl(meme.thumbnail_path || "");
+            const thumbnailUrl = getPublicUrl(meme.thumbnail_path || "");
 
-    if (thumbnailUrl) {
-        return (
-            <img
-                src={thumbnailUrl}
-                alt={meme.name}
-                className="w-full h-full object-contain"
-            />
-        );
-    }
+            if (thumbnailUrl) {
+                return (
+                    <img
+                        src={thumbnailUrl}
+                        alt={meme.name}
+                        className="w-full h-full object-contain"
+                    />
+                );
+            }
 
-    return (
-        <video
-            src={mediaUrl}
-            muted
-            playsInline
-            preload="metadata"
-            className="w-full h-full object-contain pointer-events-none"
-        />
-    );
-}
+            return (
+                <video
+                    src={mediaUrl}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    className="w-full h-full object-contain pointer-events-none"
+                />
+            );
+        }
 
         return (
             <div className="w-full h-full flex flex-col items-center justify-center gap-2 px-1">
@@ -159,7 +159,7 @@ export default function MemePanel({
                 overflow-hidden
             "
         >
-           
+
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-2">
@@ -209,13 +209,12 @@ export default function MemePanel({
     items-center
     justify-center
     shadow
-    ${
-        meme.media_type === "video"
-            ? "bg-red-600"
-            : meme.media_type === "image"
-                ? "bg-blue-600"
-                : "bg-green-600"
-    }
+    ${meme.media_type === "video"
+                                                ? "bg-red-600"
+                                                : meme.media_type === "image"
+                                                    ? "bg-blue-600"
+                                                    : "bg-green-600"
+                                            }
 `}
                                     >
                                         {meme.media_type === "video" && (

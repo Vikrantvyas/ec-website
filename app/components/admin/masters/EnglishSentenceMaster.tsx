@@ -133,7 +133,53 @@ export default function EnglishSentenceMaster({
     const selectedCourseName =
       courses.find((c: any) => c.id === selectedCourse)?.name;
 
-    // Conversation
+    // MCQ
+    if (selectedCourseName === "MCQ") {
+      const { data, error } = await supabase
+        .from("mcq_questions")
+        .select("*")
+        .eq("topic_id", selectedTopic)
+        .order("order_no");
+
+      if (error) {
+        console.error("MCQ fetch failed:", error);
+        alert("MCQ fetch failed: " + error.message);
+        return;
+      }
+
+      if (data) {
+        const formatted = data.map((q: any) => ({
+          id: q.id,
+          question: q.question,
+          option_a: q.option_a,
+          option_b: q.option_b,
+          option_c: q.option_c,
+          option_d: q.option_d,
+          correct_option: q.correct_option,
+          explanation: q.explanation,
+          sentence: [
+            q.question,
+            q.option_a,
+            q.option_b,
+            q.option_c,
+            q.option_d,
+            q.correct_option === "A"
+              ? q.option_a
+              : q.correct_option === "B"
+                ? q.option_b
+                : q.correct_option === "C"
+                  ? q.option_c
+                  : q.option_d,
+          ].join(" - "),
+          order_no: q.order_no,
+        }));
+
+        setSentences(formatted);
+      }
+
+      return;
+    }
+
     // Conversation + Image Explanation
     if (
       selectedCourseName === "Conversation" ||
@@ -143,19 +189,20 @@ export default function EnglishSentenceMaster({
         const { data, error } = await supabase
           .from("image_explanation_questions")
           .select(`
-      id,
-      topic_id,
-      hindi_question,
-      english_question,
-      hindi_answer,
-      english_answer,
-      order_no
-    `)
+          id,
+          topic_id,
+          hindi_question,
+          english_question,
+          hindi_answer,
+          english_answer,
+          order_no
+        `)
           .eq("topic_id", selectedTopic)
           .order("order_no");
 
         if (error) {
           console.error("Image Explanation fetch failed:", error);
+          alert("Image Explanation fetch failed: " + error.message);
           return;
         }
 
@@ -178,6 +225,7 @@ export default function EnglishSentenceMaster({
 
         return;
       }
+
       const { data, error } = await supabase
         .from("conversation_questions")
         .select(`
@@ -198,6 +246,7 @@ export default function EnglishSentenceMaster({
 
       if (error) {
         console.error("Conversation fetch failed:", error);
+        alert("Conversation fetch failed: " + error.message);
         return;
       }
 
@@ -226,11 +275,17 @@ export default function EnglishSentenceMaster({
     }
 
     // Existing courses
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("vocabulary")
       .select("*")
       .eq("topic_id", selectedTopic)
       .order("order_no");
+
+    if (error) {
+      console.error("Vocabulary fetch failed:", error);
+      alert("Vocabulary fetch failed: " + error.message);
+      return;
+    }
 
     if (data) {
       const formatted = data.map((d: any) => ({
@@ -244,7 +299,6 @@ export default function EnglishSentenceMaster({
       setSentences(formatted);
     }
   };
-
   const addCourse = async () => {
     if (!newCourse) return;
     const { data } = await supabase.from("english_courses").insert([{ name: newCourse }]).select();
@@ -418,140 +472,92 @@ export default function EnglishSentenceMaster({
     const selectedCourseName =
       courses.find((c: any) => c.id === selectedCourse)?.name;
 
-    // MCQ
-    if (selectedCourseName === "MCQ") {
-      const { data, error } = await supabase
-        .from("mcq_questions")
-        .select("*")
-        .eq("topic_id", selectedTopic)
-        .order("order_no");
-
-      if (error) {
-        console.error("MCQ fetch failed:", error);
-        return;
-      }
-
-      if (data) {
-        const formatted = data.map((q: any) => ({
-          id: q.id,
-          question: q.question,
-          option_a: q.option_a,
-          option_b: q.option_b,
-          option_c: q.option_c,
-          option_d: q.option_d,
-          correct_option: q.correct_option,
-          explanation: q.explanation,
-          sentence: [
-            q.question,
-            q.option_a,
-            q.option_b,
-            q.option_c,
-            q.option_d,
-            q.correct_option === "A"
-              ? q.option_a
-              : q.correct_option === "B"
-                ? q.option_b
-                : q.correct_option === "C"
-                  ? q.option_c
-                  : q.option_d,
-          ].join(" - "),
-          order_no: q.order_no,
-        }));
-
-        setSentences(formatted);
-      }
-
-      return;
-    }
-
-    // Conversation
-
     const lines = bulkText
       .split("\n")
       .map((l: string) => l.trim())
       .filter((l: string) => l);
 
-    const maxOrder = sentences.length > 0
-      ? Math.max(...sentences.map(s => s.order_no || 0))
-      : 0;
+    const maxOrder =
+      sentences.length > 0
+        ? Math.max(...sentences.map(s => s.order_no || 0))
+        : 0;
+
     // MCQ
     if (selectedCourseName === "MCQ") {
-      const parts = text
-        .split("-")
-        .map((p: string) => p.trim())
-        .filter((p: string) => p);
+      const questionsData = [];
 
-      if (parts.length !== 6) {
-        alert(
-          "MCQ में कुल 6 parts होने चाहिए:\nQuestion - Option 1 - Option 2 - Option 3 - Option 4 - Correct Answer"
-        );
-        return;
-      }
+      for (let i = 0; i < lines.length; i++) {
+        const parts = lines[i]
+          .split("-")
+          .map((p: string) => p.trim())
+          .filter((p: string) => p);
 
-      const [
-        question,
-        optionA,
-        optionB,
-        optionC,
-        optionD,
-        correctAnswer,
-      ] = parts;
+        if (parts.length !== 6) {
+          alert(
+            `Line ${i + 1} में 6 parts होने चाहिए:\nQuestion - Option 1 - Option 2 - Option 3 - Option 4 - Correct Answer`
+          );
+          return;
+        }
 
-      let correctOption = "";
+        const [
+          question,
+          optionA,
+          optionB,
+          optionC,
+          optionD,
+          correctAnswer,
+        ] = parts;
 
-      if (correctAnswer === optionA) correctOption = "A";
-      else if (correctAnswer === optionB) correctOption = "B";
-      else if (correctAnswer === optionC) correctOption = "C";
-      else if (correctAnswer === optionD) correctOption = "D";
+        let correctOption = "";
 
-      if (!correctOption) {
-        alert(
-          "Correct Answer चारों options में से किसी एक से बिल्कुल match होना चाहिए।"
-        );
-        return;
+        if (correctAnswer === optionA) correctOption = "A";
+        else if (correctAnswer === optionB) correctOption = "B";
+        else if (correctAnswer === optionC) correctOption = "C";
+        else if (correctAnswer === optionD) correctOption = "D";
+
+        if (!correctOption) {
+          alert(
+            `Line ${i + 1} में Correct Answer चारों options में से किसी एक से बिल्कुल match होना चाहिए।`
+          );
+          return;
+        }
+
+        questionsData.push({
+          topic_id: selectedTopic,
+          question,
+          option_a: optionA,
+          option_b: optionB,
+          option_c: optionC,
+          option_d: optionD,
+          correct_option: correctOption,
+          order_no: maxOrder + i + 1,
+          status: true,
+        });
       }
 
       const { error } = await supabase
         .from("mcq_questions")
-        .insert([
-          {
-            topic_id: selectedTopic,
-            question,
-            option_a: optionA,
-            option_b: optionB,
-            option_c: optionC,
-            option_d: optionD,
-            correct_option: correctOption,
-            order_no: Number(orderNo || maxOrder + 1),
-            status: true,
-          },
-        ]);
+        .insert(questionsData);
 
       if (error) {
-        alert("MCQ save failed: " + error.message);
+        alert("MCQ Bulk Save failed: " + error.message);
         return;
       }
 
-      setText("");
-      setOrderNo("");
+      setBulkText("");
       fetchSentences();
       return;
     }
 
-    // Conversation
-    
+    // Conversation + Image Explanation
     if (
       selectedCourseName === "Conversation" ||
       selectedCourseName === "Image Explanation"
     ) {
       if (selectedCourseName === "Image Explanation") {
-
-
-
         const questionsData = [];
 
         for (let i = 0; i < lines.length; i++) {
-
           const parts = lines[i]
             .split("-")
             .map((p: string) => p.trim())
@@ -590,8 +596,8 @@ export default function EnglishSentenceMaster({
         fetchSentences();
         return;
       }
-      for (let i = 0; i < lines.length; i++) {
 
+      for (let i = 0; i < lines.length; i++) {
         const parts = lines[i]
           .split("-")
           .map((p: string) => p.trim())
@@ -691,15 +697,66 @@ export default function EnglishSentenceMaster({
     if (clipboardSentences.length === 0 || !selectedTopic) return;
 
     let insertedIds: string[] = [];
+    let insertTable = "";
 
     try {
-      const maxOrder = sentences.length > 0
-        ? Math.max(...sentences.map(s => s.order_no || 0))
-        : 0;
+      const maxOrder =
+        sentences.length > 0
+          ? Math.max(...sentences.map(s => s.order_no || 0))
+          : 0;
+
       const selectedCourseName =
         courses.find((c: any) => c.id === selectedCourse)?.name;
 
+      // MCQ
+      if (selectedCourseName === "MCQ") {
+        insertTable = "mcq_questions";
+
+        const data = clipboardSentences.map((s, i) => ({
+          topic_id: selectedTopic,
+          question: s.question,
+          option_a: s.option_a,
+          option_b: s.option_b,
+          option_c: s.option_c,
+          option_d: s.option_d,
+          correct_option: s.correct_option,
+          explanation: s.explanation || null,
+          order_no: maxOrder + i + 1,
+          status: true,
+        }));
+
+        const { data: insertedData, error: insertError } = await supabase
+          .from("mcq_questions")
+          .insert(data)
+          .select("id");
+
+        if (insertError) throw insertError;
+
+        insertedIds = (insertedData || []).map((row: any) => row.id);
+
+        if (clipboardMode === "cut") {
+          const originalIds = clipboardSentences.map((s) => s.id);
+
+          const { error: deleteError } = await supabase
+            .from("mcq_questions")
+            .delete()
+            .in("id", originalIds);
+
+          if (deleteError) throw deleteError;
+        }
+
+        setClipboardSentences([]);
+        setClipboardMode(null);
+        setSelectedSentenceIds([]);
+
+        fetchSentences();
+        return;
+      }
+
+      // Image Explanation
       if (selectedCourseName === "Image Explanation") {
+        insertTable = "image_explanation_questions";
+
         const data = clipboardSentences.map((s, i) => {
           const parts = s.sentence
             .split("-")
@@ -743,6 +800,10 @@ export default function EnglishSentenceMaster({
         fetchSentences();
         return;
       }
+
+      // Existing courses
+      insertTable = "vocabulary";
+
       const data = clipboardSentences.map((s, i) => ({
         topic_id: selectedTopic,
         hindi: s.hindi,
@@ -750,7 +811,6 @@ export default function EnglishSentenceMaster({
         order_no: maxOrder + i + 1
       }));
 
-      // 1. Insert all selected sentences
       const { data: insertedData, error: insertError } = await supabase
         .from("vocabulary")
         .insert(data)
@@ -760,7 +820,6 @@ export default function EnglishSentenceMaster({
 
       insertedIds = (insertedData || []).map((row: any) => row.id);
 
-      // 2. If CUT, delete original sentences
       if (clipboardMode === "cut") {
         const originalIds = clipboardSentences.map(s => s.id);
 
@@ -772,7 +831,6 @@ export default function EnglishSentenceMaster({
         if (deleteError) throw deleteError;
       }
 
-      // 3. Clear clipboard and selection
       setClipboardSentences([]);
       setClipboardMode(null);
       setSelectedSentenceIds([]);
@@ -780,13 +838,12 @@ export default function EnglishSentenceMaster({
       fetchSentences();
 
     } catch (error) {
-
       console.error("Paste Sentences failed:", error);
 
-      // Roll back newly inserted sentences if something failed
-      if (insertedIds.length > 0) {
+      // Rollback newly inserted records
+      if (insertedIds.length > 0 && insertTable) {
         await supabase
-          .from("vocabulary")
+          .from(insertTable)
           .delete()
           .in("id", insertedIds);
       }
@@ -809,11 +866,13 @@ export default function EnglishSentenceMaster({
       courses.find((c: any) => c.id === selectedCourse)?.name;
 
     const tableName =
-      selectedCourseName === "Image Explanation"
-        ? "image_explanation_questions"
-        : selectedCourseName === "Conversation"
-          ? "conversation_questions"
-          : "vocabulary";
+      selectedCourseName === "MCQ"
+        ? "mcq_questions"
+        : selectedCourseName === "Image Explanation"
+          ? "image_explanation_questions"
+          : selectedCourseName === "Conversation"
+            ? "conversation_questions"
+            : "vocabulary";
 
     const { error } = await supabase
       .from(tableName)
@@ -835,11 +894,13 @@ export default function EnglishSentenceMaster({
       courses.find((c: any) => c.id === selectedCourse)?.name;
 
     const tableName =
-      selectedCourseName === "Image Explanation"
-        ? "image_explanation_questions"
-        : selectedCourseName === "Conversation"
-          ? "conversation_questions"
-          : "vocabulary";
+      selectedCourseName === "MCQ"
+        ? "mcq_questions"
+        : selectedCourseName === "Image Explanation"
+          ? "image_explanation_questions"
+          : selectedCourseName === "Conversation"
+            ? "conversation_questions"
+            : "vocabulary";
 
     const { error } = await supabase
       .from(tableName)
@@ -919,13 +980,61 @@ export default function EnglishSentenceMaster({
         alert("Conversation update failed: " + error.message);
         return;
       }
+    } else if (selectedCourseName === "MCQ") {
+      if (parts.length !== 6) {
+        alert(
+          "MCQ में कुल 6 parts होने चाहिए:\nQuestion - Option 1 - Option 2 - Option 3 - Option 4 - Correct Answer"
+        );
+        return;
+      }
+
+      const [
+        question,
+        optionA,
+        optionB,
+        optionC,
+        optionD,
+        correctAnswer,
+      ] = parts;
+
+      let correctOption = "";
+
+      if (correctAnswer === optionA) correctOption = "A";
+      else if (correctAnswer === optionB) correctOption = "B";
+      else if (correctAnswer === optionC) correctOption = "C";
+      else if (correctAnswer === optionD) correctOption = "D";
+
+      if (!correctOption) {
+        alert(
+          "Correct Answer चारों options में से किसी एक से बिल्कुल match होना चाहिए।"
+        );
+        return;
+      }
+
+      const { error } = await supabase
+        .from("mcq_questions")
+        .update({
+          question,
+          option_a: optionA,
+          option_b: optionB,
+          option_c: optionC,
+          option_d: optionD,
+          correct_option: correctOption,
+          order_no: Number(editOrder),
+        })
+        .eq("id", editId);
+
+      if (error) {
+        alert("MCQ update failed: " + error.message);
+        return;
+      }
     } else {
       await supabase
         .from("vocabulary")
         .update({
           hindi: parts[0] || "",
           english: parts.slice(1).join(" ").trim() || "",
-          order_no: Number(editOrder)
+          order_no: Number(editOrder),
         })
         .eq("id", editId);
     }
@@ -950,11 +1059,13 @@ export default function EnglishSentenceMaster({
       courses.find((c: any) => c.id === selectedCourse)?.name;
 
     const tableName =
-      selectedCourseName === "Image Explanation"
-        ? "image_explanation_questions"
-        : selectedCourseName === "Conversation"
-          ? "conversation_questions"
-          : "vocabulary";
+      selectedCourseName === "MCQ"
+        ? "mcq_questions"
+        : selectedCourseName === "Image Explanation"
+          ? "image_explanation_questions"
+          : selectedCourseName === "Conversation"
+            ? "conversation_questions"
+            : "vocabulary";
 
     for (let i = 0; i < sentences.length; i++) {
 
@@ -1016,10 +1127,10 @@ export default function EnglishSentenceMaster({
         )}
 
         <input value={text} onChange={(e) => setText(e.target.value)} placeholder={
-  courses.find((c: any) => c.id === selectedCourse)?.name === "MCQ"
-    ? "Question - Option 1 - Option 2 - Option 3 - Option 4 - Correct Answer"
-    : "Sentence"
-}
+          courses.find((c: any) => c.id === selectedCourse)?.name === "MCQ"
+            ? "Question - Option 1 - Option 2 - Option 3 - Option 4 - Correct Answer"
+            : "Sentence"
+        }
           className="border px-2 py-1 rounded flex-1 min-w-[300px]" />
 
         <input value={orderNo} onChange={(e) => setOrderNo(e.target.value)}
@@ -1070,7 +1181,11 @@ export default function EnglishSentenceMaster({
             value={bulkText}
             onChange={(e) => setBulkText(e.target.value)}
             className="border w-full h-32 p-2 rounded"
-            placeholder="Paste sentences (one per line)"
+            placeholder={
+              courses.find((c: any) => c.id === selectedCourse)?.name === "MCQ"
+                ? "One MCQ per line:\nQuestion - Option 1 - Option 2 - Option 3 - Option 4 - Correct Answer"
+                : "Paste sentences (one per line)"
+            }
           />
           <button onClick={addBulk} className="mt-2 bg-green-600 text-white px-3 py-1 rounded">
             Add Bulk
