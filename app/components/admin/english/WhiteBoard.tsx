@@ -22,26 +22,26 @@ export default function WhiteBoard() {
   const textareaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
   // ---------------- HISTORY ----------------
-  const saveHistory = (newItems:any[]) => {
+  const saveHistory = (newItems: any[]) => {
     historyRef.current.push(items);
     setItems(newItems);
     redoRef.current = [];
   };
 
   // ---------------- EDIT ----------------
-  const startEditing = (id:string) => {
+  const startEditing = (id: string) => {
     setEditingId(id);
     setSelectedId(id);
   };
 
-  const updateText = (id:string, value:string) => {
+  const updateText = (id: string, value: string) => {
     setItems(prev =>
-      prev.map(i => i.id === id ? { ...i, text:value } : i)
+      prev.map(i => i.id === id ? { ...i, text: value } : i)
     );
   };
 
   // ---------------- ADD ----------------
-  const addText = (e:any) => {
+  const addText = (e: any) => {
 
     // अगर drag हो रहा है तो नया text मत बनाओ
     if (draggingId) return;
@@ -57,7 +57,7 @@ export default function WhiteBoard() {
 
     const newItems = [
       ...items,
-      { id, text:"", x, y, color, underline, fontSize }
+      { id, text: "", x, y, color, underline, fontSize }
     ];
 
     saveHistory(newItems);
@@ -66,8 +66,8 @@ export default function WhiteBoard() {
 
   // ---------------- DELETE ----------------
   const deleteItem = () => {
-    if(!selectedId) return;
-    saveHistory(items.filter(i=>i.id !== selectedId));
+    if (!selectedId) return;
+    saveHistory(items.filter(i => i.id !== selectedId));
     setSelectedId(null);
     setEditingId(null);
   };
@@ -80,8 +80,8 @@ export default function WhiteBoard() {
 
   // ---------------- CLIPBOARD ----------------
   const copy = () => {
-    if(!selectedId) return;
-    clipboardRef.current = items.find(i=>i.id === selectedId);
+    if (!selectedId) return;
+    clipboardRef.current = items.find(i => i.id === selectedId);
   };
 
   const cut = () => {
@@ -90,7 +90,7 @@ export default function WhiteBoard() {
   };
 
   const paste = () => {
-    if(!clipboardRef.current) return;
+    if (!clipboardRef.current) return;
 
     const item = clipboardRef.current;
 
@@ -107,14 +107,14 @@ export default function WhiteBoard() {
   };
 
   // ---------------- DRAG ----------------
-  const handleMouseDown = (id:string, e:any) => {
+  const handleMouseDown = (id: string, e: any) => {
     e.stopPropagation();
     setDraggingId(id);
     setSelectedId(id);
   };
 
-  const handleMouseMove = (e:any) => {
-    if(!draggingId) return;
+  const handleMouseMove = (e: any) => {
+    if (!draggingId) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
 
@@ -136,7 +136,7 @@ export default function WhiteBoard() {
 
   // ---------------- UNDO / REDO ----------------
   const undo = () => {
-    if(historyRef.current.length === 0) return;
+    if (historyRef.current.length === 0) return;
     const prev = historyRef.current.pop();
     redoRef.current.push(items);
     setItems(prev || []);
@@ -145,7 +145,7 @@ export default function WhiteBoard() {
   };
 
   const redo = () => {
-    if(redoRef.current.length === 0) return;
+    if (redoRef.current.length === 0) return;
     const next = redoRef.current.pop();
     historyRef.current.push(items);
     setItems(next || []);
@@ -157,108 +157,105 @@ export default function WhiteBoard() {
 
 
   // ---------------- SHORTCUTS ----------------
-  useEffect(()=>{
-    const handleKey = (e:any)=>{
+  useEffect(() => {
+    const handleKey = (e: any) => {
 
-      if(e.ctrlKey && e.key === "z") undo();
-      if(e.ctrlKey && e.key === "y") redo();
-      if(e.ctrlKey && e.key === "c") copy();
-      if(e.ctrlKey && e.key === "x") cut();
-      if(e.ctrlKey && e.key === "v") paste();
+      if (e.ctrlKey && e.key === "z") undo();
+      if (e.ctrlKey && e.key === "y") redo();
+      if (e.ctrlKey && e.key === "c") copy();
+      if (e.ctrlKey && e.key === "x") cut();
+      if (e.ctrlKey && e.key === "v") paste();
 
-      if(e.key === "Delete") deleteItem();
+      if (e.key === "Delete") deleteItem();
 
       // ESC → exit editing
-      if(e.key === "Escape") {
+      if (e.key === "Escape") {
         setEditingId(null);
       }
 
     };
 
     window.addEventListener("keydown", handleKey);
-    return ()=> window.removeEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
 
-  },[items, selectedId]);
+  }, [items, selectedId]);
 
   // ---------------- UI ----------------
   return (
 
-    <div className="h-full flex flex-col">
+    <div className="w-full h-full min-w-0 flex flex-col">
 
       {/* TOOLBAR */}
       <div className="flex gap-2 p-2 border-b items-center flex-wrap">
 
-        <button onClick={clearAll} className="px-2 py-1 bg-red-500 text-white text-xs rounded">Clear</button>
-        <button onClick={deleteItem} className="px-2 py-1 bg-gray-200 text-xs rounded">Delete</button>
-        <button onClick={undo} className="px-2 py-1 bg-gray-200 text-xs rounded">Undo</button>
-        <button onClick={redo} className="px-2 py-1 bg-gray-200 text-xs rounded">Redo</button>
-
-        <button onClick={copy} className="px-2 py-1 bg-gray-200 text-xs rounded">Copy</button>
-        <button onClick={cut} className="px-2 py-1 bg-gray-200 text-xs rounded">Cut</button>
-        <button onClick={paste} className="px-2 py-1 bg-gray-200 text-xs rounded">Paste</button>
+        <button
+          onClick={clearAll}
+          className="px-2 py-1 bg-red-500 text-white text-xs rounded"
+        >
+          Clear
+        </button>
 
         <div className="flex gap-2 items-center">
 
-  {["black","red","blue","green","purple","orange"].map(c => (
-    <div
-      key={c}
-      onMouseDown={(e)=>{
-        e.preventDefault();
+          {["black", "red", "blue", "green", "purple", "orange"].map(c => (
+            <div
+              key={c}
+              onMouseDown={(e) => {
+                e.preventDefault();
 
-        setColor(c);
+                setColor(c);
 
-        if (editingId) {
+                if (editingId) {
 
-          const current = items.find(i => i.id === editingId);
-          if (!current) return;
+                  const current = items.find(i => i.id === editingId);
+                  if (!current) return;
 
-          // 🔥 TEXT WIDTH CALCULATION (PERFECT)
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
+                  // 🔥 TEXT WIDTH CALCULATION (PERFECT)
+                  const canvas = document.createElement("canvas");
+                  const ctx = canvas.getContext("2d");
 
-          if (!ctx) return;
+                  if (!ctx) return;
 
-          ctx.font = `${fontSize}px Arial`;
+                  ctx.font = `${fontSize}px Arial`;
 
-          const textWidth = ctx.measureText(current.text || "").width;
+                  const textWidth = ctx.measureText(current.text || "").width;
 
-          const id = Date.now().toString();
+                  const id = Date.now().toString();
 
-          const newItem = {
-            id,
-            text: "",
-            x: current.x + textWidth + 15,
-            y: current.y,
-            color: c,
-            underline,
-            fontSize
-          };
+                  const newItem = {
+                    id,
+                    text: "",
+                    x: current.x + textWidth + 15,
+                    y: current.y,
+                    color: c,
+                    underline,
+                    fontSize
+                  };
 
-          setItems(prev => [...prev, newItem]);
+                  setItems(prev => [...prev, newItem]);
 
-          setEditingId(id);
-          setSelectedId(id);
-        }
-      }}
-      className={`w-7 h-7 rounded-full cursor-pointer border-2 border-gray-500 ${
-        color === c ? "ring-2 ring-black scale-110" : ""
-      }`}
-      style={{ backgroundColor: c }}
-    />
-  ))}
+                  setEditingId(id);
+                  setSelectedId(id);
+                }
+              }}
+              className={`w-7 h-7 rounded-full cursor-pointer border-2 border-gray-500 ${color === c ? "ring-2 ring-black scale-110" : ""
+                }`}
+              style={{ backgroundColor: c }}
+            />
+          ))}
 
-</div>
+        </div>
 
         <button
-          onClick={()=>setUnderline(prev=>!prev)}
-          className={`px-2 py-1 text-xs border rounded ${underline?"bg-gray-300":""}`}
+          onClick={() => setUnderline(prev => !prev)}
+          className={`px-2 py-1 text-xs border rounded ${underline ? "bg-gray-300" : ""}`}
         >
           U
         </button>
 
         <select
           value={fontSize}
-          onChange={(e)=>setFontSize(Number(e.target.value))}
+          onChange={(e) => setFontSize(Number(e.target.value))}
           className="text-xs border px-1"
         >
           <option value={18}>Small</option>
@@ -285,54 +282,72 @@ export default function WhiteBoard() {
 
           <div
             key={item.id}
-            onMouseDown={(e)=>handleMouseDown(item.id,e)}
-            onDoubleClick={(e)=>{
+
+            onDoubleClick={(e) => {
               e.stopPropagation();
               startEditing(item.id);
             }}
             style={{
-  position: "absolute",
-  top:item.y,
-  left:item.x,
-  color:item.color,
-  fontSize: item.fontSize,
-  cursor: "text",
-  fontFamily: /[\u0900-\u097F]/.test(item.text)
-    ? "'Noto Sans Devanagari', sans-serif"
-    : "Arial"
-}}
+              position: "absolute",
+              top: item.y,
+              left: item.x,
+              width: `calc(100% - ${item.x}px - 20px)`,
+              color: item.color,
+              fontSize: item.fontSize,
+              cursor: "default",
+              pointerEvents: "none",
+              fontFamily: /[\u0900-\u097F]/.test(item.text)
+                ? "'Noto Sans Devanagari', sans-serif"
+                : "Arial"
+            }}
           >
 
             {editingId === item.id ? (
 
               <textarea
-  ref={(el) => { if (el) textareaRefs.current[item.id] = el; }}
-             
+                ref={(el) => {
+                  if (el) textareaRefs.current[item.id] = el;
+                }}
                 autoFocus
                 value={item.text}
-                onChange={(e)=>updateText(item.id,e.target.value)}
-                onBlur={()=>setEditingId(null)}
+                onChange={(e) => {
+                  e.currentTarget.style.height = "auto";
+                  e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+                  updateText(item.id, e.target.value);
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onBlur={() => setEditingId(null)}
                 className="outline-none bg-transparent resize-none"
                 style={{
-                  textDecoration: item.underline?"underline":"none",
-                  minWidth: "700px",
-maxWidth: "95%",
-                  minHeight: "320px",
+                  width: "100%",
+                  minHeight: "32px",
+                  height: "32px",
+                  textDecoration: item.underline ? "underline" : "none",
                   whiteSpace: "pre-wrap",
-                  wordBreak: "break-word"
+                  overflowWrap: "break-word",
+                  wordBreak: "normal",
+                  boxSizing: "border-box",
+                  cursor: "text",
+                  overflow: "hidden"
                 }}
               />
 
             ) : (
 
-              <div
-                className="whitespace-pre-line"
+              <span
+                onMouseDown={(e) => handleMouseDown(item.id, e)}
                 style={{
-                  textDecoration: item.underline?"underline":"none"
+                  display: "inline",
+                  textDecoration: item.underline ? "underline" : "none",
+                  cursor: "grab",
+                  userSelect: "none",
+                  WebkitUserSelect: "none",
+                  overflowWrap: "break-word",
+                  wordBreak: "normal"
                 }}
               >
                 {item.text}
-              </div>
+              </span>
 
             )}
 
@@ -342,6 +357,6 @@ maxWidth: "95%",
 
       </div>
 
-    </div>
+    </div >
   );
 }
