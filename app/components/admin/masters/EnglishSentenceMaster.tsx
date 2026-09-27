@@ -346,11 +346,73 @@ export default function EnglishSentenceMaster({
       courses.find((c: any) => c.id === selectedCourse)?.name;
 
     const maxOrder = sentences.length > 0
-      ? Math.max(...sentences.map(s => s.order_no || 0))
-      : 0;
+  ? Math.max(...sentences.map(s => s.order_no || 0))
+  : 0;
 
-    // Conversation
-    if (
+// MCQ
+if (selectedCourseName === "MCQ") {
+  const parts = text
+    .split("-")
+    .map((p: string) => p.trim())
+    .filter((p: string) => p);
+
+  if (parts.length !== 6) {
+    alert(
+      "MCQ में कुल 6 parts होने चाहिए:\nQuestion - Option 1 - Option 2 - Option 3 - Option 4 - Correct Answer"
+    );
+    return;
+  }
+
+  const [
+    question,
+    optionA,
+    optionB,
+    optionC,
+    optionD,
+    correctAnswer,
+  ] = parts;
+
+  let correctOption = "";
+
+  if (correctAnswer === optionA) correctOption = "A";
+  else if (correctAnswer === optionB) correctOption = "B";
+  else if (correctAnswer === optionC) correctOption = "C";
+  else if (correctAnswer === optionD) correctOption = "D";
+
+  if (!correctOption) {
+    alert(
+      "Correct Answer चारों options में से किसी एक से बिल्कुल match होना चाहिए।"
+    );
+    return;
+  }
+
+  const { error: mcqError } = await supabase
+    .from("mcq_questions")
+    .insert([{
+      topic_id: selectedTopic,
+      question,
+      option_a: optionA,
+      option_b: optionB,
+      option_c: optionC,
+      option_d: optionD,
+      correct_option: correctOption,
+      order_no: Number(orderNo || maxOrder + 1),
+      status: true,
+    }]);
+
+  if (mcqError) {
+    alert("MCQ save failed: " + mcqError.message);
+    return;
+  }
+
+  setText("");
+  setOrderNo("");
+  fetchSentences();
+  return;
+}
+
+// Conversation
+if (
       selectedCourseName === "Conversation" ||
       selectedCourseName === "Image Explanation"
     ) {
