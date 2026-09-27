@@ -81,6 +81,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     const [marks, setMarks] = useState<{ [key: number]: string }>({});
     const [mcqAnswered, setMcqAnswered] = useState(false);
     const [mcqSelectedOption, setMcqSelectedOption] = useState("");
+    const [mcqOptionOrder, setMcqOptionOrder] = useState<string[]>([]);
     const switchLanguage = () => {
         setSwitchLanguageMode(prev => !prev);
         setShowEnglish(false);
@@ -323,7 +324,16 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
     }, [data, random]);
 
+    useEffect(() => {
+        if (!isMCQ || currentIndex < 0 || !list[currentIndex]) {
+            setMcqOptionOrder([]);
+            return;
+        }
 
+        setMcqOptionOrder(
+            shuffleArray(["A", "B", "C", "D"])
+        );
+    }, [isMCQ, currentIndex, list]);
     // =========================================================
     // SHOW ALL / HIDE ALL
     // =========================================================
@@ -757,17 +767,17 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     // RESET
     // =========================================================
     const restartForStudent = () => {
-    let newList = isImageExplanation
-        ? (random
-            ? shuffleArray(imageExplanationData)
-            : [...imageExplanationData])
-        : isConversation
+        let newList = isImageExplanation
             ? (random
-                ? shuffleArray(conversationData)
-                : [...conversationData])
-            : (random
-                ? shuffleArray(safeData)
-                : [...safeData]);
+                ? shuffleArray(imageExplanationData)
+                : [...imageExplanationData])
+            : isConversation
+                ? (random
+                    ? shuffleArray(conversationData)
+                    : [...conversationData])
+                : (random
+                    ? shuffleArray(safeData)
+                    : [...safeData]);
         // अगर नई random order गलती से पिछली order जैसी हो,
         // तो order को निश्चित रूप से बदल दें।
         if (random && newList.length > 1) {
@@ -920,36 +930,42 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
                             <div className="grid grid-cols-1 @[600px]:grid-cols-2 gap-3">
 
-                                {[
-                                    ["A", list[currentIndex]?.option_a],
-                                    ["B", list[currentIndex]?.option_b],
-                                    ["C", list[currentIndex]?.option_c],
-                                    ["D", list[currentIndex]?.option_d],
-                                ].map(([letter, option]) => {
+                                {mcqOptionOrder.map((originalLetter) => {
 
-                                    const isCorrect =
-                                        mcqAnswered &&
-                                        letter === list[currentIndex]?.correct_option;
+    const optionMap: any = {
+        A: list[currentIndex]?.option_a,
+        B: list[currentIndex]?.option_b,
+        C: list[currentIndex]?.option_c,
+        D: list[currentIndex]?.option_d,
+    };
 
-                                    return (
-                                        <div
-                                            key={letter}
-                                            onClick={() => handleMcqOptionClick(letter)}
-                                            className={`border-2 rounded-xl p-3 text-base cursor-pointer transition-colors ${isCorrect
-                                                ? "border-green-500 bg-green-100"
-                                                : mcqAnswered && letter === mcqSelectedOption
-                                                    ? "border-red-500 bg-red-100"
-                                                    : "border-gray-300 bg-gray-50 hover:bg-gray-100"
-                                                }`}
-                                        >
-                                            <span className="font-bold mr-3">
-                                                {letter}.
-                                            </span>
+    const isCorrect =
+        mcqAnswered &&
+        originalLetter === list[currentIndex]?.correct_option;
 
-                                            {option}
-                                        </div>
-                                    );
-                                })}
+    return (
+        <div
+            key={originalLetter}
+            onClick={() => handleMcqOptionClick(originalLetter)}
+            className={`border-2 rounded-xl p-3 text-base cursor-pointer transition-colors ${
+                isCorrect
+                    ? "border-green-500 bg-green-100"
+                    : mcqAnswered &&
+                        originalLetter === mcqSelectedOption
+                        ? "border-red-500 bg-red-100"
+                        : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+            }`}
+        >
+            <span className="font-bold mr-3">
+                {String.fromCharCode(
+                    65 + mcqOptionOrder.indexOf(originalLetter)
+                )}.
+            </span>
+
+            {optionMap[originalLetter]}
+        </div>
+    );
+})}
 
                             </div>
 
