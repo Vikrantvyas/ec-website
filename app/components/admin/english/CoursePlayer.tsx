@@ -756,7 +756,48 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
     // =========================================================
     // RESET
     // =========================================================
+    const restartForStudent = () => {
+    let newList = isImageExplanation
+        ? (random
+            ? shuffleArray(imageExplanationData)
+            : [...imageExplanationData])
+        : isConversation
+            ? (random
+                ? shuffleArray(conversationData)
+                : [...conversationData])
+            : (random
+                ? shuffleArray(safeData)
+                : [...safeData]);
+        // अगर नई random order गलती से पिछली order जैसी हो,
+        // तो order को निश्चित रूप से बदल दें।
+        if (random && newList.length > 1) {
+            const currentOrder = list
+                .map((item: any) => item.id)
+                .join("|");
 
+            const newOrder = newList
+                .map((item: any) => item.id)
+                .join("|");
+
+            if (currentOrder === newOrder) {
+                newList = [
+                    ...newList.slice(1),
+                    newList[0],
+                ];
+            }
+        }
+
+        setList(newList);
+        updateCurrentIndex(-1);
+        setShowEnglish(false);
+        setRevealedAnswers([]);
+        setShowAllPrevEnglish(true);
+        setConversationStep(-1);
+        setImageExplanationStep(-1);
+        setMarks({});
+        setMcqAnswered(false);
+        setMcqSelectedOption("");
+    };
     const handleReset = () => {
 
         updateCurrentIndex(-1);
@@ -781,12 +822,12 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         next: handleNext,
         prev: handlePrev,
         reset: handleReset,
+        restartForStudent,
         switchLanguage,
         markCorrect,
         markWrong,
 
     }));
-
 
     /*
     SHOW ALL:

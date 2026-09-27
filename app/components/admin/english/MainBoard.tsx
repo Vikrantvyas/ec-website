@@ -342,7 +342,7 @@ export default function MainBoard({
   };
 
   const handleReset = () => {
-    vocabRef?.current?.reset();
+    vocabRef?.current?.restartForStudent?.();
   };
   const handleMcqCorrect = () => {
     scoreRef.current?.mcqCorrect();
@@ -432,9 +432,9 @@ export default function MainBoard({
                 conversationImageUrl={conversationImageUrl}
                 conversationMobileImageUrl={conversationMobileImageUrl}
                 isImageExplanation={isImageExplanation}
-isMCQ={isMCQ}
-onMcqCorrect={handleMcqCorrect}
-onMcqWrong={handleMcqPass}
+                isMCQ={isMCQ}
+                onMcqCorrect={handleMcqCorrect}
+                onMcqWrong={handleMcqPass}
               />
             </div>
 
