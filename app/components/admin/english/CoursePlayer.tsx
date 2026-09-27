@@ -379,14 +379,14 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
             updateCurrentIndex(currentIndex + 1);
             return;
         }
-    };const handleNext = () => {
+    }; const handleNext = () => {
 
-    if (isMCQ) {
-        handleMcqNext();
-        return;
-    }
+        if (isMCQ) {
+            handleMcqNext();
+            return;
+        }
 
-    if (isImageExplanation) {
+        if (isImageExplanation) {
             // SHOW ALL → Prev के बाद Next से sentence वापस दिखाएँ
             if (showAll) {
                 if (currentIndex < list.length - 1) {
@@ -847,21 +847,21 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
         <div className="flex flex-col h-full min-h-0">
             {isMCQ ? (
-                <div className="flex-1 min-h-0 overflow-y-auto bg-white p-6">
+                <div
+                    className="flex-1 min-h-0 overflow-y-auto bg-white p-6 @container"
+                >
                     {list.length > 0 && currentIndex >= 0 ? (
                         <div className="max-w-5xl mx-auto">
 
                             {/* Question */}
-                            <div className="text-2xl font-semibold text-gray-800 mb-6">
+                            <div className="text-xl font-semibold text-gray-800 mb-5">
                                 <span className="mr-3">
                                     {currentIndex + 1}.
                                 </span>
                                 {list[currentIndex]?.question || ""}
                             </div>
 
-                            {/* Options */}
-                            {/* Options */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 @[600px]:grid-cols-2 gap-3">
 
                                 {[
                                     ["A", list[currentIndex]?.option_a],
@@ -878,7 +878,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                                         <div
                                             key={letter}
                                             onClick={() => handleMcqOptionClick(letter)}
-                                            className={`border-2 rounded-xl p-4 text-lg cursor-pointer transition-colors ${isCorrect
+                                            className={`border-2 rounded-xl p-3 text-base cursor-pointer transition-colors ${isCorrect
                                                 ? "border-green-500 bg-green-100"
                                                 : mcqAnswered && letter === mcqSelectedOption
                                                     ? "border-red-500 bg-red-100"
@@ -899,7 +899,7 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
                         </div>
                     ) : (
                         <div className="flex h-full items-center justify-center text-gray-400 text-xl">
-                            Next दबाकर पहला Question दिखाएँ
+                            Press "Next" to start
                         </div>
                     )}
                 </div>

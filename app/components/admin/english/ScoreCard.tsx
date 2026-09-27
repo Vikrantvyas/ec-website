@@ -1,14 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 
-export default function ScoreCard({
+const ScoreCard = forwardRef<any, any>(({
   onCorrect,
   onReset,
   onPass,
   imageMode = false,
   onImageNext,
-}: any) {
+}: any, ref) => {
 
   const [score, setScore] = useState(0);
   const [total, setTotal] = useState(0);
@@ -331,7 +337,11 @@ export default function ScoreCard({
 
     onReset?.();
   };
-
+  useImperativeHandle(ref, () => ({
+    correct: handleCorrect,
+    pass: handlePass,
+    reset: resetAll,
+  }));
 
   // =========================================================
   // RESULT
@@ -776,4 +786,8 @@ export default function ScoreCard({
 
   );
 
-}
+});
+
+ScoreCard.displayName = "ScoreCard";
+
+export default ScoreCard;

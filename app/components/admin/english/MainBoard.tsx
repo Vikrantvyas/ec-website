@@ -51,7 +51,7 @@ export default function MainBoard({
   selectedReactionMeme,
 }: any) {
 
-
+  const scoreRef = useRef<any>(null);
   const [panelOrder, setPanelOrder] = useState<string[]>([]);
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [highlightPaths, setHighlightPaths] = useState<string[]>([]);
@@ -559,6 +559,7 @@ export default function MainBoard({
           className={`${widthClass} ${isVertical ? "border-t" : "border-l"} flex`}
         >
           <ScoreCard
+            ref={scoreRef}
             onCorrect={handleCorrect}
             onPass={handlePass}
             onReset={handleReset}
