@@ -344,7 +344,13 @@ export default function MainBoard({
   const handleReset = () => {
     vocabRef?.current?.reset();
   };
+  const handleMcqCorrect = () => {
+    scoreRef.current?.mcqCorrect();
+  };
 
+  const handleMcqPass = () => {
+    scoreRef.current?.mcqPass();
+  };
   // 🔹 GROUPING LOGIC
 
   const handleImageNext = () => {
@@ -426,7 +432,9 @@ export default function MainBoard({
                 conversationImageUrl={conversationImageUrl}
                 conversationMobileImageUrl={conversationMobileImageUrl}
                 isImageExplanation={isImageExplanation}
-                isMCQ={isMCQ}
+isMCQ={isMCQ}
+onMcqCorrect={handleMcqCorrect}
+onMcqWrong={handleMcqPass}
               />
             </div>
 

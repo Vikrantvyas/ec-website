@@ -35,6 +35,8 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
         conversationMobileImageUrl,
         isImageExplanation,
         isMCQ,
+        onMcqCorrect,
+        onMcqWrong,
     } = props;
     const conversationData = (data || []).map((item: any) => ({
         ...item,
@@ -735,6 +737,20 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
         setMcqSelectedOption(selectedOption);
         setMcqAnswered(true);
+
+        const correctOption = list[currentIndex]?.correct_option;
+
+        if (selectedOption === correctOption) {
+            onMcqCorrect?.();
+        } else {
+            onMcqWrong?.();
+        }
+
+        setTimeout(() => {
+            if (currentIndex < list.length - 1) {
+                updateCurrentIndex(currentIndex + 1);
+            }
+        }, 2000);
 
     };
     // =========================================================

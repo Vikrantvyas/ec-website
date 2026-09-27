@@ -337,9 +337,47 @@ const ScoreCard = forwardRef<any, any>(({
 
     onReset?.();
   };
+  const handleMcqCorrect = () => {
+    if (activeIndex === null) return;
+
+    setScore(p => p + 1);
+    setTotal(p => p + 1);
+
+    setStudents(prev => {
+      const copy = [...prev];
+
+      copy[activeIndex] = {
+        ...copy[activeIndex],
+        correct: copy[activeIndex].correct + 1,
+        total: copy[activeIndex].total + 1,
+      };
+
+      return copy;
+    });
+  };
+
+  const handleMcqPass = () => {
+    if (activeIndex === null) return;
+
+    setTotal(p => p + 1);
+
+    setStudents(prev => {
+      const copy = [...prev];
+
+      copy[activeIndex] = {
+        ...copy[activeIndex],
+        total: copy[activeIndex].total + 1,
+      };
+
+      return copy;
+    });
+  };
+
   useImperativeHandle(ref, () => ({
     correct: handleCorrect,
     pass: handlePass,
+    mcqCorrect: handleMcqCorrect,
+    mcqPass: handleMcqPass,
     reset: resetAll,
   }));
 
