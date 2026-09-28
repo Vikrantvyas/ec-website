@@ -128,11 +128,14 @@ export default function GrammarTableMaster() {
       sourceTable.name || "Grammar Table";
 
     let newTableName =
-      `${baseName} Copy`;
+      sourceData.mode === "cut"
+        ? baseName
+        : `${baseName} Copy`;
 
     let copyNumber = 2;
 
     while (
+      sourceData.mode !== "cut" &&
       savedTables.some(
         (table) => table.name === newTableName
       )
@@ -341,13 +344,23 @@ export default function GrammarTableMaster() {
       const sourceHeaders = clipboard.headers || [];
       const sourceCells = clipboard.cells || [];
 
-      const baseName = sourceTable.name || "Grammar Table";
+      const baseName =
+        sourceTable.name || "Grammar Table";
 
-      let newTableName = `${baseName} Copy`;
+      let newTableName =
+        clipboard.mode === "cut"
+          ? baseName
+          : `${baseName} Copy`;
+
       let copyNumber = 2;
 
-      while (usedNames.has(newTableName)) {
-        newTableName = `${baseName} Copy ${copyNumber}`;
+      while (
+        clipboard.mode !== "cut" &&
+        usedNames.has(newTableName)
+      ) {
+        newTableName =
+          `${baseName} Copy ${copyNumber}`;
+
         copyNumber++;
       }
 
@@ -711,6 +724,21 @@ export default function GrammarTableMaster() {
       );
 
     }
+
+    setTimeout(() => {
+      const tableNameInput =
+        document.getElementById("grammar-table-name");
+
+      if (tableNameInput) {
+        tableNameInput.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+        (tableNameInput as HTMLInputElement).focus();
+        (tableNameInput as HTMLInputElement).select();
+      }
+    }, 100);
 
   };
   const loadTableForEdit = async (tableId: string) => {
@@ -1686,8 +1714,9 @@ export default function GrammarTableMaster() {
           </label>
 
           <input
-            type="text"
-            value={tableName}
+  id="grammar-table-name"
+  type="text"
+  value={tableName}
             onChange={(e) => {
 
               setTableName(e.target.value);
