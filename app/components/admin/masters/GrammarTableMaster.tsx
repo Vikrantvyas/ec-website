@@ -35,6 +35,8 @@ export default function GrammarTableMaster() {
   const [headers, setHeaders] = useState<string[]>([]);
   const [savedTables, setSavedTables] = useState<any[]>([]);
   const [copiedTable, setCopiedTable] = useState<any>(null);
+  const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
+  const [copiedTables, setCopiedTables] = useState<any[]>([]);
 
   const [selectedTable, setSelectedTable] =
     useState<any>(null);
@@ -306,6 +308,141 @@ export default function GrammarTableMaster() {
       `Table "${newTableName}" Pasted`
     );
   };
+  const pasteSelectedTables = async () => {
+    if (copiedTables.length === 0) {
+      alert("Please cut or copy tables first.");
+      return;
+    }
+
+    const targetTopicId = selectedGrammarTopic;
+
+    if (!targetTopicId) {
+      alert("Please select a Grammar Topic first.");
+      return;
+    }
+
+    const { data: existingTables, error: existingError } =
+      await supabase
+        .from("grammar_tables")
+        .select("name")
+        .eq("topic_id", targetTopicId);
+
+    if (existingError) {
+      alert(existingError.message);
+      return;
+    }
+
+    const usedNames = new Set(
+      (existingTables || []).map((table: any) => table.name)
+    );
+
+    for (const clipboard of copiedTables) {
+      const sourceTable = clipboard.table;
+      const sourceHeaders = clipboard.headers || [];
+      const sourceCells = clipboard.cells || [];
+
+      const baseName = sourceTable.name || "Grammar Table";
+
+      let newTableName = `${baseName} Copy`;
+      let copyNumber = 2;
+
+      while (usedNames.has(newTableName)) {
+        newTableName = `${baseName} Copy ${copyNumber}`;
+        copyNumber++;
+      }
+
+      usedNames.add(newTableName);
+
+      const { data: newTable, error: tableError } =
+        await supabase
+          .from("grammar_tables")
+          .insert({
+            name: newTableName,
+            topic_id: targetTopicId,
+            total_rows: sourceTable.total_rows,
+            total_columns: sourceTable.total_columns
+          })
+          .select()
+          .single();
+
+      if (tableError) {
+        alert(tableError.message);
+        return;
+      }
+
+      const headerIdMap: any = {};
+
+      for (const header of sourceHeaders) {
+        const { data: newHeader, error: headerError } =
+          await supabase
+            .from("grammar_headers")
+            .insert({
+              table_id: newTable.id,
+              header_name: header.header_name,
+              column_order: header.column_order
+            })
+            .select()
+            .single();
+
+        if (headerError) {
+          alert(headerError.message);
+          return;
+        }
+
+        headerIdMap[header.id] = newHeader.id;
+      }
+
+      const newCells = sourceCells
+        .filter((cell: any) => headerIdMap[cell.header_id])
+        .map((cell: any) => ({
+          table_id: newTable.id,
+          header_id: headerIdMap[cell.header_id],
+          row_no: cell.row_no,
+          cell_value: cell.cell_value
+        }));
+
+      if (newCells.length > 0) {
+        const { error: cellsError } = await supabase
+          .from("grammar_cells")
+          .insert(newCells);
+
+        if (cellsError) {
+          alert(cellsError.message);
+          return;
+        }
+      }
+
+      if (clipboard.mode === "cut") {
+        await supabase
+          .from("grammar_cells")
+          .delete()
+          .eq("table_id", sourceTable.id);
+
+        await supabase
+          .from("grammar_headers")
+          .delete()
+          .eq("table_id", sourceTable.id);
+
+        const { error: deleteError } = await supabase
+          .from("grammar_tables")
+          .delete()
+          .eq("id", sourceTable.id);
+
+        if (deleteError) {
+          alert(deleteError.message);
+          return;
+        }
+      }
+    }
+
+    setCopiedTables([]);
+    setCopiedTable(null);
+    setSelectedTableIds([]);
+
+    await loadTables();
+
+    alert(`${copiedTables.length} Tables Moved Successfully`);
+  };
   const duplicateTable = async (table: any) => {
 
     const { data: headers, error: headerError } =
@@ -442,6 +579,57 @@ export default function GrammarTableMaster() {
     );
 
     alert("Row Pasted");
+  };
+  const cutSelectedTables = async () => {
+
+    if (selectedTableIds.length === 0) {
+      alert("Please select at least one table.");
+      return;
+    }
+
+    const selectedTables = savedTables.filter(
+      (table) => selectedTableIds.includes(table.id)
+    );
+
+    const clipboardTables = [];
+
+    for (const table of selectedTables) {
+
+      const { data: headers, error: headerError } =
+        await supabase
+          .from("grammar_headers")
+          .select("*")
+          .eq("table_id", table.id)
+          .order("column_order");
+
+      if (headerError) {
+        alert(headerError.message);
+        return;
+      }
+
+      const { data: cells, error: cellError } =
+        await supabase
+          .from("grammar_cells")
+          .select("*")
+          .eq("table_id", table.id);
+
+      if (cellError) {
+        alert(cellError.message);
+        return;
+      }
+
+      clipboardTables.push({
+        table,
+        headers: headers || [],
+        cells: cells || [],
+        mode: "cut"
+      });
+    }
+
+    setCopiedTables(clipboardTables);
+    setSelectedTableIds([]);
+
+    alert(`${clipboardTables.length} Tables Cut`);
   };
   const cutTable = async (table: any) => {
 
@@ -1285,12 +1473,12 @@ export default function GrammarTableMaster() {
 
       <div className="grid grid-cols-12 gap-4 items-end">
 
-        <div className="col-span-4">
+        <div className="col-span-3">
           <label className="block mb-1 font-medium">
             Grammar Topic
           </label>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 min-w-0">
 
             <select
               value={selectedGrammarTopic}
@@ -1299,7 +1487,7 @@ export default function GrammarTableMaster() {
                 setSelectedGrammarTopic(e.target.value);
 
               }}
-              className="border p-2 rounded flex-1"
+              className="border p-2 rounded flex-1 min-w-0"
             >
               <option value="">
                 Select Topic
@@ -1319,12 +1507,12 @@ export default function GrammarTableMaster() {
             <button
               type="button"
               onClick={() => setShowTopicInput(true)}
-              className="w-10 border rounded hover:bg-gray-100"
+              className="w-12 min-w-12 shrink-0 border rounded hover:bg-gray-100"
               title="Add Grammar Topic"
             >
               +
             </button>
-            <div className="flex gap-1">
+            <div className="flex gap-1 shrink-0">
               <button
                 type="button"
                 disabled={!selectedGrammarTopic}
@@ -1491,7 +1679,7 @@ export default function GrammarTableMaster() {
             )
           }
         </div>
-        <div className="col-span-4">
+        <div className="col-span-3">
 
           <label className="block mb-1 font-medium">
             Table Name
@@ -1511,7 +1699,7 @@ export default function GrammarTableMaster() {
           />
 
         </div>
-        <div className="col-span-2">
+        <div className="col-span-1">
           <label className="block mb-1 font-medium">
             Rows
           </label>
@@ -1524,7 +1712,7 @@ export default function GrammarTableMaster() {
           />
         </div>
 
-        <div className="col-span-2">
+        <div className="col-span-1">
           <label className="block mb-1 font-medium">
             Columns
           </label>
@@ -1535,6 +1723,35 @@ export default function GrammarTableMaster() {
             onChange={(e) => updateColumns(Number(e.target.value))}
             className="border p-2 w-full rounded"
           />
+        </div>
+
+        <div className="col-span-4 flex items-end gap-2">
+          <button
+            type="button"
+            onClick={cutSelectedTables}
+            disabled={selectedTableIds.length === 0}
+            className="bg-red-600 text-white px-3 py-2 rounded disabled:opacity-40"
+          >
+            Cut Selected
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (copiedTables.length > 0) {
+                pasteSelectedTables();
+              } else {
+                pasteTable();
+              }
+            }}
+            disabled={
+              !copiedTable &&
+              copiedTables.length === 0
+            }
+            className="bg-purple-600 text-white px-3 py-2 rounded disabled:opacity-40"
+          >
+            Paste Table
+          </button>
         </div>
 
       </div>
@@ -1755,23 +1972,36 @@ export default function GrammarTableMaster() {
 
       <div>
         <div className="flex items-center justify-between mb-3">
+
           <h2 className="text-xl font-semibold">
             Saved Tables ({savedTables.length})
           </h2>
 
-          <button
-            type="button"
-            onClick={() => pasteTable()}
-            disabled={!copiedTable}
-            className="bg-purple-600 text-white px-3 py-1 rounded disabled:opacity-40"
-          >
-            Paste Table
-          </button>
         </div>
 
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-100">
+
+              <th className="border p-2 text-center w-10">
+                <input
+                  type="checkbox"
+                  checked={
+                    savedTables.length > 0 &&
+                    selectedTableIds.length === savedTables.length
+                  }
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedTableIds(
+                        savedTables.map((table) => table.id)
+                      );
+                    } else {
+                      setSelectedTableIds([]);
+                    }
+                  }}
+                />
+              </th>
+
               <th className="border p-2 text-left">
                 Topic Name
               </th>
@@ -1804,6 +2034,27 @@ export default function GrammarTableMaster() {
                 onDrop={() => handleTableDrop(table)}
                 className="cursor-move"
               >
+                <td className="border p-2 text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedTableIds.includes(table.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+
+                      if (e.target.checked) {
+                        setSelectedTableIds((prev) => [
+                          ...prev,
+                          table.id
+                        ]);
+                      } else {
+                        setSelectedTableIds((prev) =>
+                          prev.filter((id) => id !== table.id)
+                        );
+                      }
+                    }}
+                  />
+                </td>
+
                 <td className="border p-2">
                   {
                     grammarTopics.find(
