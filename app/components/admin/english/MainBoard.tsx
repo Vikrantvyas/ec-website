@@ -332,7 +332,7 @@ export default function MainBoard({
         : activePanels.length === 3
           ? "w-1/3"
           : "w-1/4";
-
+  
   const handleCorrect = () => {
     vocabRef?.current?.markCorrect();
   };

@@ -506,7 +506,7 @@ const ScoreCard = forwardRef<any, any>(({
 
   return (
 
-    <div className="flex flex-col h-full border bg-gray-50">
+    <div className="flex flex-col w-full h-full min-w-0 border bg-gray-50">
 
       <audio
         ref={audioRef}
