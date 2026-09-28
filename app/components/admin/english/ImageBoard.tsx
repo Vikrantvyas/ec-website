@@ -51,24 +51,24 @@ export default function ImageBoard({
   }
 
   const instagramUrl =
-  image?.video_url?.replace("/reels/", "/reel/") || "";
+    image?.video_url?.replace("/reels/", "/reel/") || "";
 
-const isSocialPortraitVideo =
-  isVideo &&
-  (
-    // YouTube Shorts
-    image.video_url?.includes("youtube.com/shorts/") ||
+  const isSocialPortraitVideo =
+    isVideo &&
+    (
+      // YouTube Shorts
+      image.video_url?.includes("youtube.com/shorts/") ||
 
-    // Facebook
-    image.video_url?.includes("facebook.com/reel/") ||
-    image.video_url?.includes("facebook.com/videos/") ||
-    image.video_url?.includes("facebook.com/watch") ||
+      // Facebook
+      image.video_url?.includes("facebook.com/reel/") ||
+      image.video_url?.includes("facebook.com/videos/") ||
+      image.video_url?.includes("facebook.com/watch") ||
 
-    // Instagram
-    image.video_url?.includes("instagram.com/reel/") ||
-    image.video_url?.includes("instagram.com/reels/") ||
-    image.video_url?.includes("instagram.com/p/")
-  );
+      // Instagram
+      image.video_url?.includes("instagram.com/reel/") ||
+      image.video_url?.includes("instagram.com/reels/") ||
+      image.video_url?.includes("instagram.com/p/")
+    );
 
 
   let imageUrl = "";
@@ -89,31 +89,31 @@ const isSocialPortraitVideo =
 
     // YouTube
     // YouTube Shorts
-if (rawUrl.includes("youtube.com/shorts/")) {
-  const videoId = rawUrl
-    .split("youtube.com/shorts/")[1]
-    ?.split("?")[0]
-    ?.split("&")[0];
+    if (rawUrl.includes("youtube.com/shorts/")) {
+      const videoId = rawUrl
+        .split("youtube.com/shorts/")[1]
+        ?.split("?")[0]
+        ?.split("&")[0];
 
-  videoUrl = `https://www.youtube.com/embed/${videoId}`;
-}
+      videoUrl = `https://www.youtube.com/embed/${videoId}`;
+    }
 
-// YouTube normal video
-else if (rawUrl.includes("youtube.com/watch?v=")) {
-  const videoId = rawUrl.split("v=")[1]?.split("&")[0];
+    // YouTube normal video
+    else if (rawUrl.includes("youtube.com/watch?v=")) {
+      const videoId = rawUrl.split("v=")[1]?.split("&")[0];
 
-  videoUrl = `https://www.youtube.com/embed/${videoId}`;
-}
+      videoUrl = `https://www.youtube.com/embed/${videoId}`;
+    }
 
-// YouTube short/normal youtu.be link
-else if (rawUrl.includes("youtu.be/")) {
-  const videoId = rawUrl
-    .split("youtu.be/")[1]
-    ?.split("?")[0]
-    ?.split("&")[0];
+    // YouTube short/normal youtu.be link
+    else if (rawUrl.includes("youtu.be/")) {
+      const videoId = rawUrl
+        .split("youtu.be/")[1]
+        ?.split("?")[0]
+        ?.split("&")[0];
 
-  videoUrl = `https://www.youtube.com/embed/${videoId}`;
-}
+      videoUrl = `https://www.youtube.com/embed/${videoId}`;
+    }
 
     // Instagram
     else if (rawUrl.includes("instagram.com")) {

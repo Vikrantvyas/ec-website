@@ -88,12 +88,20 @@ export default function EnglishSentenceMaster({
     }
   }, [initialDayId]);
   useEffect(() => { if (selectedCourse) fetchDays(); }, [selectedCourse]);
-  useEffect(() => { if (selectedDay) fetchTopics(); }, [selectedDay]);
   useEffect(() => {
-    if (selectedTopic && selectedCourse && courses.length > 0) {
+    if (selectedCourse) {
+      fetchTopics();
+    }
+  }, [selectedCourse, selectedDay, days]);
+  useEffect(() => {
+    if (
+      selectedCourse &&
+      courses.length > 0 &&
+      (selectedTopic || topics.length > 0)
+    ) {
       fetchSentences();
     }
-  }, [selectedTopic, selectedCourse, courses]);
+  }, [selectedTopic, selectedCourse, courses, topics]);
 
   const fetchCourses = async () => {
     const { data } = await supabase
@@ -124,12 +132,84 @@ export default function EnglishSentenceMaster({
   };
 
   const fetchTopics = async () => {
-    const { data } = await supabase.from("topics")
-      .select("*").eq("day_id", selectedDay).order("order_no");
-    if (data) setTopics(data);
+    if (!selectedCourse) {
+      setTopics([]);
+      return;
+    }
+
+    if (selectedDay) {
+      const { data } = await supabase
+        .from("topics")
+        .select("*")
+        .eq("day_id", selectedDay)
+        .order("order_no");
+
+      if (data) setTopics(data);
+      return;
+    }
+
+    const dayIds = days.map(d => d.id);
+
+    if (dayIds.length === 0) {
+      setTopics([]);
+      return;
+    }
+
+    const { data } = await supabase
+      .from("topics")
+      .select("*")
+      .in("day_id", dayIds);
+
+    if (!data) {
+      setTopics([]);
+      return;
+    }
+
+    const dayOrder = new Map(
+      days.map((d, index) => [d.id, index])
+    );
+
+    const sortedTopics = [...data].sort((a, b) => {
+      const dayA = dayOrder.get(a.day_id) ?? 999999;
+      const dayB = dayOrder.get(b.day_id) ?? 999999;
+
+      if (dayA !== dayB) {
+        return dayA - dayB;
+      }
+
+      return (a.order_no ?? 0) - (b.order_no ?? 0);
+    });
+
+    setTopics(sortedTopics);
   };
 
   const fetchSentences = async () => {
+
+    const topicIds = selectedTopic
+      ? [selectedTopic]
+      : topics.map(t => t.id);
+
+    if (topicIds.length === 0) {
+      setSentences([]);
+      return;
+    }
+
+    const topicOrder = new Map(
+      topics.map((t, index) => [t.id, index])
+    );
+
+    const sortByTopic = (rows: any[]) =>
+      [...rows].sort((a, b) => {
+        const topicA = topicOrder.get(a.topic_id) ?? 999999;
+        const topicB = topicOrder.get(b.topic_id) ?? 999999;
+
+        if (topicA !== topicB) {
+          return topicA - topicB;
+        }
+
+        return (a.order_no ?? 0) - (b.order_no ?? 0);
+      });
+
     const selectedCourseName =
       courses.find((c: any) => c.id === selectedCourse)?.name;
 
@@ -138,7 +218,7 @@ export default function EnglishSentenceMaster({
       const { data, error } = await supabase
         .from("mcq_questions")
         .select("*")
-        .eq("topic_id", selectedTopic)
+        .in("topic_id", topicIds)
         .order("order_no");
 
       if (error) {
@@ -148,7 +228,7 @@ export default function EnglishSentenceMaster({
       }
 
       if (data) {
-        const formatted = data.map((q: any) => ({
+        const formatted = sortByTopic(data).map((q: any) => ({
           id: q.id,
           question: q.question,
           option_a: q.option_a,
@@ -197,7 +277,7 @@ export default function EnglishSentenceMaster({
           english_answer,
           order_no
         `)
-          .eq("topic_id", selectedTopic)
+          .in("topic_id", topicIds)
           .order("order_no");
 
         if (error) {
@@ -207,7 +287,7 @@ export default function EnglishSentenceMaster({
         }
 
         if (data) {
-          const formatted = data.map((d: any) => ({
+          const formatted = sortByTopic(data).map((d: any) => ({
             id: d.id,
             sentence: [
               d.hindi_question,
@@ -241,7 +321,7 @@ export default function EnglishSentenceMaster({
         answer_english_4,
         order_no
       `)
-        .eq("topic_id", selectedTopic)
+        .in("topic_id", topicIds)
         .order("order_no");
 
       if (error) {
@@ -251,7 +331,7 @@ export default function EnglishSentenceMaster({
       }
 
       if (data) {
-        const formatted = data.map((d: any) => ({
+        const formatted = sortByTopic(data).map((d: any) => ({
           id: d.id,
           sentence: [
             d.question_text,
@@ -278,7 +358,7 @@ export default function EnglishSentenceMaster({
     const { data, error } = await supabase
       .from("vocabulary")
       .select("*")
-      .eq("topic_id", selectedTopic)
+      .in("topic_id", topicIds)
       .order("order_no");
 
     if (error) {
@@ -288,7 +368,7 @@ export default function EnglishSentenceMaster({
     }
 
     if (data) {
-      const formatted = data.map((d: any) => ({
+      const formatted = sortByTopic(data).map((d: any) => ({
         id: d.id,
         hindi: d.hindi,
         english: d.english,
@@ -346,73 +426,73 @@ export default function EnglishSentenceMaster({
       courses.find((c: any) => c.id === selectedCourse)?.name;
 
     const maxOrder = sentences.length > 0
-  ? Math.max(...sentences.map(s => s.order_no || 0))
-  : 0;
+      ? Math.max(...sentences.map(s => s.order_no || 0))
+      : 0;
 
-// MCQ
-if (selectedCourseName === "MCQ") {
-  const parts = text
-    .split("-")
-    .map((p: string) => p.trim())
-    .filter((p: string) => p);
+    // MCQ
+    if (selectedCourseName === "MCQ") {
+      const parts = text
+        .split("-")
+        .map((p: string) => p.trim())
+        .filter((p: string) => p);
 
-  if (parts.length !== 6) {
-    alert(
-      "MCQ में कुल 6 parts होने चाहिए:\nQuestion - Option 1 - Option 2 - Option 3 - Option 4 - Correct Answer"
-    );
-    return;
-  }
+      if (parts.length !== 6) {
+        alert(
+          "MCQ में कुल 6 parts होने चाहिए:\nQuestion - Option 1 - Option 2 - Option 3 - Option 4 - Correct Answer"
+        );
+        return;
+      }
 
-  const [
-    question,
-    optionA,
-    optionB,
-    optionC,
-    optionD,
-    correctAnswer,
-  ] = parts;
+      const [
+        question,
+        optionA,
+        optionB,
+        optionC,
+        optionD,
+        correctAnswer,
+      ] = parts;
 
-  let correctOption = "";
+      let correctOption = "";
 
-  if (correctAnswer === optionA) correctOption = "A";
-  else if (correctAnswer === optionB) correctOption = "B";
-  else if (correctAnswer === optionC) correctOption = "C";
-  else if (correctAnswer === optionD) correctOption = "D";
+      if (correctAnswer === optionA) correctOption = "A";
+      else if (correctAnswer === optionB) correctOption = "B";
+      else if (correctAnswer === optionC) correctOption = "C";
+      else if (correctAnswer === optionD) correctOption = "D";
 
-  if (!correctOption) {
-    alert(
-      "Correct Answer चारों options में से किसी एक से बिल्कुल match होना चाहिए।"
-    );
-    return;
-  }
+      if (!correctOption) {
+        alert(
+          "Correct Answer चारों options में से किसी एक से बिल्कुल match होना चाहिए।"
+        );
+        return;
+      }
 
-  const { error: mcqError } = await supabase
-    .from("mcq_questions")
-    .insert([{
-      topic_id: selectedTopic,
-      question,
-      option_a: optionA,
-      option_b: optionB,
-      option_c: optionC,
-      option_d: optionD,
-      correct_option: correctOption,
-      order_no: Number(orderNo || maxOrder + 1),
-      status: true,
-    }]);
+      const { error: mcqError } = await supabase
+        .from("mcq_questions")
+        .insert([{
+          topic_id: selectedTopic,
+          question,
+          option_a: optionA,
+          option_b: optionB,
+          option_c: optionC,
+          option_d: optionD,
+          correct_option: correctOption,
+          order_no: Number(orderNo || maxOrder + 1),
+          status: true,
+        }]);
 
-  if (mcqError) {
-    alert("MCQ save failed: " + mcqError.message);
-    return;
-  }
+      if (mcqError) {
+        alert("MCQ save failed: " + mcqError.message);
+        return;
+      }
 
-  setText("");
-  setOrderNo("");
-  fetchSentences();
-  return;
-}
+      setText("");
+      setOrderNo("");
+      fetchSentences();
+      return;
+    }
 
-// Conversation
-if (
+    // Conversation
+    if (
       selectedCourseName === "Conversation" ||
       selectedCourseName === "Image Explanation"
     ) {
@@ -1160,11 +1240,22 @@ if (
           </>
         )}
 
-        <select value={selectedDay} onChange={(e) => setSelectedDay(e.target.value)} className="border px-2 py-1 rounded">
-          <option value="">Day</option>
-          {days.map(d => <option key={d.id} value={d.id}>
-            Day {d.day_number}{d.title ? ` · ${d.title}` : ""}
-          </option>)}
+        <select
+          value={selectedDay}
+          onChange={(e) => {
+            setSelectedDay(e.target.value);
+            setSelectedTopic("");
+            setSentences([]);
+          }}
+          className="border px-2 py-1 rounded"
+        >
+          <option value="">All Days</option>
+
+          {days.map(d => (
+            <option key={d.id} value={d.id}>
+              Day {d.day_number}{d.title ? ` · ${d.title}` : ""}
+            </option>
+          ))}
         </select>
 
         <button onClick={() => setShowDayInput(!showDayInput)}>+</button>
@@ -1175,9 +1266,18 @@ if (
           </>
         )}
 
-        <select value={selectedTopic} onChange={(e) => setSelectedTopic(e.target.value)} className="border px-2 py-1 rounded">
-          <option value="">Topic</option>
-          {topics.map(t => <option key={t.id} value={t.id}>{t.topic_name}</option>)}
+        <select
+          value={selectedTopic}
+          onChange={(e) => setSelectedTopic(e.target.value)}
+          className="border px-2 py-1 rounded"
+        >
+          <option value="">All Topics</option>
+
+          {topics.map(t => (
+            <option key={t.id} value={t.id}>
+              {t.topic_name}
+            </option>
+          ))}
         </select>
 
         <button onClick={() => setShowTopicInput(!showTopicInput)}>+</button>

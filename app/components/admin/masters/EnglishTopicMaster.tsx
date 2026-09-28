@@ -87,8 +87,10 @@ export default function EnglishTopicMaster({
   }, [selectedCourse]);
 
   useEffect(() => {
-    if (selectedDay) fetchTopics();
-  }, [selectedDay]);
+    if (selectedCourse && days.length > 0) {
+      fetchTopics();
+    }
+  }, [selectedDay, selectedCourse, days]);
 
   const fetchCourses = async () => {
     const { data, error } = await supabase
@@ -123,9 +125,41 @@ export default function EnglishTopicMaster({
   };
 
   const fetchTopics = async () => {
-    const { data } = await supabase.from("topics")
-      .select("*").eq("day_id", selectedDay).order("order_no");
-    if (data) setTopics(data);
+    if (!selectedCourse || days.length === 0) return;
+
+    let query = supabase
+      .from("topics")
+      .select("*");
+
+    if (selectedDay) {
+      query = query.eq("day_id", selectedDay);
+    } else {
+      query = query.in(
+        "day_id",
+        days.map(d => d.id)
+      );
+    }
+
+    const { data } = await query;
+
+    if (data) {
+      const dayOrder = new Map(
+        days.map(d => [d.id, d.day_number])
+      );
+
+      const sortedTopics = [...data].sort((a, b) => {
+        const dayA = dayOrder.get(a.day_id) ?? 999999;
+        const dayB = dayOrder.get(b.day_id) ?? 999999;
+
+        if (dayA !== dayB) {
+          return dayA - dayB;
+        }
+
+        return (a.order_no ?? 0) - (b.order_no ?? 0);
+      });
+
+      setTopics(sortedTopics);
+    }
   };
 
   // ADD
@@ -377,11 +411,18 @@ export default function EnglishTopicMaster({
           {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
 
-        <select value={selectedDay} onChange={(e) => setSelectedDay(e.target.value)} className="border px-2 py-1 rounded">
-          <option value="">Day</option>
-          {days.map(d => <option key={d.id} value={d.id}>
-            Day {d.day_number}{d.title ? ` · ${d.title}` : ""}
-          </option>)}
+        <select
+          value={selectedDay}
+          onChange={(e) => setSelectedDay(e.target.value)}
+          className="border px-2 py-1 rounded"
+        >
+          <option value="">All Days</option>
+
+          {days.map(d => (
+            <option key={d.id} value={d.id}>
+              Day {d.day_number}{d.title ? ` · ${d.title}` : ""}
+            </option>
+          ))}
         </select>
 
         <input value={topicName} onChange={(e) => setTopicName(e.target.value)}
@@ -480,9 +521,18 @@ export default function EnglishTopicMaster({
                           <div className="w-10">{t.order_no}</div>
                           <div className="flex-1">{t.topic_name}</div>
 
-                          <button onClick={() => onManageSentences(t.id)}>
-                            Manage Sentences →
-                          </button>
+                          <button
+  onClick={() =>
+    onManageSentences(
+      t.id,
+      selectedDay,
+      selectedCourse
+    )
+  }
+  className="cursor-pointer hover:text-blue-700 hover:underline transition"
+>
+  Manage Sentences →
+</button>
 
                           <button
                             onClick={copySelectedTopics}

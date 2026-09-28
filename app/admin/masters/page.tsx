@@ -307,17 +307,16 @@ export default function MastersPage() {
                 initialCourseId={
                   selectedEnglishCourseId
                 }
-                onManageTopics={(dayId: string) => {
+               onManageTopics={(dayId: string, courseId: string) => {
 
-                  setSelectedEnglishDayId(
-                    dayId
-                  );
+  setSelectedEnglishDayId(dayId);
+  setSelectedEnglishCourseId(courseId);
 
-                  setSelectedMaster(
-                    "english_topics"
-                  );
+  setSelectedMaster(
+    "english_topics"
+  );
 
-                }}
+}}
               />
             )}
 

@@ -786,7 +786,10 @@ export default function EnglishDayMaster({
                                 )}
                               </div>
                             )}
-                          <button onClick={() => onManageTopics(d.id)}>
+                          <button
+                            onClick={() => onManageTopics(d.id, selectedCourse)}
+                            className="cursor-pointer hover:text-blue-700 hover:underline transition"
+                          >
                             Manage Topics →
                           </button>
 
