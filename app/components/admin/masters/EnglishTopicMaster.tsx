@@ -522,17 +522,17 @@ export default function EnglishTopicMaster({
                           <div className="flex-1">{t.topic_name}</div>
 
                           <button
-  onClick={() =>
-    onManageSentences(
-      t.id,
-      selectedDay,
-      selectedCourse
-    )
-  }
-  className="cursor-pointer hover:text-blue-700 hover:underline transition"
->
-  Manage Sentences →
-</button>
+                            onClick={() =>
+                              onManageSentences(
+                                t.id,
+                                selectedDay,
+                                selectedCourse
+                              )
+                            }
+                            className="cursor-pointer hover:text-blue-700 hover:underline transition"
+                          >
+                            Manage Sentences →
+                          </button>
 
                           <button
                             onClick={copySelectedTopics}

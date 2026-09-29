@@ -421,7 +421,7 @@ export default function DemoShowcase({
                     {imageTopics
                         .filter(
                             (topic: any) =>
-                                (topic.images?.length || 0) > 0
+                                topic.media_type === "image"
                         )
                         .map((topic: any) => {
 
@@ -497,12 +497,12 @@ export default function DemoShowcase({
 
                 <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2">
 
-                    {imageTopics
-                        .filter(
-                            (topic: any) =>
-                                (topic.videos?.length || 0) > 0
-                        )
-                        .map((topic: any) => {
+                  {imageTopics
+    .filter(
+        (topic: any) =>
+            topic.media_type === "video"
+    )
+    .map((topic: any) => {
 
                             const expanded =
                                 expandedVideos.includes(
@@ -650,191 +650,189 @@ export default function DemoShowcase({
           COURSES
       ===================================================== */}
 
-           {/* =====================================================
+            {/* =====================================================
     COURSES
 ===================================================== */}
 
-<div className="flex-1 min-w-0 min-h-0 bg-white border rounded flex flex-col overflow-hidden">
+            <div className="flex-1 min-w-0 min-h-0 bg-white border rounded flex flex-col overflow-hidden">
 
-    <div className="bg-green-100 px-3 py-2 font-bold text-sm">
-        Courses
-    </div>
+                <div className="bg-green-100 px-3 py-2 font-bold text-sm">
+                    Courses
+                </div>
 
-    <div className="min-h-0 flex-1 overflow-y-auto p-2">
+                <div className="min-h-0 flex-1 overflow-y-auto p-2">
 
-        <div className="grid grid-cols-1 grid-flow-row auto-rows-max gap-y-1">
+                    <div className="grid grid-cols-1 grid-flow-row auto-rows-max gap-y-1">
 
-            {courses.map((course: any) => {
+                        {courses.map((course: any) => {
 
-                const courseExpanded =
-                    expandedCourses.includes(course.id);
+                            const courseExpanded =
+                                expandedCourses.includes(course.id);
 
-                const courseDays =
-                    days.filter(
-                        (day: any) =>
-                            day.course_id === course.id
-                    );
-
-                return (
-                    <div
-                        key={course.id}
-                        className="w-full"
-                    >
-
-                        {/* COURSE */}
-                        <div
-                            onClick={() => {
-                                toggleItem(
-                                    course.id,
-                                    setExpandedCourses
+                            const courseDays =
+                                days.filter(
+                                    (day: any) =>
+                                        day.course_id === course.id
                                 );
 
-                                handleCourseClick(
-                                    course.id
-                                );
-                            }}
-                            className={`flex justify-between items-center px-2 py-1.5 cursor-pointer rounded text-xs ${
-                                selectedCourse === course.id
-                                    ? "bg-green-200 font-semibold"
-                                    : "bg-gray-100 hover:bg-gray-200"
-                            }`}
-                        >
+                            return (
+                                <div
+                                    key={course.id}
+                                    className="w-full"
+                                >
 
-                            <span className="truncate">
-                                {course.name}
-                            </span>
+                                    {/* COURSE */}
+                                    <div
+                                        onClick={() => {
+                                            toggleItem(
+                                                course.id,
+                                                setExpandedCourses
+                                            );
 
-                            <span>
-                                {courseExpanded ? "−" : "+"}
-                            </span>
+                                            handleCourseClick(
+                                                course.id
+                                            );
+                                        }}
+                                        className={`flex justify-between items-center px-2 py-1.5 cursor-pointer rounded text-xs ${selectedCourse === course.id
+                                            ? "bg-green-200 font-semibold"
+                                            : "bg-gray-100 hover:bg-gray-200"
+                                            }`}
+                                    >
 
-                        </div>
+                                        <span className="truncate">
+                                            {course.name}
+                                        </span>
 
-                        {/* DAYS */}
-                        {courseExpanded && (
-                            <div className="ml-3">
+                                        <span>
+                                            {courseExpanded ? "−" : "+"}
+                                        </span>
 
-                                {courseDays.map((day: any) => {
+                                    </div>
 
-                                    const dayExpanded =
-                                        expandedDays.includes(day.id);
+                                    {/* DAYS */}
+                                    {courseExpanded && (
+                                        <div className="ml-3">
 
-                                    const dayTopics =
-                                        demoTopics.filter(
-                                            (topic: any) =>
-                                                topic.day_id === day.id
-                                        );
+                                            {courseDays.map((day: any) => {
 
-                                    return (
-                                        <div
-                                            key={day.id}
-                                            className="mt-1"
-                                        >
+                                                const dayExpanded =
+                                                    expandedDays.includes(day.id);
 
-                                            {/* DAY */}
-                                            <div
-                                                onClick={() => {
-                                                    toggleItem(
-                                                        day.id,
-                                                        setExpandedDays
+                                                const dayTopics =
+                                                    demoTopics.filter(
+                                                        (topic: any) =>
+                                                            topic.day_id === day.id
                                                     );
 
-                                                    handleDayClick(
-                                                        day.id
-                                                    );
-                                                }}
-                                                className="flex justify-between items-center px-2 py-1 bg-gray-50 hover:bg-gray-100 cursor-pointer text-xs rounded"
-                                            >
+                                                return (
+                                                    <div
+                                                        key={day.id}
+                                                        className="mt-1"
+                                                    >
 
-                                                <span>
-                                                    {String(
-                                                        day.day_number
-                                                    ).padStart(2, "0")}
-
-                                                    {day.title
-                                                        ? ` · ${day.title}`
-                                                        : ""}
-                                                </span>
-
-                                                <span>
-                                                    {dayExpanded
-                                                        ? "−"
-                                                        : "+"}
-                                                </span>
-
-                                            </div>
-
-                                            {/* TOPICS */}
-                                            {dayExpanded && (
-                                                <div className="ml-3">
-
-                                                    {dayTopics.map(
-                                                        (topic: any) => {
-
-                                                            const selected =
-                                                                selectedTopics.includes(
-                                                                    topic.id
+                                                        {/* DAY */}
+                                                        <div
+                                                            onClick={() => {
+                                                                toggleItem(
+                                                                    day.id,
+                                                                    setExpandedDays
                                                                 );
 
-                                                            return (
-                                                                <div
-                                                                    key={topic.id}
-                                                                    onClick={() =>
-                                                                        handleTopicClick(
-                                                                            topic.id
-                                                                        )
+                                                                handleDayClick(
+                                                                    day.id
+                                                                );
+                                                            }}
+                                                            className="flex justify-between items-center px-2 py-1 bg-gray-50 hover:bg-gray-100 cursor-pointer text-xs rounded"
+                                                        >
+
+                                                            <span>
+                                                                {String(
+                                                                    day.day_number
+                                                                ).padStart(2, "0")}
+
+                                                                {day.title
+                                                                    ? ` · ${day.title}`
+                                                                    : ""}
+                                                            </span>
+
+                                                            <span>
+                                                                {dayExpanded
+                                                                    ? "−"
+                                                                    : "+"}
+                                                            </span>
+
+                                                        </div>
+
+                                                        {/* TOPICS */}
+                                                        {dayExpanded && (
+                                                            <div className="ml-3">
+
+                                                                {dayTopics.map(
+                                                                    (topic: any) => {
+
+                                                                        const selected =
+                                                                            selectedTopics.includes(
+                                                                                topic.id
+                                                                            );
+
+                                                                        return (
+                                                                            <div
+                                                                                key={topic.id}
+                                                                                onClick={() =>
+                                                                                    handleTopicClick(
+                                                                                        topic.id
+                                                                                    )
+                                                                                }
+                                                                                className={`px-2 py-1 text-xs cursor-pointer rounded ${selected
+                                                                                    ? "bg-green-600 text-white"
+                                                                                    : "hover:bg-green-100"
+                                                                                    }`}
+                                                                            >
+
+                                                                                <div className="flex justify-between gap-1">
+
+                                                                                    <span className="truncate">
+                                                                                        {topic.topic_name}
+                                                                                    </span>
+
+                                                                                    {topic.sentence_count ||
+                                                                                        topic.vocabulary?.[0]?.count ? (
+                                                                                        <span className="shrink-0">
+                                                                                            (
+                                                                                            {topic.sentence_count ??
+                                                                                                topic.vocabulary?.[0]
+                                                                                                    ?.count ??
+                                                                                                0}
+                                                                                            )
+                                                                                        </span>
+                                                                                    ) : null}
+
+                                                                                </div>
+
+                                                                            </div>
+                                                                        );
                                                                     }
-                                                                    className={`px-2 py-1 text-xs cursor-pointer rounded ${
-                                                                        selected
-                                                                            ? "bg-green-600 text-white"
-                                                                            : "hover:bg-green-100"
-                                                                    }`}
-                                                                >
+                                                                )}
 
-                                                                    <div className="flex justify-between gap-1">
+                                                            </div>
+                                                        )}
 
-                                                                        <span className="truncate">
-                                                                            {topic.topic_name}
-                                                                        </span>
-
-                                                                        {topic.sentence_count ||
-                                                                        topic.vocabulary?.[0]?.count ? (
-                                                                            <span className="shrink-0">
-                                                                                (
-                                                                                {topic.sentence_count ??
-                                                                                    topic.vocabulary?.[0]
-                                                                                        ?.count ??
-                                                                                    0}
-                                                                                )
-                                                                            </span>
-                                                                        ) : null}
-
-                                                                    </div>
-
-                                                                </div>
-                                                            );
-                                                        }
-                                                    )}
-
-                                                </div>
-                                            )}
+                                                    </div>
+                                                );
+                                            })}
 
                                         </div>
-                                    );
-                                })}
+                                    )}
 
-                            </div>
-                        )}
+                                </div>
+                            );
+                        })}
 
                     </div>
-                );
-            })}
 
-        </div>
+                </div>
 
-    </div>
-
-</div>
+            </div>
 
         </div >
     );

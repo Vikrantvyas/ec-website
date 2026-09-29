@@ -505,13 +505,13 @@ export default function LeftPanel({
 
   }, [showPopup, editText]);
   const filteredImageTopics =
-    imageTopics.filter((topic: any) => {
-      if (imageMediaType === "images") {
-        return (topic.images?.length || 0) > 0;
-      }
+  imageTopics.filter((topic: any) => {
+    if (imageMediaType === "images") {
+      return topic.media_type === "image";
+    }
 
-      return (topic.videos?.length || 0) > 0;
-    });
+    return topic.media_type === "video";
+  });
   return (
 
     <div className="w-[270px] bg-white border-r flex flex-col relative">

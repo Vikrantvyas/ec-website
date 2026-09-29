@@ -452,8 +452,8 @@ export default function MainBoard({
         <div
           key="grammar"
           className={`${isVertical && showLeft
-  ? `w-full ${grammarRowCount <= 5 ? "h-[50%]" : "h-[70%]"}`
-  : widthClass
+            ? `w-full ${grammarRowCount <= 5 ? "h-[50%]" : "h-[70%]"}`
+            : widthClass
             } ${isVertical ? "border-t" : "border-l"} flex`}
         >
           <GrammarBoard

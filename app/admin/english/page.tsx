@@ -771,7 +771,7 @@ export default function EnglishPage() {
               selectedReactionMeme={selectedReactionMeme}
               showImages={showImages}
               setShowImages={setShowImages}
-                           isConversation={isConversation}
+              isConversation={isConversation}
               isImageExplanation={isImageExplanation}
               isMCQ={selectedCourseName === "MCQ"}
               conversationImageUrl={conversationImageUrl}

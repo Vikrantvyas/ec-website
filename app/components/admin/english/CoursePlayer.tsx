@@ -932,40 +932,39 @@ const VocabularyPlayer = forwardRef<any, any>((props, ref) => {
 
                                 {mcqOptionOrder.map((originalLetter) => {
 
-    const optionMap: any = {
-        A: list[currentIndex]?.option_a,
-        B: list[currentIndex]?.option_b,
-        C: list[currentIndex]?.option_c,
-        D: list[currentIndex]?.option_d,
-    };
+                                    const optionMap: any = {
+                                        A: list[currentIndex]?.option_a,
+                                        B: list[currentIndex]?.option_b,
+                                        C: list[currentIndex]?.option_c,
+                                        D: list[currentIndex]?.option_d,
+                                    };
 
-    const isCorrect =
-        mcqAnswered &&
-        originalLetter === list[currentIndex]?.correct_option;
+                                    const isCorrect =
+                                        mcqAnswered &&
+                                        originalLetter === list[currentIndex]?.correct_option;
 
-    return (
-        <div
-            key={originalLetter}
-            onClick={() => handleMcqOptionClick(originalLetter)}
-            className={`border-2 rounded-xl p-3 text-base cursor-pointer transition-colors ${
-                isCorrect
-                    ? "border-green-500 bg-green-100"
-                    : mcqAnswered &&
-                        originalLetter === mcqSelectedOption
-                        ? "border-red-500 bg-red-100"
-                        : "border-gray-300 bg-gray-50 hover:bg-gray-100"
-            }`}
-        >
-            <span className="font-bold mr-3">
-                {String.fromCharCode(
-                    65 + mcqOptionOrder.indexOf(originalLetter)
-                )}.
-            </span>
+                                    return (
+                                        <div
+                                            key={originalLetter}
+                                            onClick={() => handleMcqOptionClick(originalLetter)}
+                                            className={`border-2 rounded-xl p-3 text-base cursor-pointer transition-colors ${isCorrect
+                                                    ? "border-green-500 bg-green-100"
+                                                    : mcqAnswered &&
+                                                        originalLetter === mcqSelectedOption
+                                                        ? "border-red-500 bg-red-100"
+                                                        : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+                                                }`}
+                                        >
+                                            <span className="font-bold mr-3">
+                                                {String.fromCharCode(
+                                                    65 + mcqOptionOrder.indexOf(originalLetter)
+                                                )}.
+                                            </span>
 
-            {optionMap[originalLetter]}
-        </div>
-    );
-})}
+                                            {optionMap[originalLetter]}
+                                        </div>
+                                    );
+                                })}
 
                             </div>
 

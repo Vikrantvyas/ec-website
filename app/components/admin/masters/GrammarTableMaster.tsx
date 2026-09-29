@@ -1714,9 +1714,9 @@ export default function GrammarTableMaster() {
           </label>
 
           <input
-  id="grammar-table-name"
-  type="text"
-  value={tableName}
+            id="grammar-table-name"
+            type="text"
+            value={tableName}
             onChange={(e) => {
 
               setTableName(e.target.value);

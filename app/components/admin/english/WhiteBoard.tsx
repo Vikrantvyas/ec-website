@@ -295,7 +295,6 @@ export default function WhiteBoard() {
               color: item.color,
               fontSize: item.fontSize,
               cursor: "default",
-              pointerEvents: "none",
               fontFamily: /[\u0900-\u097F]/.test(item.text)
                 ? "'Noto Sans Devanagari', sans-serif"
                 : "Arial"

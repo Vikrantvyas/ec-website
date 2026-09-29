@@ -307,16 +307,16 @@ export default function MastersPage() {
                 initialCourseId={
                   selectedEnglishCourseId
                 }
-               onManageTopics={(dayId: string, courseId: string) => {
+                onManageTopics={(dayId: string, courseId: string) => {
 
-  setSelectedEnglishDayId(dayId);
-  setSelectedEnglishCourseId(courseId);
+                  setSelectedEnglishDayId(dayId);
+                  setSelectedEnglishCourseId(courseId);
 
-  setSelectedMaster(
-    "english_topics"
-  );
+                  setSelectedMaster(
+                    "english_topics"
+                  );
 
-}}
+                }}
               />
             )}
 
@@ -328,11 +328,15 @@ export default function MastersPage() {
                 initialCourseId={
                   selectedEnglishCourseId
                 }
-                onManageSentences={(topicId: string) => {
+                onManageSentences={(
+                  topicId: string,
+                  dayId: string,
+                  courseId: string
+                ) => {
 
-                  setSelectedEnglishTopicId(
-                    topicId
-                  );
+                  setSelectedEnglishTopicId(topicId);
+                  setSelectedEnglishDayId(dayId);
+                  setSelectedEnglishCourseId(courseId);
 
                   setSelectedMaster(
                     "english_sentences"
