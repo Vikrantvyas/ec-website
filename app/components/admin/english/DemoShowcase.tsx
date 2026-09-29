@@ -497,12 +497,12 @@ export default function DemoShowcase({
 
                 <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2">
 
-                  {imageTopics
-    .filter(
-        (topic: any) =>
-            topic.media_type === "video"
-    )
-    .map((topic: any) => {
+                    {imageTopics
+                        .filter(
+                            (topic: any) =>
+                                topic.media_type === "video"
+                        )
+                        .map((topic: any) => {
 
                             const expanded =
                                 expandedVideos.includes(

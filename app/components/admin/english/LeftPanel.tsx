@@ -25,6 +25,33 @@ export default function LeftPanel({
   const [showPopup, setShowPopup] = useState(false);
   const [selectedTopicData, setSelectedTopicData] = useState<any>(null);
   const [editText, setEditText] = useState("");
+  const handleContextMenu = (
+    e: React.MouseEvent,
+    type: string,
+    item: any
+  ) => {
+    e.preventDefault();
+
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      type,
+      item,
+      topic: type === "topic" ? item : undefined,
+      grammarTable: type === "grammarTable" ? item : undefined
+    });
+  };
+  const handleGrammarTableEdit = () => {
+
+    const table = menu?.grammarTable;
+
+    if (!table) return;
+
+    window.location.href =
+      `/admin/masters?editTable=${table.id}`;
+
+    setMenu(null);
+  };
   const [showGrammarTables, setShowGrammarTables] = useState(false);
 
   const [grammarTopics, setGrammarTopics] =
@@ -320,14 +347,7 @@ export default function LeftPanel({
   };
 
   // 🔥 RIGHT CLICK
-  const handleRightClick = (e: any, topic: any) => {
-    e.preventDefault();
-    setMenu({
-      x: e.clientX,
-      y: e.clientY,
-      topic
-    });
-  };
+
 
   // 🔥 EDIT CLICK
   const handleEdit = async () => {
@@ -351,6 +371,185 @@ export default function LeftPanel({
     }
 
     setMenu(null);
+  };
+  const handleRename = async () => {
+    if (!menu?.item) return;
+
+    const item = menu.item;
+
+    let currentName = "";
+
+    if (menu.type === "topic") {
+      currentName = item.topic_name || "";
+    } else {
+      currentName = item.name || item.title || "";
+    }
+
+    const newName = window.prompt("Enter new name:", currentName);
+
+    if (newName === null) return;
+
+    const name = newName.trim();
+
+    if (!name || name === currentName) {
+      setMenu(null);
+      return;
+    }
+
+    let table = "";
+    let column = "name";
+
+    switch (menu.type) {
+      case "topic":
+        table = "topics";
+        column = "topic_name";
+        break;
+
+      case "day":
+        table = "days";
+        column = "title";
+        break;
+
+      case "imageTopic":
+      case "videoTopic":
+        table = "image_topics";
+        break;
+
+      case "image":
+        table = "images";
+        break;
+
+      case "video":
+        table = "videos";
+        break;
+
+      case "grammarTopic":
+        table = "grammar_topics";
+        break;
+
+      case "grammarTable":
+        table = "grammar_tables";
+        break;
+    }
+
+    if (!table) return;
+
+    const { error } = await supabase
+      .from(table)
+      .update({ [column]: name })
+      .eq("id", item.id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setMenu(null);
+
+    if (
+      menu.type === "imageTopic" ||
+      menu.type === "videoTopic" ||
+      menu.type === "image" ||
+      menu.type === "video"
+    ) {
+      await fetchImageTopics();
+    }
+
+    if (
+      menu.type === "grammarTopic" ||
+      menu.type === "grammarTable"
+    ) {
+      await fetchGrammarTopics();
+    }
+
+    if (refreshData) {
+      await refreshData();
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!menu?.item) return;
+
+    const item = menu.item;
+
+    const itemName =
+      item.topic_name ||
+      item.name ||
+      item.title ||
+      "this item";
+
+    const confirmed = window.confirm(
+      `Delete "${itemName}"?`
+    );
+
+    if (!confirmed) return;
+
+    let table = "";
+
+    switch (menu.type) {
+      case "topic":
+        table = "topics";
+        break;
+
+      case "day":
+        table = "days";
+        break;
+
+      case "imageTopic":
+      case "videoTopic":
+        table = "image_topics";
+        break;
+
+      case "image":
+        table = "images";
+        break;
+
+      case "video":
+        table = "videos";
+        break;
+
+      case "grammarTopic":
+        table = "grammar_topics";
+        break;
+
+      case "grammarTable":
+        table = "grammar_tables";
+        break;
+    }
+
+    if (!table) return;
+
+    const { error } = await supabase
+      .from(table)
+      .delete()
+      .eq("id", item.id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setMenu(null);
+
+    if (
+      menu.type === "imageTopic" ||
+      menu.type === "videoTopic" ||
+      menu.type === "image" ||
+      menu.type === "video"
+    ) {
+      await fetchImageTopics();
+    }
+
+    if (
+      menu.type === "grammarTopic" ||
+      menu.type === "grammarTable"
+    ) {
+      await fetchGrammarTopics();
+    }
+
+    if (refreshData) {
+      await refreshData();
+    }
   };
   const fetchGrammarTopics = async () => {
 
@@ -415,17 +614,7 @@ export default function LeftPanel({
     }
 
   };
-  const handleGrammarTableEdit = () => {
 
-    const table = menu?.grammarTable;
-
-    if (!table) return;
-
-    window.location.href =
-      `/admin/masters?editTable=${table.id}`;
-
-    setMenu(null);
-  };
   // 🔥 SAVE
   const handleSave = async () => {
 
@@ -505,13 +694,13 @@ export default function LeftPanel({
 
   }, [showPopup, editText]);
   const filteredImageTopics =
-  imageTopics.filter((topic: any) => {
-    if (imageMediaType === "images") {
-      return topic.media_type === "image";
-    }
+    imageTopics.filter((topic: any) => {
+      if (imageMediaType === "images") {
+        return topic.media_type === "image";
+      }
 
-    return topic.media_type === "video";
-  });
+      return topic.media_type === "video";
+    });
   return (
 
     <div className="w-[270px] bg-white border-r flex flex-col relative">
@@ -588,11 +777,19 @@ export default function LeftPanel({
                   className="w-full shrink-0 mb-1"
                 >
 
-                  {/* IMAGE TOPIC */}
-                  <div
-                    onClick={() => toggleImageTopic(topic.id)}
-                    className="w-full flex justify-between items-center py-1 text-[13px] cursor-pointer"
-                  >
+                  {/* IMAGE / VIDEO TOPIC */}
+<div
+  onContextMenu={(e) =>
+    handleContextMenu(
+      e,
+      imageMediaType === "videos" ? "videoTopic" : "imageTopic",
+      topic
+    )
+  }
+  onClick={() => toggleImageTopic(topic.id)}
+  className="w-full flex justify-between items-center py-1 text-[13px] cursor-pointer"
+>
+
 
                     <span className="truncate">
                       {topic.name}
@@ -618,6 +815,9 @@ export default function LeftPanel({
                           <label
                             key={image.id}
                             id={`image-item-${image.id}`}
+                            onContextMenu={(e) =>
+                              handleContextMenu(e, "image", image)
+                            }
                             className={`flex items-center gap-2 w-full text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === image.id
                               ? "bg-blue-100 text-blue-700 font-semibold"
                               : "hover:bg-gray-100"
@@ -647,6 +847,9 @@ export default function LeftPanel({
                           <label
                             key={video.id}
                             id={`image-item-${video.id}`}
+                            onContextMenu={(e) =>
+                              handleContextMenu(e, "video", video)
+                            }
                             className={`flex items-center gap-2 w-full text-[13px] cursor-pointer px-1 py-1 rounded ${selectedImageId === video.id
                               ? "bg-blue-100 text-blue-700 font-semibold"
                               : "hover:bg-gray-100"
@@ -766,7 +969,7 @@ export default function LeftPanel({
 
                     </div>
 
-                                    )}
+                  )}
 
                 </div>
 
@@ -782,251 +985,270 @@ export default function LeftPanel({
 
       <div className="p-3 shrink-0 bg-white">
 
-              <select
-                value={selectedCourse}
-                onChange={(e) => {
-                  const courseId = e.target.value;
+        <select
+          value={selectedCourse}
+          onChange={(e) => {
+            const courseId = e.target.value;
 
-                  setSelectedCourse(courseId);
-                  setExpandedDays([]);
-                  setSelectedDays([]);
-                  setSelectedTopics([]);
-                }}
-                className="border px-2 py-1.5 rounded w-full text-[13px]"
-              >
-                <option value="">Select Course</option>
+            setSelectedCourse(courseId);
+            setExpandedDays([]);
+            setSelectedDays([]);
+            setSelectedTopics([]);
+          }}
+          className="border px-2 py-1.5 rounded w-full text-[13px]"
+        >
+          <option value="">Select Course</option>
 
-                {courses.map((c: any) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+          {courses.map((c: any) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
 
-              </select>
+        </select>
+
+      </div>
+
+      {/* DAYS + TOPICS */}
+      {selectedCourse && (
+        <>
+          {/* DAYS + TOPICS */}
+          <div
+            ref={daysContainerRef}
+            className="flex-1 min-h-0 overflow-y-auto px-3 pt-1 pb-3"
+          >
+
+            <div className="flex flex-col">
+
+              {days.map((d: any) => {
+
+                const dayTopics = topics.filter(
+                  (t: any) => t.day_id === d.id
+                );
+
+                const dayTopicIds = dayTopics.map(
+                  (topic: any) => topic.id
+                );
+
+                const isSelected =
+                  dayTopicIds.length > 0 &&
+                  dayTopicIds.every(
+                    (topicId: string) =>
+                      selectedTopics.includes(topicId)
+                  );
+                const isDayExpanded =
+                  expandedDays.includes(d.id);
+                const hasTopics = dayTopics.length > 0;
+
+                return (
+                  <div
+                    key={d.id}
+                    id={`day-item-${d.id}`}
+                    className="flex flex-col w-full"
+                  >
+
+                    {/* DAY ROW */}
+                    <div
+                      className={`sticky top-0 z-10 flex shrink-0 items-center justify-between w-full py-1 px-1 text-[13px] cursor-pointer bg-white hover:bg-gray-100 ${isSelected
+                        ? "text-blue-700"
+                        : "text-gray-800"
+                        }`}
+                      onContextMenu={(e) =>
+                        handleContextMenu(e, "day", d)
+                      }
+                      onClick={() => {
+                        if (hasTopics) {
+                          setExpandedDays((prev: string[]) =>
+                            prev.includes(d.id)
+                              ? prev.filter(dayId => dayId !== d.id)
+                              : [...prev, d.id]
+                          );
+                        }
+                      }}
+                    >
+
+
+                      <div className="flex items-center gap-2 min-w-0">
+
+                        <input
+                          type="checkbox"
+                          className="w-3.5 h-3.5 shrink-0"
+                          checked={isSelected}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={() => toggleDay(d.id)}
+                        />
+
+                        <span className="truncate">
+                          {String(d.day_number).padStart(2, "0")}
+                          {d.title ? ` · ${d.title}` : ""}
+                        </span>
+
+                      </div>
+
+                      {hasTopics && (
+                        <span className="font-bold text-[13px] shrink-0">
+                          {isSelected ? "−" : "+"}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* TOPICS */}
+                    {isDayExpanded && hasTopics && (
+
+                      <div className="flex flex-col ml-4 gap-1 pb-1">
+
+                        {dayTopics.map((t: any) => {
+
+                          const count =
+                            t.sentence_count !== undefined
+                              ? t.sentence_count
+                              : t.vocabulary?.[0]?.count || 0;
+
+                          const isTopicSelected =
+                            selectedTopics.includes(t.id);
+
+                          return (
+                            <label
+                              key={t.id}
+                              onContextMenu={(e) =>
+                                handleContextMenu(e, "topic", t)
+                              }
+                              className={`flex shrink-0 items-center justify-between w-full px-2 py-1 rounded text-[13px] cursor-pointer ${isTopicSelected
+                                ? "bg-green-600 text-white"
+                                : "bg-gray-100"
+                                }`}
+                            >
+
+                              <div className="flex items-center gap-2 min-w-0">
+
+                                <input
+                                  type="checkbox"
+                                  className="w-3.5 h-3.5 shrink-0"
+                                  checked={isTopicSelected}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={() => toggleTopic(t.id)}
+                                />
+
+                                <span className="truncate">
+                                  {t.topic_name}
+                                </span>
+
+                              </div>
+
+                              {count > 0 && (
+                                <span className="text-xs shrink-0 ml-2">
+                                  ({count})
+                                </span>
+                              )}
+
+                            </label>
+                          );
+
+                        })}
+
+                      </div>
+
+                    )}
+
+                  </div>
+                );
+
+              })}
 
             </div>
 
-            {/* DAYS + TOPICS */}
-            {selectedCourse && (
-              <>
-                {/* DAYS + TOPICS */}
-                <div
-                  ref={daysContainerRef}
-                  className="flex-1 min-h-0 overflow-y-auto px-3 pt-1 pb-3"
-                >
-
-                  <div className="flex flex-col">
-
-                    {days.map((d: any) => {
-
-                      const dayTopics = topics.filter(
-                        (t: any) => t.day_id === d.id
-                      );
-
-                      const dayTopicIds = dayTopics.map(
-                        (topic: any) => topic.id
-                      );
-
-                      const isSelected =
-                        dayTopicIds.length > 0 &&
-                        dayTopicIds.every(
-                          (topicId: string) =>
-                            selectedTopics.includes(topicId)
-                        );
-                      const isDayExpanded =
-                        expandedDays.includes(d.id);
-                      const hasTopics = dayTopics.length > 0;
-
-                      return (
-                        <div
-                          key={d.id}
-                          id={`day-item-${d.id}`}
-                          className="flex flex-col w-full"
-                        >
-
-                          {/* DAY ROW */}
-                          <div
-                            className={`sticky top-0 z-10 flex shrink-0 items-center justify-between w-full py-1 px-1 text-[13px] cursor-pointer bg-white hover:bg-gray-100 ${isSelected
-                              ? "text-blue-700"
-                              : "text-gray-800"
-                              }`}
-                            onClick={() => {
-                              if (hasTopics) {
-                                setExpandedDays((prev: string[]) =>
-                                  prev.includes(d.id)
-                                    ? prev.filter(dayId => dayId !== d.id)
-                                    : [...prev, d.id]
-                                );
-                              }
-                            }}
-                          >
-
-
-                            <div className="flex items-center gap-2 min-w-0">
-
-                              <input
-                                type="checkbox"
-                                className="w-3.5 h-3.5 shrink-0"
-                                checked={isSelected}
-                                onClick={(e) => e.stopPropagation()}
-                                onChange={() => toggleDay(d.id)}
-                              />
-
-                              <span className="truncate">
-                                {String(d.day_number).padStart(2, "0")}
-                                {d.title ? ` · ${d.title}` : ""}
-                              </span>
-
-                            </div>
-
-                            {hasTopics && (
-                              <span className="font-bold text-[13px] shrink-0">
-                                {isSelected ? "−" : "+"}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* TOPICS */}
-                          {isDayExpanded && hasTopics && (
-
-                            <div className="flex flex-col ml-4 gap-1 pb-1">
-
-                              {dayTopics.map((t: any) => {
-
-                                const count =
-                                  t.sentence_count !== undefined
-                                    ? t.sentence_count
-                                    : t.vocabulary?.[0]?.count || 0;
-
-                                const isTopicSelected =
-                                  selectedTopics.includes(t.id);
-
-                                return (
-                                  <label
-                                    key={t.id}
-                                    onContextMenu={(e) =>
-                                      handleRightClick(e, t)
-                                    }
-                                    className={`flex shrink-0 items-center justify-between w-full px-2 py-1 rounded text-[13px] cursor-pointer ${isTopicSelected
-                                      ? "bg-green-600 text-white"
-                                      : "bg-gray-100"
-                                      }`}
-                                  >
-
-                                    <div className="flex items-center gap-2 min-w-0">
-
-                                      <input
-                                        type="checkbox"
-                                        className="w-3.5 h-3.5 shrink-0"
-                                        checked={isTopicSelected}
-                                        onClick={(e) => e.stopPropagation()}
-                                        onChange={() => toggleTopic(t.id)}
-                                      />
-
-                                      <span className="truncate">
-                                        {t.topic_name}
-                                      </span>
-
-                                    </div>
-
-                                    {count > 0 && (
-                                      <span className="text-xs shrink-0 ml-2">
-                                        ({count})
-                                      </span>
-                                    )}
-
-                                  </label>
-                                );
-
-                              })}
-
-                            </div>
-
-                          )}
-
-                        </div>
-                      );
-
-                    })}
-
-                  </div>
-
-                </div>
-              </>
-            )}
-
-            {/* RIGHT CLICK MENU */}
-
-            {/* RIGHT CLICK MENU */}
-            {menu && (
-              <div
-                className="fixed bg-white border shadow rounded text-sm z-50"
-                style={{ top: menu.y, left: menu.x }}
-              >
-                <div
-                  onClick={
-                    menu.grammarTable
-                      ? handleGrammarTableEdit
-                      : handleEdit
-                  }
-                  className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
-                >
-                  Edit
-                </div>
-              </div>
-            )}
-
-            {/* POPUP */}
-            {showPopup && (
-              <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center">
-
-                <div
-                  className="bg-white rounded shadow-xl flex flex-col"
-                  style={{ width: "80vw", height: "80vh", maxWidth: "1200px" }}
-                >
-
-                  {/* HEADER */}
-                  <div className="p-4 border-b text-lg font-bold">
-                    Edit: {selectedTopicData?.topic_name}
-                  </div>
-
-                  {/* BODY */}
-                  <div style={{ flex: 1, padding: "10px" }}>
-                    <textarea
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        fontSize: "18px",
-                        lineHeight: "1.6",
-                        padding: "10px",
-                        border: "1px solid #ccc",
-                        resize: "none"
-                      }}
-                    />
-                  </div>
-
-                  {/* FOOTER */}
-                  <div className="flex justify-end gap-2 p-3 border-t">
-                    <button
-                      onClick={() => setShowPopup(false)}
-                      className="px-3 py-1 border rounded"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      className="px-3 py-1 bg-blue-600 text-white rounded"
-                    >
-                      Save
-                    </button>
-                  </div>
-
-                </div>
-
-              </div>
-            )}
           </div>
-        );
+        </>
+      )}
+
+      {/* RIGHT CLICK MENU */}
+
+      {/* RIGHT CLICK MENU */}
+      {menu && (
+        <div
+          className="fixed bg-white border shadow rounded text-sm z-50 min-w-[120px]"
+          style={{ top: menu.y, left: menu.x }}
+        >
+          {(menu.type === "topic" || menu.grammarTable) && (
+            <div
+              onClick={
+                menu.grammarTable
+                  ? handleGrammarTableEdit
+                  : handleEdit
+              }
+              className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+            >
+              Edit
+            </div>
+          )}
+
+          <div
+            onClick={handleRename}
+            className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+          >
+            Rename
+          </div>
+
+          <div
+            onClick={handleDelete}
+            className="px-3 py-2 hover:bg-red-100 text-red-600 cursor-pointer"
+          >
+            Delete
+          </div>
+        </div>
+      )}
+
+      {/* POPUP */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center">
+
+          <div
+            className="bg-white rounded shadow-xl flex flex-col"
+            style={{ width: "80vw", height: "80vh", maxWidth: "1200px" }}
+          >
+
+            {/* HEADER */}
+            <div className="p-4 border-b text-lg font-bold">
+              Edit: {selectedTopicData?.topic_name}
+            </div>
+
+            {/* BODY */}
+            <div style={{ flex: 1, padding: "10px" }}>
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  fontSize: "18px",
+                  lineHeight: "1.6",
+                  padding: "10px",
+                  border: "1px solid #ccc",
+                  resize: "none"
+                }}
+              />
+            </div>
+
+            {/* FOOTER */}
+            <div className="flex justify-end gap-2 p-3 border-t">
+              <button
+                onClick={() => setShowPopup(false)}
+                className="px-3 py-1 border rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-3 py-1 bg-blue-600 text-white rounded"
+              >
+                Save
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+      )}
+    </div>
+  );
 }
