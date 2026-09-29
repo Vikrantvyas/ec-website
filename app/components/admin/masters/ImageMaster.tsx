@@ -5,9 +5,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function ImageMaster({
-  initialTopicId = ""
+  initialTopicId = "",
+  initialMediaType = "image"
 }: {
   initialTopicId?: string;
+  initialMediaType?: "image" | "video";
 }) {
 
   const [topics, setTopics] = useState<any[]>([]);
@@ -152,14 +154,15 @@ export default function ImageMaster({
 
   }, []);
   useEffect(() => {
-    if (
-      initialTopicId &&
-      topics.some((topic: any) => topic.id === initialTopicId)
-    ) {
-      setSelectedTopicId(initialTopicId);
-    }
-  }, [initialTopicId, topics]);
+  setMediaType(initialMediaType);
 
+  if (
+    initialTopicId &&
+    topics.some((topic: any) => topic.id === initialTopicId)
+  ) {
+    setSelectedTopicId(initialTopicId);
+  }
+}, [initialTopicId, initialMediaType, topics]);
   // =========================================================
   // CLEAR FORM
   // =========================================================

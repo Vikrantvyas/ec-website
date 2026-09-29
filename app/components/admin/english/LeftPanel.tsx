@@ -25,6 +25,14 @@ export default function LeftPanel({
   const [showPopup, setShowPopup] = useState(false);
   const [selectedTopicData, setSelectedTopicData] = useState<any>(null);
   const [editText, setEditText] = useState("");
+  const [showAddVideoModal, setShowAddVideoModal] = useState(false);
+  const [selectedAddVideoTopicId, setSelectedAddVideoTopicId] = useState("");
+  const [addVideoName, setAddVideoName] = useState("");
+  const [addVideoUrl, setAddVideoUrl] = useState("");
+  const [savingAddVideo, setSavingAddVideo] = useState(false);
+  const [showAddVideoTopicModal, setShowAddVideoTopicModal] = useState(false);
+  const [addVideoTopicName, setAddVideoTopicName] = useState("");
+  const [savingAddVideoTopic, setSavingAddVideoTopic] = useState(false);
   const handleContextMenu = (
     e: React.MouseEvent,
     type: string,
@@ -68,7 +76,43 @@ export default function LeftPanel({
   const [videos, setVideos] = useState<any[]>([]);
   const [expandedImageTopics, setExpandedImageTopics] =
     useState<string[]>([]);
+  const refreshDaysAndTopics = async () => {
+    const { data: daysData, error: daysError } = await supabase
+      .from("days")
+      .select("*")
+      .eq("course_id", selectedCourse)
+      .order("day_number", { ascending: true });
 
+    if (daysError) {
+      alert(daysError.message);
+      return;
+    }
+
+    const dayIds = (daysData || []).map((d: any) => d.id);
+
+    let topicsData: any[] = [];
+
+    if (dayIds.length > 0) {
+      const { data, error: topicsError } = await supabase
+        .from("topics")
+        .select("*")
+        .in("day_id", dayIds)
+        .order("order_no", { ascending: true });
+
+      if (topicsError) {
+        alert(topicsError.message);
+        return;
+      }
+
+      topicsData = data || [];
+    }
+
+    // Parent component ki existing state ko update karna hoga
+    // isliye refreshData ko call karenge.
+    if (refreshData) {
+      await refreshData();
+    }
+  };
 
   // =========================================================
   // LOAD IMAGE TOPICS + IMAGES
@@ -551,6 +595,268 @@ export default function LeftPanel({
       await refreshData();
     }
   };
+  const handleAddNewDay = async () => {
+    if (!menu?.item) return;
+
+    const day = menu.item;
+
+    const newDayName = window.prompt(
+      "Enter new day name:"
+    );
+
+    if (newDayName === null) return;
+
+    const title = newDayName.trim();
+
+    if (!title) return;
+
+    const { data: existingDays, error: fetchError } =
+      await supabase
+        .from("days")
+        .select("day_number")
+        .eq("course_id", day.course_id);
+
+    if (fetchError) {
+      alert(fetchError.message);
+      return;
+    }
+
+    const maxDayNumber =
+      existingDays?.length > 0
+        ? Math.max(
+          ...existingDays.map(
+            (d: any) => Number(d.day_number) || 0
+          )
+        )
+        : 0;
+
+    const { error } = await supabase
+      .from("days")
+      .insert({
+        course_id: day.course_id,
+        day_number: maxDayNumber + 1,
+        title
+      });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setMenu(null);
+
+    if (refreshData) {
+      await refreshData();
+    }
+  };
+  const handleAddNewTopic = async () => {
+    if (!menu?.item) return;
+
+    const day = menu.item;
+
+    const newTopicName = window.prompt(
+      "Enter new topic name:"
+    );
+
+    if (newTopicName === null) return;
+
+    const topicName = newTopicName.trim();
+
+    if (!topicName) return;
+
+    const { data: existingTopics, error: fetchError } =
+      await supabase
+        .from("topics")
+        .select("order_no")
+        .eq("day_id", day.id);
+
+    if (fetchError) {
+      alert(fetchError.message);
+      return;
+    }
+
+    const maxOrder =
+      existingTopics?.length > 0
+        ? Math.max(
+          ...existingTopics.map(
+            (t: any) => Number(t.order_no) || 0
+          )
+        )
+        : 0;
+
+    const { error } = await supabase
+      .from("topics")
+      .insert({
+        day_id: day.id,
+        topic_name: topicName,
+        order_no: maxOrder + 1
+      });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setMenu(null);
+
+    if (refreshData) {
+      await refreshData();
+    }
+  };
+  const handleAddNewImage = () => {
+    if (!menu?.item) return;
+
+    const topicId = menu.item.id;
+
+    window.location.href =
+      `/admin/masters?addMedia=image&topicId=${topicId}`;
+
+    setMenu(null);
+  };
+
+  const handleAddNewVideo = () => {
+    if (!menu?.item) return;
+
+    setSelectedAddVideoTopicId(menu.item.id);
+    setAddVideoName("");
+    setAddVideoUrl("");
+    setShowAddVideoModal(true);
+    setMenu(null);
+  };
+  const handleAddNewVideoTopic = () => {
+    setAddVideoTopicName("");
+    setShowAddVideoTopicModal(true);
+    setMenu(null);
+  };
+
+  const handleSaveNewVideoTopic = async () => {
+    const name = addVideoTopicName.trim();
+
+    if (!name) {
+      alert("Please enter video topic name.");
+      return;
+    }
+
+    setSavingAddVideoTopic(true);
+
+    const { data: existingTopics, error: fetchError } =
+      await supabase
+        .from("image_topics")
+        .select("sort_order")
+        .eq("media_type", "video");
+
+    if (fetchError) {
+      alert(fetchError.message);
+      setSavingAddVideoTopic(false);
+      return;
+    }
+
+    const maxSortOrder =
+      existingTopics?.length > 0
+        ? Math.max(
+          ...existingTopics.map(
+            (topic: any) => Number(topic.sort_order) || 0
+          )
+        )
+        : 0;
+
+    const { error } = await supabase
+      .from("image_topics")
+      .insert({
+        name,
+        media_type: "video",
+        sort_order: maxSortOrder + 1
+      });
+
+    if (error) {
+      alert(error.message);
+      setSavingAddVideoTopic(false);
+      return;
+    }
+
+    setShowAddVideoTopicModal(false);
+    setAddVideoTopicName("");
+    setSavingAddVideoTopic(false);
+
+    await fetchImageTopics();
+  };
+  const handleSaveNewVideo = async () => {
+    const topicId = selectedAddVideoTopicId;
+
+    if (!topicId) {
+      alert("Video topic not found.");
+      return;
+    }
+
+    const name = addVideoName.trim();
+    const videoUrl = addVideoUrl.trim();
+
+    if (!name) {
+      alert("Please enter video name.");
+      return;
+    }
+
+    if (!videoUrl) {
+      alert("Please enter video URL / path.");
+      return;
+    }
+
+    setSavingAddVideo(true);
+
+    const { data: existingVideos, error: fetchError } =
+      await supabase
+        .from("videos")
+        .select("sort_order")
+        .eq("topic_id", topicId);
+
+    if (fetchError) {
+      alert(fetchError.message);
+      setSavingAddVideo(false);
+      return;
+    }
+
+    const maxSortOrder =
+      existingVideos?.length > 0
+        ? Math.max(
+          ...existingVideos.map(
+            (v: any) => Number(v.sort_order) || 0
+          )
+        )
+        : 0;
+
+    const { error } = await supabase
+      .from("videos")
+      .insert({
+        topic_id: topicId,
+        name,
+        source_type: "youtube",
+        video_url: videoUrl,
+        file_path: null,
+        sort_order: maxSortOrder + 1
+      });
+
+    if (error) {
+      alert(error.message);
+      setSavingAddVideo(false);
+      return;
+    }
+
+    setShowAddVideoModal(false);
+    setSelectedAddVideoTopicId("");
+    setAddVideoName("");
+    setAddVideoUrl("");
+    setSavingAddVideo(false);
+
+    await fetchImageTopics();
+
+    if (refreshData) {
+      await refreshData();
+    }
+
+    if (refreshTopicCount) {
+      await refreshTopicCount(topicId);
+    }
+  };
   const fetchGrammarTopics = async () => {
 
     const { data: topicsData, error: topicsError } =
@@ -778,17 +1084,17 @@ export default function LeftPanel({
                 >
 
                   {/* IMAGE / VIDEO TOPIC */}
-<div
-  onContextMenu={(e) =>
-    handleContextMenu(
-      e,
-      imageMediaType === "videos" ? "videoTopic" : "imageTopic",
-      topic
-    )
-  }
-  onClick={() => toggleImageTopic(topic.id)}
-  className="w-full flex justify-between items-center py-1 text-[13px] cursor-pointer"
->
+                  <div
+                    onContextMenu={(e) =>
+                      handleContextMenu(
+                        e,
+                        imageMediaType === "videos" ? "videoTopic" : "imageTopic",
+                        topic
+                      )
+                    }
+                    onClick={() => toggleImageTopic(topic.id)}
+                    className="w-full flex justify-between items-center py-1 text-[13px] cursor-pointer"
+                  >
 
 
                     <span className="truncate">
@@ -1181,7 +1487,46 @@ export default function LeftPanel({
               Edit
             </div>
           )}
-
+          {menu.type === "day" && (
+            <div
+              onClick={handleAddNewDay}
+              className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+            >
+              Add new day
+            </div>
+          )}
+          {menu.type === "imageTopic" && (
+            <div
+              onClick={handleAddNewImage}
+              className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+            >
+              Add new image
+            </div>
+          )}
+          {menu.type === "videoTopic" && (
+            <div
+              onClick={handleAddNewVideoTopic}
+              className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+            >
+              Add new video topic
+            </div>
+          )}
+          {menu.type === "videoTopic" && (
+            <div
+              onClick={handleAddNewVideo}
+              className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+            >
+              Add new video
+            </div>
+          )}
+          {menu.type === "day" && (
+            <div
+              onClick={handleAddNewTopic}
+              className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+            >
+              Add new topic
+            </div>
+          )}
           <div
             onClick={handleRename}
             className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
@@ -1247,6 +1592,132 @@ export default function LeftPanel({
 
           </div>
 
+        </div>
+      )}
+      {showAddVideoModal && (
+        <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl w-[420px] max-w-[90vw]">
+
+            <div className="px-4 py-3 border-b text-base font-semibold">
+              Add New Video
+            </div>
+
+            <div className="p-4 space-y-3">
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Video Name
+                </label>
+
+                <input
+                  type="text"
+                  value={addVideoName}
+                  onChange={(e) =>
+                    setAddVideoName(e.target.value)
+                  }
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Enter video name"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Video URL / Path
+                </label>
+
+                <input
+                  type="text"
+                  value={addVideoUrl}
+                  onChange={(e) =>
+                    setAddVideoUrl(e.target.value)
+                  }
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  placeholder="Paste video URL"
+                />
+              </div>
+
+            </div>
+
+            <div className="flex justify-end gap-2 px-4 py-3 border-t">
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddVideoModal(false);
+                  setSelectedAddVideoTopicId("");
+                  setAddVideoName("");
+                  setAddVideoUrl("");
+                }}
+                className="px-3 py-1.5 border rounded text-sm"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveNewVideo}
+                disabled={savingAddVideo}
+                className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+              >
+                {savingAddVideo ? "Saving..." : "OK"}
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+            {showAddVideoTopicModal && (
+        <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl w-[400px] max-w-[90vw]">
+
+            <div className="px-4 py-3 border-b text-base font-semibold">
+              Add New Video Topic
+            </div>
+
+            <div className="p-4">
+              <label className="block text-sm font-medium mb-1">
+                Video Topic Name
+              </label>
+
+              <input
+                type="text"
+                value={addVideoTopicName}
+                onChange={(e) =>
+                  setAddVideoTopicName(e.target.value)
+                }
+                className="w-full border rounded px-3 py-2 text-sm"
+                placeholder="Enter video topic name"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 px-4 py-3 border-t">
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddVideoTopicModal(false);
+                  setAddVideoTopicName("");
+                }}
+                className="px-3 py-1.5 border rounded text-sm"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveNewVideoTopic}
+                disabled={savingAddVideoTopic}
+                className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+              >
+                {savingAddVideoTopic ? "Saving..." : "OK"}
+              </button>
+
+            </div>
+
+          </div>
         </div>
       )}
     </div>

@@ -123,30 +123,31 @@ export default function MastersPage() {
       value: v.value
     }));
 
-  useEffect(() => {
+ useEffect(() => {
+  const tab = searchParams.get("tab");
+  const editTableId = searchParams.get("editTable");
 
-    const tab =
-      searchParams.get("tab");
+  const addMedia = searchParams.get("addMedia");
+  const topicId = searchParams.get("topicId");
 
-    const editTableId =
-      searchParams.get("editTable");
+  if (tab === "batches") {
+    setSelectedCategory("batches");
+    setSelectedMaster("batches");
+    return;
+  }
 
-    if (tab === "batches") {
+  if (editTableId) {
+    setSelectedCategory("english");
+    setSelectedMaster("grammar_tables");
+    return;
+  }
 
-      setSelectedCategory("batches");
-      setSelectedMaster("batches");
-
-      return;
-    }
-
-    if (editTableId) {
-
-      setSelectedCategory("english");
-      setSelectedMaster("grammar_tables");
-
-    }
-
-  }, [searchParams]);
+  if (addMedia === "image" || addMedia === "video") {
+    setSelectedCategory("english");
+    setSelectedMaster("images");
+    setSelectedImageTopicId(topicId || "");
+  }
+}, [searchParams]);
 
   return (
 
@@ -394,9 +395,7 @@ export default function MastersPage() {
 
             {selectedMaster === "images" && (
               <ImageMaster
-                initialTopicId={
-                  selectedImageTopicId
-                }
+                initialTopicId={selectedImageTopicId}
               />
             )}
 

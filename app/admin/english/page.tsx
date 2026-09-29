@@ -543,9 +543,10 @@ export default function EnglishPage() {
   };
 
   const refreshData = async () => {
-    await fetchTopics();
-    await fetchSentences();
-  };
+  await fetchDays();
+  await fetchTopics();
+  await fetchSentences();
+};
   // ---------------- NAV ----------------
 
   const nextSentence = () => {
