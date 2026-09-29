@@ -53,6 +53,7 @@ export default function MainBoard({
 
   const scoreRef = useRef<any>(null);
   const [panelOrder, setPanelOrder] = useState<string[]>([]);
+  const [grammarRowCount, setGrammarRowCount] = useState(0);
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [highlightPaths, setHighlightPaths] = useState<string[]>([]);
   const isDrawingRef = useRef(false);
@@ -332,7 +333,7 @@ export default function MainBoard({
         : activePanels.length === 3
           ? "w-1/3"
           : "w-1/4";
-  
+
   const handleCorrect = () => {
     vocabRef?.current?.markCorrect();
   };
@@ -378,7 +379,9 @@ export default function MainBoard({
       return (
         <div
           key="left"
-          className={`${isVertical && showGrammar ? "w-full h-[30%]" : widthClass
+          className={`${isVertical && showGrammar
+            ? `w-full ${grammarRowCount <= 5 ? "h-[50%]" : "h-[30%]"}`
+            : widthClass
             } flex flex-col ${studentMode ? "" : "border-l"}`}
         >
 
@@ -448,12 +451,15 @@ export default function MainBoard({
       return (
         <div
           key="grammar"
-          className={`${isVertical && showLeft ? "w-full h-[70%]" : widthClass
+          className={`${isVertical && showLeft
+  ? `w-full ${grammarRowCount <= 5 ? "h-[50%]" : "h-[70%]"}`
+  : widthClass
             } ${isVertical ? "border-t" : "border-l"} flex`}
         >
           <GrammarBoard
             selectedGrammarTableId={selectedGrammarTableId}
             onTableChange={setSelectedGrammarTableId}
+            onRowCountChange={setGrammarRowCount}
           />
         </div>
       );

@@ -6,7 +6,8 @@ import { supabase } from "@/lib/supabaseClient";
 
 export default function GrammarBoard({
   selectedGrammarTableId,
-  onTableChange
+  onTableChange,
+  onRowCountChange
 }: any) {
 
   const [tables, setTables] = useState<any[]>([]);
@@ -15,6 +16,9 @@ export default function GrammarBoard({
   const [tableHeaders, setTableHeaders] = useState<any[]>([]);
 
   const [revealedRows, setRevealedRows] = useState(2);
+  useEffect(() => {
+    onRowCountChange?.(revealedRows);
+  }, [revealedRows, onRowCountChange]);
   const topicIdRef = useRef<string>("");
 
   const requestIdRef = useRef(0);
@@ -257,244 +261,244 @@ export default function GrammarBoard({
 
     setTableHeaders(headers);
 
-    setTableData(
-      completeRows
-    );
+   setTableData(
+  completeRows
+);
 
-  };
+};
 
-  // =========================================================
-  // INITIAL / EXTERNAL TABLE SELECTION
-  // =========================================================
+// =========================================================
+// INITIAL / EXTERNAL TABLE SELECTION
+// =========================================================
 
 
 
-  // =========================================================
-  // CURRENT TABLE INDEX
-  // =========================================================
+    // =========================================================
+    // CURRENT TABLE INDEX
+    // =========================================================
 
-  const currentIndex =
-    tables.findIndex(
-      (table: any) =>
-        table.id === selectedTableId
-    );
+    const currentIndex =
+      tables.findIndex(
+        (table: any) =>
+          table.id === selectedTableId
+      );
 
-  // =========================================================
-  // PREVIOUS TABLE
-  // =========================================================
+    // =========================================================
+    // PREVIOUS TABLE
+    // =========================================================
 
-  const goPrevious = async () => {
+    const goPrevious = async () => {
 
-    if (currentIndex <= 0) {
-      return;
-    }
+      if (currentIndex <= 0) {
+        return;
+      }
 
-    const previousTable =
-      tables[currentIndex - 1];
+      const previousTable =
+        tables[currentIndex - 1];
 
-    if (!previousTable) {
-      return;
-    }
+      if (!previousTable) {
+        return;
+      }
 
-    setSelectedTableId(
-      previousTable.id
-    );
+      setSelectedTableId(
+        previousTable.id
+      );
 
-    // 🔥 Left Panel का radio button भी बदलें
-    onTableChange?.(
-      previousTable.id
-    );
-
-  };
-
-  // =========================================================
-  // NEXT TABLE
-  // =========================================================
-
-  const goNext = async () => {
-
-    if (
-      currentIndex < 0 ||
-      currentIndex >=
-      tables.length - 1
-    ) {
-
-      return;
-
-    }
-
-    const nextTable =
-      tables[
-      currentIndex + 1
-      ];
-
-    if (!nextTable) {
-
-      return;
-
-    }
-
-    setSelectedTableId(
-      nextTable.id
-    );
-
-    onTableChange?.(
-      nextTable.id
-    );
-
-  };
-
-  // =========================================================
-  // REFRESH CURRENT TABLE
-  // =========================================================
-
-  useEffect(() => {
-
-    if (!selectedTableId) {
-
-      return;
-
-    }
-
-    const handleRefresh = () => {
-
-      loadTableData(
-        selectedTableId
+      // 🔥 Left Panel का radio button भी बदलें
+      onTableChange?.(
+        previousTable.id
       );
 
     };
 
-    window.addEventListener(
-      "grammar-table-refresh",
-      handleRefresh
-    );
+    // =========================================================
+    // NEXT TABLE
+    // =========================================================
 
-    return () => {
+    const goNext = async () => {
 
-      window.removeEventListener(
-        "grammar-table-refresh",
-        handleRefresh
-      );
-
-    };
-
-  }, [selectedTableId]);
-
-  // =========================================================
-  // KEYBOARD NAVIGATION
-  // PageUp / PageDown
-  // =========================================================
-
-  useEffect(() => {
-
-    const handleKey = (
-      e: KeyboardEvent
-    ) => {
-
-      // Don't interfere with form controls
       if (
-        e.target instanceof HTMLElement &&
-        e.target.closest(
-          "input, textarea, select, button"
-        )
+        currentIndex < 0 ||
+        currentIndex >=
+        tables.length - 1
       ) {
 
         return;
 
       }
 
-      if (
-        e.key === "PageUp"
-      ) {
+      const nextTable =
+        tables[
+        currentIndex + 1
+        ];
 
-        e.preventDefault();
+      if (!nextTable) {
 
-        goPrevious();
-
-      }
-
-      if (
-        e.key === "PageDown"
-      ) {
-
-        e.preventDefault();
-
-        goNext();
+        return;
 
       }
 
-    };
+      setSelectedTableId(
+        nextTable.id
+      );
 
-    window.addEventListener(
-      "keydown",
-      handleKey
-    );
-
-    return () => {
-
-      window.removeEventListener(
-        "keydown",
-        handleKey
+      onTableChange?.(
+        nextTable.id
       );
 
     };
 
-  }, [
-    tables,
-    selectedTableId
-  ]);
+    // =========================================================
+    // REFRESH CURRENT TABLE
+    // =========================================================
 
-  // =========================================================
-  // BUTTON STATE
-  // =========================================================
+    useEffect(() => {
 
-  const isFirst =
-    currentIndex <= 0;
+      if (!selectedTableId) {
 
-  const isLast =
-    currentIndex ===
-    tables.length - 1 ||
-    currentIndex === -1;
+        return;
 
-  // =========================================================
-  // UI
-  // =========================================================
+      }
 
-  return (
+      const handleRefresh = () => {
 
-    <div className="relative w-full h-full overflow-hidden">
+        loadTableData(
+          selectedTableId
+        );
 
-      {/* =====================================================
+      };
+
+      window.addEventListener(
+        "grammar-table-refresh",
+        handleRefresh
+      );
+
+      return () => {
+
+        window.removeEventListener(
+          "grammar-table-refresh",
+          handleRefresh
+        );
+
+      };
+
+    }, [selectedTableId]);
+
+    // =========================================================
+    // KEYBOARD NAVIGATION
+    // PageUp / PageDown
+    // =========================================================
+
+    useEffect(() => {
+
+      const handleKey = (
+        e: KeyboardEvent
+      ) => {
+
+        // Don't interfere with form controls
+        if (
+          e.target instanceof HTMLElement &&
+          e.target.closest(
+            "input, textarea, select, button"
+          )
+        ) {
+
+          return;
+
+        }
+
+        if (
+          e.key === "PageUp"
+        ) {
+
+          e.preventDefault();
+
+          goPrevious();
+
+        }
+
+        if (
+          e.key === "PageDown"
+        ) {
+
+          e.preventDefault();
+
+          goNext();
+
+        }
+
+      };
+
+      window.addEventListener(
+        "keydown",
+        handleKey
+      );
+
+      return () => {
+
+        window.removeEventListener(
+          "keydown",
+          handleKey
+        );
+
+      };
+
+    }, [
+      tables,
+      selectedTableId
+    ]);
+
+    // =========================================================
+    // BUTTON STATE
+    // =========================================================
+
+    const isFirst =
+      currentIndex <= 0;
+
+    const isLast =
+      currentIndex ===
+      tables.length - 1 ||
+      currentIndex === -1;
+
+    // =========================================================
+    // UI
+    // =========================================================
+
+    return (
+
+      <div className="relative w-full h-full overflow-hidden">
+
+        {/* =====================================================
           COMPLETE GRAMMAR TABLE
       ===================================================== */}
 
-      <div className="flex-1 min-h-0 overflow-auto">
+        <div className="flex-1 min-h-0 overflow-auto">
 
-        <GrammarTable
-          data={tableData}
-          headers={
-            tableHeaders.map(
-              (h: any) =>
-                h.header_name
-            )
-          }
-          revealedRows={revealedRows}
-          setRevealedRows={setRevealedRows}
-        />
+          <GrammarTable
+            data={tableData}
+            headers={
+              tableHeaders.map(
+                (h: any) =>
+                  h.header_name
+              )
+            }
+            revealedRows={revealedRows}
+            setRevealedRows={setRevealedRows}
+          />
 
-      </div>
+        </div>
 
-      {/* =====================================================
+        {/* =====================================================
           PREVIOUS / NEXT BUTTONS
       ===================================================== */}
 
-      <div className="absolute left-6 right-6 top-1/2 -translate-y-1/2 flex items-center justify-between pointer-events-none z-[2000]">
+        <div className="absolute left-6 right-6 top-1/2 -translate-y-1/2 flex items-center justify-between pointer-events-none z-[2000]">
 
-        <button
-          type="button"
-          onClick={goPrevious}
-          disabled={isFirst}
-          className="
+          <button
+            type="button"
+            onClick={goPrevious}
+            disabled={isFirst}
+            className="
       pointer-events-auto
       w-8
       h-8
@@ -509,16 +513,16 @@ export default function GrammarBoard({
       disabled:opacity-20
       disabled:cursor-not-allowed
     "
-          title="Previous Grammar Table"
-        >
-          ←
-        </button>
+            title="Previous Grammar Table"
+          >
+            ←
+          </button>
 
-        <button
-          type="button"
-          onClick={goNext}
-          disabled={isLast}
-          className="
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={isLast}
+            className="
       pointer-events-auto
       w-8
       h-8
@@ -533,15 +537,15 @@ export default function GrammarBoard({
       disabled:opacity-20
       disabled:cursor-not-allowed
     "
-          title="Next Grammar Table"
-        >
-          →
-        </button>
+            title="Next Grammar Table"
+          >
+            →
+          </button>
+
+        </div>
 
       </div>
 
-    </div>
+    );
 
-  );
-
-}
+  }
