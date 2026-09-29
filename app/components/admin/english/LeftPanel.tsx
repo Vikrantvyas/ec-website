@@ -33,6 +33,15 @@ export default function LeftPanel({
   const [showAddVideoTopicModal, setShowAddVideoTopicModal] = useState(false);
   const [addVideoTopicName, setAddVideoTopicName] = useState("");
   const [savingAddVideoTopic, setSavingAddVideoTopic] = useState(false);
+  const [showAddImageModal, setShowAddImageModal] = useState(false);
+  const [selectedAddImageTopicId, setSelectedAddImageTopicId] = useState("");
+  const [addImageName, setAddImageName] = useState("");
+  const [selectedAddImageFile, setSelectedAddImageFile] = useState<File | null>(null);
+  const [savingAddImage, setSavingAddImage] = useState(false);
+
+  const [showAddImageTopicModal, setShowAddImageTopicModal] = useState(false);
+  const [addImageTopicName, setAddImageTopicName] = useState("");
+  const [savingAddImageTopic, setSavingAddImageTopic] = useState(false);
   const handleContextMenu = (
     e: React.MouseEvent,
     type: string,
@@ -706,14 +715,99 @@ export default function LeftPanel({
   const handleAddNewImage = () => {
     if (!menu?.item) return;
 
-    const topicId = menu.item.id;
-
-    window.location.href =
-      `/admin/masters?addMedia=image&topicId=${topicId}`;
-
+    setSelectedAddImageTopicId(menu.item.id);
+    setAddImageName("");
+    setSelectedAddImageFile(null);
+    setShowAddImageModal(true);
     setMenu(null);
   };
+  const handleSaveNewImage = async () => {
+    const topicId = selectedAddImageTopicId;
 
+    if (!topicId) {
+      alert("Image topic not found.");
+      return;
+    }
+
+    if (!selectedAddImageFile) {
+      alert("Please select an image.");
+      return;
+    }
+
+    const file = selectedAddImageFile;
+    const imageName = addImageName.trim() || file.name.replace(/\.[^/.]+$/, "");
+
+    setSavingAddImage(true);
+
+    const { data: existingImages, error: fetchError } =
+      await supabase
+        .from("images")
+        .select("sort_order")
+        .eq("topic_id", topicId);
+
+    if (fetchError) {
+      alert(fetchError.message);
+      setSavingAddImage(false);
+      return;
+    }
+
+    const maxSortOrder =
+      existingImages?.length > 0
+        ? Math.max(
+          ...existingImages.map(
+            (image: any) => Number(image.sort_order) || 0
+          )
+        )
+        : 0;
+
+    const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const filePath = `${topicId}/${crypto.randomUUID()}-${safeFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("images")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      alert(uploadError.message);
+      setSavingAddImage(false);
+      return;
+    }
+
+    const { error: insertError } = await supabase
+      .from("images")
+      .insert({
+        topic_id: topicId,
+        name: imageName,
+        file_path: filePath,
+        sort_order: maxSortOrder + 1
+      });
+
+    if (insertError) {
+      await supabase.storage
+        .from("images")
+        .remove([filePath]);
+
+      alert(insertError.message);
+      setSavingAddImage(false);
+      return;
+    }
+
+    setShowAddImageModal(false);
+    setSelectedAddImageTopicId("");
+    setAddImageName("");
+    setSelectedAddImageFile(null);
+    setSavingAddImage(false);
+
+    await fetchImageTopics();
+
+    if (refreshData) {
+      await refreshData();
+    }
+
+    if (refreshTopicCount) {
+      await refreshTopicCount(topicId);
+    }
+  };
   const handleAddNewVideo = () => {
     if (!menu?.item) return;
 
@@ -728,7 +822,57 @@ export default function LeftPanel({
     setShowAddVideoTopicModal(true);
     setMenu(null);
   };
+  const handleSaveNewImageTopic = async () => {
+    const name = addImageTopicName.trim();
 
+    if (!name) {
+      alert("Please enter image topic name.");
+      return;
+    }
+
+    setSavingAddImageTopic(true);
+
+    const { data: existingTopics, error: fetchError } =
+      await supabase
+        .from("image_topics")
+        .select("sort_order")
+        .eq("media_type", "image");
+
+    if (fetchError) {
+      alert(fetchError.message);
+      setSavingAddImageTopic(false);
+      return;
+    }
+
+    const maxSortOrder =
+      existingTopics?.length > 0
+        ? Math.max(
+          ...existingTopics.map(
+            (topic: any) => Number(topic.sort_order) || 0
+          )
+        )
+        : 0;
+
+    const { error } = await supabase
+      .from("image_topics")
+      .insert({
+        name,
+        media_type: "image",
+        sort_order: maxSortOrder + 1
+      });
+
+    if (error) {
+      alert(error.message);
+      setSavingAddImageTopic(false);
+      return;
+    }
+
+    setShowAddImageTopicModal(false);
+    setAddImageTopicName("");
+    setSavingAddImageTopic(false);
+
+    await fetchImageTopics();
+  };
   const handleSaveNewVideoTopic = async () => {
     const name = addVideoTopicName.trim();
 
@@ -1495,14 +1639,7 @@ export default function LeftPanel({
               Add new day
             </div>
           )}
-          {menu.type === "imageTopic" && (
-            <div
-              onClick={handleAddNewImage}
-              className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
-            >
-              Add new image
-            </div>
-          )}
+
           {menu.type === "videoTopic" && (
             <div
               onClick={handleAddNewVideoTopic}
@@ -1510,6 +1647,27 @@ export default function LeftPanel({
             >
               Add new video topic
             </div>
+          )}
+          {menu.type === "imageTopic" && (
+            <>
+              <div
+                onClick={() => {
+                  setAddImageTopicName("");
+                  setShowAddImageTopicModal(true);
+                  setMenu(null);
+                }}
+                className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+              >
+                Add new image topic
+              </div>
+
+              <div
+                onClick={handleAddNewImage}
+                className="px-3 py-2 hover:bg-gray-200 cursor-pointer"
+              >
+                Add new image
+              </div>
+            </>
           )}
           {menu.type === "videoTopic" && (
             <div
@@ -1541,185 +1699,315 @@ export default function LeftPanel({
             Delete
           </div>
         </div>
-      )}
+      )
+      }
 
       {/* POPUP */}
-      {showPopup && (
-        <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center">
+      {
+        showPopup && (
+          <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center">
 
-          <div
-            className="bg-white rounded shadow-xl flex flex-col"
-            style={{ width: "80vw", height: "80vh", maxWidth: "1200px" }}
-          >
+            <div
+              className="bg-white rounded shadow-xl flex flex-col"
+              style={{ width: "80vw", height: "80vh", maxWidth: "1200px" }}
+            >
 
-            {/* HEADER */}
-            <div className="p-4 border-b text-lg font-bold">
-              Edit: {selectedTopicData?.topic_name}
-            </div>
+              {/* HEADER */}
+              <div className="p-4 border-b text-lg font-bold">
+                Edit: {selectedTopicData?.topic_name}
+              </div>
 
-            {/* BODY */}
-            <div style={{ flex: 1, padding: "10px" }}>
-              <textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  fontSize: "18px",
-                  lineHeight: "1.6",
-                  padding: "10px",
-                  border: "1px solid #ccc",
-                  resize: "none"
-                }}
-              />
-            </div>
+              {/* BODY */}
+              <div style={{ flex: 1, padding: "10px" }}>
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    fontSize: "18px",
+                    lineHeight: "1.6",
+                    padding: "10px",
+                    border: "1px solid #ccc",
+                    resize: "none"
+                  }}
+                />
+              </div>
 
-            {/* FOOTER */}
-            <div className="flex justify-end gap-2 p-3 border-t">
-              <button
-                onClick={() => setShowPopup(false)}
-                className="px-3 py-1 border rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-3 py-1 bg-blue-600 text-white rounded"
-              >
-                Save
-              </button>
+              {/* FOOTER */}
+              <div className="flex justify-end gap-2 p-3 border-t">
+                <button
+                  onClick={() => setShowPopup(false)}
+                  className="px-3 py-1 border rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="px-3 py-1 bg-blue-600 text-white rounded"
+                >
+                  Save
+                </button>
+              </div>
+
             </div>
 
           </div>
+        )
+      }
+      {
+        showAddVideoModal && (
+          <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-xl w-[420px] max-w-[90vw]">
 
-        </div>
-      )}
-      {showAddVideoModal && (
-        <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-xl w-[420px] max-w-[90vw]">
+              <div className="px-4 py-3 border-b text-base font-semibold">
+                Add New Video
+              </div>
 
-            <div className="px-4 py-3 border-b text-base font-semibold">
-              Add New Video
+              <div className="p-4 space-y-3">
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Video Name
+                  </label>
+
+                  <input
+                    type="text"
+                    value={addVideoName}
+                    onChange={(e) =>
+                      setAddVideoName(e.target.value)
+                    }
+                    className="w-full border rounded px-3 py-2 text-sm"
+                    placeholder="Enter video name"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Video URL / Path
+                  </label>
+
+                  <input
+                    type="text"
+                    value={addVideoUrl}
+                    onChange={(e) =>
+                      setAddVideoUrl(e.target.value)
+                    }
+                    className="w-full border rounded px-3 py-2 text-sm"
+                    placeholder="Paste video URL"
+                  />
+                </div>
+
+              </div>
+
+              <div className="flex justify-end gap-2 px-4 py-3 border-t">
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddVideoModal(false);
+                    setSelectedAddVideoTopicId("");
+                    setAddVideoName("");
+                    setAddVideoUrl("");
+                  }}
+                  className="px-3 py-1.5 border rounded text-sm"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveNewVideo}
+                  disabled={savingAddVideo}
+                  className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+                >
+                  {savingAddVideo ? "Saving..." : "OK"}
+                </button>
+
+              </div>
+
             </div>
+          </div>
+        )
+      }
+      {
+        showAddVideoTopicModal && (
+          <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-xl w-[400px] max-w-[90vw]">
 
-            <div className="p-4 space-y-3">
+              <div className="px-4 py-3 border-b text-base font-semibold">
+                Add New Video Topic
+              </div>
 
-              <div>
+              <div className="p-4">
                 <label className="block text-sm font-medium mb-1">
-                  Video Name
+                  Video Topic Name
                 </label>
 
                 <input
                   type="text"
-                  value={addVideoName}
+                  value={addVideoTopicName}
                   onChange={(e) =>
-                    setAddVideoName(e.target.value)
+                    setAddVideoTopicName(e.target.value)
                   }
                   className="w-full border rounded px-3 py-2 text-sm"
-                  placeholder="Enter video name"
+                  placeholder="Enter video topic name"
                   autoFocus
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Video URL / Path
-                </label>
+              <div className="flex justify-end gap-2 px-4 py-3 border-t">
 
-                <input
-                  type="text"
-                  value={addVideoUrl}
-                  onChange={(e) =>
-                    setAddVideoUrl(e.target.value)
-                  }
-                  className="w-full border rounded px-3 py-2 text-sm"
-                  placeholder="Paste video URL"
-                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddVideoTopicModal(false);
+                    setAddVideoTopicName("");
+                  }}
+                  className="px-3 py-1.5 border rounded text-sm"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveNewVideoTopic}
+                  disabled={savingAddVideoTopic}
+                  className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+                >
+                  {savingAddVideoTopic ? "Saving..." : "OK"}
+                </button>
+
               </div>
 
             </div>
-
-            <div className="flex justify-end gap-2 px-4 py-3 border-t">
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAddVideoModal(false);
-                  setSelectedAddVideoTopicId("");
-                  setAddVideoName("");
-                  setAddVideoUrl("");
-                }}
-                className="px-3 py-1.5 border rounded text-sm"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSaveNewVideo}
-                disabled={savingAddVideo}
-                className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
-              >
-                {savingAddVideo ? "Saving..." : "OK"}
-              </button>
-
-            </div>
-
           </div>
-        </div>
-      )}
-            {showAddVideoTopicModal && (
-        <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-xl w-[400px] max-w-[90vw]">
+        )
+      }
+      {
+        showAddImageModal && (
+          <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-xl w-[420px] max-w-[90vw]">
 
-            <div className="px-4 py-3 border-b text-base font-semibold">
-              Add New Video Topic
+              <div className="px-4 py-3 border-b text-base font-semibold">
+                Add New Image
+              </div>
+
+              <div className="p-4 space-y-3">
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Image Name
+                  </label>
+
+                  <input
+                    type="text"
+                    value={addImageName}
+                    onChange={(e) => setAddImageName(e.target.value)}
+                    className="w-full border rounded px-3 py-2 text-sm"
+                    placeholder="Enter image name"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Select Image
+                  </label>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) =>
+                      setSelectedAddImageFile(e.target.files?.[0] || null)
+                    }
+                    className="w-full text-sm cursor-pointer"
+                  />
+                </div>
+
+              </div>
+
+              <div className="flex justify-end gap-2 px-4 py-3 border-t">
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddImageModal(false);
+                    setSelectedAddImageTopicId("");
+                    setAddImageName("");
+                    setSelectedAddImageFile(null);
+                  }}
+                  className="px-3 py-1.5 border rounded text-sm"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveNewImage}
+                  disabled={savingAddImage}
+                  className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+                >
+                  {savingAddImage ? "Saving..." : "OK"}
+                </button>
+
+              </div>
+
             </div>
-
-            <div className="p-4">
-              <label className="block text-sm font-medium mb-1">
-                Video Topic Name
-              </label>
-
-              <input
-                type="text"
-                value={addVideoTopicName}
-                onChange={(e) =>
-                  setAddVideoTopicName(e.target.value)
-                }
-                className="w-full border rounded px-3 py-2 text-sm"
-                placeholder="Enter video topic name"
-                autoFocus
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 px-4 py-3 border-t">
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAddVideoTopicModal(false);
-                  setAddVideoTopicName("");
-                }}
-                className="px-3 py-1.5 border rounded text-sm"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSaveNewVideoTopic}
-                disabled={savingAddVideoTopic}
-                className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
-              >
-                {savingAddVideoTopic ? "Saving..." : "OK"}
-              </button>
-
-            </div>
-
           </div>
-        </div>
-      )}
+        )
+      }
+      {showAddImageTopicModal && (
+  <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+    <div className="bg-white rounded-lg shadow-xl w-[400px] max-w-[90vw]">
+
+      <div className="px-4 py-3 border-b text-base font-semibold">
+        Add New Image Topic
+      </div>
+
+      <div className="p-4">
+        <label className="block text-sm font-medium mb-1">
+          Image Topic Name
+        </label>
+
+        <input
+          type="text"
+          value={addImageTopicName}
+          onChange={(e) => setAddImageTopicName(e.target.value)}
+          className="w-full border rounded px-3 py-2 text-sm"
+          placeholder="Enter image topic name"
+          autoFocus
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 px-4 py-3 border-t">
+
+        <button
+          type="button"
+          onClick={() => {
+            setShowAddImageTopicModal(false);
+            setAddImageTopicName("");
+          }}
+          className="px-3 py-1.5 border rounded text-sm"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={handleSaveNewImageTopic}
+          disabled={savingAddImageTopic}
+          className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+        >
+          {savingAddImageTopic ? "Saving..." : "OK"}
+        </button>
+
+      </div>
+
     </div>
+  </div>
+)}
+    </div >
   );
 }
