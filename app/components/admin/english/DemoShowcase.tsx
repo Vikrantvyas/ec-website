@@ -64,6 +64,8 @@ export default function DemoShowcase({
 
     const [selectedVideoTopicId, setSelectedVideoTopicId] = useState<string>("");
     const [selectedVideoIndex, setSelectedVideoIndex] = useState(0);
+    const [mcqQuestions, setMcqQuestions] = useState<any[]>([]);
+    const [selectedMCQIndex, setSelectedMCQIndex] = useState(0);
     const [reactionMemes, setReactionMemes] = useState<any[]>([]);
     const [selectedReactionIndex, setSelectedReactionIndex] = useState(0);
     const activeTab = demoTabs.find(
@@ -122,6 +124,65 @@ export default function DemoShowcase({
         loadDemoTabs();
     }, []);
     useEffect(() => {
+        if (activeTabType !== "course") return;
+
+        const courseName = courses.find(
+            (course: any) => course.id === activeCourseId
+        )?.name;
+
+        if (courseName !== "MCQ") {
+            setMcqQuestions([]);
+            return;
+        }
+
+        const topicId = selectedTopics[0];
+
+        if (!topicId) {
+            setMcqQuestions([]);
+            return;
+        }
+
+        const loadMCQQuestions = async () => {
+            const { data, error } = await supabase
+                .from("mcq_questions")
+                .select(`
+                id,
+                topic_id,
+                question,
+                option_a,
+                option_b,
+                option_c,
+                option_d,
+                correct_option,
+                order_no
+            `)
+                .eq("topic_id", topicId)
+                .order("order_no", {
+                    ascending: true
+                });
+
+            if (error) {
+                console.error(
+                    "DEMO MCQ ERROR:",
+                    error
+                );
+                setMcqQuestions([]);
+                return;
+            }
+
+            setMcqQuestions(data || []);
+            setSelectedMCQIndex(0);
+        };
+
+        loadMCQQuestions();
+    }, [
+        activeTabType,
+        activeCourseId,
+        selectedTopics,
+        courses
+    ]);
+
+    useEffect(() => {
         const loadReactionMemes = async () => {
             const { data, error } = await supabase
                 .from("reaction_memes")
@@ -135,7 +196,9 @@ export default function DemoShowcase({
                 thumbnail_path,
                 sort_order
             `)
-                .order("sort_order", { ascending: true });
+                .order("sort_order", {
+                    ascending: true
+                });
 
             if (error) {
                 console.error(
@@ -309,35 +372,54 @@ export default function DemoShowcase({
     /* =========================================================
        LOAD COURSE TOPICS FOR DEMO
     ========================================================= */
+    /* =========================================================
+   LOAD COURSE TOPICS FOR DEMO
+========================================================= */
 
     useEffect(() => {
         const loadDemoTopics = async () => {
-            if (!selectedCourse) {
+            if (
+                activeTabType !== "course" ||
+                !activeCourseId
+            ) {
                 setDemoTopics([]);
                 return;
             }
 
-            const courseDays = days.filter(
-                (day: any) => day.course_id === selectedCourse
-            );
+            const { data: courseDays, error: daysError } =
+                await supabase
+                    .from("days")
+                    .select("id")
+                    .eq("course_id", activeCourseId)
+                    .order("day_number", {
+                        ascending: true
+                    });
 
-            if (courseDays.length === 0) {
+            if (daysError) {
+                console.error(
+                    "DEMO COURSE DAYS ERROR:",
+                    daysError
+                );
                 setDemoTopics([]);
                 return;
             }
 
-            const dayIds = courseDays.map(
+            const dayIds = (courseDays || []).map(
                 (day: any) => day.id
             );
 
+            if (dayIds.length === 0) {
+                setDemoTopics([]);
+                return;
+            }
+
             const { data, error } = await supabase
                 .from("topics")
-                .select(`
-        *,
-        vocabulary(count)
-    `)
+                .select("*")
                 .in("day_id", dayIds)
-                .order("order_no");
+                .order("order_no", {
+                    ascending: true
+                });
 
             if (error) {
                 console.error(
@@ -352,7 +434,7 @@ export default function DemoShowcase({
         };
 
         loadDemoTopics();
-    }, [selectedCourse, days]);
+    }, [activeTabType, activeCourseId]);
     /* =========================================================
        TOGGLES
     ========================================================= */
@@ -499,18 +581,18 @@ export default function DemoShowcase({
     return (
         <>
 
-            <div className="w-full h-full flex flex-col gap-2 p-2 bg-gray-50 overflow-hidden">
+            <div className="w-full h-full flex flex-col gap-1 p-1 bg-gray-50 overflow-hidden">
 
                 {/* DEMO TABS */}
-                <div className="shrink-0 bg-white px-1 py-0.5 overflow-x-auto">
-                    <div className="flex gap-2 min-w-max">
+                <div className="shrink-0 px-1 py-0 overflow-x-auto">
+                    <div className="flex gap-4 min-w-max">
                         {demoTabs.map((tab: any) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveDemoTab(tab.id)}
-                                className={`px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap transition ${activeDemoTab === tab.id
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${activeDemoTab === tab.id
+                                    ? "text-blue-600"
+                                    : "text-gray-700 hover:text-blue-600"
                                     }`}
                             >
                                 {tab.tab_name}
@@ -527,16 +609,14 @@ export default function DemoShowcase({
                         <div className="flex-1 min-w-0 bg-white flex flex-col overflow-hidden">
 
                             {/* IMAGE TOPICS */}
-                            <div className="shrink-0 border-b px-1 py-1 overflow-x-auto">
-                                <div className="flex gap-2 min-w-max">
-
+                            <div className="shrink-0 px-1 py-0 overflow-x-auto">
+                                <div className="flex gap-4 min-w-max">
                                     {imageTopics
                                         .filter(
                                             (topic: any) =>
                                                 topic.media_type === "image"
                                         )
                                         .map((topic: any) => {
-
                                             const active =
                                                 selectedImageTopicId === topic.id;
 
@@ -547,16 +627,15 @@ export default function DemoShowcase({
                                                         setSelectedImageTopicId(topic.id);
                                                         setSelectedImageIndex(0);
                                                     }}
-                                                    className={`px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap ${active
-                                                        ? "bg-blue-600 text-white"
-                                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                                    className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${active
+                                                        ? "text-blue-600"
+                                                        : "text-gray-700 hover:text-blue-600"
                                                         }`}
                                                 >
                                                     {topic.name}
                                                 </button>
                                             );
                                         })}
-
                                 </div>
                             </div>
 
@@ -721,8 +800,8 @@ export default function DemoShowcase({
                         <div className="flex-1 min-w-0 bg-white flex flex-col overflow-hidden">
 
                             {/* VIDEO TOPICS */}
-                            <div className="shrink-0 px-1 py-0.5 overflow-x-auto">
-                                <div className="flex gap-2 min-w-max">
+                            <div className="shrink-0 px-1 py-0 overflow-x-auto">
+                                <div className="flex gap-4 min-w-max">
 
                                     {imageTopics
                                         .filter(
@@ -741,9 +820,9 @@ export default function DemoShowcase({
                                                         setSelectedVideoTopicId(topic.id);
                                                         setSelectedVideoIndex(0);
                                                     }}
-                                                    className={`px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap ${active
-                                                        ? "bg-red-600 text-white"
-                                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                                    className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${active
+                                                        ? "text-red-600"
+                                                        : "text-gray-700 hover:text-red-600"
                                                         }`}
                                                 >
                                                     {topic.name}
@@ -1031,178 +1110,270 @@ export default function DemoShowcase({
                     }
 
                     {/* COURSE */}
-                    {
-                        activeTabType === "course" && (
-                            <div className="flex-1 min-w-0 bg-white border rounded flex flex-col overflow-hidden">
+                    {activeTabType === "course" && (
+                        <div className="flex-1 min-w-0 bg-white flex flex-col overflow-hidden">
 
-                                <div className="bg-green-100 px-3 py-2 font-bold text-sm">
-                                    {activeTab?.tab_name}
+                            {/* COURSE TOPICS */}
+                            <div className="shrink-0 px-1 py-0 overflow-x-auto">
+                                <div className="flex gap-4 min-w-max">
+
+                                    {demoTopics.map((topic: any) => (
+                                        <button
+                                            key={topic.id}
+                                            onClick={() => {
+                                                setSelectedTopics([topic.id]);
+                                            }}
+                                            className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${selectedTopics.includes(topic.id)
+                                                ? "text-green-600"
+                                                : "text-gray-700 hover:text-green-600"
+                                                }`}
+                                        >
+                                            {topic.topic_name}
+                                        </button>
+                                    ))}
+
                                 </div>
+                            </div>
 
-                                <div className="flex-1 overflow-y-auto p-2">
+                            {/* COURSE CONTENT */}
+                            <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
 
-                                    {courses
-                                        .filter(
+                                {demoTopics.length === 0 ? (
+
+                                    <div className="text-gray-400 text-sm">
+                                        No topics
+                                    </div>
+
+                                ) : (
+
+                                    (() => {
+
+                                        const activeCourseName = courses.find(
                                             (course: any) =>
                                                 course.id === activeCourseId
-                                        )
-                                        .map((course: any) => {
+                                        )?.name;
 
-                                            const courseDays =
-                                                days.filter(
-                                                    (day: any) =>
-                                                        day.course_id === course.id
+                                        /* =========================
+                                           MCQ CAROUSEL
+                                        ========================= */
+
+                                        if (activeCourseName === "MCQ") {
+
+                                            if (mcqQuestions.length === 0) {
+                                                return (
+                                                    <div className="text-gray-400 text-sm">
+                                                        No MCQ questions
+                                                    </div>
                                                 );
+                                            }
+
+                                            const currentIndex =
+                                                selectedMCQIndex % mcqQuestions.length;
 
                                             return (
-                                                <div
-                                                    key={course.id}
-                                                    className="w-full"
-                                                >
+                                                <div className="relative w-full h-full flex items-center justify-center">
 
-                                                    <div
-                                                        onClick={() =>
-                                                            handleCourseClick(
-                                                                course.id
-                                                            )
-                                                        }
-                                                        className="flex justify-between items-center px-2 py-1.5 cursor-pointer rounded text-xs bg-green-200 font-semibold"
-                                                    >
+                                                    {mcqQuestions.map(
+                                                        (mcq: any, i: number) => {
 
-                                                        <span className="truncate">
-                                                            {course.name}
-                                                        </span>
+                                                            let position = "hidden";
 
-                                                        <span>−</span>
+                                                            if (i === currentIndex) {
+                                                                position = "center";
+                                                            }
+                                                            else if (
+                                                                i ===
+                                                                (
+                                                                    currentIndex -
+                                                                    1 +
+                                                                    mcqQuestions.length
+                                                                ) %
+                                                                mcqQuestions.length
+                                                            ) {
+                                                                position = "left";
+                                                            }
+                                                            else if (
+                                                                i ===
+                                                                (
+                                                                    currentIndex + 1
+                                                                ) %
+                                                                mcqQuestions.length
+                                                            ) {
+                                                                position = "right";
+                                                            }
 
-                                                    </div>
+                                                            return (
+                                                                <div
+                                                                    key={mcq.id}
+                                                                    onClick={() => {
 
-                                                    <div className="ml-3">
+                                                                        if (
+                                                                            position === "left"
+                                                                        ) {
+                                                                            setSelectedMCQIndex(
+                                                                                (
+                                                                                    currentIndex -
+                                                                                    1 +
+                                                                                    mcqQuestions.length
+                                                                                ) %
+                                                                                mcqQuestions.length
+                                                                            );
+                                                                        }
 
-                                                        {courseDays.map(
-                                                            (day: any) => {
+                                                                        if (
+                                                                            position === "right"
+                                                                        ) {
+                                                                            setSelectedMCQIndex(
+                                                                                (
+                                                                                    currentIndex +
+                                                                                    1
+                                                                                ) %
+                                                                                mcqQuestions.length
+                                                                            );
+                                                                        }
 
-                                                                const dayExpanded =
-                                                                    expandedDays.includes(
-                                                                        day.id
-                                                                    );
+                                                                    }}
+                                                                    className={`
+                                            absolute
+                                            transition-all
+                                            duration-500
+                                            ease-in-out
+                                            ${position === "center"
+                                                                            ? "scale-100 opacity-100 z-20 w-[58%] h-[90%]"
+                                                                            : position === "left"
+                                                                                ? "-translate-x-[28vw] scale-90 opacity-30 z-10 w-[32%] h-[72%] cursor-pointer"
+                                                                                : position === "right"
+                                                                                    ? "translate-x-[28vw] scale-90 opacity-30 z-10 w-[32%] h-[72%] cursor-pointer"
+                                                                                    : "opacity-0 scale-75 pointer-events-none"
+                                                                        }
+                                        `}
+                                                                >
 
-                                                                const dayTopics =
-                                                                    demoTopics.filter(
-                                                                        (topic: any) =>
-                                                                            topic.day_id ===
-                                                                            day.id
-                                                                    );
+                                                                    <div className="w-full h-full flex flex-col justify-center bg-white border border-gray-200 rounded-2xl shadow-lg px-8 py-6">
 
-                                                                return (
-                                                                    <div
-                                                                        key={day.id}
-                                                                        className="mt-1"
-                                                                    >
+                                                                        {/* QUESTION */}
+                                                                        <div className="text-center mb-6">
 
-                                                                        <div
-                                                                            onClick={() => {
-                                                                                toggleItem(
-                                                                                    day.id,
-                                                                                    setExpandedDays
-                                                                                );
+                                                                            <div className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-2">
+                                                                                Question {currentIndex + 1}
+                                                                            </div>
 
-                                                                                handleDayClick(
-                                                                                    day.id
-                                                                                );
-                                                                            }}
-                                                                            className="flex justify-between items-center px-2 py-1 bg-gray-50 hover:bg-gray-100 cursor-pointer text-xs rounded"
-                                                                        >
-
-                                                                            <span>
-                                                                                {String(
-                                                                                    day.day_number
-                                                                                ).padStart(
-                                                                                    2,
-                                                                                    "0"
-                                                                                )}
-
-                                                                                {day.title
-                                                                                    ? ` · ${day.title}`
-                                                                                    : ""}
-                                                                            </span>
-
-                                                                            <span>
-                                                                                {dayExpanded
-                                                                                    ? "−"
-                                                                                    : "+"}
-                                                                            </span>
+                                                                            <div className="text-xl font-bold text-gray-800 leading-relaxed">
+                                                                                {mcq.question}
+                                                                            </div>
 
                                                                         </div>
 
-                                                                        {dayExpanded && (
-                                                                            <div className="ml-3">
+                                                                        {/* OPTIONS */}
+                                                                        <div className="flex flex-col gap-3 w-full">
 
-                                                                                {dayTopics.map(
-                                                                                    (topic: any) => {
+                                                                            {[
+                                                                                {
+                                                                                    key: "A",
+                                                                                    text: mcq.option_a
+                                                                                },
+                                                                                {
+                                                                                    key: "B",
+                                                                                    text: mcq.option_b
+                                                                                },
+                                                                                {
+                                                                                    key: "C",
+                                                                                    text: mcq.option_c
+                                                                                },
+                                                                                {
+                                                                                    key: "D",
+                                                                                    text: mcq.option_d
+                                                                                }
+                                                                            ].map(
+                                                                                (option) => (
+                                                                                    <div
+                                                                                        key={option.key}
+                                                                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 border border-gray-200 rounded-xl bg-gray-50 hover:bg-blue-50 hover:border-blue-300 hover:shadow-sm cursor-pointer transition-all duration-200"
+                                                                                    >
+                                                                                        <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-300 font-semibold text-gray-600">
+    {option.key}
+</span>
 
-                                                                                        const selected =
-                                                                                            selectedTopics.includes(
-                                                                                                topic.id
-                                                                                            );
+                                                                                        {option.text}
+                                                                                    </div>
+                                                                                )
+                                                                            )}
 
-                                                                                        return (
-                                                                                            <div
-                                                                                                key={topic.id}
-                                                                                                onClick={() =>
-                                                                                                    handleTopicClick(
-                                                                                                        topic.id
-                                                                                                    )
-                                                                                                }
-                                                                                                className={`px-2 py-1 text-xs cursor-pointer rounded ${selected
-                                                                                                    ? "bg-green-600 text-white"
-                                                                                                    : "hover:bg-green-100"
-                                                                                                    }`}
-                                                                                            >
+                                                                        </div>
 
-                                                                                                <div className="flex justify-between gap-1">
-
-                                                                                                    <span className="truncate">
-                                                                                                        {topic.topic_name}
-                                                                                                    </span>
-
-                                                                                                    {topic.sentence_count ||
-                                                                                                        topic.vocabulary?.[0]?.count ? (
-                                                                                                        <span className="shrink-0">
-                                                                                                            (
-                                                                                                            {topic.sentence_count ??
-                                                                                                                topic.vocabulary?.[0]?.count ??
-                                                                                                                0}
-                                                                                                            )
-                                                                                                        </span>
-                                                                                                    ) : null}
-
-                                                                                                </div>
-
-                                                                                            </div>
-                                                                                        );
-                                                                                    }
-                                                                                )}
-
-                                                                            </div>
-                                                                        )}
+                                                                        {/* QUESTION NAME / NUMBER */}
+                                                                        <div className="text-center text-xs text-gray-400 mt-4">
+                                                                            {currentIndex + 1}
+                                                                            {" / "}
+                                                                            {mcqQuestions.length}
+                                                                        </div>
 
                                                                     </div>
-                                                                );
-                                                            }
-                                                        )}
 
-                                                    </div>
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
+
+                                                    {/* LEFT ARROW */}
+                                                    {mcqQuestions.length > 1 && (
+                                                        <button
+                                                            onClick={() =>
+                                                                setSelectedMCQIndex(
+                                                                    (
+                                                                        currentIndex -
+                                                                        1 +
+                                                                        mcqQuestions.length
+                                                                    ) %
+                                                                    mcqQuestions.length
+                                                                )
+                                                            }
+                                                            className="absolute left-1 z-30 w-9 h-9 rounded-full bg-white shadow-md text-gray-700 text-xl hover:bg-gray-100"
+                                                        >
+                                                            ‹
+                                                        </button>
+                                                    )}
+
+                                                    {/* RIGHT ARROW */}
+                                                    {mcqQuestions.length > 1 && (
+                                                        <button
+                                                            onClick={() =>
+                                                                setSelectedMCQIndex(
+                                                                    (
+                                                                        currentIndex +
+                                                                        1
+                                                                    ) %
+                                                                    mcqQuestions.length
+                                                                )
+                                                            }
+                                                            className="absolute right-1 z-30 w-9 h-9 rounded-full bg-white shadow-md text-gray-700 text-xl hover:bg-gray-100"
+                                                        >
+                                                            ›
+                                                        </button>
+                                                    )}
 
                                                 </div>
                                             );
-                                        })}
+                                        }
 
-                                </div>
+                                        /* =========================
+                                           OTHER COURSES
+                                        ========================= */
+
+                                        return (
+                                            <div className="text-gray-400 text-sm">
+                                                Select a topic
+                                            </div>
+                                        );
+
+                                    })()
+
+                                )}
 
                             </div>
-                        )
-                    }
+
+                        </div>
+                    )}
                     {/* REACTION MEMES */}
                     {activeTabType === "reaction_memes" && (
                         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -1268,11 +1439,11 @@ export default function DemoShowcase({
                                                     getUrl(mediaPath);
 
                                                 const thumbnailUrl =
-    getUrl(
-        meme.thumbnail_path ||
-        meme.image_path ||
-        mediaPath
-    );
+                                                    getUrl(
+                                                        meme.thumbnail_path ||
+                                                        meme.image_path ||
+                                                        mediaPath
+                                                    );
 
                                                 return (
                                                     <div
