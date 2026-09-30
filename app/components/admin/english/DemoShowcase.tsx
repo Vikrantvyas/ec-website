@@ -64,7 +64,8 @@ export default function DemoShowcase({
 
     const [selectedVideoTopicId, setSelectedVideoTopicId] = useState<string>("");
     const [selectedVideoIndex, setSelectedVideoIndex] = useState(0);
-
+    const [reactionMemes, setReactionMemes] = useState<any[]>([]);
+    const [selectedReactionIndex, setSelectedReactionIndex] = useState(0);
     const activeTab = demoTabs.find(
         (tab: any) => tab.id === activeDemoTab
     );
@@ -119,6 +120,35 @@ export default function DemoShowcase({
         };
 
         loadDemoTabs();
+    }, []);
+    useEffect(() => {
+        const loadReactionMemes = async () => {
+            const { data, error } = await supabase
+                .from("reaction_memes")
+                .select(`
+                id,
+                name,
+                media_type,
+                image_path,
+                video_path,
+                sound_path,
+                thumbnail_path,
+                sort_order
+            `)
+                .order("sort_order", { ascending: true });
+
+            if (error) {
+                console.error(
+                    "DEMO REACTION MEMES ERROR:",
+                    error
+                );
+                return;
+            }
+
+            setReactionMemes(data || []);
+        };
+
+        loadReactionMemes();
     }, []);
     /* =========================================================
        LOAD IMAGES + VIDEOS
@@ -687,241 +717,239 @@ export default function DemoShowcase({
                     }
 
                     {/* VIDEOS */}
-{activeTabType === "videos" && (
-    <div className="flex-1 min-w-0 bg-white flex flex-col overflow-hidden">
+                    {activeTabType === "videos" && (
+                        <div className="flex-1 min-w-0 bg-white flex flex-col overflow-hidden">
 
-        {/* VIDEO TOPICS */}
-        <div className="shrink-0 px-1 py-0.5 overflow-x-auto">
-            <div className="flex gap-2 min-w-max">
+                            {/* VIDEO TOPICS */}
+                            <div className="shrink-0 px-1 py-0.5 overflow-x-auto">
+                                <div className="flex gap-2 min-w-max">
 
-                {imageTopics
-                    .filter(
-                        (topic: any) =>
-                            topic.media_type === "video"
-                    )
-                    .map((topic: any) => {
+                                    {imageTopics
+                                        .filter(
+                                            (topic: any) =>
+                                                topic.media_type === "video"
+                                        )
+                                        .map((topic: any) => {
 
-                        const active =
-                            selectedVideoTopicId === topic.id;
+                                            const active =
+                                                selectedVideoTopicId === topic.id;
 
-                        return (
-                            <button
-                                key={topic.id}
-                                onClick={() => {
-                                    setSelectedVideoTopicId(topic.id);
-                                    setSelectedVideoIndex(0);
-                                }}
-                                className={`px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap ${
-                                    active
-                                        ? "bg-red-600 text-white"
-                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                }`}
-                            >
-                                {topic.name}
-                            </button>
-                        );
-                    })}
-
-            </div>
-        </div>
-
-        {/* VIDEO CAROUSEL */}
-        <div className="flex-1 min-h-0 flex items-center justify-center px-1 overflow-hidden">
-
-            {(() => {
-
-                const selectedTopic =
-                    imageTopics.find(
-                        (topic: any) =>
-                            topic.id === selectedVideoTopicId
-                    );
-
-                const videos =
-                    selectedTopic?.videos || [];
-
-                if (!selectedTopic) {
-                    return (
-                        <div className="text-gray-400 text-sm">
-                            Select a topic
-                        </div>
-                    );
-                }
-
-                if (videos.length === 0) {
-                    return (
-                        <div className="text-gray-400 text-sm">
-                            No videos in this topic
-                        </div>
-                    );
-                }
-
-                const currentIndex =
-                    selectedVideoIndex % videos.length;
-
-                return (
-                    <div className="relative w-full h-full flex items-center justify-center">
-
-                        {videos.map((video: any, i: number) => {
-
-                            let position = "hidden";
-
-                            if (i === currentIndex) {
-                                position = "center";
-                            } else if (
-                                i ===
-                                (currentIndex - 1 + videos.length) %
-                                    videos.length
-                            ) {
-                                position = "left";
-                            } else if (
-                                i ===
-                                (currentIndex + 1) %
-                                    videos.length
-                            ) {
-                                position = "right";
-                            }
-
-                            const getYouTubeId = (url: string) => {
-                                if (!url) return "";
-
-                                const match =
-                                    url.match(
-                                        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/
-                                    );
-
-                                return match?.[1] || "";
-                            };
-
-                            const videoId =
-                                getYouTubeId(video.video_url);
-
-                            const thumbnail =
-                                videoId
-                                    ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-                                    : "";
-
-                            return (
-                                <div
-                                    key={video.id}
-                                    onClick={() => {
-
-                                        if (position === "left") {
-                                            setSelectedVideoIndex(
-                                                (currentIndex - 1 + videos.length) %
-                                                    videos.length
+                                            return (
+                                                <button
+                                                    key={topic.id}
+                                                    onClick={() => {
+                                                        setSelectedVideoTopicId(topic.id);
+                                                        setSelectedVideoIndex(0);
+                                                    }}
+                                                    className={`px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap ${active
+                                                        ? "bg-red-600 text-white"
+                                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                                        }`}
+                                                >
+                                                    {topic.name}
+                                                </button>
                                             );
-                                        }
+                                        })}
 
-                                        if (position === "right") {
-                                            setSelectedVideoIndex(
-                                                (currentIndex + 1) %
+                                </div>
+                            </div>
+
+                            {/* VIDEO CAROUSEL */}
+                            <div className="flex-1 min-h-0 flex items-center justify-center px-1 overflow-hidden">
+
+                                {(() => {
+
+                                    const selectedTopic =
+                                        imageTopics.find(
+                                            (topic: any) =>
+                                                topic.id === selectedVideoTopicId
+                                        );
+
+                                    const videos =
+                                        selectedTopic?.videos || [];
+
+                                    if (!selectedTopic) {
+                                        return (
+                                            <div className="text-gray-400 text-sm">
+                                                Select a topic
+                                            </div>
+                                        );
+                                    }
+
+                                    if (videos.length === 0) {
+                                        return (
+                                            <div className="text-gray-400 text-sm">
+                                                No videos in this topic
+                                            </div>
+                                        );
+                                    }
+
+                                    const currentIndex =
+                                        selectedVideoIndex % videos.length;
+
+                                    return (
+                                        <div className="relative w-full h-full flex items-center justify-center">
+
+                                            {videos.map((video: any, i: number) => {
+
+                                                let position = "hidden";
+
+                                                if (i === currentIndex) {
+                                                    position = "center";
+                                                } else if (
+                                                    i ===
+                                                    (currentIndex - 1 + videos.length) %
                                                     videos.length
-                                            );
-                                        }
+                                                ) {
+                                                    position = "left";
+                                                } else if (
+                                                    i ===
+                                                    (currentIndex + 1) %
+                                                    videos.length
+                                                ) {
+                                                    position = "right";
+                                                }
 
-                                    }}
-                                    className={`
+                                                const getYouTubeId = (url: string) => {
+                                                    if (!url) return "";
+
+                                                    const match =
+                                                        url.match(
+                                                            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/
+                                                        );
+
+                                                    return match?.[1] || "";
+                                                };
+
+                                                const videoId =
+                                                    getYouTubeId(video.video_url);
+
+                                                const thumbnail =
+                                                    videoId
+                                                        ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+                                                        : "";
+
+                                                return (
+                                                    <div
+                                                        key={video.id}
+                                                        onClick={() => {
+
+                                                            if (position === "left") {
+                                                                setSelectedVideoIndex(
+                                                                    (currentIndex - 1 + videos.length) %
+                                                                    videos.length
+                                                                );
+                                                            }
+
+                                                            if (position === "right") {
+                                                                setSelectedVideoIndex(
+                                                                    (currentIndex + 1) %
+                                                                    videos.length
+                                                                );
+                                                            }
+
+                                                        }}
+                                                        className={`
                                         absolute
                                         transition-all
                                         duration-500
                                         ease-in-out
-                                        ${
-                                            position === "center"
-                                                ? "scale-100 opacity-100 z-20 w-[56%] h-[96%]"
-                                                : position === "left"
-                                                ? "-translate-x-[28vw] scale-90 opacity-40 z-10 w-[32%] h-[72%] cursor-pointer"
-                                                : position === "right"
-                                                ? "translate-x-[28vw] scale-90 opacity-40 z-10 w-[32%] h-[72%] cursor-pointer"
-                                                : "opacity-0 scale-75 pointer-events-none"
-                                        }
+                                        ${position === "center"
+                                                                ? "scale-100 opacity-100 z-20 w-[56%] h-[96%]"
+                                                                : position === "left"
+                                                                    ? "-translate-x-[28vw] scale-90 opacity-40 z-10 w-[32%] h-[72%] cursor-pointer"
+                                                                    : position === "right"
+                                                                        ? "translate-x-[28vw] scale-90 opacity-40 z-10 w-[32%] h-[72%] cursor-pointer"
+                                                                        : "opacity-0 scale-75 pointer-events-none"
+                                                            }
                                     `}
-                                >
+                                                    >
 
-                                    {position === "center" ? (
-                                        <iframe
-                                            src={
-                                                videoId
-                                                    ? `https://www.youtube.com/embed/${videoId}`
-                                                    : video.video_url
-                                            }
-                                            title={video.name}
-                                            className="w-full h-full rounded-2xl"
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                            allowFullScreen
-                                        />
-                                    ) : (
-                                        <div className="relative w-full h-full">
+                                                        {position === "center" ? (
+                                                            <iframe
+                                                                src={
+                                                                    videoId
+                                                                        ? `https://www.youtube.com/embed/${videoId}`
+                                                                        : video.video_url
+                                                                }
+                                                                title={video.name}
+                                                                className="w-full h-full rounded-2xl"
+                                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                allowFullScreen
+                                                            />
+                                                        ) : (
+                                                            <div className="relative w-full h-full">
 
-                                            {thumbnail ? (
-                                                <img
-                                                    src={thumbnail}
-                                                    alt={video.name}
-                                                    className="w-full h-full object-cover rounded-2xl"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full bg-gray-200 rounded-2xl flex items-center justify-center text-gray-400 text-sm">
-                                                    Video
-                                                </div>
+                                                                {thumbnail ? (
+                                                                    <img
+                                                                        src={thumbnail}
+                                                                        alt={video.name}
+                                                                        className="w-full h-full object-cover rounded-2xl"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-full h-full bg-gray-200 rounded-2xl flex items-center justify-center text-gray-400 text-sm">
+                                                                        Video
+                                                                    </div>
+                                                                )}
+
+                                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                                    <div className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center text-lg">
+                                                                        ▶
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+                                                        )}
+
+                                                        {position === "center" && (
+                                                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/65 text-white px-4 py-1.5 rounded-full text-sm whitespace-nowrap">
+                                                                {video.name}
+                                                            </div>
+                                                        )}
+
+                                                    </div>
+                                                );
+                                            })}
+
+                                            {/* LEFT ARROW */}
+                                            {videos.length > 1 && (
+                                                <button
+                                                    onClick={() =>
+                                                        setSelectedVideoIndex(
+                                                            (currentIndex - 1 + videos.length) %
+                                                            videos.length
+                                                        )
+                                                    }
+                                                    className="absolute left-1 z-30 w-9 h-9 rounded-full bg-white shadow-md text-gray-700 text-xl hover:bg-gray-100"
+                                                >
+                                                    ‹
+                                                </button>
                                             )}
 
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center text-lg">
-                                                    ▶
-                                                </div>
-                                            </div>
+                                            {/* RIGHT ARROW */}
+                                            {videos.length > 1 && (
+                                                <button
+                                                    onClick={() =>
+                                                        setSelectedVideoIndex(
+                                                            (currentIndex + 1) %
+                                                            videos.length
+                                                        )
+                                                    }
+                                                    className="absolute right-1 z-30 w-9 h-9 rounded-full bg-white shadow-md text-gray-700 text-xl hover:bg-gray-100"
+                                                >
+                                                    ›
+                                                </button>
+                                            )}
 
                                         </div>
-                                    )}
+                                    );
 
-                                    {position === "center" && (
-                                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/65 text-white px-4 py-1.5 rounded-full text-sm whitespace-nowrap">
-                                            {video.name}
-                                        </div>
-                                    )}
+                                })()}
 
-                                </div>
-                            );
-                        })}
+                            </div>
 
-                        {/* LEFT ARROW */}
-                        {videos.length > 1 && (
-                            <button
-                                onClick={() =>
-                                    setSelectedVideoIndex(
-                                        (currentIndex - 1 + videos.length) %
-                                            videos.length
-                                    )
-                                }
-                                className="absolute left-1 z-30 w-9 h-9 rounded-full bg-white shadow-md text-gray-700 text-xl hover:bg-gray-100"
-                            >
-                                ‹
-                            </button>
-                        )}
-
-                        {/* RIGHT ARROW */}
-                        {videos.length > 1 && (
-                            <button
-                                onClick={() =>
-                                    setSelectedVideoIndex(
-                                        (currentIndex + 1) %
-                                            videos.length
-                                    )
-                                }
-                                className="absolute right-1 z-30 w-9 h-9 rounded-full bg-white shadow-md text-gray-700 text-xl hover:bg-gray-100"
-                            >
-                                ›
-                            </button>
-                        )}
-
-                    </div>
-                );
-
-            })()}
-
-        </div>
-
-    </div>
-)}
+                        </div>
+                    )}
 
                     {/* GRAMMAR TABLES */}
                     {
@@ -1175,12 +1203,222 @@ export default function DemoShowcase({
                             </div>
                         )
                     }
+                    {/* REACTION MEMES */}
+                    {activeTabType === "reaction_memes" && (
+                        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
 
+                            <div className="flex-1 min-h-0 flex items-center justify-center px-1 overflow-hidden">
+
+                                {reactionMemes.length === 0 ? (
+                                    <div className="text-gray-400 text-sm">
+                                        No reaction memes
+                                    </div>
+                                ) : (
+
+                                    <div className="relative w-full h-full flex items-center justify-center">
+
+                                        {reactionMemes.map(
+                                            (meme: any, i: number) => {
+
+                                                let position = "hidden";
+
+                                                if (
+                                                    i === selectedReactionIndex
+                                                ) {
+                                                    position = "center";
+                                                } else if (
+                                                    i ===
+                                                    (
+                                                        selectedReactionIndex -
+                                                        1 +
+                                                        reactionMemes.length
+                                                    ) %
+                                                    reactionMemes.length
+                                                ) {
+                                                    position = "left";
+                                                } else if (
+                                                    i ===
+                                                    (
+                                                        selectedReactionIndex +
+                                                        1
+                                                    ) %
+                                                    reactionMemes.length
+                                                ) {
+                                                    position = "right";
+                                                }
+
+                                                const getUrl = (
+                                                    path: string
+                                                ) =>
+                                                    path
+                                                        ? supabase.storage
+                                                            .from("memes")
+                                                            .getPublicUrl(path)
+                                                            .data.publicUrl
+                                                        : "";
+
+                                                const mediaPath =
+                                                    meme.media_type === "video"
+                                                        ? meme.video_path
+                                                        : meme.media_type === "audio"
+                                                            ? meme.sound_path
+                                                            : meme.image_path || meme.thumbnail_path;
+
+                                                const mediaUrl =
+                                                    getUrl(mediaPath);
+
+                                                const thumbnailUrl =
+    getUrl(
+        meme.thumbnail_path ||
+        meme.image_path ||
+        mediaPath
+    );
+
+                                                return (
+                                                    <div
+                                                        key={meme.id}
+                                                        onClick={() => {
+
+                                                            if (
+                                                                position === "left"
+                                                            ) {
+                                                                setSelectedReactionIndex(
+                                                                    (
+                                                                        selectedReactionIndex -
+                                                                        1 +
+                                                                        reactionMemes.length
+                                                                    ) %
+                                                                    reactionMemes.length
+                                                                );
+                                                            }
+
+                                                            if (
+                                                                position === "right"
+                                                            ) {
+                                                                setSelectedReactionIndex(
+                                                                    (
+                                                                        selectedReactionIndex +
+                                                                        1
+                                                                    ) %
+                                                                    reactionMemes.length
+                                                                );
+                                                            }
+
+                                                        }}
+                                                        className={`
+                                        absolute
+                                        transition-all
+                                        duration-500
+                                        ease-in-out
+                                        ${position === "center"
+                                                                ? "scale-100 opacity-100 z-20 w-[56%] h-[96%]"
+                                                                : position === "left"
+                                                                    ? "-translate-x-[28vw] scale-90 opacity-40 z-10 w-[32%] h-[72%] cursor-pointer"
+                                                                    : position === "right"
+                                                                        ? "translate-x-[28vw] scale-90 opacity-40 z-10 w-[32%] h-[72%] cursor-pointer"
+                                                                        : "opacity-0 scale-75 pointer-events-none"
+                                                            }
+                                    `}
+                                                    >
+
+                                                        {position === "center" &&
+                                                            meme.media_type === "video" ? (
+                                                            <video
+                                                                src={mediaUrl}
+                                                                controls
+                                                                className="w-full h-full object-contain rounded-2xl"
+                                                            />
+                                                        ) : position === "center" &&
+                                                            meme.media_type === "audio" ? (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 rounded-2xl">
+
+                                                                <div className="text-6xl mb-6">
+                                                                    🔊
+                                                                </div>
+
+                                                                <audio
+                                                                    src={mediaUrl}
+                                                                    controls
+                                                                    className="w-[80%]"
+                                                                />
+
+                                                            </div>
+                                                        ) : (
+                                                            <img
+                                                                src={
+                                                                    position === "center"
+                                                                        ? mediaUrl
+                                                                        : thumbnailUrl
+                                                                }
+                                                                alt={meme.name}
+                                                                className="w-full h-full object-contain rounded-2xl"
+                                                            />
+                                                        )}
+
+                                                        {position === "center" && (
+                                                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/65 text-white px-4 py-1.5 rounded-full text-sm whitespace-nowrap">
+                                                                {meme.name}
+                                                            </div>
+                                                        )}
+
+                                                    </div>
+                                                );
+                                            }
+                                        )}
+
+                                        {/* LEFT ARROW */}
+                                        {reactionMemes.length > 1 && (
+                                            <button
+                                                onClick={() =>
+                                                    setSelectedReactionIndex(
+                                                        (
+                                                            selectedReactionIndex -
+                                                            1 +
+                                                            reactionMemes.length
+                                                        ) %
+                                                        reactionMemes.length
+                                                    )
+                                                }
+                                                className="absolute left-1 z-30 w-9 h-9 rounded-full bg-white shadow-md text-gray-700 text-xl hover:bg-gray-100"
+                                            >
+                                                ‹
+                                            </button>
+                                        )}
+
+                                        {/* RIGHT ARROW */}
+                                        {reactionMemes.length > 1 && (
+                                            <button
+                                                onClick={() =>
+                                                    setSelectedReactionIndex(
+                                                        (
+                                                            selectedReactionIndex +
+                                                            1
+                                                        ) %
+                                                        reactionMemes.length
+                                                    )
+                                                }
+                                                className="absolute right-1 z-30 w-9 h-9 rounded-full bg-white shadow-md text-gray-700 text-xl hover:bg-gray-100"
+                                            >
+                                                ›
+                                            </button>
+                                        )}
+
+                                    </div>
+                                )}
+
+                            </div>
+
+                        </div>
+                    )}
                     {/* NO CHILD */}
                     {
-                        !["images", "videos", "grammar_tables", "course"].includes(
-                            activeTabType
-                        ) && (
+                        ![
+                            "images",
+                            "videos",
+                            "grammar_tables",
+                            "course",
+                            "reaction_memes"
+                        ].includes(activeTabType) && (
                             <div className="flex-1 bg-white border rounded flex items-center justify-center">
 
                                 <div className="text-center">
