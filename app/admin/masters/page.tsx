@@ -36,6 +36,7 @@ import FeeMaster from "@/app/components/admin/masters/FeeMaster";
 import EnglishSentenceMaster from "@/app/components/admin/masters/EnglishSentenceMaster";
 import GrammarTableMaster from "@/app/components/admin/masters/GrammarTableMaster";
 import EnglishMCQMaster from "@/app/components/admin/masters/EnglishMCQMaster";
+import DemoMaster from "@/app/components/admin/masters/DemoMaster";
 
 export default function MastersPage() {
 
@@ -84,7 +85,8 @@ export default function MastersPage() {
     { label: "Grammar Tables", value: "grammar_tables" },
     { label: "Image Topics", value: "image_topics" },
     { label: "Images", value: "images" },
-    { label: "Reaction Memes", value: "reaction_memes" }
+    { label: "Reaction Memes", value: "reaction_memes" },
+    { label: "Demo Master", value: "demo_master" }
   ];
 
   const staffMasters = [
@@ -123,31 +125,31 @@ export default function MastersPage() {
       value: v.value
     }));
 
- useEffect(() => {
-  const tab = searchParams.get("tab");
-  const editTableId = searchParams.get("editTable");
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    const editTableId = searchParams.get("editTable");
 
-  const addMedia = searchParams.get("addMedia");
-  const topicId = searchParams.get("topicId");
+    const addMedia = searchParams.get("addMedia");
+    const topicId = searchParams.get("topicId");
 
-  if (tab === "batches") {
-    setSelectedCategory("batches");
-    setSelectedMaster("batches");
-    return;
-  }
+    if (tab === "batches") {
+      setSelectedCategory("batches");
+      setSelectedMaster("batches");
+      return;
+    }
 
-  if (editTableId) {
-    setSelectedCategory("english");
-    setSelectedMaster("grammar_tables");
-    return;
-  }
+    if (editTableId) {
+      setSelectedCategory("english");
+      setSelectedMaster("grammar_tables");
+      return;
+    }
 
-  if (addMedia === "image" || addMedia === "video") {
-    setSelectedCategory("english");
-    setSelectedMaster("images");
-    setSelectedImageTopicId(topicId || "");
-  }
-}, [searchParams]);
+    if (addMedia === "image" || addMedia === "video") {
+      setSelectedCategory("english");
+      setSelectedMaster("images");
+      setSelectedImageTopicId(topicId || "");
+    }
+  }, [searchParams]);
 
   return (
 
@@ -404,7 +406,9 @@ export default function MastersPage() {
             {selectedMaster === "reaction_memes" && (
               <ReactionMemeMaster />
             )}
-
+{selectedMaster === "demo_master" && (
+  <DemoMaster />
+)}
           </div>
 
         )}

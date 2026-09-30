@@ -1959,55 +1959,55 @@ export default function LeftPanel({
         )
       }
       {showAddImageTopicModal && (
-  <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
-    <div className="bg-white rounded-lg shadow-xl w-[400px] max-w-[90vw]">
+        <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl w-[400px] max-w-[90vw]">
 
-      <div className="px-4 py-3 border-b text-base font-semibold">
-        Add New Image Topic
-      </div>
+            <div className="px-4 py-3 border-b text-base font-semibold">
+              Add New Image Topic
+            </div>
 
-      <div className="p-4">
-        <label className="block text-sm font-medium mb-1">
-          Image Topic Name
-        </label>
+            <div className="p-4">
+              <label className="block text-sm font-medium mb-1">
+                Image Topic Name
+              </label>
 
-        <input
-          type="text"
-          value={addImageTopicName}
-          onChange={(e) => setAddImageTopicName(e.target.value)}
-          className="w-full border rounded px-3 py-2 text-sm"
-          placeholder="Enter image topic name"
-          autoFocus
-        />
-      </div>
+              <input
+                type="text"
+                value={addImageTopicName}
+                onChange={(e) => setAddImageTopicName(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+                placeholder="Enter image topic name"
+                autoFocus
+              />
+            </div>
 
-      <div className="flex justify-end gap-2 px-4 py-3 border-t">
+            <div className="flex justify-end gap-2 px-4 py-3 border-t">
 
-        <button
-          type="button"
-          onClick={() => {
-            setShowAddImageTopicModal(false);
-            setAddImageTopicName("");
-          }}
-          className="px-3 py-1.5 border rounded text-sm"
-        >
-          Cancel
-        </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddImageTopicModal(false);
+                  setAddImageTopicName("");
+                }}
+                className="px-3 py-1.5 border rounded text-sm"
+              >
+                Cancel
+              </button>
 
-        <button
-          type="button"
-          onClick={handleSaveNewImageTopic}
-          disabled={savingAddImageTopic}
-          className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
-        >
-          {savingAddImageTopic ? "Saving..." : "OK"}
-        </button>
+              <button
+                type="button"
+                onClick={handleSaveNewImageTopic}
+                disabled={savingAddImageTopic}
+                className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+              >
+                {savingAddImageTopic ? "Saving..." : "OK"}
+              </button>
 
-      </div>
+            </div>
 
-    </div>
-  </div>
-)}
+          </div>
+        </div>
+      )}
     </div >
   );
 }

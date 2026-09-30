@@ -154,15 +154,15 @@ export default function ImageMaster({
 
   }, []);
   useEffect(() => {
-  setMediaType(initialMediaType);
+    setMediaType(initialMediaType);
 
-  if (
-    initialTopicId &&
-    topics.some((topic: any) => topic.id === initialTopicId)
-  ) {
-    setSelectedTopicId(initialTopicId);
-  }
-}, [initialTopicId, initialMediaType, topics]);
+    if (
+      initialTopicId &&
+      topics.some((topic: any) => topic.id === initialTopicId)
+    ) {
+      setSelectedTopicId(initialTopicId);
+    }
+  }, [initialTopicId, initialMediaType, topics]);
   // =========================================================
   // CLEAR FORM
   // =========================================================
