@@ -33,29 +33,29 @@ export default function AltPointer() {
         };
 
         const handleKeyDown = (e: KeyboardEvent) => {
-    if (
-        e.key === "Alt" ||
-        e.key === "Control" ||
-        e.key === "Meta"
-    ) {
-        e.preventDefault();
+            if (
+                e.key === "Alt" ||
+                e.key === "Control" ||
+                e.key === "Meta"
+            ) {
+                e.preventDefault();
 
-        if (e.key === "Alt") {
-            setActive(true);
-        }
+                if (e.key === "Alt") {
+                    setActive(true);
+                }
 
-        if (e.altKey) {
-            setPosition((prev) => ({
-                ...prev,
-                direction: e.ctrlKey
-                    ? "right"
-                    : e.metaKey
-                        ? "left"
-                        : "down",
-            }));
-        }
-    }
-};
+                if (e.altKey) {
+                    setPosition((prev) => ({
+                        ...prev,
+                        direction: e.ctrlKey
+                            ? "right"
+                            : e.metaKey
+                                ? "left"
+                                : "down",
+                    }));
+                }
+            }
+        };
         const handleKeyUp = (e: KeyboardEvent) => {
             if (e.key === "Alt") {
                 e.preventDefault();

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import WhiteBoard from "@/app/components/admin/english/WhiteBoard";
 
 type DemoShowcaseProps = {
     courses: any[];
@@ -677,6 +678,12 @@ LOAD COURSE TOPICS FOR DEMO
 
                 {/* DEMO CONTENT */}
                 <div className="flex-1 min-h-0 flex gap-1 overflow-hidden">
+                    {/* BOARD */}
+                    {activeTabType === "board" && (
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                            <WhiteBoard />
+                        </div>
+                    )}
 
                     {/* IMAGES */}
                     {activeTabType === "images" && (
@@ -1395,167 +1402,166 @@ LOAD COURSE TOPICS FOR DEMO
 
                             </div>
                         )}
-                   {/* COURSE */}
-{activeTabType === "course" &&
-    activeCourseName !== "MCQ" && (
-        <div className="flex-1 min-w-0 bg-white border rounded flex flex-col overflow-hidden">
+                    {/* COURSE */}
+                    {activeTabType === "course" &&
+                        activeCourseName !== "MCQ" && (
+                            <div className="flex-1 min-w-0 bg-white border rounded flex flex-col overflow-hidden">
 
-            <div className="flex-1 overflow-y-auto p-2">
+                                <div className="flex-1 overflow-y-auto p-2">
 
-                {(() => {
-                    const courseDays = demoDays
-                        .filter(
-                            (day: any) =>
-                                day.course_id === activeCourseId
-                        )
-                        .sort(
-                            (a: any, b: any) =>
-                                (a.day_number ?? 0) -
-                                (b.day_number ?? 0)
-                        );
+                                    {(() => {
+                                        const courseDays = demoDays
+                                            .filter(
+                                                (day: any) =>
+                                                    day.course_id === activeCourseId
+                                            )
+                                            .sort(
+                                                (a: any, b: any) =>
+                                                    (a.day_number ?? 0) -
+                                                    (b.day_number ?? 0)
+                                            );
 
-                    if (courseDays.length === 0) {
-                        return (
-                            <div className="text-gray-400 text-sm text-center mt-4">
-                                No days
-                            </div>
-                        );
-                    }
+                                        if (courseDays.length === 0) {
+                                            return (
+                                                <div className="text-gray-400 text-sm text-center mt-4">
+                                                    No days
+                                                </div>
+                                            );
+                                        }
 
-                    return (
-    <div className="grid grid-cols-4 gap-x-4">
+                                        return (
+                                            <div className="grid grid-cols-4 gap-x-4">
 
-        {Array.from({ length: 4 }, (_, columnIndex) => {
-            const columnDays = courseDays.slice(
-                columnIndex * 10,
-                columnIndex * 10 + 10
-            );
+                                                {Array.from({ length: 4 }, (_, columnIndex) => {
+                                                    const columnDays = courseDays.slice(
+                                                        columnIndex * 10,
+                                                        columnIndex * 10 + 10
+                                                    );
 
-            return (
-                <div
-                    key={columnIndex}
-                    className="flex flex-col gap-1"
-                >
+                                                    return (
+                                                        <div
+                                                            key={columnIndex}
+                                                            className="flex flex-col gap-1"
+                                                        >
 
-                    {columnDays.map((day: any) => {
+                                                            {columnDays.map((day: any) => {
 
-                        const dayTopics = demoTopics
-                            .filter(
-                                (topic: any) =>
-                                    topic.day_id === day.id
-                            )
-                            .sort(
-                                (a: any, b: any) =>
-                                    (a.order_no ?? 0) -
-                                    (b.order_no ?? 0)
-                            );
+                                                                const dayTopics = demoTopics
+                                                                    .filter(
+                                                                        (topic: any) =>
+                                                                            topic.day_id === day.id
+                                                                    )
+                                                                    .sort(
+                                                                        (a: any, b: any) =>
+                                                                            (a.order_no ?? 0) -
+                                                                            (b.order_no ?? 0)
+                                                                    );
 
-                        const expanded =
-                            expandedDays.includes(day.id);
+                                                                const expanded =
+                                                                    expandedDays.includes(day.id);
 
-                        return (
-                            <div
-                                key={day.id}
-                            >
+                                                                return (
+                                                                    <div
+                                                                        key={day.id}
+                                                                    >
 
-                                {/* DAY */}
-                                <div
-                                    onClick={() =>
-                                        setExpandedDays((prev) =>
-                                            prev.includes(day.id)
-                                                ? prev.filter(
-                                                    (id) =>
-                                                        id !== day.id
-                                                )
-                                                : [
-                                                    ...prev,
-                                                    day.id
-                                                ]
-                                        )
-                                    }
-                                    className="flex justify-between items-center px-2 py-1.5 bg-gray-100 hover:bg-gray-200 cursor-pointer text-xs rounded"
-                                >
+                                                                        {/* DAY */}
+                                                                        <div
+                                                                            onClick={() =>
+                                                                                setExpandedDays((prev) =>
+                                                                                    prev.includes(day.id)
+                                                                                        ? prev.filter(
+                                                                                            (id) =>
+                                                                                                id !== day.id
+                                                                                        )
+                                                                                        : [
+                                                                                            ...prev,
+                                                                                            day.id
+                                                                                        ]
+                                                                                )
+                                                                            }
+                                                                            className="flex justify-between items-center px-2 py-1.5 bg-gray-100 hover:bg-gray-200 cursor-pointer text-xs rounded"
+                                                                        >
 
-                                    <span className="truncate">
-                                        {day.day_number != null
-                                            ? `${String(
-                                                day.day_number
-                                            ).padStart(2, "0")} - `
-                                            : ""}
-                                        {day.title}
-                                    </span>
+                                                                            <span className="truncate">
+                                                                                {day.day_number != null
+                                                                                    ? `${String(
+                                                                                        day.day_number
+                                                                                    ).padStart(2, "0")} - `
+                                                                                    : ""}
+                                                                                {day.title}
+                                                                            </span>
 
-                                    <span>
-                                        {expanded ? "−" : "+"}
-                                    </span>
+                                                                            <span>
+                                                                                {expanded ? "−" : "+"}
+                                                                            </span>
+
+                                                                        </div>
+
+                                                                        {/* TOPICS — SINGLE COLUMN */}
+                                                                        {expanded && (
+                                                                            <div className="ml-3 flex flex-col gap-1">
+
+                                                                                {dayTopics.length === 0 ? (
+                                                                                    <div className="px-2 py-1 text-xs text-gray-400">
+                                                                                        No topics
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    dayTopics.map(
+                                                                                        (topic: any) => (
+                                                                                            <div
+                                                                                                key={topic.id}
+                                                                                                onClick={() =>
+                                                                                                    setSelectedTopics([
+                                                                                                        topic.id
+                                                                                                    ])
+                                                                                                }
+                                                                                                className={`px-2 py-1 text-xs cursor-pointer rounded flex items-center justify-between gap-1 ${selectedTopics.includes(
+                                                                                                    topic.id
+                                                                                                )
+                                                                                                    ? "bg-green-100 text-green-700 font-semibold"
+                                                                                                    : "hover:bg-green-50"
+                                                                                                    }`}
+                                                                                            >
+
+                                                                                                <span className="truncate">
+                                                                                                    {topic.topic_name ||
+                                                                                                        topic.name}
+                                                                                                </span>
+
+                                                                                                <span className="text-[10px] text-gray-500 shrink-0">
+                                                                                                    (
+                                                                                                    {
+                                                                                                        topic.sentence_count ??
+                                                                                                        0
+                                                                                                    }
+                                                                                                    )
+                                                                                                </span>
+
+                                                                                            </div>
+                                                                                        )
+                                                                                    )
+                                                                                )}
+
+                                                                            </div>
+                                                                        )}
+
+                                                                    </div>
+                                                                );
+                                                            })}
+
+                                                        </div>
+                                                    );
+                                                })}
+
+                                            </div>
+                                        );
+                                    })()}
 
                                 </div>
 
-                                {/* TOPICS — SINGLE COLUMN */}
-                                {expanded && (
-                                    <div className="ml-3 flex flex-col gap-1">
-
-                                        {dayTopics.length === 0 ? (
-                                            <div className="px-2 py-1 text-xs text-gray-400">
-                                                No topics
-                                            </div>
-                                        ) : (
-                                            dayTopics.map(
-                                                (topic: any) => (
-                                                    <div
-                                                        key={topic.id}
-                                                        onClick={() =>
-                                                            setSelectedTopics([
-                                                                topic.id
-                                                            ])
-                                                        }
-                                                        className={`px-2 py-1 text-xs cursor-pointer rounded flex items-center justify-between gap-1 ${
-                                                            selectedTopics.includes(
-                                                                topic.id
-                                                            )
-                                                                ? "bg-green-100 text-green-700 font-semibold"
-                                                                : "hover:bg-green-50"
-                                                        }`}
-                                                    >
-
-                                                        <span className="truncate">
-                                                            {topic.topic_name ||
-                                                                topic.name}
-                                                        </span>
-
-                                                        <span className="text-[10px] text-gray-500 shrink-0">
-                                                            (
-                                                            {
-                                                                topic.sentence_count ??
-                                                                0
-                                                            }
-                                                            )
-                                                        </span>
-
-                                                    </div>
-                                                )
-                                            )
-                                        )}
-
-                                    </div>
-                                )}
-
                             </div>
-                        );
-                    })}
-
-                </div>
-            );
-        })}
-
-    </div>
-);
-                })()}
-
-            </div>
-
-        </div>
-    )}
+                        )}
                     {/* REACTION MEMES */}
                     {activeTabType === "reaction_memes" && (
                         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -1766,12 +1772,13 @@ LOAD COURSE TOPICS FOR DEMO
                     {/* NO CHILD */}
                     {
                         ![
-                            "images",
-                            "videos",
-                            "grammar_tables",
-                            "course",
-                            "reaction_memes"
-                        ].includes(activeTabType) && (
+    "board",
+    "images",
+    "videos",
+    "grammar_tables",
+    "course",
+    "reaction_memes"
+].includes(activeTabType) && (
                             <div className="flex-1 bg-white border rounded flex items-center justify-center">
 
                                 <div className="text-center">

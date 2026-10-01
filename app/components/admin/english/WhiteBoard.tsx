@@ -334,19 +334,21 @@ export default function WhiteBoard() {
             ) : (
 
               <span
-                onMouseDown={(e) => handleMouseDown(item.id, e)}
-                style={{
-                  display: "inline",
-                  textDecoration: item.underline ? "underline" : "none",
-                  cursor: "grab",
-                  userSelect: "none",
-                  WebkitUserSelect: "none",
-                  overflowWrap: "break-word",
-                  wordBreak: "normal"
-                }}
-              >
-                {item.text}
-              </span>
+    onMouseDown={(e) => handleMouseDown(item.id, e)}
+    style={{
+        display: "block",
+        textDecoration: item.underline ? "underline" : "none",
+        cursor: "grab",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        whiteSpace: "pre-wrap",
+        overflowWrap: "break-word",
+        wordBreak: "normal",
+        lineHeight: `${LINE_HEIGHT}px`,
+    }}
+>
+    {item.text}
+</span>
 
             )}
 
