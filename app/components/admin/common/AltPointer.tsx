@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 
+type Direction = "down" | "right" | "left";
+
 type Position = {
     x: number;
     y: number;
+    direction: Direction;
 };
 
 export default function AltPointer() {
@@ -13,6 +16,7 @@ export default function AltPointer() {
     const [position, setPosition] = useState<Position>({
         x: 0,
         y: 0,
+        direction: "down",
     });
 
     const [pinnedArrows, setPinnedArrows] = useState<Position[]>(
@@ -21,19 +25,37 @@ export default function AltPointer() {
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            setPosition({
+            setPosition((prev) => ({
+                ...prev,
                 x: e.clientX,
                 y: e.clientY,
-            });
+            }));
         };
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Alt") {
-                e.preventDefault();
-                setActive(true);
-            }
-        };
+    if (
+        e.key === "Alt" ||
+        e.key === "Control" ||
+        e.key === "Meta"
+    ) {
+        e.preventDefault();
 
+        if (e.key === "Alt") {
+            setActive(true);
+        }
+
+        if (e.altKey) {
+            setPosition((prev) => ({
+                ...prev,
+                direction: e.ctrlKey
+                    ? "right"
+                    : e.metaKey
+                        ? "left"
+                        : "down",
+            }));
+        }
+    }
+};
         const handleKeyUp = (e: KeyboardEvent) => {
             if (e.key === "Alt") {
                 e.preventDefault();
@@ -44,6 +66,34 @@ export default function AltPointer() {
         const handleContextMenu = (e: MouseEvent) => {
             const clickX = e.clientX;
             const clickY = e.clientY;
+
+            // -----------------------------------------
+            // Alt + Right Click → Add Arrow
+            // Alt + Ctrl → Right Arrow
+            // Alt + Windows → Left Arrow
+            // Alt only → Down Arrow
+            // -----------------------------------------
+
+            if (active) {
+                e.preventDefault();
+
+                const direction: Direction = e.ctrlKey
+                    ? "right"
+                    : e.metaKey
+                        ? "left"
+                        : "down";
+
+                setPinnedArrows((prev) => [
+                    ...prev,
+                    {
+                        x: clickX,
+                        y: clickY,
+                        direction,
+                    },
+                ]);
+
+                return;
+            }
 
             // -----------------------------------------
             // Ctrl + Right Click → Remove ALL arrows
@@ -57,24 +107,6 @@ export default function AltPointer() {
             }
 
             // -----------------------------------------
-            // Alt + Right Click → Add new arrow
-            // -----------------------------------------
-
-            if (active) {
-                e.preventDefault();
-
-                setPinnedArrows((prev) => [
-                    ...prev,
-                    {
-                        x: clickX,
-                        y: clickY,
-                    },
-                ]);
-
-                return;
-            }
-
-            // -----------------------------------------
             // Right Click on existing arrow → Remove it
             // -----------------------------------------
 
@@ -82,7 +114,7 @@ export default function AltPointer() {
                 (arrow) => {
                     const distance = Math.sqrt(
                         Math.pow(arrow.x - clickX, 2) +
-                            Math.pow(arrow.y - clickY, 2)
+                        Math.pow(arrow.y - clickY, 2)
                     );
 
                     return distance <= 50;
@@ -177,12 +209,24 @@ export default function AltPointer() {
     // Arrow Component
     // -----------------------------------------
 
-    const Arrow = () => (
+    const Arrow = ({
+        direction,
+    }: {
+        direction: Direction;
+    }) => (
         <svg
             width="100"
             height="100"
             viewBox="0 0 100 100"
             fill="none"
+            style={{
+                transform:
+                    direction === "right"
+                        ? "rotate(-90deg)"
+                        : direction === "left"
+                            ? "rotate(90deg)"
+                            : "rotate(0deg)",
+            }}
         >
             {/* White outer stroke */}
 
@@ -253,7 +297,7 @@ export default function AltPointer() {
                             "altPointerMove 0.8s ease-in-out infinite alternate",
                     }}
                 >
-                    <Arrow />
+                    <Arrow direction={arrow.direction} />
                 </div>
             ))}
 
@@ -271,7 +315,7 @@ export default function AltPointer() {
                             "altPointerMove 0.8s ease-in-out infinite alternate",
                     }}
                 >
-                    <Arrow />
+                    <Arrow direction={position.direction} />
                 </div>
             )}
         </>
