@@ -70,6 +70,9 @@ export default function DemoShowcase({
     const [selectedMCQIndex, setSelectedMCQIndex] = useState(0);
     const [reactionMemes, setReactionMemes] = useState<any[]>([]);
     const [selectedReactionIndex, setSelectedReactionIndex] = useState(0);
+    const [classStartTime, setClassStartTime] = useState<number | null>(null);
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const [tabsHovered, setTabsHovered] = useState(false);
     const activeTab = demoTabs.find(
         (tab: any) => tab.id === activeDemoTab
     );
@@ -142,6 +145,31 @@ export default function DemoShowcase({
 
         loadDemoTabs();
     }, []);
+    useEffect(() => {
+        if (!classStartTime) {
+            setElapsedSeconds(0);
+            return;
+        }
+
+        const updateTimer = () => {
+            setElapsedSeconds(
+                Math.floor((Date.now() - classStartTime) / 1000)
+            );
+        };
+
+        updateTimer();
+
+        const timer = window.setInterval(updateTimer, 1000);
+
+        return () => window.clearInterval(timer);
+    }, [classStartTime]);
+
+    const formatElapsedTime = (seconds: number) => {
+        const totalMinutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+
+        return `${totalMinutes} : ${String(remainingSeconds).padStart(2, "0")} minutes`;
+    };
     useEffect(() => {
         if (activeTabType !== "course") return;
 
@@ -655,24 +683,86 @@ LOAD COURSE TOPICS FOR DEMO
 
     return (
         <>
+            <style jsx>{`
+            @keyframes demoClassTicker {
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(-100%);
+    }
+}
+        `}</style>
 
             <div className="w-full h-full flex flex-col gap-1 p-1 bg-gray-50 overflow-hidden">
 
-                {/* DEMO TABS */}
-                <div className="shrink-0 px-1 py-0 overflow-x-auto">
-                    <div className="flex gap-4 min-w-max">
-                        {demoTabs.map((tab: any) => (
+
+
+                {/* CLASS NOTICE + DEMO TABS */}
+                <div className="shrink-0">
+
+                    {/* DEMO TABS */}
+                    <div
+                        className="relative px-1 py-0 overflow-hidden"
+                        onMouseEnter={() => setTabsHovered(true)}
+                        onMouseLeave={() => setTabsHovered(false)}
+                    >
+
+                        {/* LATE JOIN NOTICE — BLUE STRIP */}
+                        {classStartTime && !tabsHovered && (
+                            <div className="absolute inset-0 z-30 flex items-center justify-center bg-blue-600 text-xs text-white whitespace-nowrap pointer-events-none">
+                                <span
+                                    className="inline-block whitespace-nowrap text-sm"
+                                    style={{
+                                        animation: "demoClassTicker 75s linear infinite",
+                                    }}
+                                >
+                                    ⚠️ क्लास शुरू हुए{" "}
+                                    <span className="text-yellow-300 mx-1">
+                                        {formatElapsedTime(elapsedSeconds)}
+                                    </span>
+                                    हो चुके हैं। जो देर से जुड़े हैं, हो सकता है कुछ बातें छुट जाने के कारण उन्‍हें लगे कि चल क्‍या रहा है, आप क्‍लास में बने रहें... दोबारा भी डेमो ले सकते हैं। यह बेसिक कोर्स की डेमो क्‍लास है, यदि आपको एडवांस्‍ड कोर्स की जरूरत है, तो वह भी क्‍लास मिल जाएगी।
+                                </span>
+                            </div>
+                        )}
+
+                        <div className="flex gap-4 min-w-max items-center">
+
+                            {demoTabs.map((tab: any) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveDemoTab(tab.id)}
+                                    className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${activeDemoTab === tab.id
+                                        ? "text-blue-600"
+                                        : "text-gray-700 hover:text-blue-600"
+                                        }`}
+                                >
+                                    {tab.tab_name}
+                                </button>
+                            ))}
+
+                            {/* CLASS ON / OFF TOGGLE */}
                             <button
-                                key={tab.id}
-                                onClick={() => setActiveDemoTab(tab.id)}
-                                className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${activeDemoTab === tab.id
-                                    ? "text-blue-600"
-                                    : "text-gray-700 hover:text-blue-600"
+                                onClick={() => {
+                                    if (classStartTime) {
+                                        setClassStartTime(null);
+                                        setElapsedSeconds(0);
+                                        setTabsHovered(false);
+                                    } else {
+                                        setClassStartTime(Date.now());
+                                        setElapsedSeconds(0);
+                                    }
+                                }}
+                                className={`text-xs font-bold text-white px-2 py-1 rounded whitespace-nowrap ${classStartTime
+                                    ? "bg-red-600 hover:bg-red-700"
+                                    : "bg-green-600 hover:bg-green-700"
                                     }`}
                             >
-                                {tab.tab_name}
+                                {classStartTime ? "■ Demo OFF" : "▶ Demo ON"}
                             </button>
-                        ))}
+
+                        </div>
                     </div>
                 </div>
 
@@ -1772,13 +1862,13 @@ LOAD COURSE TOPICS FOR DEMO
                     {/* NO CHILD */}
                     {
                         ![
-    "board",
-    "images",
-    "videos",
-    "grammar_tables",
-    "course",
-    "reaction_memes"
-].includes(activeTabType) && (
+                            "board",
+                            "images",
+                            "videos",
+                            "grammar_tables",
+                            "course",
+                            "reaction_memes"
+                        ].includes(activeTabType) && (
                             <div className="flex-1 bg-white border rounded flex items-center justify-center">
 
                                 <div className="text-center">
