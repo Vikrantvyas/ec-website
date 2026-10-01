@@ -458,7 +458,50 @@ LOAD COURSE TOPICS FOR DEMO
                 return;
             }
 
-            setDemoTopics(courseTopics || []);
+            // SENTENCE COUNTS
+            const topicIds = (courseTopics || []).map(
+                (topic: any) => topic.id
+            );
+
+            let sentenceCounts: any[] = [];
+
+            if (topicIds.length > 0) {
+                const { data: vocabularyData, error: vocabularyError } =
+                    await supabase
+                        .from("vocabulary")
+                        .select("topic_id")
+                        .in("topic_id", topicIds);
+
+                if (vocabularyError) {
+                    console.error(
+                        "DEMO VOCABULARY COUNT ERROR:",
+                        vocabularyError
+                    );
+                }
+
+                sentenceCounts = vocabularyData || [];
+            }
+
+            const topicsWithCount = (courseTopics || []).map(
+                (topic: any) => ({
+                    ...topic,
+                    sentence_count: sentenceCounts.filter(
+                        (item: any) =>
+                            item.topic_id === topic.id
+                    ).length
+                })
+            );
+
+            if (topicsError) {
+                console.error(
+                    "DEMO COURSE TOPICS ERROR:",
+                    topicsError
+                );
+                setDemoTopics([]);
+                return;
+            }
+
+            setDemoTopics(topicsWithCount);
         };
 
         loadDemoCourseData();
@@ -1105,7 +1148,7 @@ LOAD COURSE TOPICS FOR DEMO
                                                     </div>
 
                                                     {expanded && (
-                                                        <div className="ml-3">
+                                                        <div className="ml-3 flex flex-col gap-1">
 
                                                             {topic.grammar_tables?.map(
                                                                 (table: any) => (
@@ -1156,8 +1199,8 @@ LOAD COURSE TOPICS FOR DEMO
                                                     setSelectedMCQIndex(0);
                                                 }}
                                                 className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${selectedTopics.includes(topic.id)
-                                                        ? "text-green-600"
-                                                        : "text-gray-700 hover:text-green-600"
+                                                    ? "text-green-600"
+                                                    : "text-gray-700 hover:text-green-600"
                                                     }`}
                                             >
                                                 {topic.topic_name || topic.name}
@@ -1352,138 +1395,167 @@ LOAD COURSE TOPICS FOR DEMO
 
                             </div>
                         )}
-                    {/* COURSE */}
-                    {activeTabType === "course" &&
+                   {/* COURSE */}
+{activeTabType === "course" &&
     activeCourseName !== "MCQ" && (
-                        <div className="flex-1 min-w-0 bg-white border rounded flex flex-col overflow-hidden">
+        <div className="flex-1 min-w-0 bg-white border rounded flex flex-col overflow-hidden">
 
-                            {/* COURSE NAME */}
-                            <div className="bg-green-100 px-3 py-2 font-bold text-sm">
-                                {activeTab?.tab_name}
+            <div className="flex-1 overflow-y-auto p-2">
+
+                {(() => {
+                    const courseDays = demoDays
+                        .filter(
+                            (day: any) =>
+                                day.course_id === activeCourseId
+                        )
+                        .sort(
+                            (a: any, b: any) =>
+                                (a.day_number ?? 0) -
+                                (b.day_number ?? 0)
+                        );
+
+                    if (courseDays.length === 0) {
+                        return (
+                            <div className="text-gray-400 text-sm text-center mt-4">
+                                No days
                             </div>
+                        );
+                    }
 
-                            {/* DAYS + TOPICS */}
-                            <div className="flex-1 overflow-y-auto p-2">
+                    return (
+    <div className="grid grid-cols-4 gap-x-4">
 
-                                {(() => {
-                                    const courseDays = demoDays
-                                        .filter(
-                                            (day: any) =>
-                                                day.course_id === activeCourseId
+        {Array.from({ length: 4 }, (_, columnIndex) => {
+            const columnDays = courseDays.slice(
+                columnIndex * 10,
+                columnIndex * 10 + 10
+            );
+
+            return (
+                <div
+                    key={columnIndex}
+                    className="flex flex-col gap-1"
+                >
+
+                    {columnDays.map((day: any) => {
+
+                        const dayTopics = demoTopics
+                            .filter(
+                                (topic: any) =>
+                                    topic.day_id === day.id
+                            )
+                            .sort(
+                                (a: any, b: any) =>
+                                    (a.order_no ?? 0) -
+                                    (b.order_no ?? 0)
+                            );
+
+                        const expanded =
+                            expandedDays.includes(day.id);
+
+                        return (
+                            <div
+                                key={day.id}
+                            >
+
+                                {/* DAY */}
+                                <div
+                                    onClick={() =>
+                                        setExpandedDays((prev) =>
+                                            prev.includes(day.id)
+                                                ? prev.filter(
+                                                    (id) =>
+                                                        id !== day.id
+                                                )
+                                                : [
+                                                    ...prev,
+                                                    day.id
+                                                ]
                                         )
-                                        .sort(
-                                            (a: any, b: any) =>
-                                                (a.day_number ?? 0) -
-                                                (b.day_number ?? 0)
-                                        );
-
-                                    if (courseDays.length === 0) {
-                                        return (
-                                            <div className="text-gray-400 text-sm text-center mt-4">
-                                                No days
-                                            </div>
-                                        );
                                     }
+                                    className="flex justify-between items-center px-2 py-1.5 bg-gray-100 hover:bg-gray-200 cursor-pointer text-xs rounded"
+                                >
 
-                                    return courseDays.map((day: any) => {
+                                    <span className="truncate">
+                                        {day.day_number != null
+                                            ? `${String(
+                                                day.day_number
+                                            ).padStart(2, "0")} - `
+                                            : ""}
+                                        {day.title}
+                                    </span>
 
-                                        const dayTopics = demoTopics
-                                            .filter(
-                                                (topic: any) =>
-                                                    topic.day_id === day.id
-                                            )
-                                            .sort(
-                                                (a: any, b: any) =>
-                                                    (a.order_no ?? 0) -
-                                                    (b.order_no ?? 0)
-                                            );
+                                    <span>
+                                        {expanded ? "−" : "+"}
+                                    </span>
 
-                                        const expanded =
-                                            expandedDays.includes(day.id);
+                                </div>
 
-                                        return (
-                                            <div
-                                                key={day.id}
-                                                className="mb-1"
-                                            >
+                                {/* TOPICS — SINGLE COLUMN */}
+                                {expanded && (
+                                    <div className="ml-3 flex flex-col gap-1">
 
-                                                {/* DAY */}
-                                                <div
-                                                    onClick={() =>
-                                                        setExpandedDays((prev) =>
-                                                            prev.includes(day.id)
-                                                                ? prev.filter(
-                                                                    (id) =>
-                                                                        id !== day.id
-                                                                )
-                                                                : [
-                                                                    ...prev,
-                                                                    day.id
-                                                                ]
-                                                        )
-                                                    }
-                                                    className="flex justify-between items-center px-2 py-1.5 bg-gray-100 hover:bg-gray-200 cursor-pointer text-xs rounded"
-                                                >
-
-                                                    <span className="truncate">
-                                                        {day.day_number != null
-                                                            ? `${String(
-                                                                day.day_number
-                                                            ).padStart(2, "0")} - `
-                                                            : ""}
-                                                        {day.title}
-                                                    </span>
-
-                                                    <span>
-                                                        {expanded ? "−" : "+"}
-                                                    </span>
-
-                                                </div>
-
-                                                {/* TOPICS */}
-                                                {expanded && (
-                                                    <div className="ml-3">
-
-                                                        {dayTopics.length === 0 ? (
-                                                            <div className="px-2 py-1 text-xs text-gray-400">
-                                                                No topics
-                                                            </div>
-                                                        ) : (
-                                                            dayTopics.map(
-                                                                (topic: any) => (
-                                                                    <div
-                                                                        key={topic.id}
-                                                                        onClick={() =>
-                                                                            setSelectedTopics([
-                                                                                topic.id
-                                                                            ])
-                                                                        }
-                                                                        className={`px-2 py-1 text-xs cursor-pointer rounded ${selectedTopics.includes(
-                                                                            topic.id
-                                                                        )
-                                                                            ? "bg-green-100 text-green-700 font-semibold"
-                                                                            : "hover:bg-green-50"
-                                                                            }`}
-                                                                    >
-                                                                        {topic.topic_name ||
-                                                                            topic.name}
-                                                                    </div>
-                                                                )
+                                        {dayTopics.length === 0 ? (
+                                            <div className="px-2 py-1 text-xs text-gray-400">
+                                                No topics
+                                            </div>
+                                        ) : (
+                                            dayTopics.map(
+                                                (topic: any) => (
+                                                    <div
+                                                        key={topic.id}
+                                                        onClick={() =>
+                                                            setSelectedTopics([
+                                                                topic.id
+                                                            ])
+                                                        }
+                                                        className={`px-2 py-1 text-xs cursor-pointer rounded flex items-center justify-between gap-1 ${
+                                                            selectedTopics.includes(
+                                                                topic.id
                                                             )
-                                                        )}
+                                                                ? "bg-green-100 text-green-700 font-semibold"
+                                                                : "hover:bg-green-50"
+                                                        }`}
+                                                    >
+
+                                                        <span className="truncate">
+                                                            {topic.topic_name ||
+                                                                topic.name}
+                                                        </span>
+
+                                                        <span className="text-[10px] text-gray-500 shrink-0">
+                                                            (
+                                                            {
+                                                                topic.sentence_count ??
+                                                                0
+                                                            }
+                                                            )
+                                                        </span>
 
                                                     </div>
-                                                )}
+                                                )
+                                            )
+                                        )}
 
-                                            </div>
-                                        );
-                                    });
-                                })()}
+                                    </div>
+                                )}
 
                             </div>
+                        );
+                    })}
 
-                        </div>
-                    )}
+                </div>
+            );
+        })}
+
+    </div>
+);
+                })()}
+
+            </div>
+
+        </div>
+    )}
                     {/* REACTION MEMES */}
                     {activeTabType === "reaction_memes" && (
                         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
