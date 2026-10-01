@@ -686,11 +686,11 @@ LOAD COURSE TOPICS FOR DEMO
             <style jsx>{`
             @keyframes demoClassTicker {
     from {
-        transform: translateX(100%);
+        transform: translateX(0);
     }
 
     to {
-        transform: translateX(-100%);
+        transform: translateX(-50%);
     }
 }
         `}</style>
@@ -709,19 +709,29 @@ LOAD COURSE TOPICS FOR DEMO
 
                         {/* LATE JOIN NOTICE — BLUE STRIP */}
                         {classStartTime && !tabsHovered && (
-                            <div className="absolute inset-0 z-30 flex items-center justify-center bg-blue-600 text-xs text-white whitespace-nowrap pointer-events-none">
-                                <span
-                                    className="inline-block whitespace-nowrap text-sm"
+                            <div className="absolute inset-0 z-30 flex items-center bg-blue-600 text-xs text-white whitespace-nowrap pointer-events-none overflow-hidden">
+                                <div
+                                    className="flex w-max whitespace-nowrap"
                                     style={{
                                         animation: "demoClassTicker 75s linear infinite",
                                     }}
                                 >
-                                    ⚠️ क्लास शुरू हुए{" "}
-                                    <span className="text-yellow-300 mx-1">
-                                        {formatElapsedTime(elapsedSeconds)}
+                                    <span className="inline-block whitespace-nowrap pr-8 text-sm">
+                                        ⚠️ क्लास शुरू हुए{" "}
+                                        <span className="text-yellow-300 mx-1">
+                                            {formatElapsedTime(elapsedSeconds)}
+                                        </span>
+                                        हो चुके हैं। जो देर से जुड़े हैं, हो सकता है कुछ बातें छुट जाने के कारण उन्‍हें लगे कि चल क्‍या रहा है, आप क्‍लास में बने रहें... दोबारा भी डेमो ले सकते हैं। यह बेसिक कोर्स की डेमो क्‍लास है, यदि आपको एडवांस्‍ड कोर्स की जरूरत है, तो वह भी क्‍लास मिल जाएगी।
                                     </span>
-                                    हो चुके हैं। जो देर से जुड़े हैं, हो सकता है कुछ बातें छुट जाने के कारण उन्‍हें लगे कि चल क्‍या रहा है, आप क्‍लास में बने रहें... दोबारा भी डेमो ले सकते हैं। यह बेसिक कोर्स की डेमो क्‍लास है, यदि आपको एडवांस्‍ड कोर्स की जरूरत है, तो वह भी क्‍लास मिल जाएगी।
-                                </span>
+
+                                    <span className="inline-block whitespace-nowrap pr-8 text-sm">
+                                        ⚠️ क्लास शुरू हुए{" "}
+                                        <span className="text-yellow-300 mx-1">
+                                            {formatElapsedTime(elapsedSeconds)}
+                                        </span>
+                                        हो चुके हैं। जो देर से जुड़े हैं, हो सकता है कुछ बातें छुट जाने के कारण उन्‍हें लगे कि चल क्‍या रहा है, आप क्‍लास में बने रहें... दोबारा भी डेमो ले सकते हैं। यह बेसिक कोर्स की डेमो क्‍लास है, यदि आपको एडवांस्‍ड कोर्स की जरूरत है, तो वह भी क्‍लास मिल जाएगी।
+                                    </span>
+                                </div>
                             </div>
                         )}
 
