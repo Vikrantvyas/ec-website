@@ -698,10 +698,8 @@ LOAD COURSE TOPICS FOR DEMO
             <div className="w-full h-full flex flex-col gap-1 p-1 bg-gray-50 overflow-hidden">
 
 
-
                 {/* CLASS NOTICE + DEMO TABS */}
                 <div className="shrink-0">
-
                     {/* DEMO TABS */}
                     <div
                         className="relative px-1 py-0 overflow-hidden"
