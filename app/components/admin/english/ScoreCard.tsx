@@ -37,6 +37,7 @@ const ScoreCard = forwardRef<any, any>(({
   // RESULT
   const [showResult, setShowResult] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showWinnerCelebration, setShowWinnerCelebration] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -432,8 +433,15 @@ const ScoreCard = forwardRef<any, any>(({
     setTimerRunning(false);
     setRunning(false);
 
-  };
+    if (students.length > 0) {
+      setShowWinnerCelebration(true);
 
+      setTimeout(() => {
+        setShowWinnerCelebration(false);
+      }, 3500);
+    }
+
+  };
 
   // =========================================================
   // RESULT DATA
@@ -496,7 +504,62 @@ const ScoreCard = forwardRef<any, any>(({
           </button>
 
         </div>
+        {showWinnerCelebration && groupedResults.length > 0 && (
+          <>
+            <style jsx>{`
+      @keyframes winnerCelebration {
+        0% {
+          transform: scale(0.4) translateY(40px);
+          opacity: 0;
+          filter: blur(8px);
+        }
 
+        25% {
+          transform: scale(1.15) translateY(0);
+          opacity: 1;
+          filter: blur(0);
+        }
+
+        70% {
+          transform: scale(1) translateY(-8px);
+          opacity: 1;
+        }
+
+        100% {
+          transform: scale(1.08) translateY(-20px);
+          opacity: 0;
+          filter: blur(6px);
+        }
+      }
+
+      .winnerCelebration {
+        animation: winnerCelebration 3.5s ease-out forwards;
+      }
+    `}</style>
+
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center pointer-events-none">
+              <div className="winnerCelebration text-center">
+
+                <div className="text-[110px] leading-none">
+                  🏆
+                </div>
+
+                <div className="text-[70px] leading-none font-black text-yellow-500">
+                  1st
+                </div>
+
+                <div className="text-4xl font-black text-green-600 mt-2">
+                  {groupedResults[0].names.join(" | ")}
+                </div>
+
+                <div className="text-2xl font-bold text-gray-700 mt-2">
+                  Winner!
+                </div>
+
+              </div>
+            </div>
+          </>
+        )}
 
         {/* RESULT LIST */}
 
@@ -506,15 +569,19 @@ const ScoreCard = forwardRef<any, any>(({
 
             <div
               key={i}
-              className={`flex justify-between items-center border p-3 rounded ${
-                i === 0
-                  ? "bg-yellow-200 font-bold"
-                  : "bg-white"
-              }`}
+              className={`flex justify-between items-center border p-3 rounded ${i === 0
+                ? "bg-yellow-200 font-bold"
+                : "bg-white"
+                }`}
             >
 
               <div className="flex-1">
                 {i + 1}. {group.names.join(" | ")}
+                {i === 0 && !showWinnerCelebration && (
+                  <span className="text-2xl ml-2 align-middle">
+                    🏆
+                  </span>
+                )}
               </div>
 
               <div className="font-bold ml-3">
@@ -679,11 +746,10 @@ const ScoreCard = forwardRef<any, any>(({
           {/* TIMER */}
 
           <div
-            className={`border rounded p-2 text-center ${
-              showTimeUp
-                ? "bg-red-500 text-white animate-pulse"
-                : ""
-            }`}
+            className={`border rounded p-2 text-center ${showTimeUp
+              ? "bg-red-500 text-white animate-pulse"
+              : ""
+              }`}
           >
 
             <div className="text-xs text-gray-500 flex justify-center gap-1 items-center">
@@ -704,11 +770,10 @@ const ScoreCard = forwardRef<any, any>(({
             </div>
 
             <div
-              className={`text-3xl font-bold ${
-                timer <= 10 && timerRunning
-                  ? "text-red-600 animate-pulse"
-                  : ""
-              }`}
+              className={`text-3xl font-bold ${timer <= 10 && timerRunning
+                ? "text-red-600 animate-pulse"
+                : ""
+                }`}
             >
               {format(timer)}
             </div>
@@ -816,11 +881,10 @@ const ScoreCard = forwardRef<any, any>(({
 
             <div
               key={i}
-              className={`flex items-center gap-3 justify-between border p-2 rounded ${
-                i === activeIndex
-                  ? "bg-yellow-100"
-                  : ""
-              }`}
+              className={`flex items-center gap-3 justify-between border p-2 rounded ${i === activeIndex
+                ? "bg-yellow-100"
+                : ""
+                }`}
             >
 
               <div>
