@@ -73,6 +73,7 @@ export default function DemoShowcase({
     const [classStartTime, setClassStartTime] = useState<number | null>(null);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [tabsHovered, setTabsHovered] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const activeTab = demoTabs.find(
         (tab: any) => tab.id === activeDemoTab
     );
@@ -145,6 +146,21 @@ export default function DemoShowcase({
 
         loadDemoTabs();
     }, []);
+    useEffect(() => {
+        if (!isFullscreen) return;
+
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                setIsFullscreen(false);
+            }
+        };
+
+        document.addEventListener("keydown", handleEscape);
+
+        return () => {
+            document.removeEventListener("keydown", handleEscape);
+        };
+    }, [isFullscreen]);
     useEffect(() => {
         if (!classStartTime) {
             setElapsedSeconds(0);
@@ -554,22 +570,22 @@ LOAD COURSE TOPICS FOR DEMO
                 : [...prev, id]
         );
     };
-const handleCarouselWheel = (
-    e: React.WheelEvent,
-    currentIndex: number,
-    totalItems: number,
-    setIndex: React.Dispatch<React.SetStateAction<number>>
-) => {
-    e.preventDefault();
+    const handleCarouselWheel = (
+        e: React.WheelEvent,
+        currentIndex: number,
+        totalItems: number,
+        setIndex: React.Dispatch<React.SetStateAction<number>>
+    ) => {
+        e.preventDefault();
 
-    if (totalItems <= 1) return;
+        if (totalItems <= 1) return;
 
-    if (e.deltaY > 0) {
-        setIndex((currentIndex + 1) % totalItems);
-    } else {
-        setIndex((currentIndex - 1 + totalItems) % totalItems);
-    }
-};
+        if (e.deltaY > 0) {
+            setIndex((currentIndex + 1) % totalItems);
+        } else {
+            setIndex((currentIndex - 1 + totalItems) % totalItems);
+        }
+    };
     /* =========================================================
        IMAGE CLICK
     ========================================================= */
@@ -714,83 +730,96 @@ const handleCarouselWheel = (
 
 
                 {/* CLASS NOTICE + DEMO TABS */}
-                <div className="shrink-0">
-                    {/* DEMO TABS */}
-                    <div
-                        className="relative px-1 py-0 overflow-hidden"
-                        onMouseEnter={() => setTabsHovered(true)}
-                        onMouseLeave={() => setTabsHovered(false)}
-                    >
+                {!isFullscreen && (
+                    <div className="shrink-0">
+                        {/* DEMO TABS */}
+                        <div
+                            className="relative px-1 py-0 overflow-hidden"
+                            onMouseEnter={() => setTabsHovered(true)}
+                            onMouseLeave={() => setTabsHovered(false)}
+                        >
 
-                        {/* LATE JOIN NOTICE — BLUE STRIP */}
-                        {classStartTime && !tabsHovered && (
-                            <div className="absolute inset-0 z-30 flex items-center bg-blue-600 text-xs text-white whitespace-nowrap pointer-events-none overflow-hidden">
-                                <div
-                                    className="flex w-max whitespace-nowrap"
-                                    style={{
-                                        animation: "demoClassTicker 75s linear infinite",
-                                    }}
-                                >
-                                    <span className="inline-block whitespace-nowrap pr-8 text-sm">
-                                        ⚠️ क्लास शुरू हुए{" "}
-                                        <span className="text-yellow-300 mx-1">
-                                            {formatElapsedTime(elapsedSeconds)}
+                            {/* LATE JOIN NOTICE — BLUE STRIP */}
+                            {classStartTime && !tabsHovered && (
+                                <div className="absolute inset-0 z-30 flex items-center bg-blue-600 text-xs text-white whitespace-nowrap pointer-events-none overflow-hidden">
+                                    <div
+                                        className="flex w-max whitespace-nowrap"
+                                        style={{
+                                            animation: "demoClassTicker 75s linear infinite",
+                                        }}
+                                    >
+                                        <span className="inline-block whitespace-nowrap pr-8 text-sm">
+                                            ⚠️ क्लास शुरू हुए{" "}
+                                            <span className="text-yellow-300 mx-1">
+                                                {formatElapsedTime(elapsedSeconds)}
+                                            </span>
+                                            हो चुके हैं। देर से जुड़ने वाले स्‍टूडेन्‍ट्स को समझने में दिक्‍कत आ सकती है... आप दोबारा भी डेमो ले सकते हैं। ⚠️ यह बेसिक English की डेमो क्‍लास है।
                                         </span>
-                                        हो चुके हैं। देर से जुड़ने वाले स्‍टूडेन्‍ट्स को समझने में दिक्‍कत आ सकती है... आप दोबारा भी डेमो ले सकते हैं। ⚠️ यह बेसिक English की डेमो क्‍लास है।
-                                    </span>
 
-                                    <span className="inline-block whitespace-nowrap pr-8 text-sm">
-                                        ⚠️ क्लास शुरू हुए{" "}
-                                        <span className="text-yellow-300 mx-1">
-                                            {formatElapsedTime(elapsedSeconds)}
+                                        <span className="inline-block whitespace-nowrap pr-8 text-sm">
+                                            ⚠️ क्लास शुरू हुए{" "}
+                                            <span className="text-yellow-300 mx-1">
+                                                {formatElapsedTime(elapsedSeconds)}
+                                            </span>
+                                            हो चुके हैं। देर से जुड़ने वाले स्‍टूडेन्‍ट्स को समझने में दिक्‍कत आ सकती है... आप दोबारा भी डेमो ले सकते हैं। ⚠️ यह बेसिक English की डेमो क्‍लास है।
                                         </span>
-                                        हो चुके हैं। देर से जुड़ने वाले स्‍टूडेन्‍ट्स को समझने में दिक्‍कत आ सकती है... आप दोबारा भी डेमो ले सकते हैं। ⚠️ यह बेसिक English की डेमो क्‍लास है।
-                                    </span>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        <div className="flex gap-4 min-w-max items-center">
+                            <div className="flex gap-4 min-w-max items-center">
 
-                            {demoTabs.map((tab: any) => (
+                                {demoTabs.map((tab: any) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveDemoTab(tab.id)}
+                                        className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${activeDemoTab === tab.id
+                                            ? "text-blue-600"
+                                            : "text-gray-700 hover:text-blue-600"
+                                            }`}
+                                    >
+                                        {tab.tab_name}
+                                    </button>
+                                ))}
+                                {/* FULL SCREEN TOGGLE */}
+                                <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 whitespace-nowrap cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={isFullscreen}
+                                        onChange={(e) => setIsFullscreen(e.target.checked)}
+                                        className="w-3.5 h-3.5 cursor-pointer"
+                                    />
+                                    Full Screen
+                                </label>
+                                {/* CLASS ON / OFF TOGGLE */}
                                 <button
-                                    key={tab.id}
-                                    onClick={() => setActiveDemoTab(tab.id)}
-                                    className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${activeDemoTab === tab.id
-                                        ? "text-blue-600"
-                                        : "text-gray-700 hover:text-blue-600"
+                                    onClick={() => {
+                                        if (classStartTime) {
+                                            setClassStartTime(null);
+                                            setElapsedSeconds(0);
+                                            setTabsHovered(false);
+                                        } else {
+                                            setClassStartTime(Date.now());
+                                            setElapsedSeconds(0);
+                                        }
+                                    }}
+                                    className={`text-xs font-bold text-white px-2 py-1 rounded whitespace-nowrap ${classStartTime
+                                        ? "bg-red-600 hover:bg-red-700"
+                                        : "bg-green-600 hover:bg-green-700"
                                         }`}
                                 >
-                                    {tab.tab_name}
+                                    {classStartTime ? "■ Demo OFF" : "▶ Demo ON"}
                                 </button>
-                            ))}
 
-                            {/* CLASS ON / OFF TOGGLE */}
-                            <button
-                                onClick={() => {
-                                    if (classStartTime) {
-                                        setClassStartTime(null);
-                                        setElapsedSeconds(0);
-                                        setTabsHovered(false);
-                                    } else {
-                                        setClassStartTime(Date.now());
-                                        setElapsedSeconds(0);
-                                    }
-                                }}
-                                className={`text-xs font-bold text-white px-2 py-1 rounded whitespace-nowrap ${classStartTime
-                                    ? "bg-red-600 hover:bg-red-700"
-                                    : "bg-green-600 hover:bg-green-700"
-                                    }`}
-                            >
-                                {classStartTime ? "■ Demo OFF" : "▶ Demo ON"}
-                            </button>
-
+                            </div>
                         </div>
                     </div>
-                </div>
-
+                )}
                 {/* DEMO CONTENT */}
-                <div className="flex-1 min-h-0 flex gap-1 overflow-hidden">
+                <div
+                    className={`flex-1 min-h-0 flex gap-1 overflow-hidden ${isFullscreen ? "p-0" : ""
+                        }`}
+                >
                     {/* BOARD */}
                     {activeTabType === "board" && (
                         <div className="flex-1 min-w-0 overflow-hidden">
@@ -803,39 +832,42 @@ const handleCarouselWheel = (
                         <div className="flex-1 min-w-0 bg-white flex flex-col overflow-hidden">
 
                             {/* IMAGE TOPICS */}
-                            <div className="shrink-0 px-1 py-0 overflow-x-auto">
-                                <div className="flex gap-4 min-w-max">
-                                    {imageTopics
-                                        .filter(
-                                            (topic: any) =>
-                                                topic.media_type === "image"
-                                        )
-                                        .map((topic: any) => {
-                                            const active =
-                                                selectedImageTopicId === topic.id;
+                            {!isFullscreen && (
+                                <div className="shrink-0 px-1 py-0 overflow-x-auto">
+                                    <div className="flex gap-4 min-w-max">
+                                        {imageTopics
+                                            .filter(
+                                                (topic: any) =>
+                                                    topic.media_type === "image"
+                                            )
+                                            .map((topic: any) => {
+                                                const active =
+                                                    selectedImageTopicId === topic.id;
 
-                                            return (
-                                                <button
-                                                    key={topic.id}
-                                                    onClick={() => {
-                                                        setSelectedImageTopicId(topic.id);
-                                                        setSelectedImageIndex(0);
-                                                    }}
-                                                    className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${active
-                                                        ? "text-blue-600"
-                                                        : "text-gray-700 hover:text-blue-600"
-                                                        }`}
-                                                >
-                                                    {topic.name}
-                                                </button>
-                                            );
-                                        })}
+                                                return (
+                                                    <button
+                                                        key={topic.id}
+                                                        onClick={() => {
+                                                            setSelectedImageTopicId(topic.id);
+                                                            setSelectedImageIndex(0);
+                                                        }}
+                                                        className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${active
+                                                            ? "text-blue-600"
+                                                            : "text-gray-700 hover:text-blue-600"
+                                                            }`}
+                                                    >
+                                                        {topic.name}
+                                                    </button>
+                                                );
+                                            })}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* IMAGE CAROUSEL */}
                             <div
-                                className="flex-1 min-h-0 flex items-center justify-center px-1 overflow-hidden"
+                                className={`flex-1 min-h-0 flex items-center justify-center overflow-hidden ${isFullscreen ? "px-0" : "px-1"
+                                    }`}
                             >
 
                                 {(() => {
@@ -934,7 +966,9 @@ const handleCarouselWheel = (
                                 duration-500
                                 ease-in-out
                                 ${position === "center"
-                                                                ? "scale-100 opacity-100 z-20 w-[56%] h-[96%]"
+                                                                ? isFullscreen
+                                                                    ? "scale-100 opacity-100 z-20 w-full h-full"
+                                                                    : "scale-100 opacity-100 z-20 w-[56%] h-[96%]"
                                                                 : position === "left"
                                                                     ? "-translate-x-[28vw] scale-90 opacity-40 z-10 w-[32%] h-[72%] cursor-pointer"
                                                                     : position === "right"
@@ -1004,38 +1038,40 @@ const handleCarouselWheel = (
                         <div className="flex-1 min-w-0 bg-white flex flex-col overflow-hidden">
 
                             {/* VIDEO TOPICS */}
-                            <div className="shrink-0 px-1 py-0 overflow-x-auto">
-                                <div className="flex gap-4 min-w-max">
+                            {!isFullscreen && (
+                                <div className="shrink-0 px-1 py-0 overflow-x-auto">
+                                    <div className="flex gap-4 min-w-max">
 
-                                    {imageTopics
-                                        .filter(
-                                            (topic: any) =>
-                                                topic.media_type === "video"
-                                        )
-                                        .map((topic: any) => {
+                                        {imageTopics
+                                            .filter(
+                                                (topic: any) =>
+                                                    topic.media_type === "video"
+                                            )
+                                            .map((topic: any) => {
 
-                                            const active =
-                                                selectedVideoTopicId === topic.id;
+                                                const active =
+                                                    selectedVideoTopicId === topic.id;
 
-                                            return (
-                                                <button
-                                                    key={topic.id}
-                                                    onClick={() => {
-                                                        setSelectedVideoTopicId(topic.id);
-                                                        setSelectedVideoIndex(0);
-                                                    }}
-                                                    className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${active
-                                                        ? "text-red-600"
-                                                        : "text-gray-700 hover:text-red-600"
-                                                        }`}
-                                                >
-                                                    {topic.name}
-                                                </button>
-                                            );
-                                        })}
+                                                return (
+                                                    <button
+                                                        key={topic.id}
+                                                        onClick={() => {
+                                                            setSelectedVideoTopicId(topic.id);
+                                                            setSelectedVideoIndex(0);
+                                                        }}
+                                                        className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${active
+                                                            ? "text-red-600"
+                                                            : "text-gray-700 hover:text-red-600"
+                                                            }`}
+                                                    >
+                                                        {topic.name}
+                                                    </button>
+                                                );
+                                            })}
 
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* VIDEO CAROUSEL */}
                             <div className="flex-1 min-h-0 flex items-center justify-center px-1 overflow-hidden">
@@ -1159,18 +1195,30 @@ const handleCarouselWheel = (
                                                     >
 
                                                         {position === "center" ? (
-                                                            <iframe
-                                                                src={
-                                                                    videoId
-                                                                        ? `https://www.youtube.com/embed/${videoId}`
-                                                                        : video.video_url
-                                                                }
-                                                                title={video.name}
-                                                                className="w-full h-full rounded-2xl"
-                                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                                allowFullScreen
-                                                            />
-                                                        ) : (
+    <div
+        className="w-full h-full relative"
+        onWheel={(e) =>
+            handleCarouselWheel(
+                e,
+                currentIndex,
+                videos.length,
+                setSelectedVideoIndex
+            )
+        }
+    >
+        <iframe
+            src={
+                videoId
+                    ? `https://www.youtube.com/embed/${videoId}`
+                    : video.video_url
+            }
+            title={video.name}
+            className="w-full h-full rounded-2xl pointer-events-none"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+        />
+    </div>
+) : (
                                                             <div className="relative w-full h-full">
 
                                                                 {thumbnail ? (
@@ -1328,28 +1376,29 @@ const handleCarouselWheel = (
                             <div className="flex-1 min-w-0 bg-white flex flex-col overflow-hidden">
 
                                 {/* MCQ TOPICS */}
-                                <div className="shrink-0 px-1 py-0 overflow-x-auto">
-                                    <div className="flex gap-4 min-w-max">
+                                {!isFullscreen && (
+                                    <div className="shrink-0 px-1 py-0 overflow-x-auto">
+                                        <div className="flex gap-4 min-w-max">
 
-                                        {demoTopics.map((topic: any) => (
-                                            <button
-                                                key={topic.id}
-                                                onClick={() => {
-                                                    setSelectedTopics([topic.id]);
-                                                    setSelectedMCQIndex(0);
-                                                }}
-                                                className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${selectedTopics.includes(topic.id)
-                                                    ? "text-green-600"
-                                                    : "text-gray-700 hover:text-green-600"
-                                                    }`}
-                                            >
-                                                {topic.topic_name || topic.name}
-                                            </button>
-                                        ))}
+                                            {demoTopics.map((topic: any) => (
+                                                <button
+                                                    key={topic.id}
+                                                    onClick={() => {
+                                                        setSelectedTopics([topic.id]);
+                                                        setSelectedMCQIndex(0);
+                                                    }}
+                                                    className={`text-xs font-semibold whitespace-nowrap cursor-pointer ${selectedTopics.includes(topic.id)
+                                                        ? "text-green-600"
+                                                        : "text-gray-700 hover:text-green-600"
+                                                        }`}
+                                                >
+                                                    {topic.topic_name || topic.name}
+                                                </button>
+                                            ))}
 
+                                        </div>
                                     </div>
-                                </div>
-
+                                )}
                                 {/* MCQ CAROUSEL */}
                                 <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
 
