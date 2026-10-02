@@ -36,6 +36,7 @@ const ScoreCard = forwardRef<any, any>(({
 
   // RESULT
   const [showResult, setShowResult] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -212,6 +213,12 @@ const ScoreCard = forwardRef<any, any>(({
     setScore(p => p + 1);
     setTotal(p => p + 1);
 
+    setShowCelebration(true);
+
+    setTimeout(() => {
+      setShowCelebration(false);
+    }, 1800);
+
     setStudents(prev => {
 
       const copy = [...prev];
@@ -334,16 +341,31 @@ const ScoreCard = forwardRef<any, any>(({
 
     setStarted(false);
     setShowResult(false);
+    setShowCelebration(false);
 
     onReset?.();
   };
+
+
+  // =========================================================
+  // MCQ CORRECT
+  // =========================================================
+
   const handleMcqCorrect = () => {
+
     if (activeIndex === null) return;
 
     setScore(p => p + 1);
     setTotal(p => p + 1);
 
+    setShowCelebration(true);
+
+    setTimeout(() => {
+      setShowCelebration(false);
+    }, 1800);
+
     setStudents(prev => {
+
       const copy = [...prev];
 
       copy[activeIndex] = {
@@ -353,15 +375,24 @@ const ScoreCard = forwardRef<any, any>(({
       };
 
       return copy;
+
     });
+
   };
 
+
+  // =========================================================
+  // MCQ PASS
+  // =========================================================
+
   const handleMcqPass = () => {
+
     if (activeIndex === null) return;
 
     setTotal(p => p + 1);
 
     setStudents(prev => {
+
       const copy = [...prev];
 
       copy[activeIndex] = {
@@ -370,8 +401,15 @@ const ScoreCard = forwardRef<any, any>(({
       };
 
       return copy;
+
     });
+
   };
+
+
+  // =========================================================
+  // IMPERATIVE HANDLE
+  // =========================================================
 
   useImperativeHandle(ref, () => ({
     correct: handleCorrect,
@@ -380,6 +418,7 @@ const ScoreCard = forwardRef<any, any>(({
     mcqPass: handleMcqPass,
     reset: resetAll,
   }));
+
 
   // =========================================================
   // RESULT
@@ -421,6 +460,7 @@ const ScoreCard = forwardRef<any, any>(({
     (a: any, b: any) => b.marks - a.marks
   );
 
+
   const disabled =
     !started || !timerRunning;
 
@@ -428,6 +468,7 @@ const ScoreCard = forwardRef<any, any>(({
     disabled
       ? "opacity-40 pointer-events-none"
       : "";
+
 
   // =========================================================
   // RESULT VIEW
@@ -465,10 +506,11 @@ const ScoreCard = forwardRef<any, any>(({
 
             <div
               key={i}
-              className={`flex justify-between items-center border p-3 rounded ${i === 0
-                ? "bg-yellow-200 font-bold"
-                : "bg-white"
-                }`}
+              className={`flex justify-between items-center border p-3 rounded ${
+                i === 0
+                  ? "bg-yellow-200 font-bold"
+                  : "bg-white"
+              }`}
             >
 
               <div className="flex-1">
@@ -505,323 +547,386 @@ const ScoreCard = forwardRef<any, any>(({
   // =========================================================
 
   return (
+    <>
 
-    <div className="flex flex-col w-full h-full min-w-0 border bg-gray-50">
+      {/* ===================================================== */}
+      {/* +1 CELEBRATION */}
+      {/* ===================================================== */}
 
-      <audio
-        ref={audioRef}
-        src="/buzzer.mp3"
-      />
+      {showCelebration && (
+        <>
+          <style jsx>{`
+            @keyframes plusOneCelebration {
 
-
-      {/* HEADER */}
-
-      <div className="flex justify-between items-center p-2 border-b">
-
-        <div className="font-semibold">
-          Score Board of {students.length}
-        </div>
-
-        <button
-          onClick={resetAll}
-          className="px-3 py-1 bg-red-600 text-white rounded text-sm"
-        >
-          Reset All
-        </button>
-
-      </div>
-
-
-      {/* CONTROLS */}
-
-      <div className="grid grid-cols-3 gap-2 p-2">
-
-
-        {/* SCORE */}
-
-        <div
-          className={`border rounded p-2 text-center ${blurClass}`}
-        >
-
-          <div className="text-xs text-gray-500">
-            Score
-          </div>
-
-          <div className="text-3xl font-bold">
-            {score}
-          </div>
-
-          <div className="flex gap-1 mt-2">
-
-            <button
-              disabled={disabled}
-              onClick={handleCorrect}
-              className="flex-1 bg-green-600 text-white rounded h-8"
-            >
-              +1
-            </button>
-
-            <button
-              disabled={disabled}
-              onClick={handlePass}
-              className="flex-1 bg-gray-500 text-white rounded h-8"
-            >
-              0
-            </button>
-
-            <button
-              disabled={disabled}
-              onClick={handleMinus}
-              className="flex-1 bg-red-600 text-white rounded h-8"
-            >
-              -1
-            </button>
-
-          </div>
-
-        </div>
-
-
-        {/* TIMER */}
-
-        <div
-          className={`border rounded p-2 text-center ${showTimeUp
-            ? "bg-red-500 text-white animate-pulse"
-            : ""
-            }`}
-        >
-
-          <div className="text-xs text-gray-500 flex justify-center gap-1 items-center">
-
-            Timer
-
-            <input
-              type="number"
-              value={inputMin}
-              onChange={(e) =>
-                setInputMin(Number(e.target.value))
+              0% {
+                transform: translateY(50px) scale(0.65);
+                opacity: 0;
+                filter: blur(0);
               }
-              className="w-10 border text-xs text-center"
-            />
 
-            <span>min</span>
+              20% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+                filter: blur(0);
+              }
 
-          </div>
+              65% {
+                transform: translateY(-10px) scale(1.08);
+                opacity: 1;
+                filter: blur(0);
+              }
 
-          <div
-            className={`text-3xl font-bold ${timer <= 10 && timerRunning
-              ? "text-red-600 animate-pulse"
-              : ""
-              }`}
-          >
-            {format(timer)}
-          </div>
+              100% {
+                transform: translateY(-30px) scale(1.18);
+                opacity: 0;
+                filter: blur(10px);
+              }
 
-          <div className="flex gap-1 mt-2">
+            }
 
-            <button
-              className="flex-1 bg-green-600 text-white rounded h-8"
-              onClick={() => setTimerRunning(true)}
-            >
-              ▶
-            </button>
+            .plusOneCelebration {
+              animation: plusOneCelebration 1.8s ease-out forwards;
+            }
+          `}</style>
 
-            <button
-              className="flex-1 bg-yellow-500 text-white rounded h-8"
-              onClick={() => setTimerRunning(false)}
-            >
-              ⏸
-            </button>
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center pointer-events-none">
 
-          </div>
-
-        </div>
-
-
-        {/* STOPWATCH */}
-
-        <div
-          className={`border rounded p-2 text-center ${blurClass}`}
-        >
-
-          <div className="text-xs text-gray-500">
-            Stopwatch
-          </div>
-
-          <div className="text-3xl font-bold">
-            {format(time)}
-          </div>
-
-          <div className="flex gap-1 mt-2">
-
-            <button
-              className="flex-1 bg-blue-600 text-white rounded h-8"
-              onClick={() => setRunning(true)}
-            >
-              ▶
-            </button>
-
-            <button
-              className="flex-1 bg-yellow-500 text-white rounded h-8"
-              onClick={() => setRunning(false)}
-            >
-              ⏸
-            </button>
+            <div className="plusOneCelebration text-[180px] leading-none font-black text-green-600 drop-shadow-2xl">
+              +1
+            </div>
 
           </div>
-
-        </div>
-
-      </div>
+        </>
+      )}
 
 
-      {/* ADD + START + RESULT */}
+      <div className="flex flex-col w-full h-full min-w-0 border bg-gray-50">
 
-      <div className="p-2 border-b flex gap-2 bg-white">
-
-        <input
-          value={name}
-          onChange={(e) =>
-            setName(e.target.value)
-          }
-          placeholder="Student name"
-          className="flex-1 border px-2 py-1"
+        <audio
+          ref={audioRef}
+          src="/buzzer.mp3"
         />
 
-        <button
-          onClick={addStudent}
-          className="bg-blue-600 text-white px-3 rounded"
-        >
-          Add
-        </button>
 
-        <button
-          onClick={startGame}
-          className="bg-green-600 text-white px-3 rounded"
-        >
-          Start
-        </button>
+        {/* HEADER */}
 
-        <button
-          onClick={handleResult}
-          className="bg-purple-600 text-white px-3 rounded"
-        >
-          Result
-        </button>
+        <div className="flex justify-between items-center p-2 border-b">
 
-      </div>
+          <div className="font-semibold">
+            Score Board of {students.length}
+          </div>
+
+          <button
+            onClick={resetAll}
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm"
+          >
+            Reset All
+          </button>
+
+        </div>
 
 
-      {/* STUDENTS */}
+        {/* CONTROLS */}
 
-      <div className="flex-1 overflow-y-auto p-2 space-y-2">
+        <div className="grid grid-cols-3 gap-2 p-2">
 
-        {students.map((s, i) => (
+
+          {/* SCORE */}
 
           <div
-            key={i}
-            className={`flex items-center gap-3 justify-between border p-2 rounded ${i === activeIndex
-              ? "bg-yellow-100"
-              : ""
-              }`}
+            className={`border rounded p-2 text-center ${blurClass}`}
           >
 
-            <div>
-              {s.name}
+            <div className="text-xs text-gray-500">
+              Score
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="text-3xl font-bold">
+              {score}
+            </div>
 
-              {/* MINUS */}
+            <div className="flex gap-1 mt-2">
 
               <button
-                onClick={() => {
-
-                  setStudents(prev => {
-
-                    const copy = [...prev];
-
-                    if (copy[i].correct > 0) {
-
-                      copy[i].correct -= 1;
-
-                      setScore(p => p - 1);
-
-                    }
-
-                    return copy;
-
-                  });
-
-                }}
-                className="bg-red-500 text-white px-2 rounded"
+                disabled={disabled}
+                onClick={handleCorrect}
+                className="flex-1 bg-green-600 text-white rounded h-8"
               >
-                -
+                +1
               </button>
 
-
-              {/* DISPLAY */}
-
-              <div className="font-bold w-16 text-center">
-                {s.correct}/{s.total}
-              </div>
-
-
-              {/* PLUS */}
-
               <button
-                onClick={() => {
-
-                  setStudents(prev => {
-
-                    const copy = [...prev];
-
-                    copy[i].correct += 1;
-
-                    setScore(p => p + 1);
-
-                    return copy;
-
-                  });
-
-                }}
-                className="bg-green-600 text-white px-2 rounded"
+                disabled={disabled}
+                onClick={handlePass}
+                className="flex-1 bg-gray-500 text-white rounded h-8"
               >
-                +
+                0
               </button>
 
-
-              {/* DELETE */}
-
               <button
-                onClick={() => {
-
-                  setStudents(prev =>
-                    prev.filter(
-                      (_, index) => index !== i
-                    )
-                  );
-
-                  if (activeIndex === i) {
-                    setActiveIndex(null);
-                  }
-
-                }}
-                className="bg-red-600 text-white px-2 rounded"
+                disabled={disabled}
+                onClick={handleMinus}
+                className="flex-1 bg-red-600 text-white rounded h-8"
               >
-                ✕
+                -1
               </button>
 
             </div>
 
           </div>
 
-        ))}
+
+          {/* TIMER */}
+
+          <div
+            className={`border rounded p-2 text-center ${
+              showTimeUp
+                ? "bg-red-500 text-white animate-pulse"
+                : ""
+            }`}
+          >
+
+            <div className="text-xs text-gray-500 flex justify-center gap-1 items-center">
+
+              Timer
+
+              <input
+                type="number"
+                value={inputMin}
+                onChange={(e) =>
+                  setInputMin(Number(e.target.value))
+                }
+                className="w-10 border text-xs text-center"
+              />
+
+              <span>min</span>
+
+            </div>
+
+            <div
+              className={`text-3xl font-bold ${
+                timer <= 10 && timerRunning
+                  ? "text-red-600 animate-pulse"
+                  : ""
+              }`}
+            >
+              {format(timer)}
+            </div>
+
+            <div className="flex gap-1 mt-2">
+
+              <button
+                className="flex-1 bg-green-600 text-white rounded h-8"
+                onClick={() => setTimerRunning(true)}
+              >
+                ▶
+              </button>
+
+              <button
+                className="flex-1 bg-yellow-500 text-white rounded h-8"
+                onClick={() => setTimerRunning(false)}
+              >
+                ⏸
+              </button>
+
+            </div>
+
+          </div>
+
+
+          {/* STOPWATCH */}
+
+          <div
+            className={`border rounded p-2 text-center ${blurClass}`}
+          >
+
+            <div className="text-xs text-gray-500">
+              Stopwatch
+            </div>
+
+            <div className="text-3xl font-bold">
+              {format(time)}
+            </div>
+
+            <div className="flex gap-1 mt-2">
+
+              <button
+                className="flex-1 bg-blue-600 text-white rounded h-8"
+                onClick={() => setRunning(true)}
+              >
+                ▶
+              </button>
+
+              <button
+                className="flex-1 bg-yellow-500 text-white rounded h-8"
+                onClick={() => setRunning(false)}
+              >
+                ⏸
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* ADD + START + RESULT */}
+
+        <div className="p-2 border-b flex gap-2 bg-white">
+
+          <input
+            value={name}
+            onChange={(e) =>
+              setName(e.target.value)
+            }
+            placeholder="Student name"
+            className="flex-1 border px-2 py-1"
+          />
+
+          <button
+            onClick={addStudent}
+            className="bg-blue-600 text-white px-3 rounded"
+          >
+            Add
+          </button>
+
+          <button
+            onClick={startGame}
+            className="bg-green-600 text-white px-3 rounded"
+          >
+            Start
+          </button>
+
+          <button
+            onClick={handleResult}
+            className="bg-purple-600 text-white px-3 rounded"
+          >
+            Result
+          </button>
+
+        </div>
+
+
+        {/* STUDENTS */}
+
+        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+
+          {students.map((s, i) => (
+
+            <div
+              key={i}
+              className={`flex items-center gap-3 justify-between border p-2 rounded ${
+                i === activeIndex
+                  ? "bg-yellow-100"
+                  : ""
+              }`}
+            >
+
+              <div>
+                {s.name}
+              </div>
+
+              <div className="flex items-center gap-2">
+
+
+                {/* MINUS */}
+
+                <button
+                  onClick={() => {
+
+                    setStudents(prev => {
+
+                      const copy = [...prev];
+
+                      if (copy[i].correct > 0) {
+
+                        copy[i].correct -= 1;
+
+                        setScore(p => p - 1);
+
+                      }
+
+                      return copy;
+
+                    });
+
+                  }}
+                  className="bg-red-500 text-white px-2 rounded"
+                >
+                  -
+                </button>
+
+
+                {/* DISPLAY */}
+
+                <div className="font-bold w-16 text-center">
+                  {s.correct}/{s.total}
+                </div>
+
+
+                {/* PLUS */}
+
+                <button
+                  onClick={() => {
+
+                    setStudents(prev => {
+
+                      const copy = [...prev];
+
+                      copy[i].correct += 1;
+
+                      setScore(p => p + 1);
+
+                      setShowCelebration(true);
+
+                      setTimeout(() => {
+                        setShowCelebration(false);
+                      }, 1800);
+
+                      return copy;
+
+                    });
+
+                  }}
+                  className="bg-green-600 text-white px-2 rounded"
+                >
+                  +
+                </button>
+
+
+                {/* DELETE */}
+
+                <button
+                  onClick={() => {
+
+                    setStudents(prev =>
+                      prev.filter(
+                        (_, index) => index !== i
+                      )
+                    );
+
+                    if (activeIndex === i) {
+                      setActiveIndex(null);
+                    }
+
+                  }}
+                  className="bg-red-600 text-white px-2 rounded"
+                >
+                  ✕
+                </button>
+
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
 
       </div>
 
-    </div>
-
+    </>
   );
 
 });
