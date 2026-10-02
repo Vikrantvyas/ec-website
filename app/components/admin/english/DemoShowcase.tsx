@@ -554,7 +554,22 @@ LOAD COURSE TOPICS FOR DEMO
                 : [...prev, id]
         );
     };
+const handleCarouselWheel = (
+    e: React.WheelEvent,
+    currentIndex: number,
+    totalItems: number,
+    setIndex: React.Dispatch<React.SetStateAction<number>>
+) => {
+    e.preventDefault();
 
+    if (totalItems <= 1) return;
+
+    if (e.deltaY > 0) {
+        setIndex((currentIndex + 1) % totalItems);
+    } else {
+        setIndex((currentIndex - 1 + totalItems) % totalItems);
+    }
+};
     /* =========================================================
        IMAGE CLICK
     ========================================================= */
@@ -861,7 +876,17 @@ LOAD COURSE TOPICS FOR DEMO
                                         selectedImageIndex % images.length;
 
                                     return (
-                                        <div className="relative w-full h-full flex items-center justify-center">
+                                        <div
+                                            className="relative w-full h-full flex items-center justify-center"
+                                            onWheel={(e) =>
+                                                handleCarouselWheel(
+                                                    e,
+                                                    currentIndex,
+                                                    images.length,
+                                                    setSelectedImageIndex
+                                                )
+                                            }
+                                        >
 
                                             {images.map((image: any, i: number) => {
 
@@ -1046,7 +1071,17 @@ LOAD COURSE TOPICS FOR DEMO
                                         selectedVideoIndex % videos.length;
 
                                     return (
-                                        <div className="relative w-full h-full flex items-center justify-center">
+                                        <div
+                                            className="relative w-full h-full flex items-center justify-center"
+                                            onWheel={(e) =>
+                                                handleCarouselWheel(
+                                                    e,
+                                                    currentIndex,
+                                                    videos.length,
+                                                    setSelectedVideoIndex
+                                                )
+                                            }
+                                        >
 
                                             {videos.map((video: any, i: number) => {
 
@@ -1328,7 +1363,17 @@ LOAD COURSE TOPICS FOR DEMO
                                             selectedMCQIndex % mcqQuestions.length;
 
                                         return (
-                                            <div className="relative w-full h-full flex items-center justify-center">
+                                            <div
+                                                className="relative w-full h-full flex items-center justify-center"
+                                                onWheel={(e) =>
+                                                    handleCarouselWheel(
+                                                        e,
+                                                        currentIndex,
+                                                        mcqQuestions.length,
+                                                        setSelectedMCQIndex
+                                                    )
+                                                }
+                                            >
 
                                                 {mcqQuestions.map(
                                                     (mcq: any, i: number) => {
@@ -1672,7 +1717,17 @@ LOAD COURSE TOPICS FOR DEMO
                                     </div>
                                 ) : (
 
-                                    <div className="relative w-full h-full flex items-center justify-center">
+                                    <div
+                                        className="relative w-full h-full flex items-center justify-center"
+                                        onWheel={(e) =>
+                                            handleCarouselWheel(
+                                                e,
+                                                selectedReactionIndex,
+                                                reactionMemes.length,
+                                                setSelectedReactionIndex
+                                            )
+                                        }
+                                    >
 
                                         {reactionMemes.map(
                                             (meme: any, i: number) => {
