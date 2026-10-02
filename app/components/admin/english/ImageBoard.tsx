@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabaseClient";
 import { useEffect } from "react";
+
 interface ImageBoardProps {
   images: any[];
   currentIndex: number;
@@ -132,6 +133,7 @@ export default function ImageBoard({
           rawUrl
         )}&show_text=false&width=1000`;
     }
+
     // Other URL
     else {
       videoUrl = rawUrl;
@@ -142,8 +144,33 @@ export default function ImageBoard({
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === images.length - 1;
 
+  // =========================================================
+  // MOUSE WHEEL NAVIGATION
+  // =========================================================
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+
+    if (images.length <= 1) return;
+
+    if (e.deltaY > 0) {
+      // Mouse wheel down → Next
+      if (!isLast) {
+        onNext();
+      }
+    } else {
+      // Mouse wheel up → Previous
+      if (!isFirst) {
+        onPrevious();
+      }
+    }
+  };
+
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-white">
+    <div
+      className="relative w-full h-full flex items-center justify-center bg-white"
+      onWheel={handleWheel}
+    >
 
       {/* PREVIOUS */}
       <button
