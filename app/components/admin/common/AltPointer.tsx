@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-type Direction = "down" | "right" | "left";
+type Direction = "up" | "down" | "right" | "left";
+type PointerMode = "arrow" | "dot";
 
 type Position = {
     x: number;
@@ -10,8 +11,15 @@ type Position = {
     direction: Direction;
 };
 
+type PinnedPointer = Position & {
+    mode: PointerMode;
+};
+
 export default function AltPointer() {
     const [active, setActive] = useState(false);
+
+    const [pointerMode, setPointerMode] =
+        useState<PointerMode>("arrow");
 
     const [position, setPosition] = useState<Position>({
         x: 0,
@@ -19,9 +27,8 @@ export default function AltPointer() {
         direction: "down",
     });
 
-    const [pinnedArrows, setPinnedArrows] = useState<Position[]>(
-        []
-    );
+    const [pinnedPointers, setPinnedPointers] =
+        useState<PinnedPointer[]>([]);
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -33,30 +40,63 @@ export default function AltPointer() {
         };
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (
-                e.key === "Alt" ||
-                e.key === "Control" ||
-                e.key === "Meta"
-            ) {
+            // -----------------------------------------
+            // Alt + Ctrl → Blue Dot Mode
+            // -----------------------------------------
+
+            if (e.altKey && e.ctrlKey) {
                 e.preventDefault();
 
-                if (e.key === "Alt") {
-                    setActive(true);
+                setActive(true);
+                setPointerMode("dot");
+
+                return;
+            }
+
+            // -----------------------------------------
+            // Alt + Arrow Keys → Arrow Mode
+            // -----------------------------------------
+
+            if (e.altKey) {
+                let direction: Direction | null = null;
+
+                if (e.key === "ArrowUp") {
+                    direction = "up";
                 }
 
-                if (e.altKey) {
+                if (e.key === "ArrowRight") {
+                    direction = "right";
+                }
+
+                if (e.key === "ArrowLeft") {
+                    direction = "left";
+                }
+
+                if (e.key === "ArrowDown") {
+                    direction = "down";
+                }
+
+                if (direction) {
+                    e.preventDefault();
+
+                    setActive(true);
+                    setPointerMode("arrow");
+
                     setPosition((prev) => ({
                         ...prev,
-                        direction: e.ctrlKey
-                            ? "right"
-                            : e.metaKey
-                                ? "left"
-                                : "down",
+                        direction,
                     }));
+
+                    return;
                 }
             }
         };
+
         const handleKeyUp = (e: KeyboardEvent) => {
+            // -----------------------------------------
+            // Release Alt → Hide Moving Pointer
+            // -----------------------------------------
+
             if (e.key === "Alt") {
                 e.preventDefault();
                 setActive(false);
@@ -68,27 +108,19 @@ export default function AltPointer() {
             const clickY = e.clientY;
 
             // -----------------------------------------
-            // Alt + Right Click → Add Arrow
-            // Alt + Ctrl → Right Arrow
-            // Alt + Windows → Left Arrow
-            // Alt only → Down Arrow
+            // Alt + Right Click → Pin Current Pointer
             // -----------------------------------------
 
             if (active) {
                 e.preventDefault();
 
-                const direction: Direction = e.ctrlKey
-                    ? "right"
-                    : e.metaKey
-                        ? "left"
-                        : "down";
-
-                setPinnedArrows((prev) => [
+                setPinnedPointers((prev) => [
                     ...prev,
                     {
                         x: clickX,
                         y: clickY,
-                        direction,
+                        direction: position.direction,
+                        mode: pointerMode,
                     },
                 ]);
 
@@ -96,37 +128,45 @@ export default function AltPointer() {
             }
 
             // -----------------------------------------
-            // Ctrl + Right Click → Remove ALL arrows
+            // Ctrl + Right Click → Remove ALL
             // -----------------------------------------
 
             if (e.ctrlKey) {
                 e.preventDefault();
-                setPinnedArrows([]);
+
+                setPinnedPointers([]);
                 setActive(false);
+
                 return;
             }
 
             // -----------------------------------------
-            // Right Click on existing arrow → Remove it
+            // Right Click on Existing Pointer → Remove
             // -----------------------------------------
 
-            const arrowIndex = pinnedArrows.findIndex(
-                (arrow) => {
+            const pointerIndex =
+                pinnedPointers.findIndex((pointer) => {
                     const distance = Math.sqrt(
-                        Math.pow(arrow.x - clickX, 2) +
-                        Math.pow(arrow.y - clickY, 2)
+                        Math.pow(
+                            pointer.x - clickX,
+                            2
+                        ) +
+                            Math.pow(
+                                pointer.y - clickY,
+                                2
+                            )
                     );
 
                     return distance <= 50;
-                }
-            );
+                });
 
-            if (arrowIndex !== -1) {
+            if (pointerIndex !== -1) {
                 e.preventDefault();
 
-                setPinnedArrows((prev) =>
+                setPinnedPointers((prev) =>
                     prev.filter(
-                        (_, index) => index !== arrowIndex
+                        (_, index) =>
+                            index !== pointerIndex
                     )
                 );
             }
@@ -159,7 +199,10 @@ export default function AltPointer() {
             true
         );
 
-        window.addEventListener("blur", handleBlur);
+        window.addEventListener(
+            "blur",
+            handleBlur
+        );
 
         return () => {
             window.removeEventListener(
@@ -185,11 +228,19 @@ export default function AltPointer() {
                 true
             );
 
-            window.removeEventListener("blur", handleBlur);
+            window.removeEventListener(
+                "blur",
+                handleBlur
+            );
 
             document.body.style.cursor = "";
         };
-    }, [active, pinnedArrows]);
+    }, [
+        active,
+        pointerMode,
+        position.direction,
+        pinnedPointers,
+    ]);
 
     // -----------------------------------------
     // Hide Normal Cursor
@@ -204,6 +255,20 @@ export default function AltPointer() {
             document.body.style.cursor = "";
         };
     }, [active]);
+
+    // -----------------------------------------
+    // Blue Dot Component
+    // -----------------------------------------
+
+    const BlueDot = () => (
+        <div className="relative w-[50px] h-[50px] flex items-center justify-center">
+            <div className="absolute w-[46px] h-[46px] rounded-full bg-blue-400/25 animate-ping" />
+
+            <div className="absolute w-[30px] h-[30px] rounded-full bg-blue-500/25" />
+
+            <div className="relative w-[18px] h-[18px] rounded-full bg-blue-600 border-[3px] border-white shadow-lg" />
+        </div>
+    );
 
     // -----------------------------------------
     // Arrow Component
@@ -225,7 +290,9 @@ export default function AltPointer() {
                         ? "rotate(-90deg)"
                         : direction === "left"
                             ? "rotate(90deg)"
-                            : "rotate(0deg)",
+                            : direction === "up"
+                                ? "rotate(180deg)"
+                                : "rotate(0deg)",
             }}
         >
             {/* White outer stroke */}
@@ -264,7 +331,10 @@ export default function AltPointer() {
         </svg>
     );
 
-    if (!active && pinnedArrows.length === 0) {
+    if (
+        !active &&
+        pinnedPointers.length === 0
+    ) {
         return null;
     }
 
@@ -283,39 +353,78 @@ export default function AltPointer() {
             `}</style>
 
             {/* ----------------------------------------- */}
-            {/* Pinned Arrows */}
+            {/* Pinned Pointers */}
             {/* ----------------------------------------- */}
 
-            {pinnedArrows.map((arrow, index) => (
-                <div
-                    key={index}
-                    className="fixed z-[99998] pointer-events-none"
-                    style={{
-                        left: arrow.x - 50,
-                        top: arrow.y - 50,
-                        animation:
-                            "altPointerMove 0.8s ease-in-out infinite alternate",
-                    }}
-                >
-                    <Arrow direction={arrow.direction} />
-                </div>
-            ))}
+            {pinnedPointers.map(
+                (pointer, index) => (
+                    <div
+                        key={index}
+                        className="fixed z-[99998] pointer-events-none"
+                        style={{
+                            left:
+                                pointer.x -
+                                (pointer.mode === "dot"
+                                    ? 25
+                                    : 50),
+                            top:
+                                pointer.y -
+                                (pointer.mode === "dot"
+                                    ? 25
+                                    : 50),
+                            animation:
+                                pointer.mode ===
+                                "arrow"
+                                    ? "altPointerMove 0.8s ease-in-out infinite alternate"
+                                    : undefined,
+                        }}
+                    >
+                        {pointer.mode === "dot" ? (
+                            <BlueDot />
+                        ) : (
+                            <Arrow
+                                direction={
+                                    pointer.direction
+                                }
+                            />
+                        )}
+                    </div>
+                )
+            )}
 
             {/* ----------------------------------------- */}
-            {/* Current Moving Arrow */}
+            {/* Current Moving Pointer */}
             {/* ----------------------------------------- */}
 
             {active && (
                 <div
                     className="fixed z-[99999] pointer-events-none"
                     style={{
-                        left: position.x - 50,
-                        top: position.y - 50,
+                        left:
+                            position.x -
+                            (pointerMode === "dot"
+                                ? 25
+                                : 50),
+                        top:
+                            position.y -
+                            (pointerMode === "dot"
+                                ? 25
+                                : 50),
                         animation:
-                            "altPointerMove 0.8s ease-in-out infinite alternate",
+                            pointerMode === "arrow"
+                                ? "altPointerMove 0.8s ease-in-out infinite alternate"
+                                : undefined,
                     }}
                 >
-                    <Arrow direction={position.direction} />
+                    {pointerMode === "dot" ? (
+                        <BlueDot />
+                    ) : (
+                        <Arrow
+                            direction={
+                                position.direction
+                            }
+                        />
+                    )}
                 </div>
             )}
         </>
