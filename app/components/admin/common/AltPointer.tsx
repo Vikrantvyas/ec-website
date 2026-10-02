@@ -151,10 +151,10 @@ export default function AltPointer() {
                             pointer.x - clickX,
                             2
                         ) +
-                            Math.pow(
-                                pointer.y - clickY,
-                                2
-                            )
+                        Math.pow(
+                            pointer.y - clickY,
+                            2
+                        )
                     );
 
                     return distance <= 50;
@@ -341,13 +341,23 @@ export default function AltPointer() {
     return (
         <>
             <style jsx>{`
-                @keyframes altPointerMove {
+                @keyframes altPointerVertical {
                     from {
                         transform: translateY(-6px);
                     }
 
                     to {
                         transform: translateY(6px);
+                    }
+                }
+
+                @keyframes altPointerHorizontal {
+                    from {
+                        transform: translateX(-6px);
+                    }
+
+                    to {
+                        transform: translateX(6px);
                     }
                 }
             `}</style>
@@ -367,15 +377,19 @@ export default function AltPointer() {
                                 (pointer.mode === "dot"
                                     ? 25
                                     : 50),
+
                             top:
                                 pointer.y -
                                 (pointer.mode === "dot"
                                     ? 25
                                     : 50),
+
                             animation:
-                                pointer.mode ===
-                                "arrow"
-                                    ? "altPointerMove 0.8s ease-in-out infinite alternate"
+                                pointer.mode === "arrow"
+                                    ? pointer.direction === "left" ||
+                                      pointer.direction === "right"
+                                        ? "altPointerHorizontal 0.8s ease-in-out infinite alternate"
+                                        : "altPointerVertical 0.8s ease-in-out infinite alternate"
                                     : undefined,
                         }}
                     >
@@ -405,14 +419,19 @@ export default function AltPointer() {
                             (pointerMode === "dot"
                                 ? 25
                                 : 50),
+
                         top:
                             position.y -
                             (pointerMode === "dot"
                                 ? 25
                                 : 50),
+
                         animation:
                             pointerMode === "arrow"
-                                ? "altPointerMove 0.8s ease-in-out infinite alternate"
+                                ? position.direction === "left" ||
+                                  position.direction === "right"
+                                    ? "altPointerHorizontal 0.8s ease-in-out infinite alternate"
+                                    : "altPointerVertical 0.8s ease-in-out infinite alternate"
                                 : undefined,
                     }}
                 >
