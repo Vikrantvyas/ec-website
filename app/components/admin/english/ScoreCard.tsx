@@ -447,7 +447,7 @@ const ScoreCard = forwardRef<any, any>(({
   // RESULT DATA
   // =========================================================
 
-  const groupedResults = Object.values(
+  const groupedResults: any[] = Object.values(
     students.reduce((acc: any, student: any) => {
 
       const marks = student.correct;
