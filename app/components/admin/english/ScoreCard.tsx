@@ -36,10 +36,41 @@ const ScoreCard = forwardRef<any, any>(({
 
   // RESULT
   const [showResult, setShowResult] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
+  const [showCelebration, setShowCelebration] = useState<number[]>([]);
+  const celebrationIdRef = useRef(0);
   const [showWinnerCelebration, setShowWinnerCelebration] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const celebrationColors = [
+    "text-green-600",
+    "text-blue-600",
+    "text-red-600",
+    "text-purple-600",
+    "text-orange-500",
+    "text-pink-600",
+    "text-cyan-600",
+    "text-yellow-500",
+  ];
+
+  const triggerCelebration = () => {
+    const id = ++celebrationIdRef.current;
+
+    const color =
+      celebrationColors[
+      (id - 1) % celebrationColors.length
+      ];
+
+    setShowCelebration(prev => [
+      ...prev,
+      { id, color },
+    ]);
+
+    setTimeout(() => {
+      setShowCelebration(prev =>
+        prev.filter(item => item.id !== id)
+      );
+    }, 1800);
+  };
 
   // =========================================================
   // STOPWATCH
@@ -214,11 +245,7 @@ const ScoreCard = forwardRef<any, any>(({
     setScore(p => p + 1);
     setTotal(p => p + 1);
 
-    setShowCelebration(true);
-
-    setTimeout(() => {
-      setShowCelebration(false);
-    }, 1800);
+    triggerCelebration();
 
     setStudents(prev => {
 
@@ -359,11 +386,7 @@ const ScoreCard = forwardRef<any, any>(({
     setScore(p => p + 1);
     setTotal(p => p + 1);
 
-    setShowCelebration(true);
-
-    setTimeout(() => {
-      setShowCelebration(false);
-    }, 1800);
+    triggerCelebration();
 
     setStudents(prev => {
 
@@ -620,47 +643,52 @@ const ScoreCard = forwardRef<any, any>(({
       {/* +1 CELEBRATION */}
       {/* ===================================================== */}
 
-      {showCelebration && (
+      {showCelebration.length > 0 && (
         <>
           <style jsx>{`
-            @keyframes plusOneCelebration {
+      @keyframes plusOneCelebration {
 
-              0% {
-                transform: translateY(50px) scale(0.65);
-                opacity: 0;
-                filter: blur(0);
-              }
+  0% {
+    transform: translateY(180px) scale(0.6);
+    opacity: 0;
+    filter: blur(4px);
+  }
 
-              20% {
-                transform: translateY(0) scale(1);
-                opacity: 1;
-                filter: blur(0);
-              }
+  20% {
+    transform: translateY(80px) scale(0.9);
+    opacity: 1;
+    filter: blur(0);
+  }
 
-              65% {
-                transform: translateY(-10px) scale(1.08);
-                opacity: 1;
-                filter: blur(0);
-              }
+  55% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
 
-              100% {
-                transform: translateY(-30px) scale(1.18);
-                opacity: 0;
-                filter: blur(10px);
-              }
+  100% {
+    transform: translateY(-180px) scale(1.15);
+    opacity: 0;
+    filter: blur(8px);
+  }
 
-            }
+}
 
-            .plusOneCelebration {
-              animation: plusOneCelebration 1.8s ease-out forwards;
-            }
-          `}</style>
+      .plusOneCelebration {
+        animation: plusOneCelebration 1.8s ease-out forwards;
+      }
+    `}</style>
 
           <div className="fixed inset-0 z-[99999] flex items-center justify-center pointer-events-none">
 
-            <div className="plusOneCelebration text-[180px] leading-none font-black text-green-600 drop-shadow-2xl">
-              +1
-            </div>
+            {showCelebration.map(item => (
+              <div
+                key={item.id}
+                className={`plusOneCelebration absolute text-[180px] leading-none font-black ${item.color} drop-shadow-2xl`}
+              >
+                +1
+              </div>
+            ))}
 
           </div>
         </>
@@ -942,11 +970,7 @@ const ScoreCard = forwardRef<any, any>(({
 
                       setScore(p => p + 1);
 
-                      setShowCelebration(true);
-
-                      setTimeout(() => {
-                        setShowCelebration(false);
-                      }, 1800);
+                      triggerCelebration();
 
                       return copy;
 
