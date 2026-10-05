@@ -86,9 +86,15 @@ export default function MetaReportPage() {
   const [zoom, setZoom] = useState("");
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
+ useEffect(() => {
+  loadLeads();
+
+  const refreshInterval = setInterval(() => {
     loadLeads();
-  }, []);
+  }, 30000);
+
+  return () => clearInterval(refreshInterval);
+}, []);
 
   async function loadLeads() {
     setLoading(true);
