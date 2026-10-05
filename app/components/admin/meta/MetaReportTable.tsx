@@ -1,0 +1,360 @@
+"use client";
+
+import { useState } from "react";
+
+type MetaLead = {
+  id: string;
+  meta_lead_id: string | null;
+  created_time: string | null;
+
+  ad_id: string | null;
+  ad_name: string | null;
+
+  ad_set_id: string | null;
+  ad_set_name: string | null;
+
+  campaign_id: string | null;
+  campaign_name: string | null;
+
+  form_id: string | null;
+  form_name: string | null;
+
+  platform: string | null;
+  is_organic: boolean | null;
+
+  full_name: string | null;
+  whatsapp_number: string | null;
+  age: string | null;
+  education: string | null;
+  english_level: string | null;
+  demo_class_time: string | null;
+  knows_zoom: string | null;
+};
+
+type ColumnKey =
+  | "date"
+  | "name"
+  | "whatsapp"
+  | "campaign"
+  | "adSet"
+  | "ad"
+  | "form"
+  | "age"
+  | "education"
+  | "english"
+  | "demo"
+  | "zoom"
+  | "platform"
+  | "type";
+
+type MetaReportTableProps = {
+  leads: MetaLead[];
+  totalLeads: number;
+  loading: boolean;
+  onRefresh: () => void;
+};
+
+const columns: {
+  key: ColumnKey;
+  label: string;
+}[] = [
+  { key: "date", label: "Date" },
+  { key: "name", label: "Name" },
+  { key: "whatsapp", label: "WhatsApp" },
+  { key: "campaign", label: "Campaign" },
+  { key: "adSet", label: "Ad Set" },
+  { key: "ad", label: "Ad" },
+  { key: "form", label: "Form" },
+  { key: "age", label: "Age" },
+  { key: "education", label: "Education" },
+  { key: "english", label: "English" },
+  { key: "demo", label: "Demo" },
+  { key: "zoom", label: "Zoom" },
+  { key: "platform", label: "Platform" },
+  { key: "type", label: "Type" },
+];
+
+const defaultVisibleColumns: Record<ColumnKey, boolean> = {
+  date: true,
+  name: true,
+  whatsapp: true,
+  campaign: true,
+  adSet: true,
+  ad: true,
+  form: true,
+  age: true,
+  education: true,
+  english: true,
+  demo: true,
+  zoom: true,
+  platform: true,
+  type: true,
+};
+
+function formatDate(date: string | null) {
+  if (!date) return "-";
+
+  return new Date(date).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getCellValue(
+  lead: MetaLead,
+  column: ColumnKey
+) {
+  switch (column) {
+    case "date":
+      return formatDate(lead.created_time);
+
+    case "name":
+      return lead.full_name || "-";
+
+    case "whatsapp":
+      return lead.whatsapp_number || "-";
+
+    case "campaign":
+      return lead.campaign_name || "-";
+
+    case "adSet":
+      return lead.ad_set_name || "-";
+
+    case "ad":
+      return lead.ad_name || "-";
+
+    case "form":
+      return lead.form_name || "-";
+
+    case "age":
+      return lead.age || "-";
+
+    case "education":
+      return lead.education || "-";
+
+    case "english":
+      return lead.english_level || "-";
+
+    case "demo":
+      return lead.demo_class_time || "-";
+
+    case "zoom":
+      return lead.knows_zoom || "-";
+
+    case "platform":
+      return lead.platform || "-";
+
+    case "type":
+      return lead.is_organic ? "Organic" : "Paid";
+
+    default:
+      return "-";
+  }
+}
+
+export default function MetaReportTable({
+  leads,
+  totalLeads,
+  loading,
+  onRefresh,
+}: MetaReportTableProps) {
+  const [showColumnMenu, setShowColumnMenu] = useState(false);
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    Record<ColumnKey, boolean>
+  >(defaultVisibleColumns);
+
+  function toggleColumn(column: ColumnKey) {
+    setVisibleColumns((current) => ({
+      ...current,
+      [column]: !current[column],
+    }));
+  }
+
+  function showAllColumns() {
+    const allVisible = {} as Record<ColumnKey, boolean>;
+
+    columns.forEach((column) => {
+      allVisible[column.key] = true;
+    });
+
+    setVisibleColumns(allVisible);
+  }
+
+  function hideAllColumns() {
+    const allHidden = {} as Record<ColumnKey, boolean>;
+
+    columns.forEach((column) => {
+      allHidden[column.key] = false;
+    });
+
+    setVisibleColumns(allHidden);
+  }
+
+  const visibleColumnList = columns.filter(
+    (column) => visibleColumns[column.key]
+  );
+
+  return (
+    <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-4">
+        <div>
+          <h2 className="font-semibold text-gray-800">
+            Lead Details
+          </h2>
+
+          <p className="text-xs text-gray-500">
+            Showing {leads.length} of {totalLeads} leads
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Column Selection */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() =>
+                setShowColumnMenu((current) => !current)
+              }
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Columns ▾
+            </button>
+
+            {showColumnMenu && (
+              <div className="absolute right-0 z-30 mt-2 w-64 rounded-xl border border-gray-200 bg-white p-3 shadow-lg">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-800">
+                    Select Columns
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowColumnMenu(false)
+                    }
+                    className="text-xs text-gray-400 hover:text-gray-700"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div className="mb-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={showAllColumns}
+                    className="rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                  >
+                    All
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={hideAllColumns}
+                    className="rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                  >
+                    None
+                  </button>
+                </div>
+
+                <div className="max-h-80 space-y-2 overflow-y-auto">
+                  {columns.map((column) => (
+                    <label
+                      key={column.key}
+                      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={visibleColumns[column.key]}
+                        onChange={() =>
+                          toggleColumn(column.key)
+                        }
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+
+                      <span className="text-sm text-gray-700">
+                        {column.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Refresh */}
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      {loading ? (
+        <div className="p-10 text-center text-sm text-gray-500">
+          Loading Meta leads...
+        </div>
+      ) : leads.length === 0 ? (
+        <div className="p-10 text-center text-sm text-gray-500">
+          No leads found.
+        </div>
+      ) : visibleColumnList.length === 0 ? (
+        <div className="p-10 text-center text-sm text-gray-500">
+          Please select at least one column.
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-max w-full text-left text-sm">
+            <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+              <tr>
+                {visibleColumnList.map((column) => (
+                  <th
+                    key={column.key}
+                    className="whitespace-nowrap px-4 py-3"
+                  >
+                    {column.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-gray-100">
+              {leads.map((lead) => (
+                <tr
+                  key={lead.id}
+                  className="hover:bg-gray-50"
+                >
+                  {visibleColumnList.map((column) => (
+                    <td
+                      key={column.key}
+                      className={`px-4 py-3 ${
+                        column.key === "name"
+                          ? "font-medium text-gray-800"
+                          : ""
+                      } ${
+                        column.key === "date" ||
+                        column.key === "whatsapp"
+                          ? "whitespace-nowrap"
+                          : ""
+                      }`}
+                    >
+                      {getCellValue(lead, column.key)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
