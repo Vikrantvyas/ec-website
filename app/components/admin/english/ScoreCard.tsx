@@ -36,7 +36,9 @@ const ScoreCard = forwardRef<any, any>(({
 
   // RESULT
   const [showResult, setShowResult] = useState(false);
-  const [showCelebration, setShowCelebration] = useState<number[]>([]);
+  const [showCelebration, setShowCelebration] = useState<
+    { id: number; color: string }[]
+  >([]);
   const celebrationIdRef = useRef(0);
   const [showWinnerCelebration, setShowWinnerCelebration] = useState(false);
 
@@ -369,7 +371,7 @@ const ScoreCard = forwardRef<any, any>(({
 
     setStarted(false);
     setShowResult(false);
-    setShowCelebration(false);
+    setShowCelebration([]);
 
     onReset?.();
   };
