@@ -17,6 +17,7 @@ import {
   ReceiptText,
   BookOpen,      // ✅ English
   User,          // ✅ User
+  BarChart3,     // ✅ Meta Report
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -45,6 +46,10 @@ export default function AdminDashboard() {
     { name: "User", href: "/admin/users", icon: User },
 
     { name: "Reports", href: "/admin/reports", icon: FileBarChart },
+
+    // ✅ META REPORT
+    { name: "Meta Report", href: "/admin/meta-report", icon: BarChart3 },
+
     { name: "Masters", href: "/admin/masters", icon: Database },
 
     { name: "Roles", href: "/admin/roles", icon: ShieldCheck },
