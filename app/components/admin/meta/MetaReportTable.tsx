@@ -155,6 +155,19 @@ function getCellValue(
   }
 }
 
+function getWhatsAppUrl(number: string) {
+  const cleanNumber = number.replace(/\D/g, "");
+
+  if (!cleanNumber) return "#";
+
+  const whatsappNumber =
+    cleanNumber.length === 10
+      ? `91${cleanNumber}`
+      : cleanNumber;
+
+  return `https://wa.me/${whatsappNumber}`;
+}
+
 export default function MetaReportTable({
   leads,
   totalLeads,
@@ -346,7 +359,21 @@ export default function MetaReportTable({
                           : ""
                       }`}
                     >
-                      {getCellValue(lead, column.key)}
+                      {column.key === "whatsapp" &&
+                      lead.whatsapp_number ? (
+                        <a
+                          href={getWhatsAppUrl(
+                            lead.whatsapp_number
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-green-600 hover:text-green-700 hover:underline"
+                        >
+                          {lead.whatsapp_number}
+                        </a>
+                      ) : (
+                        getCellValue(lead, column.key)
+                      )}
                     </td>
                   ))}
                 </tr>
