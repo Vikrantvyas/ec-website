@@ -20,6 +20,13 @@ type CountItem = {
   count: number;
 };
 
+function normalizeValue(value: string) {
+  return value
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function getCounts(
   leads: MetaLead[],
   key: keyof MetaLead
@@ -33,7 +40,10 @@ function getCounts(
       return;
     }
 
-    counts[value] = (counts[value] || 0) + 1;
+    const normalizedValue = normalizeValue(value);
+
+    counts[normalizedValue] =
+      (counts[normalizedValue] || 0) + 1;
   });
 
   return Object.entries(counts)
@@ -51,7 +61,10 @@ function ChartCard({
   title: string;
   items: CountItem[];
 }) {
-  const max = Math.max(...items.map((item) => item.count), 1);
+  const max = Math.max(
+    ...items.map((item) => item.count),
+    1
+  );
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -98,7 +111,11 @@ function ChartCard({
   );
 }
 
-function DailyTrend({ leads }: { leads: MetaLead[] }) {
+function DailyTrend({
+  leads,
+}: {
+  leads: MetaLead[];
+}) {
   const counts: Record<string, number> = {};
 
   leads.forEach((lead) => {
@@ -121,7 +138,10 @@ function DailyTrend({ leads }: { leads: MetaLead[] }) {
     }))
     .reverse();
 
-  const max = Math.max(...items.map((item) => item.count), 1);
+  const max = Math.max(
+    ...items.map((item) => item.count),
+    1
+  );
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -159,7 +179,9 @@ function DailyTrend({ leads }: { leads: MetaLead[] }) {
                 <div className="flex h-40 w-7 items-end">
                   <div
                     className="w-full rounded-t-md bg-blue-600"
-                    style={{ height: `${height}%` }}
+                    style={{
+                      height: `${height}%`,
+                    }}
                   />
                 </div>
 
@@ -178,13 +200,40 @@ function DailyTrend({ leads }: { leads: MetaLead[] }) {
 export default function MetaReportCharts({
   leads,
 }: MetaReportChartsProps) {
-  const campaigns = getCounts(leads, "campaign_name");
-  const ads = getCounts(leads, "ad_name");
-  const ages = getCounts(leads, "age");
-  const education = getCounts(leads, "education");
-  const englishLevels = getCounts(leads, "english_level");
-  const demoTimes = getCounts(leads, "demo_class_time");
-  const zoom = getCounts(leads, "knows_zoom");
+  const campaigns = getCounts(
+    leads,
+    "campaign_name"
+  );
+
+  const ads = getCounts(
+    leads,
+    "ad_name"
+  );
+
+  const ages = getCounts(
+    leads,
+    "age"
+  );
+
+  const education = getCounts(
+    leads,
+    "education"
+  );
+
+  const englishLevels = getCounts(
+    leads,
+    "english_level"
+  );
+
+  const demoTimes = getCounts(
+    leads,
+    "demo_class_time"
+  );
+
+  const zoom = getCounts(
+    leads,
+    "knows_zoom"
+  );
 
   return (
     <div className="mt-6">
