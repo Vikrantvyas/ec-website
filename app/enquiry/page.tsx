@@ -27,6 +27,17 @@ export default function EnquiryPage() {
     const [formData, setFormData] = useState<FormData>(initialForm);
     const [submitted, setSubmitted] = useState(false);
     const [started, setStarted] = useState(false);
+    const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+    type ExistingEnquiry = FormData & {
+        id: string;
+        created_time: string;
+    };
+
+    const [existingEnquiry, setExistingEnquiry] =
+        useState<ExistingEnquiry | null>(null);
+
+    const [editingExistingId, setEditingExistingId] =
+        useState<string | null>(null);
     const [questionStep, setQuestionStep] = useState(0);
 
     const nameIsValid =
@@ -67,7 +78,27 @@ export default function EnquiryPage() {
 
         updateField("whatsapp_number", value);
     };
+    const checkDuplicateEnquiry = async () => {
+        const name = formData.full_name.trim();
+        const phone = formData.whatsapp_number;
 
+        const { data, error } = await supabase
+            .from("meta_leads")
+            .select(
+                "id, created_time, full_name, whatsapp_number, age, education, english_level, demo_class_time, knows_zoom"
+            )
+            .ilike("full_name", name)
+            .eq("whatsapp_number", phone)
+            .order("created_time", { ascending: false })
+            .limit(1);
+
+        if (error) {
+            console.error("Duplicate enquiry check error:", error);
+            return null;
+        }
+
+        return data && data.length > 0 ? data[0] : null;
+    };
     const handleOption = (
         field: keyof FormData,
         value: string
@@ -120,30 +151,58 @@ export default function EnquiryPage() {
             return;
         }
 
-        const { error } = await supabase.from("meta_leads").insert({
-            meta_lead_id: null,
-            created_time: new Date().toISOString(),
+        let error;
 
-            form_name: "Website Enquiry",
-            platform: "website",
-            is_organic: true,
+        if (editingExistingId) {
+            const result = await supabase
+                .from("meta_leads")
+                .update({
+                    full_name: formData.full_name.trim(),
+                    whatsapp_number: formData.whatsapp_number,
+                    age: formData.age,
+                    education: formData.education,
+                    english_level: formData.english_level,
+                    demo_class_time: formData.demo_class_time,
+                    knows_zoom: formData.knows_zoom,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq("id", editingExistingId);
 
-            full_name: formData.full_name.trim(),
-            whatsapp_number: formData.whatsapp_number,
-            age: formData.age,
-            education: formData.education,
-            english_level: formData.english_level,
-            demo_class_time: formData.demo_class_time,
-            knows_zoom: formData.knows_zoom,
+            error = result.error;
+        } else {
+            const result = await supabase
+                .from("meta_leads")
+                .insert({
+                    meta_lead_id: null,
+                    created_time: new Date().toISOString(),
+                    form_name: "Website Enquiry",
+                    platform: "website",
+                    is_organic: true,
+                    full_name: formData.full_name.trim(),
+                    whatsapp_number: formData.whatsapp_number,
+                    age: formData.age,
+                    education: formData.education,
+                    english_level: formData.english_level,
+                    demo_class_time: formData.demo_class_time,
+                    knows_zoom: formData.knows_zoom,
+                    processed: false,
+                });
 
-            processed: false,
-        });
+            error = result.error;
+        }
 
         if (error) {
             console.error(
                 "Website enquiry insert error:",
                 error
             );
+
+            if (error.code === "23505") {
+                alert(
+                    "आपकी enquiry पहले ही दर्ज है। कृपया Demo Class की जानकारी के लिए WhatsApp Community Join करें।"
+                );
+                return;
+            }
 
             alert(
                 "जानकारी जमा नहीं हो पाई। कृपया दोबारा प्रयास करें।"
@@ -177,7 +236,178 @@ export default function EnquiryPage() {
                             : questionStep === 6
                                 ? "🎉 शानदार! आपने सभी 5 सवाल पूरे कर लिए।"
                                 : "";
+    if (existingEnquiry) {
+        const englishLevelText =
+            existingEnquiry.english_level === "need_advanced_batch"
+                ? "Advanced Batch की जरूरत है"
+                : existingEnquiry.english_level;
 
+        return (
+            <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-blue-50 px-4 py-8">
+                <div className="mx-auto w-full max-w-2xl">
+                    <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl">
+
+                        <div className="px-5 pt-7 text-center sm:px-8 sm:pt-8">
+
+                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-2xl text-white">
+                                    ✓
+                                </div>
+                            </div>
+
+                            <h1 className="mt-5 text-lg font-extrabold tracking-tight text-gray-900 sm:text-xl">
+                                आपकी Enquiry{" "}
+                                {new Date(existingEnquiry.created_time).toLocaleString("en-IN", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                })}{" "}
+                                को सबमिट हो चुकी है
+                            </h1>
+
+
+                        </div>
+
+                        <div className="mx-5 mt-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-5 sm:mx-8 sm:p-6">
+
+                            <div className="grid gap-3 sm:grid-cols-2">
+
+                                <div className="rounded-xl bg-white p-3">
+                                    <p className="text-xs text-gray-500">
+                                        नाम
+                                    </p>
+                                    <p className="mt-1 font-bold text-gray-900">
+                                        {existingEnquiry.full_name}
+                                    </p>
+                                </div>
+
+                                <div className="rounded-xl bg-white p-3">
+                                    <p className="text-xs text-gray-500">
+                                        WhatsApp Number
+                                    </p>
+                                    <p className="mt-1 font-bold text-gray-900">
+                                        {existingEnquiry.whatsapp_number}
+                                    </p>
+                                </div>
+
+                                <div className="rounded-xl bg-white p-3">
+                                    <p className="text-xs text-gray-500">
+                                        उम्र
+                                    </p>
+                                    <p className="mt-1 font-bold text-gray-900">
+                                        {existingEnquiry.age}
+                                    </p>
+                                </div>
+
+                                <div className="rounded-xl bg-white p-3">
+                                    <p className="text-xs text-gray-500">
+                                        पढ़ाई
+                                    </p>
+                                    <p className="mt-1 font-bold text-gray-900">
+                                        {existingEnquiry.education}
+                                    </p>
+                                </div>
+
+                                <div className="rounded-xl bg-white p-3 sm:col-span-2">
+                                    <p className="text-xs text-gray-500">
+                                        English Level
+                                    </p>
+                                    <p className="mt-1 font-bold text-gray-900">
+                                        {englishLevelText}
+                                    </p>
+                                </div>
+
+                                <div className="rounded-xl bg-white p-3">
+                                    <p className="text-xs text-gray-500">
+                                        Demo Class Time
+                                    </p>
+                                    <p className="mt-1 font-bold text-blue-700">
+                                        {existingEnquiry.demo_class_time}
+                                    </p>
+                                </div>
+
+                                <div className="rounded-xl bg-white p-3">
+                                    <p className="text-xs text-gray-500">
+                                        Zoom Class
+                                    </p>
+                                    <p className="mt-1 font-bold text-gray-900">
+                                        {existingEnquiry.knows_zoom}
+                                    </p>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div className="px-5 py-6 text-center sm:px-8">
+
+                           
+                            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setFormData({
+                                            full_name: existingEnquiry.full_name,
+                                            whatsapp_number:
+                                                existingEnquiry.whatsapp_number,
+                                            age: existingEnquiry.age || "",
+                                            education:
+                                                existingEnquiry.education || "",
+                                            english_level:
+                                                existingEnquiry.english_level || "",
+                                            demo_class_time:
+                                                existingEnquiry.demo_class_time || "",
+                                            knows_zoom:
+                                                existingEnquiry.knows_zoom || "",
+                                        });
+
+                                        setEditingExistingId(existingEnquiry.id);
+                                        setExistingEnquiry(null);
+                                        setStarted(true);
+                                        setQuestionStep(1);
+                                    }}
+                                    className="w-full rounded-xl border-2 border-blue-600 bg-blue-50 px-5 py-3 font-bold text-blue-700 transition hover:bg-blue-100"
+                                >
+                                    मुझे जानकारी सुधारना है
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            demo_class_time:
+                                                existingEnquiry.demo_class_time || "",
+                                        }));
+
+                                        setExistingEnquiry(null);
+                                        setSubmitted(true);
+                                    }}
+                                    className="w-full rounded-xl bg-green-600 px-5 py-3 font-bold text-white shadow-sm transition hover:bg-green-700"
+                                >
+                                    जानकारी सही है, आगे बढ़ो →
+                                </button>
+
+                            </div>
+
+                          
+
+                        </div>
+
+                        <div className="border-t px-5 py-5 text-center sm:px-8">
+                            <p className="font-extrabold text-gray-900">
+                                English Club
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+            </main>
+        );
+    }
     if (submitted) {
         const communityData = {
             "सुबह 8 से 11 के बीच": {
@@ -238,7 +468,7 @@ export default function EnquiryPage() {
                             </div>
                         </div>
 
-                        
+
                         {/* COMMUNITY CTA */}
                         {selectedCommunity && (
                             <div className="mx-5 mt-6 rounded-2xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5 sm:mx-8 sm:p-6">
@@ -262,9 +492,9 @@ export default function EnquiryPage() {
                                     <span className="text-xl">→</span>
                                 </a>
 
-                              
 
-                                
+
+
                             </div>
                         )}
 
@@ -274,7 +504,7 @@ export default function EnquiryPage() {
                                 English Club
                             </p>
 
-                            
+
                         </div>
                     </div>
                 </div>
@@ -458,8 +688,19 @@ export default function EnquiryPage() {
                             {/* CONTINUE */}
                             <button
                                 type="button"
-                                disabled={!basicDetailsValid}
-                                onClick={() => {
+                                disabled={!basicDetailsValid || checkingDuplicate}
+                                onClick={async () => {
+                                    setCheckingDuplicate(true);
+
+                                    const duplicateEnquiry = await checkDuplicateEnquiry();
+
+                                    setCheckingDuplicate(false);
+
+                                    if (duplicateEnquiry) {
+                                        setExistingEnquiry(duplicateEnquiry);
+                                        return;
+                                    }
+
                                     setStarted(true);
                                     setQuestionStep(1);
                                 }}
@@ -468,7 +709,9 @@ export default function EnquiryPage() {
                                     : "cursor-not-allowed bg-gray-300"
                                     }`}
                             >
-                                दरवाज़ा खटखटाएँ और शुरुआत करें 🚪 →
+                                {checkingDuplicate
+                                    ? "जानकारी जाँची जा रही है..."
+                                    : "दरवाज़ा खटखटाएँ और शुरुआत करें 🚪 →"}
                             </button>
                         </div>
                     )}
