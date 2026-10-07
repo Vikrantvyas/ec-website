@@ -106,15 +106,28 @@ export default function MetaReportPage() {
     const [zoom, setZoom] = useState("");
     const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        loadLeads();
+   useEffect(() => {
+    loadLeads();
 
-        const refreshInterval = setInterval(() => {
-            loadLeads();
-        }, 30000);
+    const channel = supabase
+        .channel("meta-leads-report")
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "meta_leads",
+            },
+            () => {
+                loadLeads();
+            }
+        )
+        .subscribe();
 
-        return () => clearInterval(refreshInterval);
-    }, []);
+    return () => {
+        supabase.removeChannel(channel);
+    };
+}, []);
 
     async function loadLeads() {
         setLoading(true);
