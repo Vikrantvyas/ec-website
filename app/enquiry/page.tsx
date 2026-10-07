@@ -238,43 +238,7 @@ export default function EnquiryPage() {
                             </div>
                         </div>
 
-                        {/* PRIVACY BENEFITS */}
-                        <div className="grid gap-4 px-5 pt-6 sm:grid-cols-2 sm:px-8">
-
-                            {/* PRIVACY */}
-                            <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-5">
-                                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
-                                    🔒
-                                </div>
-
-                                <p className="font-bold text-gray-900">
-                                    आपका मोबाइल नंबर सुरक्षित
-                                </p>
-
-                                <p className="mt-2 text-sm leading-6 text-gray-700">
-                                    Community में किसी सदस्य को किसी भी अन्य सदस्य
-                                    का मोबाइल नंबर दिखाई नहीं देता।
-                                </p>
-                            </div>
-
-                            {/* MESSAGES */}
-                            <div className="rounded-2xl border border-green-100 bg-green-50/70 p-5">
-                                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
-                                    📢
-                                </div>
-
-                                <p className="font-bold text-gray-900">
-                                    केवल हम ही मैसेज करेंगे
-                                </p>
-
-                                <p className="mt-2 text-sm leading-6 text-gray-700">
-                                    इसमें मैसेज भी सिर्फ हम ही कर सकते हैं,
-                                    अन्य सदस्य नहीं। यानी आपकी privacy और
-                                    सुविधा दोनों का पूरा ध्यान रखा जाता है।
-                                </p>
-                            </div>
-                        </div>
-
+                        
                         {/* COMMUNITY CTA */}
                         {selectedCommunity && (
                             <div className="mx-5 mt-6 rounded-2xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5 sm:mx-8 sm:p-6">
