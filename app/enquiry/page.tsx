@@ -257,7 +257,7 @@ export default function EnquiryPage() {
                                     rel="noopener noreferrer"
                                     className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-4 text-base font-extrabold text-white shadow-lg transition hover:bg-green-700 hover:shadow-xl active:scale-[0.99] sm:text-lg"
                                 >
-                                    <span className="text-2xl">☘</span>
+                                    <span className="text-2xl"></span>
                                     {selectedCommunity.buttonText}
                                     <span className="text-xl">→</span>
                                 </a>
