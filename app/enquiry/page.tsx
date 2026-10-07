@@ -245,7 +245,7 @@ export default function EnquiryPage() {
 
                                 {/* PURPOSE */}
                                 <p className="text-base font-bold leading-7 text-gray-900 text-center sm:text-lg">
-                                    📢 प्रतिदिन की फ्री डेमो क्लास के टाइम,
+                                    📢 प्रतिदिन होने वाली डेमो क्लास के टाइम,
                                     लिंक और अन्य अपडेट्स के लिए
                                     Community ज्वाइन करें 👇
                                 </p>
