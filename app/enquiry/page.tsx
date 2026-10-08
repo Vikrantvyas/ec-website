@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -24,7 +24,7 @@ const initialForm: FormData = {
     knows_zoom: "",
 };
 
-export default function EnquiryPage() {
+function EnquiryPage() {
     const [formData, setFormData] = useState<FormData>(initialForm);
     const searchParams = useSearchParams();
 
@@ -526,43 +526,43 @@ export default function EnquiryPage() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={async (e) => {
-    e.preventDefault();
+                                        e.preventDefault();
 
-    if (!submittedLeadId) {
-        window.open(
-            selectedCommunity.link,
-            "_blank",
-            "noopener,noreferrer"
-        );
-        return;
-    }
+                                        if (!submittedLeadId) {
+                                            window.open(
+                                                selectedCommunity.link,
+                                                "_blank",
+                                                "noopener,noreferrer"
+                                            );
+                                            return;
+                                        }
 
-    const newWindow = window.open(
-        "about:blank",
-        "_blank"
-    );
+                                        const newWindow = window.open(
+                                            "about:blank",
+                                            "_blank"
+                                        );
 
-    const { error } = await supabase
-        .from("meta_leads")
-        .update({
-            community_button_clicked: true,
-            community_button_clicked_at: new Date().toISOString(),
-        })
-        .eq("id", submittedLeadId);
+                                        const { error } = await supabase
+                                            .from("meta_leads")
+                                            .update({
+                                                community_button_clicked: true,
+                                                community_button_clicked_at: new Date().toISOString(),
+                                            })
+                                            .eq("id", submittedLeadId);
 
-    if (error) {
-        console.error(
-            "Community button tracking error:",
-            error
-        );
-    }
+                                        if (error) {
+                                            console.error(
+                                                "Community button tracking error:",
+                                                error
+                                            );
+                                        }
 
-    if (newWindow) {
-        newWindow.location.href = selectedCommunity.link;
-    } else {
-        window.location.href = selectedCommunity.link;
-    }
-}}
+                                        if (newWindow) {
+                                            newWindow.location.href = selectedCommunity.link;
+                                        } else {
+                                            window.location.href = selectedCommunity.link;
+                                        }
+                                    }}
                                     className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-4 text-base font-extrabold text-white shadow-lg transition hover:bg-green-700 hover:shadow-xl active:scale-[0.99] sm:text-lg"
                                 >
                                     <span className="text-2xl"></span>
@@ -1039,5 +1039,12 @@ export default function EnquiryPage() {
                 </form>
             </div>
         </main>
+    );
+}
+export default function EnquiryPageWrapper() {
+    return (
+        <Suspense fallback={null}>
+            <EnquiryPage />
+        </Suspense>
     );
 }
