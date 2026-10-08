@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 type FormData = {
@@ -25,7 +26,23 @@ const initialForm: FormData = {
 
 export default function EnquiryPage() {
     const [formData, setFormData] = useState<FormData>(initialForm);
+    const searchParams = useSearchParams();
+
+    const leadSource =
+        searchParams.get("source") || "direct";
+
+    const metaAttribution = {
+        campaign_id: searchParams.get("campaign_id"),
+        campaign_name: searchParams.get("campaign_name"),
+        ad_set_id: searchParams.get("adset_id"),
+        ad_set_name: searchParams.get("adset_name"),
+        ad_id: searchParams.get("ad_id"),
+        ad_name: searchParams.get("ad_name"),
+        placement: searchParams.get("placement"),
+        site_source: searchParams.get("site_source"),
+    };
     const [submitted, setSubmitted] = useState(false);
+    const [submittedLeadId, setSubmittedLeadId] = useState<string | null>(null);
     const [started, setStarted] = useState(false);
     const [checkingDuplicate, setCheckingDuplicate] = useState(false);
     type ExistingEnquiry = FormData & {
@@ -139,7 +156,13 @@ export default function EnquiryPage() {
         e: React.FormEvent<HTMLFormElement>
     ) => {
         e.preventDefault();
+        const urlSource =
+            typeof window !== "undefined"
+                ? new URLSearchParams(window.location.search).get("source")
+                : null;
 
+        const effectiveLeadSource =
+            (urlSource || leadSource || "direct").trim().toLowerCase();
         if (
             !basicDetailsValid ||
             !formData.age ||
@@ -152,7 +175,7 @@ export default function EnquiryPage() {
         }
 
         let error;
-
+        let submittedId: string | null = editingExistingId;
         if (editingExistingId) {
             const result = await supabase
                 .from("meta_leads")
@@ -177,7 +200,17 @@ export default function EnquiryPage() {
                     created_time: new Date().toISOString(),
                     form_name: "Website Enquiry",
                     platform: "website",
-                    is_organic: true,
+                    is_organic: leadSource !== "meta_ad",
+
+                    lead_source: effectiveLeadSource,
+
+                    campaign_id: metaAttribution.campaign_id,
+                    campaign_name: metaAttribution.campaign_name,
+                    ad_set_id: metaAttribution.ad_set_id,
+                    ad_set_name: metaAttribution.ad_set_name,
+                    ad_id: metaAttribution.ad_id,
+                    ad_name: metaAttribution.ad_name,
+
                     full_name: formData.full_name.trim(),
                     whatsapp_number: formData.whatsapp_number,
                     age: formData.age,
@@ -186,11 +219,16 @@ export default function EnquiryPage() {
                     demo_class_time: formData.demo_class_time,
                     knows_zoom: formData.knows_zoom,
                     processed: false,
-                });
+                })
+                .select("id")
+                .single();
 
             error = result.error;
-        }
 
+            if (!error && result.data) {
+                submittedId = result.data.id;
+            }
+        }
         if (error) {
             console.error(
                 "Website enquiry insert error:",
@@ -211,7 +249,8 @@ export default function EnquiryPage() {
             return;
         }
 
-        setSubmitted(true);
+        setSubmittedLeadId(submittedId);
+        setSubmitted(true);;
     };
 
     const optionClass = (selected: boolean) =>
@@ -343,7 +382,7 @@ export default function EnquiryPage() {
 
                         <div className="px-5 py-6 text-center sm:px-8">
 
-                           
+
                             <div className="mt-5 grid gap-3 sm:grid-cols-2">
 
                                 <button
@@ -384,6 +423,7 @@ export default function EnquiryPage() {
                                         }));
 
                                         setExistingEnquiry(null);
+                                        setSubmittedLeadId(existingEnquiry.id);
                                         setSubmitted(true);
                                     }}
                                     className="w-full rounded-xl bg-green-600 px-5 py-3 font-bold text-white shadow-sm transition hover:bg-green-700"
@@ -393,7 +433,7 @@ export default function EnquiryPage() {
 
                             </div>
 
-                          
+
 
                         </div>
 
@@ -485,6 +525,44 @@ export default function EnquiryPage() {
                                     href={selectedCommunity.link}
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    onClick={async (e) => {
+    e.preventDefault();
+
+    if (!submittedLeadId) {
+        window.open(
+            selectedCommunity.link,
+            "_blank",
+            "noopener,noreferrer"
+        );
+        return;
+    }
+
+    const newWindow = window.open(
+        "about:blank",
+        "_blank"
+    );
+
+    const { error } = await supabase
+        .from("meta_leads")
+        .update({
+            community_button_clicked: true,
+            community_button_clicked_at: new Date().toISOString(),
+        })
+        .eq("id", submittedLeadId);
+
+    if (error) {
+        console.error(
+            "Community button tracking error:",
+            error
+        );
+    }
+
+    if (newWindow) {
+        newWindow.location.href = selectedCommunity.link;
+    } else {
+        window.location.href = selectedCommunity.link;
+    }
+}}
                                     className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-4 text-base font-extrabold text-white shadow-lg transition hover:bg-green-700 hover:shadow-xl active:scale-[0.99] sm:text-lg"
                                 >
                                     <span className="text-2xl"></span>
@@ -501,7 +579,7 @@ export default function EnquiryPage() {
                         {/* FOOTER */}
                         <div className="px-5 py-6 text-center sm:px-8">
                             <p className="text-lg font-extrabold text-gray-900">
-                                English Club
+                                आप अगर ऊपर दिए हरे बटन को दबा कर कम्‍यूनिटी ज्‍वाईन नहीं करेंगे तो आपको डेमो क्‍लास की लिंक नहीं मिल पाएगी - English Club
                             </p>
 
 
