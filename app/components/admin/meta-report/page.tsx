@@ -36,6 +36,10 @@ type MetaLead = {
     english_level: string | null;
     demo_class_time: string | null;
     knows_zoom: string | null;
+
+    lead_source: string | null;
+    community_button_clicked: boolean | null;
+    community_button_clicked_at: string | null;
 };
 
 type Option = {
@@ -104,30 +108,34 @@ export default function MetaReportPage() {
     const [englishLevel, setEnglishLevel] = useState("");
     const [demoTime, setDemoTime] = useState("");
     const [zoom, setZoom] = useState("");
+
+    const [leadSource, setLeadSource] = useState("");
+    const [communityClicked, setCommunityClicked] = useState("");
+
     const [search, setSearch] = useState("");
 
-   useEffect(() => {
-    loadLeads();
+    useEffect(() => {
+        loadLeads();
 
-    const channel = supabase
-        .channel("meta-leads-report")
-        .on(
-            "postgres_changes",
-            {
-                event: "*",
-                schema: "public",
-                table: "meta_leads",
-            },
-            () => {
-                loadLeads();
-            }
-        )
-        .subscribe();
+        const channel = supabase
+            .channel("meta-leads-report")
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "meta_leads",
+                },
+                () => {
+                    loadLeads();
+                }
+            )
+            .subscribe();
 
-    return () => {
-        supabase.removeChannel(channel);
-    };
-}, []);
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     async function loadLeads() {
         setLoading(true);
@@ -227,7 +235,24 @@ export default function MetaReportPage() {
         () => uniqueOptions(leads, "knows_zoom"),
         [leads]
     );
+    const leadSources = useMemo(
+        () => [
+            { value: "meta_lead_form", label: "Meta Lead Form" },
+            { value: "meta_ad", label: "Meta Ad" },
+            { value: "meta_whatsapp", label: "Meta WhatsApp" },
+            { value: "whatsapp", label: "WhatsApp" },
+            { value: "direct", label: "Direct" },
+        ],
+        []
+    );
 
+    const communityOptions = useMemo(
+        () => [
+            { value: "true", label: "Clicked" },
+            { value: "false", label: "Not Clicked" },
+        ],
+        []
+    );
     /*
      * Agar Campaign change hone par
      * current Ad Set available nahi hai,
@@ -318,6 +343,23 @@ export default function MetaReportPage() {
             if (zoom && lead.knows_zoom !== zoom) {
                 return false;
             }
+            if (
+                leadSource &&
+                lead.lead_source !== leadSource
+            ) {
+                return false;
+            }
+
+            if (communityClicked) {
+                const clicked =
+                    lead.community_button_clicked === true
+                        ? "true"
+                        : "false";
+
+                if (clicked !== communityClicked) {
+                    return false;
+                }
+            }
 
             if (search.trim()) {
                 const text = search.toLowerCase();
@@ -352,6 +394,8 @@ export default function MetaReportPage() {
         englishLevel,
         demoTime,
         zoom,
+        leadSource,
+        communityClicked,
         search,
     ]);
 
@@ -465,6 +509,14 @@ export default function MetaReportPage() {
                 setZoom(value);
                 break;
 
+            case "leadSource":
+                setLeadSource(value);
+                break;
+
+            case "communityClicked":
+                setCommunityClicked(value);
+                break;
+
             case "search":
                 setSearch(value);
                 break;
@@ -484,6 +536,8 @@ export default function MetaReportPage() {
         setEnglishLevel("");
         setDemoTime("");
         setZoom("");
+        setLeadSource("");
+        setCommunityClicked("");
         setSearch("");
     }
 
@@ -537,6 +591,8 @@ export default function MetaReportPage() {
                     englishLevel={englishLevel}
                     demoTime={demoTime}
                     zoom={zoom}
+                    leadSource={leadSource}
+                    communityClicked={communityClicked}
                     search={search}
                     campaigns={campaigns}
                     adSets={adSets}
@@ -546,8 +602,10 @@ export default function MetaReportPage() {
                     ages={ages}
                     educations={educations}
                     englishLevels={englishLevels}
-                    demoTimes={demoTimes}
+                                        demoTimes={demoTimes}
                     zoomOptions={zoomOptions}
+                    leadSources={leadSources}
+                    communityOptions={communityOptions}
                     onChange={handleFilterChange}
                     onReset={resetFilters}
                 />

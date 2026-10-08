@@ -18,6 +18,8 @@ type MetaReportFiltersProps = {
   englishLevel: string;
   demoTime: string;
   zoom: string;
+  leadSource: string;
+  communityClicked: string;
   search: string;
 
   campaigns: FilterOption[];
@@ -30,6 +32,8 @@ type MetaReportFiltersProps = {
   englishLevels: FilterOption[];
   demoTimes: FilterOption[];
   zoomOptions: FilterOption[];
+  leadSources: FilterOption[];
+  communityOptions: FilterOption[];
 
   onChange: (name: string, value: string) => void;
   onReset: () => void;
@@ -48,6 +52,8 @@ export default function MetaReportFilters({
   englishLevel,
   demoTime,
   zoom,
+  leadSource,
+  communityClicked,
   search,
 
   campaigns,
@@ -60,6 +66,8 @@ export default function MetaReportFilters({
   englishLevels,
   demoTimes,
   zoomOptions,
+  leadSources,
+  communityOptions,
 
   onChange,
   onReset,
@@ -264,7 +272,37 @@ export default function MetaReportFilters({
             {options(zoomOptions)}
           </select>
         </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-600">
+            Lead Source
+          </label>
 
+          <select
+            value={leadSource}
+            onChange={(e) =>
+              onChange("leadSource", e.target.value)
+            }
+            className={selectClass}
+          >
+            {options(leadSources)}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-600">
+            Community
+          </label>
+
+          <select
+            value={communityClicked}
+            onChange={(e) =>
+              onChange("communityClicked", e.target.value)
+            }
+            className={selectClass}
+          >
+            {options(communityOptions)}
+          </select>
+        </div>
         <div className="sm:col-span-2 lg:col-span-4">
           <label className="mb-1 block text-xs font-medium text-gray-600">
             Search Name / WhatsApp / Meta Lead ID

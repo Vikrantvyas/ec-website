@@ -406,9 +406,9 @@ export default function MastersPage() {
             {selectedMaster === "reaction_memes" && (
               <ReactionMemeMaster />
             )}
-{selectedMaster === "demo_master" && (
-  <DemoMaster />
-)}
+            {selectedMaster === "demo_master" && (
+              <DemoMaster />
+            )}
           </div>
 
         )}

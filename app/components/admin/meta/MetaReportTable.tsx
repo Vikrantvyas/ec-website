@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type MetaLead = {
   id: string;
@@ -29,6 +29,9 @@ type MetaLead = {
   english_level: string | null;
   demo_class_time: string | null;
   knows_zoom: string | null;
+  lead_source: string | null;
+  community_button_clicked: boolean | null;
+  community_button_clicked_at: string | null;
 };
 
 type ColumnKey =
@@ -45,7 +48,10 @@ type ColumnKey =
   | "demo"
   | "zoom"
   | "platform"
-  | "type";
+  | "type"
+  | "source"
+  | "community"
+  | "communityTime";
 
 type MetaReportTableProps = {
   leads: MetaLead[];
@@ -58,21 +64,24 @@ const columns: {
   key: ColumnKey;
   label: string;
 }[] = [
-  { key: "date", label: "Date" },
-  { key: "name", label: "Name" },
-  { key: "whatsapp", label: "WhatsApp" },
-  { key: "campaign", label: "Campaign" },
-  { key: "adSet", label: "Ad Set" },
-  { key: "ad", label: "Ad" },
-  { key: "form", label: "Form" },
-  { key: "age", label: "Age" },
-  { key: "education", label: "Education" },
-  { key: "english", label: "English" },
-  { key: "demo", label: "Demo" },
-  { key: "zoom", label: "Zoom" },
-  { key: "platform", label: "Platform" },
-  { key: "type", label: "Type" },
-];
+    { key: "date", label: "Date" },
+    { key: "name", label: "Name" },
+    { key: "whatsapp", label: "WhatsApp" },
+    { key: "campaign", label: "Campaign" },
+    { key: "adSet", label: "Ad Set" },
+    { key: "ad", label: "Ad" },
+    { key: "form", label: "Form" },
+    { key: "age", label: "Age" },
+    { key: "education", label: "Education" },
+    { key: "english", label: "English" },
+    { key: "demo", label: "Demo" },
+    { key: "zoom", label: "Zoom" },
+    { key: "platform", label: "Platform" },
+    { key: "type", label: "Type" },
+    { key: "source", label: "Source" },
+    { key: "community", label: "Community" },
+    { key: "communityTime", label: "Community Click Time" },
+  ];
 
 const defaultVisibleColumns: Record<ColumnKey, boolean> = {
   date: true,
@@ -89,8 +98,10 @@ const defaultVisibleColumns: Record<ColumnKey, boolean> = {
   zoom: true,
   platform: true,
   type: true,
+  source: true,
+  community: true,
+  communityTime: true,
 };
-
 function formatDate(date: string | null) {
   if (!date) return "-";
 
@@ -150,6 +161,35 @@ function getCellValue(
     case "type":
       return lead.is_organic ? "Organic" : "Paid";
 
+    case "source": {
+      const sourceLabels: Record<string, string> = {
+        meta_lead_form: "Meta Lead Form",
+        meta_ad: "Meta Ad",
+        meta_whatsapp: "Meta WhatsApp",
+        whatsapp: "WhatsApp",
+        direct: "Direct",
+      };
+
+      if (!lead.lead_source) {
+        return "-";
+      }
+
+      return (
+        sourceLabels[lead.lead_source] ||
+        lead.lead_source
+      );
+    }
+
+    case "community":
+      return lead.community_button_clicked
+        ? "Clicked"
+        : "Not Clicked";
+
+    case "communityTime":
+      return formatDate(
+        lead.community_button_clicked_at
+      );
+
     default:
       return "-";
   }
@@ -175,11 +215,69 @@ export default function MetaReportTable({
   onRefresh,
 }: MetaReportTableProps) {
   const [showColumnMenu, setShowColumnMenu] = useState(false);
-
+  const columnMenuRef = useRef<HTMLDivElement>(null);
   const [visibleColumns, setVisibleColumns] = useState<
     Record<ColumnKey, boolean>
-  >(defaultVisibleColumns);
+  >(() => {
+    if (typeof window === "undefined") {
+      return defaultVisibleColumns;
+    }
 
+    try {
+      const saved = localStorage.getItem(
+        "meta-report-visible-columns"
+      );
+
+      if (!saved) {
+        return defaultVisibleColumns;
+      }
+
+      const parsed = JSON.parse(saved);
+
+      return {
+        ...defaultVisibleColumns,
+        ...parsed,
+      };
+    } catch {
+      return defaultVisibleColumns;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "meta-report-visible-columns",
+        JSON.stringify(visibleColumns)
+      );
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, [visibleColumns]);
+ useEffect(() => {
+  function handleOutsideClick(event: MouseEvent) {
+    if (
+      columnMenuRef.current &&
+      !columnMenuRef.current.contains(
+        event.target as Node
+      )
+    ) {
+      setShowColumnMenu(false);
+    }
+  }
+
+  if (showColumnMenu) {
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
+  }
+
+  return () => {
+    document.removeEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
+  };
+}, [showColumnMenu]);
   function toggleColumn(column: ColumnKey) {
     setVisibleColumns((current) => ({
       ...current,
@@ -227,7 +325,10 @@ export default function MetaReportTable({
 
         <div className="flex items-center gap-2">
           {/* Column Selection */}
-          <div className="relative">
+          <div
+            ref={columnMenuRef}
+            className="relative"
+          >
             <button
               type="button"
               onClick={() =>
@@ -343,24 +444,26 @@ export default function MetaReportTable({
               {leads.map((lead) => (
                 <tr
                   key={lead.id}
-                  className="hover:bg-gray-50"
+                  className={
+                    lead.community_button_clicked
+                      ? "bg-green-50 hover:bg-green-100"
+                      : "hover:bg-gray-50"
+                  }
                 >
                   {visibleColumnList.map((column) => (
                     <td
                       key={column.key}
-                      className={`px-4 py-3 ${
-                        column.key === "name"
-                          ? "font-medium text-gray-800"
-                          : ""
-                      } ${
-                        column.key === "date" ||
-                        column.key === "whatsapp"
+                      className={`px-4 py-3 ${column.key === "name"
+                        ? "font-medium text-gray-800"
+                        : ""
+                        } ${column.key === "date" ||
+                          column.key === "whatsapp"
                           ? "whitespace-nowrap"
                           : ""
-                      }`}
+                        }`}
                     >
                       {column.key === "whatsapp" &&
-                      lead.whatsapp_number ? (
+                        lead.whatsapp_number ? (
                         <a
                           href={getWhatsAppUrl(
                             lead.whatsapp_number

@@ -9,6 +9,8 @@ type MetaLead = {
   english_level: string | null;
   demo_class_time: string | null;
   knows_zoom: string | null;
+  lead_source: string | null;
+  community_button_clicked: boolean | null;
 };
 
 type MetaReportChartsProps = {
@@ -27,6 +29,18 @@ function normalizeValue(value: string) {
     .trim();
 }
 
+function formatLeadSource(value: string) {
+  const labels: Record<string, string> = {
+    meta_lead_form: "Meta Lead Form",
+    meta_ad: "Meta Ad",
+    meta_whatsapp: "Meta WhatsApp",
+    whatsapp: "WhatsApp",
+    direct: "Direct",
+  };
+
+  return labels[value] || normalizeValue(value);
+}
+
 function getCounts(
   leads: MetaLead[],
   key: keyof MetaLead
@@ -40,7 +54,10 @@ function getCounts(
       return;
     }
 
-    const normalizedValue = normalizeValue(value);
+    const normalizedValue =
+      key === "lead_source"
+        ? formatLeadSource(value)
+        : normalizeValue(value);
 
     counts[normalizedValue] =
       (counts[normalizedValue] || 0) + 1;
@@ -53,7 +70,28 @@ function getCounts(
     }))
     .sort((a, b) => b.count - a.count);
 }
+function getCommunityCounts(
+  leads: MetaLead[]
+): CountItem[] {
+  const clicked = leads.filter(
+    (lead) => lead.community_button_clicked === true
+  ).length;
 
+  const notClicked = leads.filter(
+    (lead) => lead.community_button_clicked !== true
+  ).length;
+
+  return [
+    {
+      label: "Clicked",
+      count: clicked,
+    },
+    {
+      label: "Not Clicked",
+      count: notClicked,
+    },
+  ];
+}
 function ChartCard({
   title,
   items,
@@ -225,7 +263,7 @@ export default function MetaReportCharts({
     "english_level"
   );
 
-  const demoTimes = getCounts(
+   const demoTimes = getCounts(
     leads,
     "demo_class_time"
   );
@@ -234,6 +272,13 @@ export default function MetaReportCharts({
     leads,
     "knows_zoom"
   );
+
+  const leadSources = getCounts(
+    leads,
+    "lead_source"
+  );
+
+  const community = getCommunityCounts(leads);
 
   return (
     <div className="mt-6">
@@ -249,7 +294,15 @@ export default function MetaReportCharts({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <DailyTrend leads={leads} />
+        <ChartCard
+          title="Lead Source"
+          items={leadSources}
+        />
 
+        <ChartCard
+          title="Community Clicks"
+          items={community}
+        />
         <ChartCard
           title="Campaign Performance"
           items={campaigns}

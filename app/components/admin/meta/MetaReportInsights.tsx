@@ -8,6 +8,8 @@ type MetaLead = {
   english_level: string | null;
   demo_class_time: string | null;
   knows_zoom: string | null;
+  lead_source: string | null;
+  community_button_clicked: boolean | null;
 };
 
 type Insight = {
@@ -48,7 +50,41 @@ function getTopValue(
     count: result[1],
   };
 }
+function formatLeadSource(value: string) {
+  const labels: Record<string, string> = {
+    meta_lead_form: "Meta Lead Form",
+    meta_ad: "Meta Ad",
+    meta_whatsapp: "Meta WhatsApp",
+    whatsapp: "WhatsApp",
+    direct: "Direct",
+  };
 
+  return labels[value] || value;
+}
+
+function getCommunityClickRate(
+  leads: MetaLead[]
+): { value: string; count: number } {
+  const clicked = leads.filter(
+    (lead) => lead.community_button_clicked === true
+  ).length;
+
+  const total = leads.length;
+
+  if (total === 0) {
+    return {
+      value: "No data",
+      count: 0,
+    };
+  }
+
+  const rate = Math.round((clicked / total) * 100);
+
+  return {
+    value: `${rate}%`,
+    count: clicked,
+  };
+}
 function InsightCard({
   insight,
 }: {
@@ -84,7 +120,21 @@ export default function MetaReportInsights({
   const age = getTopValue(leads, "age");
   const education = getTopValue(leads, "education");
   const zoom = getTopValue(leads, "knows_zoom");
+    const leadSourceRaw = getTopValue(
+    leads,
+    "lead_source"
+  );
 
+  const leadSource = {
+    value:
+      leadSourceRaw.value === "No data"
+        ? "No data"
+        : formatLeadSource(leadSourceRaw.value),
+    count: leadSourceRaw.count,
+  };
+
+  const communityRate =
+    getCommunityClickRate(leads);
   const insights: Insight[] = [
     {
       title: "Top Campaign",
@@ -120,6 +170,16 @@ export default function MetaReportInsights({
       title: "Most Common Zoom Response",
       value: zoom.value,
       count: zoom.count,
+    },
+        {
+      title: "Top Lead Source",
+      value: leadSource.value,
+      count: leadSource.count,
+    },
+    {
+      title: "Community Click Rate",
+      value: communityRate.value,
+      count: communityRate.count,
     },
   ];
 
