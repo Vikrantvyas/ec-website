@@ -23,6 +23,17 @@ const initialForm: FormData = {
     demo_class_time: "",
     knows_zoom: "",
 };
+const formatName = (name: string) =>
+    name
+        .trim()
+        .replace(/\s+/g, " ")
+        .split(" ")
+        .map(
+            (word) =>
+                word.charAt(0).toLocaleUpperCase("en-IN") +
+                word.slice(1).toLocaleLowerCase("en-IN")
+        )
+        .join(" ");
 
 function EnquiryPage() {
     const [formData, setFormData] = useState<FormData>(initialForm);
@@ -82,8 +93,8 @@ function EnquiryPage() {
         const value = e.target.value;
 
         if (/^[A-Za-z\u0900-\u097F ]*$/.test(value)) {
-            updateField("full_name", value);
-        }
+    updateField("full_name", value);
+}
     };
 
     const handlePhoneChange = (
@@ -96,7 +107,6 @@ function EnquiryPage() {
         updateField("whatsapp_number", value);
     };
     const checkDuplicateEnquiry = async () => {
-        const name = formData.full_name.trim();
         const phone = formData.whatsapp_number;
 
         const { data, error } = await supabase
@@ -104,7 +114,7 @@ function EnquiryPage() {
             .select(
                 "id, created_time, full_name, whatsapp_number, age, education, english_level, demo_class_time, knows_zoom"
             )
-            .ilike("full_name", name)
+            
             .eq("whatsapp_number", phone)
             .order("created_time", { ascending: false })
             .limit(1);
@@ -180,7 +190,7 @@ function EnquiryPage() {
             const result = await supabase
                 .from("meta_leads")
                 .update({
-                    full_name: formData.full_name.trim(),
+                    full_name: formatName(formData.full_name),
                     whatsapp_number: formData.whatsapp_number,
                     age: formData.age,
                     education: formData.education,
@@ -211,7 +221,7 @@ function EnquiryPage() {
                     ad_id: metaAttribution.ad_id,
                     ad_name: metaAttribution.ad_name,
 
-                    full_name: formData.full_name.trim(),
+                    full_name: formatName(formData.full_name),
                     whatsapp_number: formData.whatsapp_number,
                     age: formData.age,
                     education: formData.education,
@@ -249,7 +259,7 @@ function EnquiryPage() {
             return;
         }
 
-       
+
         if (!editingExistingId) {
             (window as any).fbq?.("track", "Lead");
         }
