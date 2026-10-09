@@ -249,8 +249,14 @@ function EnquiryPage() {
             return;
         }
 
+       
+        if (!editingExistingId) {
+            (window as any).fbq?.("track", "Lead");
+        }
+
         setSubmittedLeadId(submittedId);
-        setSubmitted(true);;
+        setSubmitted(true);
+
     };
 
     const optionClass = (selected: boolean) =>
