@@ -26,7 +26,9 @@ type MetaLead = {
   lead_source: string | null;
   community_button_clicked: boolean | null;
   community_button_clicked_at: string | null;
-  joining_status?: string | null;
+  community_joined: boolean | null;
+  demo_attended: boolean | null;
+  class_joined: boolean | null;
 };
 type ColumnKey =
   | "date"
@@ -46,7 +48,7 @@ type ColumnKey =
   | "source"
   | "community"
   | "communityTime"
-  | "joiningStatus";
+;
 type MetaReportTableProps = {
   leads: MetaLead[];
   totalLeads: number;
@@ -74,7 +76,6 @@ const columns: {
     { key: "source", label: "Source" },
     { key: "community", label: "Community" },
     { key: "communityTime", label: "Community Click Time" },
-    { key: "joiningStatus", label: "Joining Status" },
   ];
 const defaultVisibleColumns: Record<ColumnKey, boolean> = {
   date: true,
@@ -94,7 +95,6 @@ const defaultVisibleColumns: Record<ColumnKey, boolean> = {
   source: true,
   community: true,
   communityTime: true,
-  joiningStatus: true,
 };
 function formatDate(date: string | null) {
   if (!date) return "-";
@@ -163,8 +163,6 @@ function getCellValue(
       return formatDate(
         lead.community_button_clicked_at
       );
-    case "joiningStatus":
-      return lead.joining_status || "-";
     default:
       return "-";
   }
@@ -274,9 +272,11 @@ export default function MetaReportTable({
     lastSelectedIndexRef.current = index;
   }
 
-  async function handleJoiningStatusChange(status: string) {
-    if (!status) return;
-
+  async function updateSelectedStatus(
+    field: "community_joined" | "demo_attended" | "class_joined",
+    value: boolean,
+    label: string
+  ) {
     if (selectedIds.length === 0) {
       window.alert("Pehle kam se kam ek Lead select karein.");
       return;
@@ -285,19 +285,38 @@ export default function MetaReportTable({
     setSavingStatus(true);
     const { error } = await supabase
       .from("meta_leads")
-      .update({ joining_status: status })
+      .update({ [field]: value })
       .in("id", selectedIds);
-
     setSavingStatus(false);
 
     if (error) {
-      window.alert(`Joining Status save nahi hua: ${error.message}`);
+      window.alert(`${label} status save nahi hua: ${error.message}`);
       return;
     }
 
-    window.alert(`${selectedIds.length} Lead(s) ka Joining Status ${status} save ho gaya.`);
+    window.alert(`${selectedIds.length} Lead(s) ka ${label} status update ho gaya.`);
     setSelectedIds([]);
     lastSelectedIndexRef.current = null;
+    onRefresh();
+  }
+
+  async function toggleLeadStatus(
+    lead: MetaLead,
+    field: "community_joined" | "demo_attended" | "class_joined",
+    label: string
+  ) {
+    const nextValue = !lead[field];
+    setSavingStatus(true);
+    const { error } = await supabase
+      .from("meta_leads")
+      .update({ [field]: nextValue })
+      .eq("id", lead.id);
+    setSavingStatus(false);
+
+    if (error) {
+      window.alert(`${label} status save nahi hua: ${error.message}`);
+      return;
+    }
     onRefresh();
   }
 
@@ -343,14 +362,19 @@ export default function MetaReportTable({
           <select
             value=""
             disabled={savingStatus}
-            onChange={(event) => handleJoiningStatusChange(event.target.value)}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (value === "community") updateSelectedStatus("community_joined", true, "Community");
+              if (value === "demo") updateSelectedStatus("demo_attended", true, "Demo");
+              if (value === "class") updateSelectedStatus("class_joined", true, "Class");
+            }}
             className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
-            aria-label="Update Joining Status"
+            aria-label="Update selected lead statuses"
           >
-            <option value="">{savingStatus ? "Saving..." : "Joining Status ▾"}</option>
-            <option value="Community">Community</option>
-            <option value="Demo">Demo</option>
-            <option value="Class">Class</option>
+            <option value="">{savingStatus ? "Saving..." : "Update Status ▾"}</option>
+            <option value="community">Community</option>
+            <option value="demo">Demo</option>
+            <option value="class">Class</option>
           </select>
           {/* Column Selection */}
           <div
@@ -498,18 +522,28 @@ export default function MetaReportTable({
                           : ""
                         }`}
                     >
-                      {column.key === "whatsapp" &&
-                        lead.whatsapp_number ? (
+                      {column.key === "whatsapp" && lead.whatsapp_number ? (
                         <a
-                          href={getWhatsAppUrl(
-                            lead.whatsapp_number
-                          )}
+                          href={getWhatsAppUrl(lead.whatsapp_number)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-medium text-green-600 hover:text-green-700 hover:underline"
                         >
                           {lead.whatsapp_number}
                         </a>
+                      ) : column.key === "name" ? (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span>{lead.full_name || "-"}</span>
+                          {lead.community_joined && (
+                            <button type="button" disabled={savingStatus} onClick={() => toggleLeadStatus(lead, "community_joined", "Community")} title="Community joined — click to remove" className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2 py-0.5 text-[10px] font-semibold leading-4 text-green-800 hover:bg-green-200 disabled:opacity-50">Com</button>
+                          )}
+                          {lead.demo_attended && (
+                            <button type="button" disabled={savingStatus} onClick={() => toggleLeadStatus(lead, "demo_attended", "Demo")} title="Demo attended — click to remove" className="inline-flex items-center rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-[10px] font-semibold leading-4 text-blue-800 hover:bg-blue-200 disabled:opacity-50">Demo</button>
+                          )}
+                          {lead.class_joined && (
+                            <button type="button" disabled={savingStatus} onClick={() => toggleLeadStatus(lead, "class_joined", "Class")} title="Class joined — click to remove" className="inline-flex items-center rounded-full border border-purple-200 bg-purple-100 px-2 py-0.5 text-[10px] font-semibold leading-4 text-purple-800 hover:bg-purple-200 disabled:opacity-50">Class</button>
+                          )}
+                        </div>
                       ) : (
                         getCellValue(lead, column.key)
                       )}
