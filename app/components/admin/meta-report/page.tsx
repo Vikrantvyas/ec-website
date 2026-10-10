@@ -69,7 +69,7 @@ const uniqueOptions = (
         }));
 };
 export default function MetaReportPage() {
-    const [leads, setLeads] = useState\<MetaLead[]>([]);
+    const [leads, setLeads] = useState<MetaLead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [dateFrom, setDateFrom] = useState("");
@@ -94,7 +94,7 @@ export default function MetaReportPage() {
             .on(
                 "postgres_changes",
                 {
-                    event: "\*",
+                    event: "*",
                     schema: "public",
                     table: "meta_leads",
                 },
@@ -112,7 +112,7 @@ export default function MetaReportPage() {
         setError("");
         const { data, error } = await supabase
             .from("meta_leads")
-            .select("\*")
+            .select("*")
             .order("created_time", { ascending: false });
         if (error) {
             setError(error.message);
@@ -127,10 +127,10 @@ export default function MetaReportPage() {
         () => uniqueOptions(leads, "campaign_name"),
         [leads]
     );
-    /\*
-     \* Campaign select hone par
-     \* sirf us Campaign ke Ad Sets dikhenge.
-     \*/
+    /*
+     * Campaign select hone par
+     * sirf us Campaign ke Ad Sets dikhenge.
+     */
     const adSets = useMemo(() => {
         const source = campaign
             ? leads.filter(
@@ -139,13 +139,13 @@ export default function MetaReportPage() {
             : leads;
         return uniqueOptions(source, "ad_set_name");
     }, [leads, campaign]);
-    /\*
-     \* Ad Set select hone par
-     \* sirf us Ad Set ke Ads dikhenge.
+    /*
+     * Ad Set select hone par
+     * sirf us Ad Set ke Ads dikhenge.
      \*
-     \* Agar Campaign bhi selected hai,
-     \* to Campaign + Ad Set dono match honge.
-     \*/
+     * Agar Campaign bhi selected hai,
+     * to Campaign + Ad Set dono match honge.
+     */
     const ads = useMemo(() => {
         let source = leads;
         if (campaign) {
@@ -205,11 +205,11 @@ export default function MetaReportPage() {
         ],
         []
     );
-    /\*
-     \* Agar Campaign change hone par
-     \* current Ad Set available nahi hai,
-     \* to Ad Set aur Ad clear kar do.
-     \*/
+    /*
+     * Agar Campaign change hone par
+     * current Ad Set available nahi hai,
+     * to Ad Set aur Ad clear kar do.
+     */
     useEffect(() => {
         if (
             adSet &&
@@ -219,11 +219,11 @@ export default function MetaReportPage() {
             setAd("");
         }
     }, [adSet, adSets]);
-    /\*
-     \* Agar Ad Set change hone par
-     \* current Ad available nahi hai,
-     \* to Ad clear kar do.
-     \*/
+    /*
+     * Agar Ad Set change hone par
+     * current Ad available nahi hai,
+     * to Ad clear kar do.
+     */
     useEffect(() => {
         if (
             ad &&
@@ -238,13 +238,13 @@ export default function MetaReportPage() {
                 ? new Date(lead.created_time)
                 : null;
             if (dateFrom && leadDate) {
-                const from = new Date(\`${dateFrom}T00:00:00\`);
+                const from = new Date(`${dateFrom}T00:00:00`);
                 if (leadDate < from) {
                     return false;
                 }
             }
             if (dateTo && leadDate) {
-                const to = new Date(\`${dateTo}T23:59:59\`);
+                const to = new Date(`${dateTo}T23:59:59`);
                 if (leadDate > to) {
                     return false;
                 }
@@ -364,8 +364,8 @@ export default function MetaReportPage() {
             }
             const date = new Date(lead.created_time);
             return (
-                date.getFullYear() === now\.getFullYear() &&
-                date.getMonth() === now\.getMonth()
+                date.getFullYear() === now.getFullYear() &&
+                date.getMonth() === now.getMonth()
             );
         }).length;
     }, [filteredLeads]);
@@ -442,36 +442,36 @@ export default function MetaReportPage() {
         setSearch("");
     }
     return (
-        \<div className="min-h-screen bg-gray-50 p-4 md:p-6">
-            \<div className="mx-auto max-w-[1600px]">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+            <div className="mx-auto max-w-[1600px]">
                 {error && (
-                    \<div className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                    <div className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                         {error}
-                    \</div>
+                    </div>
                 )}
-                \<div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
-                    \<KpiCard
+                <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
+                    <KpiCard
                         title="Total Leads"
                         value={leads.length}
                     />
-                    \<KpiCard
+                    <KpiCard
                         title="Today"
                         value={todayCount}
                     />
-                    \<KpiCard
+                    <KpiCard
                         title="This Week"
                         value={weekCount}
                     />
-                    \<KpiCard
+                    <KpiCard
                         title="This Month"
                         value={monthCount}
                     />
-                    \<KpiCard
+                    <KpiCard
                         title="Filtered Leads"
                         value={filteredLeads.length}
                     />
-                \</div>
-                \<MetaReportFilters
+                </div>
+                <MetaReportFilters
                     dateFrom={dateFrom}
                     dateTo={dateTo}
                     campaign={campaign}
@@ -502,16 +502,16 @@ export default function MetaReportPage() {
                     onChange={handleFilterChange}
                     onReset={resetFilters}
                 />
-                \<MetaReportCharts leads={filteredLeads} />
-                \<MetaReportInsights leads={filteredLeads} />
-                \<MetaReportTable
+                <MetaReportCharts leads={filteredLeads} />
+                <MetaReportInsights leads={filteredLeads} />
+                <MetaReportTable
                     leads={filteredLeads}
                     totalLeads={leads.length}
                     loading={loading}
                     onRefresh={loadLeads}
                 />
-            \</div>
-        \</div>
+            </div>
+        </div>
     );
 }
 function KpiCard({
@@ -522,13 +522,13 @@ function KpiCard({
     value: number;
 }) {
     return (
-        \<div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm">
-            \<p className="text-xs font-medium text-gray-500">
+        <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm">
+            <p className="text-xs font-medium text-gray-500">
                 {title}
-            \</p>
-            \<p className="mt-2 text-2xl font-bold text-blue-900">
+            </p>
+            <p className="mt-2 text-2xl font-bold text-blue-900">
                 {value}
-            \</p>
-        \</div>
+            </p>
+        </div>
     );
 }
