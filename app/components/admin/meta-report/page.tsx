@@ -1,34 +1,24 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
-
 import { supabase } from "@/lib/supabaseClient";
-
 import MetaReportFilters from "@/app/components/admin/meta/MetaReportFilters";
 import MetaReportCharts from "@/app/components/admin/meta/MetaReportCharts";
 import MetaReportInsights from "@/app/components/admin/meta/MetaReportInsights";
 import MetaReportTable from "@/app/components/admin/meta/MetaReportTable";
-
 type MetaLead = {
     id: string;
     meta_lead_id: string | null;
     created_time: string | null;
-
     ad_id: string | null;
     ad_name: string | null;
-
     ad_set_id: string | null;
     ad_set_name: string | null;
-
     campaign_id: string | null;
     campaign_name: string | null;
-
     form_id: string | null;
     form_name: string | null;
-
     platform: string | null;
     is_organic: boolean | null;
-
     full_name: string | null;
     whatsapp_number: string | null;
     age: string | null;
@@ -36,31 +26,26 @@ type MetaLead = {
     english_level: string | null;
     demo_class_time: string | null;
     knows_zoom: string | null;
-
     lead_source: string | null;
     community_button_clicked: boolean | null;
     community_button_clicked_at: string | null;
+    community_joined: boolean | null;
+    demo_attended: boolean | null;
+    class_joined: boolean | null;
 };
-
 type Option = {
     value: string;
     label: string;
 };
-
-
-
 function normalizeMetaValue(value: string) {
     return value
         .normalize("NFC")
         .replace(/[\u200B-\u200D\uFEFF]/g, "")
-        .replace(/_/g, " ")
+        .replace(/\_/g, " ")
         .replace(/\u00A0/g, " ")
         .replace(/\s+/g, " ")
         .trim();
 }
-
-
-
 const uniqueOptions = (
     leads: MetaLead[],
     key: keyof MetaLead
@@ -76,9 +61,6 @@ const uniqueOptions = (
                 .map((value) => normalizeMetaValue(value))
         )
     );
-
-
-
     return values
         .sort((a, b) => a.localeCompare(b))
         .map((value) => ({
@@ -86,18 +68,12 @@ const uniqueOptions = (
             label: value,
         }));
 };
-
-
-
-
 export default function MetaReportPage() {
-    const [leads, setLeads] = useState<MetaLead[]>([]);
+    const [leads, setLeads] = useState\<MetaLead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
-
     const [campaign, setCampaign] = useState("");
     const [adSet, setAdSet] = useState("");
     const [ad, setAd] = useState("");
@@ -108,21 +84,17 @@ export default function MetaReportPage() {
     const [englishLevel, setEnglishLevel] = useState("");
     const [demoTime, setDemoTime] = useState("");
     const [zoom, setZoom] = useState("");
-
     const [leadSource, setLeadSource] = useState("");
     const [communityClicked, setCommunityClicked] = useState("");
-
     const [search, setSearch] = useState("");
-
     useEffect(() => {
         loadLeads();
-
         const channel = supabase
             .channel("meta-leads-report")
             .on(
                 "postgres_changes",
                 {
-                    event: "*",
+                    event: "\*",
                     schema: "public",
                     table: "meta_leads",
                 },
@@ -131,106 +103,87 @@ export default function MetaReportPage() {
                 }
             )
             .subscribe();
-
         return () => {
             supabase.removeChannel(channel);
         };
     }, []);
-
     async function loadLeads() {
         setLoading(true);
         setError("");
-
         const { data, error } = await supabase
             .from("meta_leads")
-            .select("*")
+            .select("\*")
             .order("created_time", { ascending: false });
-
         if (error) {
             setError(error.message);
             setLeads([]);
             setLoading(false);
             return;
         }
-
         setLeads((data || []) as MetaLead[]);
         setLoading(false);
     }
-
     const campaigns = useMemo(
         () => uniqueOptions(leads, "campaign_name"),
         [leads]
     );
-
-    /*
-     * Campaign select hone par
-     * sirf us Campaign ke Ad Sets dikhenge.
-     */
+    /\*
+     \* Campaign select hone par
+     \* sirf us Campaign ke Ad Sets dikhenge.
+     \*/
     const adSets = useMemo(() => {
         const source = campaign
             ? leads.filter(
                 (lead) => lead.campaign_name === campaign
             )
             : leads;
-
         return uniqueOptions(source, "ad_set_name");
     }, [leads, campaign]);
-
-    /*
-     * Ad Set select hone par
-     * sirf us Ad Set ke Ads dikhenge.
-     *
-     * Agar Campaign bhi selected hai,
-     * to Campaign + Ad Set dono match honge.
-     */
+    /\*
+     \* Ad Set select hone par
+     \* sirf us Ad Set ke Ads dikhenge.
+     \*
+     \* Agar Campaign bhi selected hai,
+     \* to Campaign + Ad Set dono match honge.
+     \*/
     const ads = useMemo(() => {
         let source = leads;
-
         if (campaign) {
             source = source.filter(
                 (lead) => lead.campaign_name === campaign
             );
         }
-
         if (adSet) {
             source = source.filter(
                 (lead) => lead.ad_set_name === adSet
             );
         }
-
         return uniqueOptions(source, "ad_name");
     }, [leads, campaign, adSet]);
-
     const forms = useMemo(
         () => uniqueOptions(leads, "form_name"),
         [leads]
     );
-
     const platforms = useMemo(
         () => uniqueOptions(leads, "platform"),
         [leads]
     );
-
     const ages = useMemo(
         () => uniqueOptions(leads, "age"),
         [leads]
     );
-
     const educations = useMemo(
         () => uniqueOptions(leads, "education"),
         [leads]
     );
-
     const englishLevels = useMemo(
         () => uniqueOptions(leads, "english_level"),
         [leads]
     );
-
     const demoTimes = useMemo(
         () => uniqueOptions(leads, "demo_class_time"),
         [leads]
     );
-
     const zoomOptions = useMemo(
         () => uniqueOptions(leads, "knows_zoom"),
         [leads]
@@ -245,7 +198,6 @@ export default function MetaReportPage() {
         ],
         []
     );
-
     const communityOptions = useMemo(
         () => [
             { value: "true", label: "Clicked" },
@@ -253,11 +205,11 @@ export default function MetaReportPage() {
         ],
         []
     );
-    /*
-     * Agar Campaign change hone par
-     * current Ad Set available nahi hai,
-     * to Ad Set aur Ad clear kar do.
-     */
+    /\*
+     \* Agar Campaign change hone par
+     \* current Ad Set available nahi hai,
+     \* to Ad Set aur Ad clear kar do.
+     \*/
     useEffect(() => {
         if (
             adSet &&
@@ -267,12 +219,11 @@ export default function MetaReportPage() {
             setAd("");
         }
     }, [adSet, adSets]);
-
-    /*
-     * Agar Ad Set change hone par
-     * current Ad available nahi hai,
-     * to Ad clear kar do.
-     */
+    /\*
+     \* Agar Ad Set change hone par
+     \* current Ad available nahi hai,
+     \* to Ad clear kar do.
+     \*/
     useEffect(() => {
         if (
             ad &&
@@ -281,65 +232,50 @@ export default function MetaReportPage() {
             setAd("");
         }
     }, [ad, ads]);
-
     const filteredLeads = useMemo(() => {
         return leads.filter((lead) => {
             const leadDate = lead.created_time
                 ? new Date(lead.created_time)
                 : null;
-
             if (dateFrom && leadDate) {
-                const from = new Date(`${dateFrom}T00:00:00`);
-
+                const from = new Date(\`${dateFrom}T00:00:00\`);
                 if (leadDate < from) {
                     return false;
                 }
             }
-
             if (dateTo && leadDate) {
-                const to = new Date(`${dateTo}T23:59:59`);
-
+                const to = new Date(\`${dateTo}T23:59:59\`);
                 if (leadDate > to) {
                     return false;
                 }
             }
-
             if (campaign && lead.campaign_name !== campaign) {
                 return false;
             }
-
             if (adSet && lead.ad_set_name !== adSet) {
                 return false;
             }
-
             if (ad && lead.ad_name !== ad) {
                 return false;
             }
-
             if (form && lead.form_name !== form) {
                 return false;
             }
-
             if (platform && lead.platform !== platform) {
                 return false;
             }
-
             if (age && lead.age !== age) {
                 return false;
             }
-
             if (education && lead.education !== education) {
                 return false;
             }
-
             if (englishLevel && lead.english_level !== englishLevel) {
                 return false;
             }
-
             if (demoTime && lead.demo_class_time !== demoTime) {
                 return false;
             }
-
             if (zoom && lead.knows_zoom !== zoom) {
                 return false;
             }
@@ -349,21 +285,17 @@ export default function MetaReportPage() {
             ) {
                 return false;
             }
-
             if (communityClicked) {
                 const clicked =
                     lead.community_button_clicked === true
                         ? "true"
                         : "false";
-
                 if (clicked !== communityClicked) {
                     return false;
                 }
             }
-
             if (search.trim()) {
                 const text = search.toLowerCase();
-
                 const searchable = [
                     lead.full_name,
                     lead.whatsapp_number,
@@ -372,12 +304,10 @@ export default function MetaReportPage() {
                     .filter(Boolean)
                     .join(" ")
                     .toLowerCase();
-
                 if (!searchable.includes(text)) {
                     return false;
                 }
             }
-
             return true;
         });
     }, [
@@ -398,17 +328,13 @@ export default function MetaReportPage() {
         communityClicked,
         search,
     ]);
-
     const todayCount = useMemo(() => {
         const today = new Date();
-
         return filteredLeads.filter((lead) => {
             if (!lead.created_time) {
                 return false;
             }
-
             const date = new Date(lead.created_time);
-
             return (
                 date.getFullYear() === today.getFullYear() &&
                 date.getMonth() === today.getMonth() &&
@@ -416,43 +342,33 @@ export default function MetaReportPage() {
             );
         }).length;
     }, [filteredLeads]);
-
     const weekCount = useMemo(() => {
         const now = new Date();
         const start = new Date(now);
-
         const day = start.getDay();
         const diff = day === 0 ? 6 : day - 1;
-
         start.setDate(start.getDate() - diff);
         start.setHours(0, 0, 0, 0);
-
         return filteredLeads.filter((lead) => {
             if (!lead.created_time) {
                 return false;
             }
-
             return new Date(lead.created_time) >= start;
         }).length;
     }, [filteredLeads]);
-
     const monthCount = useMemo(() => {
         const now = new Date();
-
         return filteredLeads.filter((lead) => {
             if (!lead.created_time) {
                 return false;
             }
-
             const date = new Date(lead.created_time);
-
             return (
-                date.getFullYear() === now.getFullYear() &&
-                date.getMonth() === now.getMonth()
+                date.getFullYear() === now\.getFullYear() &&
+                date.getMonth() === now\.getMonth()
             );
         }).length;
     }, [filteredLeads]);
-
     function handleFilterChange(
         name: string,
         value: string
@@ -461,68 +377,53 @@ export default function MetaReportPage() {
             case "dateFrom":
                 setDateFrom(value);
                 break;
-
             case "dateTo":
                 setDateTo(value);
                 break;
-
             case "campaign":
                 setCampaign(value);
                 setAdSet("");
                 setAd("");
                 break;
-
             case "adSet":
                 setAdSet(value);
                 setAd("");
                 break;
-
             case "ad":
                 setAd(value);
                 break;
-
             case "form":
                 setForm(value);
                 break;
-
             case "platform":
                 setPlatform(value);
                 break;
-
             case "age":
                 setAge(value);
                 break;
-
             case "education":
                 setEducation(value);
                 break;
-
             case "englishLevel":
                 setEnglishLevel(value);
                 break;
-
             case "demoTime":
                 setDemoTime(value);
                 break;
-
             case "zoom":
                 setZoom(value);
                 break;
-
             case "leadSource":
                 setLeadSource(value);
                 break;
-
             case "communityClicked":
                 setCommunityClicked(value);
                 break;
-
             case "search":
                 setSearch(value);
                 break;
         }
     }
-
     function resetFilters() {
         setDateFrom("");
         setDateTo("");
@@ -540,45 +441,37 @@ export default function MetaReportPage() {
         setCommunityClicked("");
         setSearch("");
     }
-
     return (
-        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-            <div className="mx-auto max-w-[1600px]">
-
-
-
+        \<div className="min-h-screen bg-gray-50 p-4 md:p-6">
+            \<div className="mx-auto max-w-[1600px]">
                 {error && (
-                    <div className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                    \<div className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                         {error}
-                    </div>
+                    \</div>
                 )}
-                <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
-                    <KpiCard
+                \<div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
+                    \<KpiCard
                         title="Total Leads"
                         value={leads.length}
                     />
-
-                    <KpiCard
+                    \<KpiCard
                         title="Today"
                         value={todayCount}
                     />
-
-                    <KpiCard
+                    \<KpiCard
                         title="This Week"
                         value={weekCount}
                     />
-
-                    <KpiCard
+                    \<KpiCard
                         title="This Month"
                         value={monthCount}
                     />
-
-                    <KpiCard
+                    \<KpiCard
                         title="Filtered Leads"
                         value={filteredLeads.length}
                     />
-                </div>
-                <MetaReportFilters
+                \</div>
+                \<MetaReportFilters
                     dateFrom={dateFrom}
                     dateTo={dateTo}
                     campaign={campaign}
@@ -602,32 +495,25 @@ export default function MetaReportPage() {
                     ages={ages}
                     educations={educations}
                     englishLevels={englishLevels}
-                                        demoTimes={demoTimes}
+                    demoTimes={demoTimes}
                     zoomOptions={zoomOptions}
                     leadSources={leadSources}
                     communityOptions={communityOptions}
                     onChange={handleFilterChange}
                     onReset={resetFilters}
                 />
-
-
-
-                <MetaReportCharts leads={filteredLeads} />
-
-                <MetaReportInsights leads={filteredLeads} />
-
-                <MetaReportTable
+                \<MetaReportCharts leads={filteredLeads} />
+                \<MetaReportInsights leads={filteredLeads} />
+                \<MetaReportTable
                     leads={filteredLeads}
                     totalLeads={leads.length}
                     loading={loading}
                     onRefresh={loadLeads}
                 />
-
-            </div>
-        </div>
+            \</div>
+        \</div>
     );
 }
-
 function KpiCard({
     title,
     value,
@@ -636,14 +522,13 @@ function KpiCard({
     value: number;
 }) {
     return (
-        <div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm">
-            <p className="text-xs font-medium text-gray-500">
+        \<div className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm">
+            \<p className="text-xs font-medium text-gray-500">
                 {title}
-            </p>
-
-            <p className="mt-2 text-2xl font-bold text-blue-900">
+            \</p>
+            \<p className="mt-2 text-2xl font-bold text-blue-900">
                 {value}
-            </p>
-        </div>
+            \</p>
+        \</div>
     );
 }
