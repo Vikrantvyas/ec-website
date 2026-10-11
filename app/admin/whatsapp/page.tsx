@@ -739,11 +739,11 @@ export default function WhatsAppBulkPage() {
                   const { data, error } = await supabase.functions.invoke(
                     "whatsapp-bulk-send",
                     {
-                    body: {
-  to: recipients,
-  template_name: selectedTemplate.template_name,
-  language_code: selectedTemplate.language_code,
-},
+                      body: {
+                        to: recipients,
+                        template_name: selectedTemplate.template_name,
+                        language_code: selectedTemplate.language_code,
+                      },
                     },
                   );
 
@@ -754,9 +754,8 @@ export default function WhatsAppBulkPage() {
                   }
 
                   setSuccess(
-                    data.message ||
-                    "Test successful. No WhatsApp messages sent.",
-                  );
+  `Total: ${data.total ?? 0} | Meta accepted: ${data.accepted ?? 0} | Failed: ${data.failed ?? 0}`,
+);
                 } catch (err: unknown) {
                   setError(
                     err instanceof Error
