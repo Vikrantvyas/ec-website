@@ -398,7 +398,7 @@ export default function WhatsAppBulkPage() {
               WhatsApp Campaign Ready
             </p>
             <p className="mt-1 text-sm text-amber-800">
-             Contacts aur active template verify karein. Send karne se pehle recipients aur template dobara check karein.
+              Contacts aur active template verify karein. Send karne se pehle recipients aur template dobara check karein.
             </p>
           </div>
         </div>
