@@ -739,12 +739,11 @@ export default function WhatsAppBulkPage() {
                   const { data, error } = await supabase.functions.invoke(
                     "whatsapp-bulk-send",
                     {
-                      body: {
-                        to: [],
-                        template_name: selectedTemplate.template_name,
-                        language_code: selectedTemplate.language_code,
-                        auth_test_only: true,
-                      },
+                    body: {
+  to: recipients,
+  template_name: selectedTemplate.template_name,
+  language_code: selectedTemplate.language_code,
+},
                     },
                   );
 
