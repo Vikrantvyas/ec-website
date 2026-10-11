@@ -338,8 +338,8 @@ export default function WhatsAppBulkPage() {
       }
 
       setSuccess(
-  `Total: ${data.total ?? 0} | Meta accepted: ${data.accepted ?? 0} | Failed: ${data.failed ?? 0}`,
-);
+        `Total: ${data.total ?? 0} | Meta accepted: ${data.accepted ?? 0} | Failed: ${data.failed ?? 0}`,
+      );
     } catch (err: unknown) {
       setError(
         err instanceof Error
