@@ -203,7 +203,11 @@ export default function WhatsAppInboxPage() {
     const [notice, setNotice] = useState("");
     const [mobileChatOpen, setMobileChatOpen] = useState(false);
     const [realtimeConnected, setRealtimeConnected] = useState(false);
-
+    const [botTemplates, setBotTemplates] = useState<
+        { id: string; name: string; status: string; start_mode: string }[]
+    >([]);
+    const [selectedBotId, setSelectedBotId] = useState("");
+    const [botLoading, setBotLoading] = useState(false);
     const loadInbox = useCallback(async (showLoader = false) => {
         if (showLoader) setLoading(true);
 
@@ -344,7 +348,25 @@ export default function WhatsAppInboxPage() {
             void supabase.removeChannel(channel);
         };
     }, [loadInbox]);
+    useEffect(() => {
+        async function loadBotTemplates() {
+            const { data, error } = await supabase
+                .from("whatsapp_bot_templates")
+                .select("id, name, status, start_mode")
+                .eq("status", "active")
+                .order("name");
 
+            if (error) {
+                console.error("Failed to load bot templates:", error.message);
+                setError("Bot templates load nahi hue: " + error.message);
+                return;
+            }
+
+            setBotTemplates(data ?? []);
+        }
+
+        void loadBotTemplates();
+    }, []);
     const conversations = useMemo(() => {
         const map = new Map<string, Conversation>();
 
@@ -551,20 +573,20 @@ export default function WhatsAppInboxPage() {
                 return;
             }
 
-if (rows.length > 10) {
-  setError("List mein maximum 10 options ho sakte hain.");
-  return;
-}
+            if (rows.length > 10) {
+                setError("List mein maximum 10 options ho sakte hain.");
+                return;
+            }
 
-if (rows.some((row) => row.title.length > 24 || row.description.length > 72)) {
-  setError("Option title maximum 24 aur description maximum 72 characters ka hona chahiye.");
-  return;
-}
+            if (rows.some((row) => row.title.length > 24 || row.description.length > 72)) {
+                setError("Option title maximum 24 aur description maximum 72 characters ka hona chahiye.");
+                return;
+            }
 
-if (new Set(rows.map((row) => row.title)).size !== rows.length) {
-  setError("Har list option ka title alag rakhein.");
-  return;
-}
+            if (new Set(rows.map((row) => row.title)).size !== rows.length) {
+                setError("Har list option ka title alag rakhein.");
+                return;
+            }
 
             requestBody = {
                 ...requestBody,
@@ -859,7 +881,170 @@ if (new Set(rows.map((row) => row.title)).size !== rows.length) {
                                     </div>
                                 </div>
                             </header>
+                            {/* Bot Starter */}
+                            <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-3 py-2 sm:px-4">
+                                <select
+                                    value={selectedBotId}
+                                    onChange={(event) => setSelectedBotId(event.target.value)}
+                                    disabled={botLoading}
+                                    className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#008069]"
+                                >
+                                    <option value="">Select an active bot...</option>
+                                    {botTemplates.map((bot) => (
+                                        <option key={bot.id} value={bot.id}>
+                                            {bot.name}
+                                        </option>
+                                    ))}
+                                </select>
 
+                                <button
+                                    type="button"
+                                    disabled={!selectedBotId || !selectedPhone || botLoading}
+                                    onClick={async () => {
+                                        const phone = normalizePhone(selectedPhone);
+
+                                        if (!selectedBotId || !phone || botLoading) return;
+
+                                        setBotLoading(true);
+                                        setError("");
+                                        setNotice("");
+
+                                        try {
+                                            const bot = botTemplates.find(
+                                                (item) => item.id === selectedBotId
+                                            );
+
+                                            if (!bot) {
+                                                throw new Error("Selected Bot nahi mila.");
+                                            }
+
+                                            const { data: existingSession, error: sessionError } =
+                                                await supabase
+                                                    .from("whatsapp_bot_sessions")
+                                                    .select("id")
+                                                    .eq("phone_number", phone)
+                                                    .eq("status", "active")
+                                                    .maybeSingle();
+
+                                            if (sessionError) throw sessionError;
+
+                                            if (existingSession) {
+                                                throw new Error(
+                                                    "Is customer ke liye ek active Bot Session pehle se chal raha hai."
+                                                );
+                                            }
+
+                                            const { data: botData, error: botError } = await supabase
+                                                .from("whatsapp_bot_templates")
+                                                .select("flow")
+                                                .eq("id", selectedBotId)
+                                                .eq("status", "active")
+                                                .single();
+
+                                            if (botError) throw botError;
+
+                                            const nodes = Array.isArray(botData.flow?.nodes)
+                                                ? botData.flow.nodes
+                                                : [];
+
+                                            if (nodes.length === 0) {
+                                                throw new Error("Is Bot mein koi Question nahi hai.");
+                                            }
+
+                                            // Step 1: First question ke reply buttons prepare karein
+                                            const firstNode = nodes[0];
+
+                                            if (firstNode.type !== "buttons") {
+                                                throw new Error("First question ka type buttons hona chahiye.");
+                                            }
+
+                                            const options = Array.isArray(firstNode.options)
+                                                ? firstNode.options
+                                                : [];
+
+                                            if (options.length < 1 || options.length > 3) {
+                                                throw new Error("Reply Buttons ke liye 1 se 3 options zaroori hain.");
+                                            }
+
+                                            // Step 2: WhatsApp par pehla question bhejein
+                                            const { data: sendData, error: sendError } =
+                                                await supabase.functions.invoke("whatsapp-send", {
+                                                    body: {
+                                                        to: phone,
+                                                        type: "buttons",
+                                                        message: firstNode.question,
+                                                        buttons: options.map((option) => ({
+                                                            id: option.id,
+                                                            title: option.title,
+                                                        })),
+                                                    },
+                                                });
+
+                                            if (sendError) throw sendError;
+
+                                            if (!sendData?.success || !sendData?.message_id) {
+                                                throw new Error(sendData?.error || "Pehla WhatsApp question send nahi hua.");
+                                            }
+
+                                            // Step 3: Message log save karein
+                                            const { data: contact } = await supabase
+                                                .from("whatsapp_contacts")
+                                                .select("id")
+                                                .eq("phone_number", phone)
+                                                .maybeSingle();
+
+                                            const { error: logError } = await supabase
+                                                .from("whatsapp_message_logs")
+                                                .insert({
+                                                    contact_id: contact?.id ?? null,
+                                                    direction: "outbound",
+                                                    message_id: sendData.message_id,
+                                                    message_type: "interactive",
+                                                    message_text:
+                                                        firstNode.question +
+                                                        "\n" +
+                                                        options.map((option) => `• ${option.title}`).join("\n"),
+                                                    status: sendData.initial_status ?? "accepted",
+                                                    event_at: new Date().toISOString(),
+                                                });
+
+                                            if (logError) {
+                                                console.error("Bot message log save failed:", logError.message);
+                                            }
+
+                                            // Step 4: Session create karein
+                                            const { error: insertError } = await supabase
+                                                .from("whatsapp_bot_sessions")
+                                                .insert({
+                                                    bot_id: selectedBotId,
+                                                    phone_number: phone,
+                                                    current_node_id: firstNode.id,
+                                                    status: "active",
+                                                });
+
+                                            if (insertError) throw insertError;
+
+                                            setNotice(`Bot "${bot.name}" ka pehla question WhatsApp par bhej diya gaya.`);
+                                            await loadInbox(false);
+
+                                            setNotice(
+                                                `Bot "${bot.name}" customer ${phone} ke liye start ho gaya. Abhi sirf session create hua hai; pehla WhatsApp question agle step mein bhejenge.`
+                                            );
+                                        } catch (err) {
+                                            setError(
+                                                err instanceof Error
+                                                    ? err.message
+                                                    : "Bot start nahi ho saka."
+                                            );
+                                        } finally {
+                                            setBotLoading(false);
+                                        }
+                                    }}
+                                    className="rounded-lg bg-[#008069] px-4 py-2 text-sm font-medium text-white hover:bg-[#006e5b] disabled:cursor-not-allowed disabled:bg-gray-300"
+                                >
+                                    {botLoading ? "Starting..." : "Start Bot"}
+                                </button>
+                            </div>
                             {/* Messages */}
                             <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto bg-[#efeae2] px-3 py-4 sm:px-5 md:px-8">
                                 <div
