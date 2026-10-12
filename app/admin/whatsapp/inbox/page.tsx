@@ -1,579 +1,894 @@
-
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import {
-  Search,
-  Send,
-  RefreshCw,
-  MessageCircle,
-  UserRound,
-  Phone,
-  CheckCheck,
-  LoaderCircle,
-  AlertCircle,
+    Search,
+    Send,
+    RefreshCw,
+    MessageCircle,
+    UserRound,
+    Phone,
+    Check,
+    CheckCheck,
+    LoaderCircle,
+    AlertCircle,
+    ArrowLeft,
+    MessageSquare,
+    Wifi,
+    WifiOff,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
 type Contact = {
-  id: string;
-  name: string | null;
-  phone_number: string;
+    id: string;
+    name: string | null;
+    phone_number: string;
 };
 
 type InboundMessage = {
-  id: string;
-  contact_id: string | null;
-  phone_number: string;
-  message_id: string;
-  message_type: string | null;
-  message_text: string | null;
-  received_at: string;
+    id: string;
+    contact_id: string | null;
+    phone_number: string;
+    message_id: string;
+    message_type: string | null;
+    message_text: string | null;
+    received_at: string;
 };
 
 type MessageLog = {
-  id: string;
-  contact_id: string | null;
-  recipient_id: string | null;
-  direction: string;
-  message_id: string | null;
-  message_type: string | null;
-  message_text: string | null;
-  status: string | null;
-  error_message: string | null;
-  event_at: string;
+    id: string;
+    contact_id: string | null;
+    recipient_id: string | null;
+    direction: string;
+    message_id: string | null;
+    message_type: string | null;
+    message_text: string | null;
+    status: string | null;
+    error_message: string | null;
+    event_at: string;
+};
+
+type ChatMessage = {
+    id: string;
+    direction: string;
+    text: string;
+    status: string;
+    at: string;
 };
 
 type Conversation = {
-  phone: string;
-  contactId: string | null;
-  name: string;
-  lastText: string;
-  lastAt: string;
+    phone: string;
+    contactId: string | null;
+    name: string;
+    lastText: string;
+    lastAt: string;
 };
 
-function formatTime(value: string) {
-  return new Date(value).toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function normalizePhone(value: string) {
+    return value.replace(/\D/g, "");
 }
 
-function normalizePhone(value: string) {
-  return value.replace(/\D/g, "");
+function formatTime(value: string) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    const today = new Date();
+    const isToday = date.toDateString() === today.toDateString();
+
+    if (isToday) {
+        return date.toLocaleTimeString("en-IN", {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    }
+
+    return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+    });
+}
+
+function formatChatDate(value: string) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+function getMessageText(
+    text: string | null | undefined,
+    type?: string | null,
+) {
+    if (text?.trim()) return text;
+
+    const labels: Record<string, string> = {
+        image: "📷 Image",
+        video: "🎥 Video",
+        audio: "🎤 Audio",
+        document: "📎 Document",
+        sticker: "Sticker",
+        location: "📍 Location",
+        contacts: "Contact",
+        interactive: "Interactive message",
+        button: "Button reply",
+    };
+
+    return labels[type ?? ""] ?? "Message";
+}
+
+function StatusIcon({ status }: { status: string }) {
+    const value = status.toLowerCase();
+
+    if (value === "read" || value === "played") {
+        return (
+            <CheckCheck
+                size={15}
+                className="shrink-0 text-sky-500"
+                aria-label="Read"
+            />
+        );
+    }
+
+    if (value === "delivered") {
+        return (
+            <CheckCheck
+                size={15}
+                className="shrink-0 text-gray-500"
+                aria-label="Delivered"
+            />
+        );
+    }
+
+    if (
+        value === "failed" ||
+        value === "error"
+    ) {
+        return (
+            <AlertCircle
+                size={14}
+                className="shrink-0 text-red-500"
+                aria-label="Failed"
+            />
+        );
+    }
+
+    if (value === "accepted" || value === "sent") {
+        return (
+            <CheckCheck
+                size={15}
+                className="shrink-0 text-gray-400"
+                aria-label="Sent"
+            />
+        );
+    }
+
+    return (
+        <Check
+            size={14}
+            className="shrink-0 text-gray-400"
+            aria-label={status || "Pending"}
+        />
+    );
 }
 
 export default function WhatsAppInboxPage() {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [inbound, setInbound] = useState<InboundMessage[]>([]);
-  const [logs, setLogs] = useState<MessageLog[]>([]);
-  const [selectedPhone, setSelectedPhone] = useState("");
-  const [search, setSearch] = useState("");
-  const [draft, setDraft] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+    const [contacts, setContacts] = useState<Contact[]>([]);
+    const [inbound, setInbound] = useState<InboundMessage[]>([]);
+    const [logs, setLogs] = useState<MessageLog[]>([]);
 
-  const loadInbox = useCallback(async (showLoader = false) => {
-    if (showLoader) setLoading(true);
+    const [selectedPhone, setSelectedPhone] = useState("");
+    const [search, setSearch] = useState("");
+    const [draft, setDraft] = useState("");
 
-    try {
-      const [contactsResult, inboundResult, logsResult] =
-        await Promise.all([
-          supabase
-            .from("whatsapp_contacts")
-            .select("id,name,phone_number")
-            .order("updated_at", { ascending: false }),
+    const [loading, setLoading] = useState(true);
+    const [sending, setSending] = useState(false);
+    const [error, setError] = useState("");
+    const [notice, setNotice] = useState("");
+    const [mobileChatOpen, setMobileChatOpen] = useState(false);
+    const [realtimeConnected, setRealtimeConnected] = useState(false);
 
-          supabase
-            .from("whatsapp_inbound_messages")
-            .select(
-              "id,contact_id,phone_number,message_id,message_type,message_text,received_at",
-            )
-            .order("received_at", { ascending: false })
-            .limit(1000),
+    const loadInbox = useCallback(async (showLoader = false) => {
+        if (showLoader) setLoading(true);
 
-          supabase
-            .from("whatsapp_message_logs")
-            .select(
-              "id,contact_id,recipient_id,direction,message_id,message_type,message_text,status,error_message,event_at",
-            )
-            .order("event_at", { ascending: false })
-            .limit(2000),
-        ]);
+        try {
+            const [contactsResult, inboundResult, logsResult] =
+                await Promise.all([
+                    supabase
+                        .from("whatsapp_contacts")
+                        .select("id,name,phone_number")
+                        .order("updated_at", { ascending: false }),
 
-      if (contactsResult.error) throw contactsResult.error;
-      if (inboundResult.error) throw inboundResult.error;
-      if (logsResult.error) throw logsResult.error;
+                    supabase
+                        .from("whatsapp_inbound_messages")
+                        .select(
+                            "id,contact_id,phone_number,message_id,message_type,message_text,received_at",
+                        )
+                        .order("received_at", { ascending: false })
+                        .limit(1000),
 
-      const nextContacts = (contactsResult.data ?? []) as Contact[];
-      const nextInbound = (inboundResult.data ?? []) as InboundMessage[];
-      const nextLogs = (logsResult.data ?? []) as MessageLog[];
+                    supabase
+                        .from("whatsapp_message_logs")
+                        .select(
+                            "id,contact_id,recipient_id,direction,message_id,message_type,message_text,status,error_message,event_at",
+                        )
+                        .order("event_at", { ascending: false })
+                        .limit(2000),
+                ]);
 
-      setContacts(nextContacts);
-      setInbound(nextInbound);
-      setLogs(nextLogs);
-      setError("");
+            if (contactsResult.error) throw contactsResult.error;
+            if (inboundResult.error) throw inboundResult.error;
+            if (logsResult.error) throw logsResult.error;
 
-      const knownPhones = new Set(
-        nextContacts.map((contact) => normalizePhone(contact.phone_number)),
-      );
+            const nextContacts = (contactsResult.data ?? []) as Contact[];
+            const nextInbound = (inboundResult.data ?? []) as InboundMessage[];
+            const nextLogs = (logsResult.data ?? []) as MessageLog[];
 
-      const availablePhones = [
-        ...nextContacts.map((contact) => contact.phone_number),
-        ...nextInbound.map((message) => message.phone_number),
-      ];
+            setContacts(nextContacts);
+            setInbound(nextInbound);
+            setLogs(nextLogs);
+            setError("");
 
-      const uniquePhones = [...new Set(availablePhones)];
+            const availablePhones = [
+                ...nextContacts.map((item) => item.phone_number),
+                ...nextInbound.map((item) => item.phone_number),
+            ];
 
-      // Preserve the currently selected conversation.
-      setSelectedPhone((current) => {
-        if (
-          current &&
-          uniquePhones.some(
-            (phone) => normalizePhone(phone) === normalizePhone(current),
-          )
-        ) {
-          return current;
+            const uniquePhones = [
+                ...new Map(
+                    availablePhones
+                        .filter(Boolean)
+                        .map((phone) => [normalizePhone(phone), phone]),
+                ).values(),
+            ];
+
+            setSelectedPhone((current) => {
+                if (
+                    current &&
+                    uniquePhones.some(
+                        (phone) =>
+                            normalizePhone(phone) === normalizePhone(current),
+                    )
+                ) {
+                    return current;
+                }
+
+                const firstInbound = nextInbound[0]?.phone_number;
+
+                return firstInbound ?? uniquePhones[0] ?? "";
+            });
+        } catch (err) {
+            setError(
+                err instanceof Error ? err.message : "Inbox load failed.",
+            );
+        } finally {
+            if (showLoader) setLoading(false);
         }
+    }, []);
 
-        const firstInbound = nextInbound[0]?.phone_number;
-        return firstInbound ?? uniquePhones[0] ?? "";
-      });
+    // Initial load + Supabase Realtime subscriptions.
+    useEffect(() => {
+        let active = true;
 
-      // Keep known contacts available for the conversation list.
-      void knownPhones;
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Inbox load failed.",
-      );
-    } finally {
-      if (showLoader) setLoading(false);
-    }
-  }, []);
+        void loadInbox(true);
 
-  useEffect(() => {
-    void loadInbox(true);
+        const channel = supabase
+            .channel("whatsapp-inbox-live")
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "whatsapp_inbound_messages",
+                },
+                () => {
+                    if (active) void loadInbox(false);
+                },
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "whatsapp_message_logs",
+                },
+                () => {
+                    if (active) void loadInbox(false);
+                },
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "whatsapp_contacts",
+                },
+                () => {
+                    if (active) void loadInbox(false);
+                },
+            )
+            .subscribe((status) => {
+                if (!active) return;
 
-    const interval = setInterval(() => {
-      void loadInbox(false);
-    }, 10000);
+                setRealtimeConnected(status === "SUBSCRIBED");
 
-    return () => clearInterval(interval);
-  }, [loadInbox]);
+                if (status === "SUBSCRIBED") {
+                    void loadInbox(false);
+                }
+            });
 
-  const conversations = useMemo(() => {
-    const map = new Map<string, Conversation>();
+        // Fallback refresh in case the realtime connection is interrupted.
+        const fallbackInterval = setInterval(() => {
+            if (active) void loadInbox(false);
+        }, 30000);
 
-    const contactByPhone = new Map(
-      contacts.map((contact) => [
-        normalizePhone(contact.phone_number),
-        contact,
-      ]),
-    );
-
-    const allMessages = [
-      ...inbound.map((message) => ({
-        phone: message.phone_number,
-        contactId: message.contact_id,
-        text: message.message_text ?? `[${message.message_type ?? "Message"}]`,
-        at: message.received_at,
-      })),
-      ...logs.map((message) => {
-        const contact = contacts.find(
-          (item) => item.id === message.contact_id,
-        );
-
-        return {
-          phone: contact?.phone_number ?? "",
-          contactId: message.contact_id,
-          text: message.message_text ?? "",
-          at: message.event_at,
+        return () => {
+            active = false;
+            clearInterval(fallbackInterval);
+            void supabase.removeChannel(channel);
         };
-      }),
-    ]
-      .filter((message) => message.phone)
-      .sort(
-        (a, b) =>
-          new Date(b.at).getTime() - new Date(a.at).getTime(),
-      );
+    }, [loadInbox]);
 
-    for (const message of allMessages) {
-      const phoneKey = normalizePhone(message.phone);
-      if (!phoneKey) continue;
+    const conversations = useMemo(() => {
+        const map = new Map<string, Conversation>();
 
-      const contact = contactByPhone.get(phoneKey);
+        const contactByPhone = new Map(
+            contacts.map((contact) => [
+                normalizePhone(contact.phone_number),
+                contact,
+            ]),
+        );
 
-      if (!map.has(phoneKey)) {
-        map.set(phoneKey, {
-          phone: message.phone,
-          contactId: message.contactId ?? contact?.id ?? null,
-          name: contact?.name || message.phone,
-          lastText: message.text,
-          lastAt: message.at,
-        });
-      }
-    }
+        const allMessages = [
+            ...inbound.map((message) => ({
+                phone: message.phone_number,
+                contactId: message.contact_id,
+                text: getMessageText(message.message_text, message.message_type),
+                at: message.received_at,
+            })),
 
-    return [...map.values()].filter((conversation) => {
-      const query = search.trim().toLowerCase();
+            ...logs
+                .filter((message) => message.direction === "outbound")
+                .map((message) => {
+                    const contact = contacts.find(
+                        (item) => item.id === message.contact_id,
+                    );
 
-      return (
-        !query ||
-        conversation.name.toLowerCase().includes(query) ||
-        conversation.phone.includes(query)
-      );
-    });
-  }, [contacts, inbound, logs, search]);
+                    return {
+                        phone: contact?.phone_number ?? "",
+                        contactId: message.contact_id,
+                        text: getMessageText(message.message_text, message.message_type),
+                        at: message.event_at,
+                    };
+                }),
+        ]
+            .filter((message) => message.phone)
+            .sort(
+                (a, b) =>
+                    new Date(b.at).getTime() - new Date(a.at).getTime(),
+            );
 
-  const selectedContact = contacts.find(
-    (contact) =>
-      normalizePhone(contact.phone_number) ===
-      normalizePhone(selectedPhone),
-  );
+        for (const message of allMessages) {
+            const phoneKey = normalizePhone(message.phone);
 
-  const chatMessages = useMemo(() => {
-    const phone = normalizePhone(selectedPhone);
-    if (!phone) return [];
+            if (!phoneKey || map.has(phoneKey)) continue;
 
-    const inboundMessages = inbound
-      .filter(
-        (message) => normalizePhone(message.phone_number) === phone,
-      )
-      .map((message) => ({
-        id: message.message_id,
-        direction: "inbound",
-        text:
-          message.message_text ??
-          `[${message.message_type ?? "Message"}]`,
-        status: "received",
-        at: message.received_at,
-      }));
+            const contact = contactByPhone.get(phoneKey);
 
-    const outboundMessages = logs
-      .filter((message) => {
-        if (message.direction !== "outbound") return false;
-
-        if (
-          message.contact_id &&
-          selectedContact?.id === message.contact_id
-        ) {
-          return true;
+            map.set(phoneKey, {
+                phone: message.phone,
+                contactId: message.contactId ?? contact?.id ?? null,
+                name: contact?.name || message.phone,
+                lastText: message.text,
+                lastAt: message.at,
+            });
         }
 
-        return false;
-      })
-      .map((message) => ({
-        id: message.message_id ?? message.id,
-        direction: "outbound",
-        text: message.message_text ?? "",
-        status: message.status ?? "sent",
-        at: message.event_at,
-      }));
+        return [...map.values()].filter((conversation) => {
+            const query = search.trim().toLowerCase();
 
-    return [...inboundMessages, ...outboundMessages].sort(
-      (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime(),
+            return (
+                !query ||
+                conversation.name.toLowerCase().includes(query) ||
+                conversation.phone.includes(query)
+            );
+        });
+    }, [contacts, inbound, logs, search]);
+
+    const selectedContact = contacts.find(
+        (contact) =>
+            normalizePhone(contact.phone_number) ===
+            normalizePhone(selectedPhone),
     );
-  }, [inbound, logs, selectedPhone, selectedContact]);
 
-  async function sendReply() {
-    const message = draft.trim();
-    const phone = normalizePhone(selectedPhone);
+    const chatMessages = useMemo(() => {
+        const phone = normalizePhone(selectedPhone);
 
-    if (!phone || !message) return;
+        if (!phone) return [];
 
-    if (message.length > 4096) {
-      setError("Message 4096 characters se chhota hona chahiye.");
-      return;
+        const inboundMessages: ChatMessage[] = inbound
+            .filter(
+                (message) => normalizePhone(message.phone_number) === phone,
+            )
+            .map((message) => ({
+                id: message.message_id || message.id,
+                direction: "inbound",
+                text: getMessageText(message.message_text, message.message_type),
+                status: "received",
+                at: message.received_at,
+            }));
+
+        const outboundMessages: ChatMessage[] = logs
+            .filter(
+                (message) =>
+                    message.direction === "outbound" &&
+                    !!selectedContact &&
+                    message.contact_id === selectedContact.id,
+            )
+            .map((message) => ({
+                id: message.message_id ?? message.id,
+                direction: "outbound",
+                text: getMessageText(message.message_text, message.message_type),
+                status: message.status ?? "sent",
+                at: message.event_at,
+            }));
+
+        // Avoid showing the same message twice if a log is updated.
+        const unique = new Map<string, ChatMessage>();
+
+        for (const message of [...inboundMessages, ...outboundMessages]) {
+            const key = `${message.direction}-${message.id}`;
+
+            const existing = unique.get(key);
+
+            if (
+                !existing ||
+                new Date(message.at).getTime() >=
+                new Date(existing.at).getTime()
+            ) {
+                unique.set(key, message);
+            }
+        }
+
+        return [...unique.values()].sort(
+            (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime(),
+        );
+    }, [inbound, logs, selectedPhone, selectedContact]);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "end",
+        });
+    }, [chatMessages]);
+    async function sendReply() {
+        const message = draft.trim();
+        const phone = normalizePhone(selectedPhone);
+
+        if (!phone || !message || sending) return;
+
+        if (message.length > 4096) {
+            setError("Message 4096 characters se chhota hona chahiye.");
+            return;
+        }
+
+        setSending(true);
+        setError("");
+        setNotice("");
+
+        try {
+            const { data, error: functionError } =
+                await supabase.functions.invoke("whatsapp-send", {
+                    body: {
+                        to: phone,
+                        message,
+                    },
+                });
+
+            if (functionError) throw functionError;
+
+            if (!data?.success || !data?.message_id) {
+                throw new Error(data?.error || "WhatsApp message send failed.");
+            }
+
+            let contact =
+                selectedContact ??
+                contacts.find(
+                    (item) => normalizePhone(item.phone_number) === phone,
+                );
+
+            // Keep existing contact records; create one only if missing.
+            if (!contact) {
+                const { data: newContact, error: contactError } = await supabase
+                    .from("whatsapp_contacts")
+                    .insert({
+                        phone_number: phone,
+                        name: phone,
+                    })
+                    .select("id,name,phone_number")
+                    .single();
+
+                if (!contactError && newContact) {
+                    contact = newContact as Contact;
+                }
+            }
+
+            const { error: logError } = await supabase
+                .from("whatsapp_message_logs")
+                .insert({
+                    contact_id: contact?.id ?? null,
+                    direction: "outbound",
+                    message_id: data.message_id,
+                    message_type: "text",
+                    message_text: message,
+                    status: data.status ?? "sent",
+                    event_at: new Date().toISOString(),
+                });
+
+            setDraft("");
+
+            if (logError) {
+                setNotice(
+                    "Message send ho gaya, lekin chat history save nahi hui.",
+                );
+            } else {
+                setNotice("");
+            }
+
+            await loadInbox(false);
+        } catch (err) {
+            setError(
+                err instanceof Error ? err.message : "Message send failed.",
+            );
+        } finally {
+            setSending(false);
+        }
     }
 
-    setSending(true);
-    setError("");
-    setNotice("");
-
-    try {
-      // Uses the existing WhatsApp Cloud API Edge Function.
-      const { data, error: functionError } =
-        await supabase.functions.invoke("whatsapp-send", {
-          body: {
-            to: phone,
-            message,
-          },
-        });
-
-      if (functionError) throw functionError;
-
-      if (!data?.success || !data?.message_id) {
-        throw new Error(data?.error || "WhatsApp message send failed.");
-      }
-
-      const contact =
-        selectedContact ??
-        contacts.find(
-          (item) => normalizePhone(item.phone_number) === phone,
-        );
-
-      // Save the outgoing message for chat history.
-      const { error: logError } = await supabase
-        .from("whatsapp_message_logs")
-        .insert({
-          contact_id: contact?.id ?? null,
-          direction: "outbound",
-          message_id: data.message_id,
-          message_type: "text",
-          message_text: message,
-          status: data.status ?? "sent",
-          event_at: new Date().toISOString(),
-        });
-
-      setDraft("");
-
-      if (logError) {
-        setNotice(
-          "WhatsApp ne message accept kiya, lekin chat log save nahi hua. Logs check karein.",
-        );
-      } else {
-        setNotice("Message Meta API ne accept kar liya.");
-      }
-
-      await loadInbox(false);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Message send failed.",
-      );
-    } finally {
-      setSending(false);
+    function openConversation(phone: string) {
+        setSelectedPhone(phone);
+        setMobileChatOpen(true);
+        setNotice("");
+        setError("");
     }
-  }
 
-  return (
-    <main className="flex h-[calc(100vh-110px)] min-h-[540px] flex-col gap-4 p-3 md:p-5">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">WhatsApp Inbox</h1>
-          <p className="text-sm text-gray-500">
-            Incoming messages aur customer replies
-          </p>
-        </div>
+    return (
+        <main className="flex h-[calc(100dvh-96px)] min-h-[480px] flex-col overflow-hidden bg-white text-[#111b21]">
+            {/* Compact page header */}
+            
 
-        <button
-          onClick={() => void loadInbox(true)}
-          disabled={loading}
-          className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
-        >
-          <RefreshCw size={16} />
-          Refresh
-        </button>
-      </header>
-
-      {error && (
-        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          <AlertCircle size={18} className="mt-0.5 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {notice && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-          {notice}
-        </div>
-      )}
-
-      <section className="grid min-h-0 flex-1 overflow-hidden rounded-xl border bg-white md:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="flex min-h-0 flex-col border-b md:border-b-0 md:border-r">
-          <div className="border-b p-3">
-            <div className="mb-2 flex items-center gap-2 font-semibold">
-              <MessageCircle size={18} />
-              Conversations
-              <span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-xs">
-                {conversations.length}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 rounded-lg border px-3">
-              <Search size={16} className="text-gray-400" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Name ya mobile search karein"
-                className="min-w-0 flex-1 py-2 text-sm outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {loading ? (
-              <div className="flex items-center justify-center gap-2 p-6 text-sm text-gray-500">
-                <LoaderCircle size={18} className="animate-spin" />
-                Loading...
-              </div>
-            ) : conversations.length === 0 ? (
-              <p className="p-5 text-sm text-gray-500">
-                Abhi koi conversation nahi mili.
-              </p>
-            ) : (
-              conversations.map((conversation) => (
-                <button
-                  key={normalizePhone(conversation.phone)}
-                  onClick={() => {
-                    setSelectedPhone(conversation.phone);
-                    setNotice("");
-                    setError("");
-                  }}
-                  className={`w-full border-b p-3 text-left hover:bg-gray-50 ${
-                    normalizePhone(selectedPhone) ===
-                    normalizePhone(conversation.phone)
-                      ? "bg-green-50"
-                      : ""
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
-                      <UserRound size={20} />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold">
-                        {conversation.name}
-                      </div>
-                      <div className="truncate text-xs text-gray-500">
-                        {conversation.phone}
-                      </div>
-                      <div className="mt-1 truncate text-sm text-gray-600">
-                        {conversation.lastText || "Message"}
-                      </div>
-                      <div className="mt-1 text-[11px] text-gray-400">
-                        {formatTime(conversation.lastAt)}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </aside>
-
-        <div className="flex min-h-0 flex-col">
-          {selectedPhone ? (
-            <>
-              <header className="flex items-center gap-3 border-b p-3">
-                <div className="flex size-10 items-center justify-center rounded-full bg-green-100 text-green-700">
-                  <UserRound size={20} />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold">
-                    {selectedContact?.name || selectedPhone}
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Phone size={12} />
-                    {selectedPhone}
-                  </div>
-                </div>
-              </header>
-
-              <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto bg-gray-50 p-4">
-                {chatMessages.length === 0 ? (
-                  <p className="m-auto text-sm text-gray-500">
-                    Is customer ki message history nahi mili.
-                  </p>
-                ) : (
-                  chatMessages.map((message, index) => (
-                    <div
-                      key={`${message.id}-${index}`}
-                      className={`flex ${
-                        message.direction === "outbound"
-                          ? "justify-end"
-                          : "justify-start"
-                      }`}
+            {/* Inline alerts */}
+            {error && (
+                <div className="flex shrink-0 items-center gap-2 bg-red-50 px-4 py-2 text-sm text-red-700">
+                    <AlertCircle size={16} className="shrink-0" />
+                    <span className="min-w-0 flex-1 break-words">{error}</span>
+                    <button
+                        type="button"
+                        onClick={() => setError("")}
+                        className="shrink-0 px-2 font-bold"
+                        aria-label="Dismiss error"
                     >
-                      <div
-                        className={`max-w-[85%] rounded-xl px-3 py-2 shadow-sm ${
-                          message.direction === "outbound"
-                            ? "rounded-br-sm bg-green-100"
-                            : "rounded-bl-sm border bg-white"
-                        }`}
-                      >
-                        <p className="whitespace-pre-wrap break-words text-sm">
-                          {message.text || "(Empty message)"}
-                        </p>
-
-                        <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-gray-500">
-                          {formatTime(message.at)}
-                          {message.direction === "outbound" && (
-                            <span title={message.status}>
-                              <CheckCheck size={13} />
-                              {message.status}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void sendReply();
-                }}
-                className="border-t bg-white p-3"
-              >
-                <div className="flex items-end gap-2">
-                  <textarea
-                    value={draft}
-                    onChange={(event) => setDraft(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (
-                        event.key === "Enter" &&
-                        !event.shiftKey &&
-                        !event.nativeEvent.isComposing
-                      ) {
-                        event.preventDefault();
-                        void sendReply();
-                      }
-                    }}
-                    maxLength={4096}
-                    rows={2}
-                    placeholder="Reply likhein... (Enter = Send, Shift+Enter = new line)"
-                    className="max-h-36 min-h-12 flex-1 resize-y rounded-lg border px-3 py-2 text-sm outline-none focus:border-green-500"
-                  />
-
-                  <button
-                    type="submit"
-                    disabled={sending || !draft.trim()}
-                    className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {sending ? (
-                      <LoaderCircle size={17} className="animate-spin" />
-                    ) : (
-                      <Send size={17} />
-                    )}
-                    Send
-                  </button>
+                        ×
+                    </button>
                 </div>
+            )}
 
-                <p className="mt-2 text-xs text-gray-500">
-                  Customer ke last reply ke 24-hour window ke baad
-                  WhatsApp template ki zaroorat ho sakti hai.
-                </p>
-              </form>
-            </>
-          ) : (
-            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center text-gray-500">
-              <MessageCircle size={42} />
-              <p className="font-medium">Conversation select karein</p>
-              <p className="text-sm">
-                Customer ki chat dekhne ke liye left side se number chunein.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-    </main>
-  );
+            {notice && (
+                <div className="shrink-0 bg-green-50 px-4 py-2 text-xs text-green-800">
+                    {notice}
+                </div>
+            )}
+
+            {/* WhatsApp-style workspace */}
+            <section className="flex min-h-0 flex-1 overflow-hidden bg-white border-t border-gray-200">
+                {/* Conversation sidebar */}
+                <aside
+                    className={`${mobileChatOpen ? "hidden sm:flex" : "flex"
+                        } w-full shrink-0 flex-col border-r border-gray-200 sm:w-[300px] md:w-[330px] lg:w-[360px] xl:w-[390px]`}
+                >
+                    <div className="flex shrink-0 items-center justify-between bg-white px-3 py-2">
+                        <h2 className="text-sm font-semibold">
+                            Chats
+                            <span className="ml-2 font-normal text-gray-500">
+                                {conversations.length}
+                            </span>
+                        </h2>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => void loadInbox(true)}
+                                disabled={loading}
+                                title="Refresh inbox"
+                                className="flex size-8 items-center justify-center rounded-full text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+                            >
+                                <RefreshCw
+                                    size={16}
+                                    className={loading ? "animate-spin" : ""}
+                                />
+                            </button>
+
+                            <MessageSquare size={18} className="text-gray-500" />
+                        </div>
+                    </div>
+
+                    <div className="shrink-0 bg-white px-3 py-2">
+                        <label className="flex items-center gap-3 rounded-lg bg-[#f0f2f5] px-3">
+                            <Search size={17} className="shrink-0 text-gray-500" />
+
+                            <input
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                                placeholder="Search name or phone"
+                                className="h-9 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-gray-500"
+                            />
+
+                            {search && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearch("")}
+                                    className="text-gray-500"
+                                    aria-label="Clear search"
+                                >
+                                    ×
+                                </button>
+                            )}
+                        </label>
+                    </div>
+
+                    <div className="min-h-0 flex-1 overflow-y-auto">
+                        {loading && conversations.length === 0 ? (
+                            <div className="flex items-center justify-center gap-2 p-8 text-sm text-gray-500">
+                                <LoaderCircle size={18} className="animate-spin" />
+                                Loading chats...
+                            </div>
+                        ) : conversations.length === 0 ? (
+                            <div className="flex flex-col items-center gap-2 px-5 py-12 text-center text-gray-500">
+                                <MessageCircle size={34} strokeWidth={1.4} />
+                                <p className="text-sm">No conversations found</p>
+                            </div>
+                        ) : (
+                            conversations.map((conversation) => {
+                                const isSelected =
+                                    normalizePhone(selectedPhone) ===
+                                    normalizePhone(conversation.phone);
+
+                                return (
+                                    <button
+                                        key={normalizePhone(conversation.phone)}
+                                        type="button"
+                                        onClick={() => openConversation(conversation.phone)}
+                                        className={`flex w-full items-center gap-3 border-b border-gray-100 px-3 py-3 text-left transition ${isSelected
+                                            ? "bg-[#f0f2f5]"
+                                            : "bg-white hover:bg-[#f5f6f6]"
+                                            }`}
+                                    >
+                                        <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#dfe5e7] text-gray-600">
+                                            <UserRound size={23} strokeWidth={1.6} />
+                                        </div>
+
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="truncate text-[14px] font-medium text-[#111b21]">
+                                                    {conversation.name}
+                                                </span>
+
+                                                <span className="shrink-0 text-[10px] text-gray-500">
+                                                    {formatTime(conversation.lastAt)}
+                                                </span>
+                                            </div>
+
+                                            <div className="mt-1 truncate text-xs text-gray-500">
+                                                {conversation.phone}
+                                            </div>
+
+                                            <div className="mt-1 truncate text-[13px] text-[#667781]">
+                                                {conversation.lastText}
+                                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })
+                        )}
+                    </div>
+                </aside>
+
+                {/* Chat panel */}
+                <div
+                    className={`${mobileChatOpen ? "flex" : "hidden"
+                        } min-h-0 min-w-0 flex-1 flex-col sm:flex`}
+                >
+                    {selectedPhone ? (
+                        <>
+                            {/* Chat contact header */}
+                            <header className="flex shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-3 py-1.5 sm:px-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setMobileChatOpen(false)}
+                                    className="flex size-9 shrink-0 items-center justify-center rounded-full text-gray-600 hover:bg-gray-200 sm:hidden"
+                                    aria-label="Back to chats"
+                                >
+                                    <ArrowLeft size={20} />
+                                </button>
+
+                                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#dfe5e7] text-gray-600">
+                                    <UserRound size={22} strokeWidth={1.6} />
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                    <div className="truncate text-sm font-semibold">
+                                        {selectedContact?.name || selectedPhone}
+                                    </div>
+
+                                    <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
+                                        <Phone size={11} />
+                                        <span>{selectedPhone}</span>
+                                    </div>
+                                </div>
+                            </header>
+
+                            {/* Messages */}
+                            <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto bg-[#efeae2] px-3 py-4 sm:px-5 md:px-8">
+                                <div
+                                    className="pointer-events-none absolute inset-0 opacity-[0.12]"
+                                    style={{
+                                        backgroundImage:
+                                            "radial-gradient(#9a8f80 0.7px, transparent 0.7px)",
+                                        backgroundSize: "18px 18px",
+                                    }}
+                                />
+
+                                <div
+                                    ref={messagesEndRef}
+                                    className="relative z-10 my-0 flex flex-col gap-2"
+                                >
+                                    {chatMessages.length === 0 ? (
+                                        <div className="m-auto mt-8 max-w-xs rounded-lg bg-[#fff7df] px-4 py-3 text-center text-xs leading-5 text-gray-600 shadow-sm">
+                                            Messages sent or received with this contact will appear
+                                            here.
+                                        </div>
+                                    ) : (
+                                        chatMessages.map((message, index) => {
+                                            const outgoing = message.direction === "outbound";
+
+                                            const previous = chatMessages[index - 1];
+
+                                            const showDate =
+                                                !previous ||
+                                                new Date(previous.at).toDateString() !==
+                                                new Date(message.at).toDateString();
+
+                                            return (
+                                                <div
+                                                    key={`${message.direction}-${message.id}-${index}`}
+                                                    className="flex w-full flex-col"
+                                                >
+                                                    {showDate && (
+                                                        <div className="my-2 flex justify-center">
+                                                            <span className="rounded-md bg-white/90 px-3 py-1 text-[10px] text-gray-600 shadow-sm">
+                                                                {new Date(message.at).toLocaleDateString(
+                                                                    "en-IN",
+                                                                    {
+                                                                        day: "numeric",
+                                                                        month: "short",
+                                                                        year: "numeric",
+                                                                    },
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                    <div
+                                                        className={`flex ${outgoing ? "justify-end" : "justify-start"
+                                                            }`}
+                                                    >
+                                                        <div
+                                                            className={`max-w-[92%] rounded-lg px-3 py-2 shadow-sm sm:max-w-[82%] md:max-w-[75%] lg:max-w-[68%] ${outgoing
+                                                                ? "rounded-tr-none bg-[#d9fdd3]"
+                                                                : "rounded-tl-none bg-white"
+                                                                }`}
+                                                        >
+                                                            <p className="whitespace-pre-wrap break-words text-[13px] leading-[1.5] text-[#111b21] sm:text-sm">
+                                                                {message.text || "(Empty message)"}
+                                                            </p>
+
+                                                            <div className="mt-1 flex items-center justify-end gap-1.5">
+                                                                <span className="text-[10px] text-gray-500">
+                                                                    {formatChatDate(message.at)}
+                                                                </span>
+
+                                                                {outgoing && (
+                                                                    <span
+                                                                        className="flex items-center gap-0.5"
+                                                                        title={message.status}
+                                                                    >
+                                                                        <StatusIcon status={message.status} />
+                                                                        <span className="max-w-20 truncate text-[9px] text-gray-500">
+                                                                            {message.status}
+                                                                        </span>
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Message composer */}
+                            <form
+                                onSubmit={(event) => {
+                                    event.preventDefault();
+                                    void sendReply();
+                                }}
+                                className="shrink-0 border-t border-gray-200 bg-transparent px-2 py-2 sm:px-4 sm:py-3"
+                            >
+                                <div className="bg-white"></div>
+                                <div className="flex items-end gap-2 sm:gap-3">
+                                    <div className="flex min-h-11 min-w-0 flex-1 items-end rounded-xl bg-white px-3 py-1.5 shadow-sm">
+                                        <textarea
+                                            value={draft}
+                                            onChange={(event) => setDraft(event.target.value)}
+                                            onKeyDown={(event) => {
+                                                if (
+                                                    event.key === "Enter" &&
+                                                    !event.shiftKey &&
+                                                    !event.nativeEvent.isComposing
+                                                ) {
+                                                    event.preventDefault();
+                                                    void sendReply();
+                                                }
+                                            }}
+                                            maxLength={4096}
+                                            rows={1}
+                                            placeholder="Type a message"
+                                            className="max-h-32 min-h-8 flex-1 resize-none bg-transparent py-1.5 text-sm leading-5 outline-none placeholder:text-gray-500"
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={sending || !draft.trim()}
+                                        title="Send message"
+                                        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#008069] text-white transition hover:bg-[#006e5b] disabled:cursor-not-allowed disabled:bg-gray-300"
+                                    >
+                                        {sending ? (
+                                            <LoaderCircle size={19} className="animate-spin" />
+                                        ) : (
+                                            <Send size={19} />
+                                        )}
+                                    </button>
+                                </div>
+
+                            </form>
+                        </>
+                    ) : (
+                        <div className="flex flex-1 flex-col items-center justify-center bg-[#f7f9fa] px-6 text-center">
+                            <div className="mb-5 flex size-20 items-center justify-center rounded-full bg-[#e4f5ed] text-[#008069]">
+                                <MessageCircle size={40} strokeWidth={1.3} />
+                            </div>
+
+                            <h2 className="text-xl font-light text-[#41525d]">
+                                WhatsApp Inbox
+                            </h2>
+
+                            <p className="mt-2 max-w-sm text-sm leading-6 text-gray-500">
+                                Chat dekhne aur message bhejne ke liye left side se
+                                conversation select karein.
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </section>
+        </main>
+    );
 }
