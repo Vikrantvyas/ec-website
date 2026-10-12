@@ -186,6 +186,17 @@ export default function WhatsAppInboxPage() {
     const [search, setSearch] = useState("");
     const [draft, setDraft] = useState("");
 
+    const [messageMode, setMessageMode] = useState<"text" | "buttons" | "list">("text");
+    const [button1, setButton1] = useState("");
+    const [button2, setButton2] = useState("");
+    const [button3, setButton3] = useState("");
+    const [listButtonText, setListButtonText] = useState("Choose an option");
+    const [listRows, setListRows] = useState([
+        { title: "", description: "" },
+        { title: "", description: "" },
+        { title: "", description: "" },
+    ]);
+
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [error, setError] = useState("");
@@ -467,15 +478,105 @@ export default function WhatsAppInboxPage() {
             block: "end",
         });
     }, [chatMessages]);
+
     async function sendReply() {
         const message = draft.trim();
         const phone = normalizePhone(selectedPhone);
 
         if (!phone || !message || sending) return;
 
-        if (message.length > 4096) {
+        if (messageMode === "text" && message.length > 4096) {
             setError("Message 4096 characters se chhota hona chahiye.");
             return;
+        }
+
+        if (messageMode !== "text" && message.length > 1024) {
+            setError("Buttons/List message 1024 characters se chhota hona chahiye.");
+            return;
+        }
+
+        let requestBody: Record<string, unknown> = {
+            to: phone,
+            message,
+        };
+
+        if (messageMode === "buttons") {
+            const titles = [button1, button2, button3]
+                .map((title) => title.trim())
+                .filter(Boolean);
+
+
+            if (titles.length === 0) {
+                setError("Kam se kam ek button title likhein.");
+                return;
+            }
+
+            if (titles.some((title) => title.length > 20)) {
+                setError("Har button title maximum 20 characters ka hona chahiye.");
+                return;
+            }
+
+            if (new Set(titles).size !== titles.length) {
+                setError("Har button ka title alag rakhein.");
+                return;
+            }
+
+
+            requestBody = {
+                ...requestBody,
+                type: "buttons",
+                buttons: titles.map((title, index) => ({
+                    id: `reply_${index + 1}`,
+                    title,
+                })),
+            };
+        }
+
+        if (messageMode === "list") {
+            const rows = listRows
+                .map((row, index) => ({
+                    id: `option_${index + 1}`,
+                    title: row.title.trim(),
+                    description: row.description.trim(),
+                }))
+                .filter((row) => row.title);
+
+            if (!listButtonText.trim()) {
+                setError("List button ka text likhein.");
+                return;
+            }
+
+            if (rows.length === 0) {
+                setError("Kam se kam ek list option likhein.");
+                return;
+            }
+
+if (rows.length > 10) {
+  setError("List mein maximum 10 options ho sakte hain.");
+  return;
+}
+
+if (rows.some((row) => row.title.length > 24 || row.description.length > 72)) {
+  setError("Option title maximum 24 aur description maximum 72 characters ka hona chahiye.");
+  return;
+}
+
+if (new Set(rows.map((row) => row.title)).size !== rows.length) {
+  setError("Har list option ka title alag rakhein.");
+  return;
+}
+
+            requestBody = {
+                ...requestBody,
+                type: "list",
+                button_text: listButtonText.trim(),
+                sections: [
+                    {
+                        title: "Options",
+                        rows,
+                    },
+                ],
+            };
         }
 
         setSending(true);
@@ -485,10 +586,7 @@ export default function WhatsAppInboxPage() {
         try {
             const { data, error: functionError } =
                 await supabase.functions.invoke("whatsapp-send", {
-                    body: {
-                        to: phone,
-                        message,
-                    },
+                    body: requestBody,
                 });
 
             if (functionError) throw functionError;
@@ -503,7 +601,6 @@ export default function WhatsAppInboxPage() {
                     (item) => normalizePhone(item.phone_number) === phone,
                 );
 
-            // Keep existing contact records; create one only if missing.
             if (!contact) {
                 const { data: newContact, error: contactError } = await supabase
                     .from("whatsapp_contacts")
@@ -519,24 +616,53 @@ export default function WhatsAppInboxPage() {
                 }
             }
 
+            const loggedMessage =
+                messageMode === "text"
+                    ? message
+                    : messageMode === "buttons"
+                        ? `${message}\n${[button1, button2, button3]
+                            .map((title) => title.trim())
+                            .filter(Boolean)
+                            .map((title) => `• ${title}`)
+                            .join("\n")}`
+                        : `${message}\n${listRows
+                            .filter((row) => row.title.trim())
+                            .map((row) => `• ${row.title.trim()}${row.description.trim() ? ` — ${row.description.trim()}` : ""}`)
+                            .join("\n")}`;
+
             const { error: logError } = await supabase
                 .from("whatsapp_message_logs")
                 .insert({
                     contact_id: contact?.id ?? null,
                     direction: "outbound",
                     message_id: data.message_id,
-                    message_type: "text",
-                    message_text: message,
-                    status: data.status ?? "sent",
+                    message_type: messageMode === "text" ? "text" : "interactive",
+                    message_text: loggedMessage,
+                    status: data.initial_status ?? "accepted",
                     event_at: new Date().toISOString(),
                 });
 
             setDraft("");
 
+            if (messageMode === "buttons") {
+                setButton1("");
+                setButton2("");
+                setButton3("");
+            }
+
+            if (messageMode === "list") {
+                setListButtonText("Choose an option");
+                setListRows([
+                    { title: "", description: "" },
+                    { title: "", description: "" },
+                    { title: "", description: "" },
+                ]);
+            }
+
+            setMessageMode("text");
+
             if (logError) {
-                setNotice(
-                    "Message send ho gaya, lekin chat history save nahi hui.",
-                );
+                setNotice("Message send ho gaya, lekin chat history save nahi hui.");
             } else {
                 setNotice("");
             }
@@ -551,6 +677,7 @@ export default function WhatsAppInboxPage() {
         }
     }
 
+
     function openConversation(phone: string) {
         setSelectedPhone(phone);
         setMobileChatOpen(true);
@@ -561,7 +688,7 @@ export default function WhatsAppInboxPage() {
     return (
         <main className="flex h-[calc(100dvh-96px)] min-h-[480px] flex-col overflow-hidden bg-white text-[#111b21]">
             {/* Compact page header */}
-            
+
 
             {/* Inline alerts */}
             {error && (
@@ -825,6 +952,114 @@ export default function WhatsAppInboxPage() {
                             </div>
 
                             {/* Message composer */}
+
+                            <div className="flex shrink-0 items-center gap-2 bg-white px-3 pt-2 sm:px-4">
+                                <span className="text-xs font-medium text-gray-600">Message type:</span>
+                                <select
+                                    value={messageMode}
+                                    onChange={(event) =>
+                                        setMessageMode(event.target.value as "text" | "buttons" | "list")
+                                    }
+                                    disabled={sending}
+                                    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#008069]"
+                                >
+                                    <option value="text">Normal Text</option>
+                                    <option value="buttons">Reply Buttons</option>
+                                    <option value="list">List Message</option>
+                                </select>
+                            </div>
+
+                            {messageMode !== "text" && (
+                                <div className="shrink-0 space-y-3 border-t border-gray-100 bg-white px-3 py-3 sm:px-4">
+                                    {messageMode === "buttons" ? (
+                                        <div className="space-y-2">
+                                            <p className="text-xs font-semibold text-gray-700">
+                                                Reply Buttons (maximum 3)
+                                            </p>
+                                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                                                <input
+                                                    value={button1}
+                                                    onChange={(event) => setButton1(event.target.value)}
+                                                    maxLength={20}
+                                                    placeholder="Button 1 (required)"
+                                                    className="min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
+                                                />
+                                                <input
+                                                    value={button2}
+                                                    onChange={(event) => setButton2(event.target.value)}
+                                                    maxLength={20}
+                                                    placeholder="Button 2 (optional)"
+                                                    className="min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
+                                                />
+                                                <input
+                                                    value={button3}
+                                                    onChange={(event) => setButton3(event.target.value)}
+                                                    maxLength={20}
+                                                    placeholder="Button 3 (optional)"
+                                                    className="min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
+                                                />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <p className="text-xs font-semibold text-gray-700">
+                                                List Message (maximum 10 options)
+                                            </p>
+                                            <input
+                                                value={listButtonText}
+                                                onChange={(event) => setListButtonText(event.target.value)}
+                                                maxLength={20}
+                                                placeholder="List button text"
+                                                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
+                                            />
+                                            {listRows.map((row, index) => (
+                                                <div key={index} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                                    <input
+                                                        value={row.title}
+                                                        onChange={(event) =>
+                                                            setListRows((current) =>
+                                                                current.map((item, i) =>
+                                                                    i === index ? { ...item, title: event.target.value } : item
+                                                                )
+                                                            )
+                                                        }
+                                                        maxLength={24}
+                                                        placeholder={`Option ${index + 1} (required)`}
+                                                        className="min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
+                                                    />
+                                                    <input
+                                                        value={row.description}
+                                                        onChange={(event) =>
+                                                            setListRows((current) =>
+                                                                current.map((item, i) =>
+                                                                    i === index ? { ...item, description: event.target.value } : item
+                                                                )
+                                                            )
+                                                        }
+                                                        maxLength={72}
+                                                        placeholder="Description (optional)"
+                                                        className="min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
+                                                    />
+                                                </div>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                disabled={listRows.length >= 10}
+                                                onClick={() =>
+                                                    setListRows((current) => [
+                                                        ...current,
+                                                        { title: "", description: "" },
+                                                    ])
+                                                }
+                                                className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                            >
+                                                + Add option
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <form
                                 onSubmit={(event) => {
                                     event.preventDefault();
