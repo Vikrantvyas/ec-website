@@ -973,7 +973,7 @@ export default function WhatsAppInboxPage() {
                                                         to: phone,
                                                         type: "buttons",
                                                         message: firstNode.question,
-                                                        buttons: options.map((option) => ({
+                                                        buttons: options.map((option: { id: string; title: string }) => ({
                                                             id: option.id,
                                                             title: option.title,
                                                         })),
