@@ -918,45 +918,7 @@ export default function WhatsAppInboxPage() {
                                 </div>
                             </header>
                             {/* Bot Starter */}
-                            {selectedBotActive && (
-                                <button
-                                    type="button"
-                                    disabled={endingBot}
-                                    onClick={async () => {
-                                        if (!selectedPhone || endingBot) return;
 
-                                        setEndingBot(true);
-                                        setError("");
-                                        setNotice("");
-
-                                        try {
-                                            const phone = normalizePhone(selectedPhone);
-
-                                            const { error: endError } = await supabase
-                                                .from("whatsapp_bot_sessions")
-                                                .update({ status: "paused" })
-                                                .eq("phone_number", phone)
-                                                .eq("status", "active");
-
-                                            if (endError) throw endError;
-
-                                            await loadInbox(false);
-                                            setNotice("Bot Session successfully ended.");
-                                        } catch (err) {
-                                            setError(
-                                                err instanceof Error
-                                                    ? err.message
-                                                    : "Bot Session end nahi hua."
-                                            );
-                                        } finally {
-                                            setEndingBot(false);
-                                        }
-                                    }}
-                                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                                >
-                                    {endingBot ? "Ending..." : "End Bot"}
-                                </button>
-                            )}
                             <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-3 py-2 sm:px-4">
                                 <select
                                     value={selectedBotId}
@@ -1124,7 +1086,47 @@ export default function WhatsAppInboxPage() {
                                 >
                                     {botLoading ? "Starting..." : "Start Bot"}
                                 </button>
+                                {selectedBotActive && (
+                                <button
+                                    type="button"
+                                    disabled={endingBot}
+                                    onClick={async () => {
+                                        if (!selectedPhone || endingBot) return;
+
+                                        setEndingBot(true);
+                                        setError("");
+                                        setNotice("");
+
+                                        try {
+                                            const phone = normalizePhone(selectedPhone);
+
+                                            const { error: endError } = await supabase
+                                                .from("whatsapp_bot_sessions")
+                                                .update({ status: "paused" })
+                                                .eq("phone_number", phone)
+                                                .eq("status", "active");
+
+                                            if (endError) throw endError;
+
+                                            await loadInbox(false);
+                                            setNotice("Bot Session successfully ended.");
+                                        } catch (err) {
+                                            setError(
+                                                err instanceof Error
+                                                    ? err.message
+                                                    : "Bot Session end nahi hua."
+                                            );
+                                        } finally {
+                                            setEndingBot(false);
+                                        }
+                                    }}
+                                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                                >
+                                    {endingBot ? "Ending..." : "End Bot"}
+                                </button>
+                            )}
                             </div>
+                            
                             {/* Messages */}
                             <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto bg-[#efeae2] px-3 py-4 sm:px-5 md:px-8">
                                 <div
@@ -1218,21 +1220,7 @@ export default function WhatsAppInboxPage() {
 
                             {/* Message composer */}
 
-                            <div className="flex shrink-0 items-center gap-2 bg-white px-3 pt-2 sm:px-4">
-                                <span className="text-xs font-medium text-gray-600">Message type:</span>
-                                <select
-                                    value={messageMode}
-                                    onChange={(event) =>
-                                        setMessageMode(event.target.value as "text" | "buttons" | "list")
-                                    }
-                                    disabled={sending}
-                                    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#008069]"
-                                >
-                                    <option value="text">Normal Text</option>
-                                    <option value="buttons">Reply Buttons</option>
-                                    <option value="list">List Message</option>
-                                </select>
-                            </div>
+
 
                             {messageMode !== "text" && (
                                 <div className="shrink-0 space-y-3 border-t border-gray-100 bg-white px-3 py-3 sm:px-4">
@@ -1334,7 +1322,20 @@ export default function WhatsAppInboxPage() {
                             >
                                 <div className="bg-white"></div>
                                 <div className="flex items-end gap-2 sm:gap-3">
-                                    <div className="flex min-h-11 min-w-0 flex-1 items-end rounded-xl bg-white px-3 py-1.5 shadow-sm">
+                                    <select
+                                        value={messageMode}
+                                        onChange={(event) =>
+                                            setMessageMode(event.target.value as "text" | "buttons" | "list")
+                                        }
+                                        disabled={sending}
+                                        aria-label="Message type"
+                                        className="h-11 w-28 shrink-0 rounded-xl border border-gray-200 bg-white px-2 text-sm outline-none focus:border-[#008069] sm:w-36"
+                                    >
+                                        <option value="text">Normal Text</option>
+                                        <option value="buttons">Reply Buttons</option>
+                                        <option value="list">List Message</option>
+                                    </select>
+                                    <div className="flex h-11 min-h-11 min-w-0 flex-1 items-center rounded-xl bg-white px-3 py-1.5 shadow-sm">
                                         <textarea
                                             value={draft}
                                             onChange={(event) => setDraft(event.target.value)}
@@ -1351,7 +1352,7 @@ export default function WhatsAppInboxPage() {
                                             maxLength={4096}
                                             rows={1}
                                             placeholder="Type a message"
-                                            className="max-h-32 min-h-8 flex-1 resize-none bg-transparent py-1.5 text-sm leading-5 outline-none placeholder:text-gray-500"
+                                            className="h-8 max-h-8 min-h-8 flex-1 resize-none self-center overflow-y-auto bg-transparent py-1.5 text-sm leading-5 outline-none placeholder:text-gray-500"
                                         />
                                     </div>
 
@@ -1367,6 +1368,7 @@ export default function WhatsAppInboxPage() {
                                             <Send size={19} />
                                         )}
                                     </button>
+
                                 </div>
 
                             </form>
