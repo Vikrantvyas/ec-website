@@ -1003,7 +1003,7 @@ export default function WhatsAppInboxPage() {
                                                     message_text:
                                                         firstNode.question +
                                                         "\n" +
-                                                        options.map((option) => `• ${option.title}`).join("\n"),
+                                                        options.map((option: { id: string; title: string }) => `• ${option.title}`).join("\n"),
                                                     status: sendData.initial_status ?? "accepted",
                                                     event_at: new Date().toISOString(),
                                                 });
