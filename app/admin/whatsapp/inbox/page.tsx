@@ -208,37 +208,60 @@ export default function WhatsAppInboxPage() {
     >([]);
     const [selectedBotId, setSelectedBotId] = useState("");
     const [botLoading, setBotLoading] = useState(false);
+    const [activeBotPhones, setActiveBotPhones] = useState<string[]>([]);
+    const [endingBot, setEndingBot] = useState(false);
+
+    const selectedBotActive = activeBotPhones.includes(
+        normalizePhone(selectedPhone)
+    );
     const loadInbox = useCallback(async (showLoader = false) => {
         if (showLoader) setLoading(true);
 
         try {
-            const [contactsResult, inboundResult, logsResult] =
-                await Promise.all([
-                    supabase
-                        .from("whatsapp_contacts")
-                        .select("id,name,phone_number")
-                        .order("updated_at", { ascending: false }),
+            const [
+                contactsResult,
+                inboundResult,
+                logsResult,
+                botSessionsResult,
+            ] = await Promise.all([
+                supabase
+                    .from("whatsapp_contacts")
+                    .select("id,name,phone_number")
+                    .order("updated_at", { ascending: false }),
 
-                    supabase
-                        .from("whatsapp_inbound_messages")
-                        .select(
-                            "id,contact_id,phone_number,message_id,message_type,message_text,received_at",
-                        )
-                        .order("received_at", { ascending: false })
-                        .limit(1000),
+                supabase
+                    .from("whatsapp_inbound_messages")
+                    .select(
+                        "id,contact_id,phone_number,message_id,message_type,message_text,received_at",
+                    )
+                    .order("received_at", { ascending: false })
+                    .limit(1000),
 
-                    supabase
-                        .from("whatsapp_message_logs")
-                        .select(
-                            "id,contact_id,recipient_id,direction,message_id,message_type,message_text,status,error_message,event_at",
-                        )
-                        .order("event_at", { ascending: false })
-                        .limit(2000),
-                ]);
+                supabase
+                    .from("whatsapp_message_logs")
+                    .select(
+                        "id,contact_id,recipient_id,direction,message_id,message_type,message_text,status,error_message,event_at",
+                    )
+                    .order("event_at", { ascending: false })
+                    .limit(2000),
+                supabase
+                    .from("whatsapp_bot_sessions")
+                    .select("phone_number")
+                    .eq("status", "active"),
+            ]);
 
             if (contactsResult.error) throw contactsResult.error;
             if (inboundResult.error) throw inboundResult.error;
             if (logsResult.error) throw logsResult.error;
+            if (botSessionsResult.error) throw botSessionsResult.error;
+
+            setActiveBotPhones([
+                ...new Set(
+                    (botSessionsResult.data ?? []).map((session) =>
+                        normalizePhone(session.phone_number)
+                    )
+                ),
+            ]);
 
             const nextContacts = (contactsResult.data ?? []) as Contact[];
             const nextInbound = (inboundResult.data ?? []) as InboundMessage[];
@@ -825,7 +848,20 @@ export default function WhatsAppInboxPage() {
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center justify-between gap-2">
                                                 <span className="truncate text-[14px] font-medium text-[#111b21]">
-                                                    {conversation.name}
+                                                    <span className="flex min-w-0 items-center gap-1.5">
+                                                        <span className="truncate text-[14px] font-medium text-[#111b21]">
+                                                            {conversation.name}
+                                                        </span>
+
+                                                        {activeBotPhones.includes(
+                                                            normalizePhone(conversation.phone)
+                                                        ) && (
+                                                                <span
+                                                                    title="Bot Session Active"
+                                                                    className="size-2 shrink-0 rounded-full bg-green-500"
+                                                                />
+                                                            )}
+                                                    </span>
                                                 </span>
 
                                                 <span className="shrink-0 text-[10px] text-gray-500">
@@ -882,6 +918,45 @@ export default function WhatsAppInboxPage() {
                                 </div>
                             </header>
                             {/* Bot Starter */}
+                            {selectedBotActive && (
+                                <button
+                                    type="button"
+                                    disabled={endingBot}
+                                    onClick={async () => {
+                                        if (!selectedPhone || endingBot) return;
+
+                                        setEndingBot(true);
+                                        setError("");
+                                        setNotice("");
+
+                                        try {
+                                            const phone = normalizePhone(selectedPhone);
+
+                                            const { error: endError } = await supabase
+                                                .from("whatsapp_bot_sessions")
+                                                .update({ status: "paused" })
+                                                .eq("phone_number", phone)
+                                                .eq("status", "active");
+
+                                            if (endError) throw endError;
+
+                                            await loadInbox(false);
+                                            setNotice("Bot Session successfully ended.");
+                                        } catch (err) {
+                                            setError(
+                                                err instanceof Error
+                                                    ? err.message
+                                                    : "Bot Session end nahi hua."
+                                            );
+                                        } finally {
+                                            setEndingBot(false);
+                                        }
+                                    }}
+                                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                                >
+                                    {endingBot ? "Ending..." : "End Bot"}
+                                </button>
+                            )}
                             <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-3 py-2 sm:px-4">
                                 <select
                                     value={selectedBotId}
@@ -899,7 +974,12 @@ export default function WhatsAppInboxPage() {
 
                                 <button
                                     type="button"
-                                    disabled={!selectedBotId || !selectedPhone || botLoading}
+                                    disabled={
+                                        !selectedBotId ||
+                                        !selectedPhone ||
+                                        botLoading ||
+                                        selectedBotActive
+                                    }
                                     onClick={async () => {
                                         const phone = normalizePhone(selectedPhone);
 
