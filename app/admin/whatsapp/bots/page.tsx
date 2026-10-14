@@ -51,10 +51,17 @@ type BotTemplate = {
     start_mode: StartMode;
     trigger_keyword: string | null;
     flow: BotFlow;
+    source_template_id?: string | null;
     created_at: string;
     updated_at: string;
 };
-
+type ApprovedWhatsAppTemplate = {
+    id: string;
+    template_name: string;
+    language_code: string;
+    status: string;
+    components: any[];
+};
 const emptyFlow: BotFlow = {
     nodes: [
         {
@@ -162,35 +169,37 @@ export default function WhatsAppBotsPage() {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [status, setStatus] = useState<BotStatus>("draft");
+    const [approvedTemplates, setApprovedTemplates] = useState<ApprovedWhatsAppTemplate[]>([]);
+    const [selectedTemplateId, setSelectedTemplateId] = useState("");
     const [startMode, setStartMode] = useState<StartMode>("manual");
     const [triggerKeyword, setTriggerKeyword] = useState("");
     const [flow, setFlow] = useState<BotFlow>(emptyFlow);
-async function saveBotSettings() {
-  setSettingsSaving(true);
-  setError("");
-  setNotice("");
+    async function saveBotSettings() {
+        setSettingsSaving(true);
+        setError("");
+        setNotice("");
 
-  const { error: settingsError } = await supabase
-    .from("whatsapp_bot_automation_settings")
-    .upsert(
-      {
-        id: 1,
-        automation_enabled: automationEnabled,
-        default_bot_id: defaultBotId || null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" },
-    );
+        const { error: settingsError } = await supabase
+            .from("whatsapp_bot_automation_settings")
+            .upsert(
+                {
+                    id: 1,
+                    automation_enabled: automationEnabled,
+                    default_bot_id: defaultBotId || null,
+                    updated_at: new Date().toISOString(),
+                },
+                { onConflict: "id" },
+            );
 
-  if (settingsError) {
-    setError(settingsError.message);
-    setSettingsSaving(false);
-    return;
-  }
+        if (settingsError) {
+            setError(settingsError.message);
+            setSettingsSaving(false);
+            return;
+        }
 
-  setNotice("Bot Automation Settings सफलतापूर्वक Save हो गईं।");
-  setSettingsSaving(false);
-}
+        setNotice("Bot Automation Settings सफलतापूर्वक Save हो गईं।");
+        setSettingsSaving(false);
+    }
     const loadBots = useCallback(async () => {
         setLoading(true);
         setError("");
@@ -214,6 +223,24 @@ async function saveBotSettings() {
 
         setLoading(false);
     }, []);
+    const loadApprovedTemplates = useCallback(async () => {
+        const { data, error } = await supabase
+            .from("whatsapp_templates")
+            .select("id, template_name, language_code, status, components")
+            .eq("status", "Active")
+            .order("template_name", { ascending: true });
+
+        if (error) {
+            setError(error.message);
+            return;
+        }
+
+        setApprovedTemplates((data ?? []) as ApprovedWhatsAppTemplate[]);
+    }, []);
+
+    useEffect(() => {
+        void loadApprovedTemplates();
+    }, [loadApprovedTemplates]);
 
     useEffect(() => {
         void loadBots();
@@ -259,6 +286,7 @@ async function saveBotSettings() {
 
     function editBot(bot: BotTemplate) {
         setEditingId(bot.id);
+        setSelectedTemplateId(bot.source_template_id ?? "");
         setName(bot.name);
         setDescription(bot.description ?? "");
         setStatus(bot.status);
@@ -437,6 +465,7 @@ async function saveBotSettings() {
             start_mode: startMode,
             trigger_keyword: triggerKeyword.trim(),
             flow,
+            source_template_id: selectedTemplateId || null,
             updated_at: new Date().toISOString(),
         };
 
@@ -546,31 +575,31 @@ async function saveBotSettings() {
                     </div>
 
                     {view === "templates" ? (
-    <div className="flex flex-wrap items-center gap-2">
-        <Link
-            href="/admin/whatsapp/bots/settings"
-            className={secondary}
-        >
-            <Settings2 size={17} />
-            Automation Settings
-        </Link>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Link
+                                href="/admin/whatsapp/bots/settings"
+                                className={secondary}
+                            >
+                                <Settings2 size={17} />
+                                Automation Settings
+                            </Link>
 
-        <button className={primary} onClick={resetBuilder}>
-            <Plus size={18} />
-            Create New Bot
-        </button>
-    </div>
-) : (
-    <button
-        className={secondary}
-        onClick={() => {
-            setView("templates");
-            setError("");
-        }}
-    >
-        Back to Templates
-    </button>
-)}
+                            <button className={primary} onClick={resetBuilder}>
+                                <Plus size={18} />
+                                Create New Bot
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            className={secondary}
+                            onClick={() => {
+                                setView("templates");
+                                setError("");
+                            }}
+                        >
+                            Back to Templates
+                        </button>
+                    )}
                 </header>
 
                 {error && (
@@ -821,6 +850,91 @@ async function saveBotSettings() {
                                         placeholder="यह Bot किस काम के लिए है?"
                                     />
                                 </label>
+                            </div>
+
+                            <div className="mt-4">
+                                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                    Approved WhatsApp Template
+                                    <select
+                                        className={field}
+                                        value={selectedTemplateId}
+                                        onChange={(event) => {
+                                            const templateId = event.target.value;
+                                            setSelectedTemplateId(templateId);
+
+                                            if (!templateId) return;
+
+                                            const existingBot = bots.find(
+                                                (bot) => bot.source_template_id === templateId
+                                            );
+
+                                            if (existingBot) {
+                                                editBot(existingBot);
+                                                setNotice(`यह Template पहले से "${existingBot.name}" Bot से जुड़ा है।`);
+                                                return;
+                                            }
+
+                                            const template = approvedTemplates.find(
+                                                (item) => item.id === templateId
+                                            );
+
+                                            if (!template) return;
+
+                                            setName(template.template_name);
+                                            setDescription(
+                                                `WhatsApp Template: ${template.template_name} (${template.language_code})`
+                                            );
+
+                                            const components = template.components ?? [];
+                                            const body = components.find(
+                                                (item: any) => item.type === "BODY"
+                                            );
+                                            const buttonsComponent = components.find(
+                                                (item: any) => item.type === "BUTTONS"
+                                            );
+
+                                            const quickReplies = (
+                                                buttonsComponent?.buttons ?? []
+                                            ).filter(
+                                                (item: any) => item.type === "QUICK_REPLY"
+                                            );
+
+                                            setFlow({
+                                                nodes: [
+                                                    {
+                                                        id: makeId(),
+                                                        question: body?.text ?? "",
+                                                        type: quickReplies.length > 0 ? "buttons" : "text",
+                                                        options: quickReplies.slice(0, 3).map(
+                                                            (item: any) => ({
+                                                                id: item.text,
+                                                                title: item.text,
+                                                                nextNodeId: "",
+                                                            })
+                                                        ),
+                                                    },
+                                                ],
+                                            });
+
+                                            setStatus("draft");
+                                            setStartMode("manual");
+                                            setTriggerKeyword("");
+                                        }}
+                                    >
+                                        <option value="">Select approved template</option>
+                                        {approvedTemplates.map((template) => (
+                                            <option key={template.id} value={template.id}>
+                                                {template.template_name} ({template.language_code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+
+                                {approvedTemplates.length === 0 && (
+                                    <p className="mt-1 text-xs text-amber-700">
+                                        कोई approved template नहीं मिला। पहले Templates page पर Sync करें।
+                                    </p>
+                                )}
                             </div>
 
                             <div className="mt-5">
