@@ -249,29 +249,59 @@ export default function MetaReportTable({
     event: ReactMouseEvent<HTMLInputElement>
   ) {
     const lastIndex = lastSelectedIndexRef.current;
-
     if (event.shiftKey && lastIndex !== null) {
       const start = Math.min(lastIndex, index);
       const end = Math.max(lastIndex, index);
       const rangeIds = leads.slice(start, end + 1).map((lead) => lead.id);
-
       setSelectedIds((current) =>
         Array.from(new Set([...current, ...rangeIds]))
       );
       lastSelectedIndexRef.current = index;
       return;
     }
-
     // Normal click toggles only this checkbox, preserving other selections.
     setSelectedIds((current) =>
       current.includes(leadId)
         ? current.filter((id) => id !== leadId)
         : [...current, leadId]
     );
-
     lastSelectedIndexRef.current = index;
   }
-
+  function handleSendSelectedLeads() {
+    const selectedLeads = leads
+      .filter((lead) => selectedIds.includes(lead.id))
+      .filter((lead) => {
+        const digits = String(lead.whatsapp_number ?? "").replace(/\D/g, "");
+        return digits.length >= 10 && digits.length <= 15;
+      })
+      .map((lead) => ({
+        id: lead.id,
+        name: lead.full_name || "Name not available",
+        phone: String(lead.whatsapp_number ?? "").replace(/\D/g, ""),
+        source: "meta_leads" as const,
+      }));
+    if (selectedIds.length === 0) {
+      window.alert("Pehle kam se kam ek Meta Lead select karein.");
+      return;
+    }
+    if (selectedLeads.length === 0) {
+      window.alert("Selected Leads mein valid WhatsApp number nahi mila.");
+      return;
+    }
+    if (selectedLeads.length > 100) {
+      window.alert("Ek baar mein maximum 100 Leads bhej sakte hain.");
+      return;
+    }
+    try {
+      sessionStorage.setItem(
+        "ec_meta_report_selected_leads",
+        JSON.stringify(selectedLeads),
+      );
+      window.location.href = "/admin/whatsapp?source=meta_leads&from=meta-report";
+    } catch {
+      window.alert("Selected Leads save nahi ho sake. Dobara try karein.");
+    }
+  }
   async function updateSelectedStatus(
     field: "community_joined" | "demo_attended" | "class_joined",
     value: boolean,
@@ -281,25 +311,21 @@ export default function MetaReportTable({
       window.alert("Pehle kam se kam ek Lead select karein.");
       return;
     }
-
     setSavingStatus(true);
     const { error } = await supabase
       .from("meta_leads")
       .update({ [field]: value })
       .in("id", selectedIds);
     setSavingStatus(false);
-
     if (error) {
       window.alert(`${label} status save nahi hua: ${error.message}`);
       return;
     }
-
     window.alert(`${selectedIds.length} Lead(s) ka ${label} status update ho gaya.`);
     setSelectedIds([]);
     lastSelectedIndexRef.current = null;
     onRefresh();
   }
-
   async function toggleLeadStatus(
     lead: MetaLead,
     field: "community_joined" | "demo_attended" | "class_joined",
@@ -312,14 +338,12 @@ export default function MetaReportTable({
       .update({ [field]: nextValue })
       .eq("id", lead.id);
     setSavingStatus(false);
-
     if (error) {
       window.alert(`${label} status save nahi hua: ${error.message}`);
       return;
     }
     onRefresh();
   }
-
   function toggleColumn(column: ColumnKey) {
     setVisibleColumns((current) => ({
       ...current,
@@ -359,6 +383,14 @@ export default function MetaReportTable({
           <span className="text-xs text-gray-500">
             Selected: {selectedIds.length}
           </span>
+          <button
+            type="button"
+            onClick={handleSendSelectedLeads}
+            disabled={savingStatus || selectedIds.length === 0}
+            className="rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Send Msg ({selectedIds.length})
+          </button>
           <select
             value=""
             disabled={savingStatus}
