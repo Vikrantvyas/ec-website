@@ -78,6 +78,7 @@ export default function WhatsAppBulkPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [templateId, setTemplateId] = useState("");
+  const [campaignName, setCampaignName] = useState("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [templateLoading, setTemplateLoading] = useState(false);
@@ -218,6 +219,10 @@ export default function WhatsAppBulkPage() {
   async function handleCreateCampaign() {
     setSuccess("");
     setError("");
+    if (!campaignName.trim()) {
+      setError("Campaign Name bharna zaroori hai.");
+      return;
+    }
     if (!selectedTemplate) {
       setError("Pehle WhatsApp template select karein.");
       return;
@@ -255,6 +260,8 @@ export default function WhatsAppBulkPage() {
           body: {
             to: recipients,
             recipients: structuredRecipients,
+            campaign_name: campaignName.trim(),
+            template_id: selectedTemplate.id,
             template_name: selectedTemplate.template_name,
             language_code: selectedTemplate.language_code,
           },
@@ -547,6 +554,20 @@ export default function WhatsAppBulkPage() {
               3. Campaign Summary
             </h2>
             <div className="mt-4 space-y-3 text-sm">
+              <div>
+                <label htmlFor="campaign-name" className="mb-1 block font-medium text-gray-700">
+                  Campaign Name <span className="text-red-600">*</span>
+                </label>
+                <input
+                  id="campaign-name"
+                  value={campaignName}
+                  onChange={(event) => setCampaignName(event.target.value)}
+                  maxLength={120}
+                  placeholder="e.g. October Meta Leads Follow-up"
+                  className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
+                  required
+                />
+              </div>
               <SummaryRow label="Source" value={contacts.length > 0 ? "Filtered Meta Report contacts" : "No source selected"} />
               <SummaryRow
                 label="Selected recipients"
@@ -577,6 +598,10 @@ export default function WhatsAppBulkPage() {
               onClick={async () => {
                 setError("");
                 setSuccess("");
+                if (!campaignName.trim()) {
+                  setError("Campaign Name bharna zaroori hai.");
+                  return;
+                }
                 if (!selectedTemplate) {
                   setError("Pehle WhatsApp template select karein.");
                   return;
@@ -615,6 +640,8 @@ export default function WhatsAppBulkPage() {
                       body: {
                         to: recipients,
                         recipients: structuredRecipients,
+                        campaign_name: campaignName.trim(),
+                        template_id: selectedTemplate.id,
                         template_name: selectedTemplate.template_name,
                         language_code: selectedTemplate.language_code,
                       },
