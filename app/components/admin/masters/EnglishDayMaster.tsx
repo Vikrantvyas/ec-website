@@ -379,7 +379,9 @@ export default function EnglishDayMaster({
               const { error: insertQuestionsError } =
                 await supabase
                   .from(questionTable)
-                  .insert(questionsData);
+                  
+.insert(questionsData as any);
+
 
               if (insertQuestionsError) throw insertQuestionsError;
             }
