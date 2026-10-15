@@ -210,7 +210,213 @@ export default function WhatsAppInboxPage() {
     const [botLoading, setBotLoading] = useState(false);
     const [activeBotPhones, setActiveBotPhones] = useState<string[]>([]);
     const [endingBot, setEndingBot] = useState(false);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+    const previousInboundIdsRef = useRef<Set<string>>(new Set());
+    const inboxInitializedRef = useRef(false);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    function playNotificationSound() {
+        const audio = audioContextRef.current;
 
+        if (!audio) return;
+
+        try {
+            if (audio.state === "suspended") {
+                void audio.resume();
+            }
+
+            const oscillator = audio.createOscillator();
+            const gain = audio.createGain();
+
+            oscillator.type = "sine";
+            oscillator.frequency.value = 880;
+            gain.gain.setValueAtTime(0.001, audio.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.25, audio.currentTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.3);
+
+            oscillator.connect(gain);
+            gain.connect(audio.destination);
+
+            oscillator.start();
+            oscillator.stop(audio.currentTime + 0.3);
+        } catch (error) {
+            console.error("Notification sound failed:", error);
+        }
+    }
+
+
+
+
+    function playNotificationSound() {
+        const audio = audioContextRef.current;
+        if (!audio) return;
+
+        void (async () => {
+            try {
+                if (audio.state === "suspended") {
+                    await audio.resume();
+                }
+
+                const now = audio.currentTime;
+
+                [1046, 1397].forEach((frequency, index) => {
+                    const start = now + index * 0.16;
+                    const oscillator = audio.createOscillator();
+                    const gain = audio.createGain();
+
+                    oscillator.type = "triangle";
+                    oscillator.frequency.value = frequency;
+
+                    gain.gain.setValueAtTime(0.001, start);
+                    gain.gain.linearRampToValueAtTime(0.5, start + 0.015);
+                    gain.gain.setValueAtTime(0.5, start + 0.12);
+                    gain.gain.linearRampToValueAtTime(0.001, start + 0.32);
+
+                    oscillator.connect(gain);
+                    gain.connect(audio.destination);
+
+                    oscillator.start(start);
+                    oscillator.stop(start + 0.33);
+                });
+            } catch (error) {
+                console.error("Notification sound failed:", error);
+            }
+        })();
+    }
+
+
+
+
+    async function enableInboxNotifications() {
+        try {
+            setError("");
+            setNotice("");
+
+            if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+                setError("Is browser mein Web Push supported nahi hai.");
+                return;
+            }
+
+            if (!("Notification" in window)) {
+                setError("Is browser mein notifications supported nahi hain.");
+                return;
+            }
+
+            if (Notification.permission === "denied") {
+                setError("Browser settings mein notifications allow karein.");
+                return;
+            }
+
+            if (Notification.permission === "default") {
+                const permission = await Notification.requestPermission();
+
+                if (permission !== "granted") {
+                    setError("Notification permission nahi mili.");
+                    return;
+                }
+            }
+
+            const { data: sessionData, error: sessionError } =
+                await supabase.auth.getSession();
+
+            const accessToken = sessionData.session?.access_token;
+
+            if (sessionError || !accessToken) {
+                setError("Login session nahi mila. Dobara login karein.");
+                return;
+            }
+
+            const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+
+            if (!vapidPublicKey) {
+                setError("VAPID public key .env.local mein nahi mili.");
+                return;
+            }
+
+            const registration = await navigator.serviceWorker.register("/sw.js");
+            await navigator.serviceWorker.ready;
+
+            const base64Key = vapidPublicKey
+                .replace(/-/g, "+")
+                .replace(/_/g, "/");
+
+            const paddedKey = base64Key.padEnd(
+                base64Key.length + ((4 - (base64Key.length % 4)) % 4),
+                "="
+            );
+
+            const applicationServerKey = Uint8Array.from(
+                atob(paddedKey),
+                (character) => character.charCodeAt(0)
+            );
+
+            let subscription = await registration.pushManager.getSubscription();
+
+            if (!subscription) {
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey,
+                });
+            }
+
+            const saveResponse = await fetch("/api/push", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    subscription: subscription.toJSON(),
+                }),
+            });
+
+            const saveResult = await saveResponse.json();
+
+            if (!saveResponse.ok || !saveResult.success) {
+                setError(saveResult.message || "Push subscription save nahi hui.");
+                return;
+            }
+
+            const AudioContextClass =
+                window.AudioContext ||
+                (window as typeof window & {
+                    webkitAudioContext?: typeof AudioContext;
+                }).webkitAudioContext;
+
+            if (AudioContextClass) {
+                const audio = new AudioContextClass();
+                await audio.resume();
+                audioContextRef.current = audio;
+            }
+
+            setNotificationsEnabled(true);
+            setNotice("Subscription save ho gayi. Test notification bhej rahe hain...");
+
+            const testResponse = await fetch("/api/push/test", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+
+            const testResult = await testResponse.json();
+
+            if (!testResponse.ok || !testResult.success) {
+                setError(
+                    "Subscription save ho gayi, lekin test notification fail hui: " +
+                    (testResult.message || "Unknown error")
+                );
+                return;
+            }
+
+            setNotice("Test push notification bhej di gayi. Browser/Android par check karein.");
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Push notifications enable nahi ho sake."
+            );
+        }
+    }
     const selectedBotActive = activeBotPhones.includes(
         normalizePhone(selectedPhone)
     );
@@ -265,6 +471,42 @@ export default function WhatsAppInboxPage() {
 
             const nextContacts = (contactsResult.data ?? []) as Contact[];
             const nextInbound = (inboundResult.data ?? []) as InboundMessage[];
+
+            if (inboxInitializedRef.current) {
+                const previousIds = previousInboundIdsRef.current;
+
+                const hasNewInbound = nextInbound.some(
+                    (message) => !previousIds.has(message.id)
+                );
+
+                if (hasNewInbound) {
+                    playNotificationSound();
+                }
+            }
+
+            previousInboundIdsRef.current = new Set(
+                nextInbound.map((message) => message.id)
+            );
+
+            inboxInitializedRef.current = true;
+
+            if (inboxInitializedRef.current) {
+                const previousIds = previousInboundIdsRef.current;
+
+                const hasNewInbound = nextInbound.some(
+                    (message) => !previousIds.has(message.id)
+                );
+
+                if (hasNewInbound) {
+                    playNotificationSound();
+                }
+            }
+
+            previousInboundIdsRef.current = new Set(
+                nextInbound.map((message) => message.id)
+            );
+
+            inboxInitializedRef.current = true;
             const nextLogs = (logsResult.data ?? []) as MessageLog[];
 
             setContacts(nextContacts);
@@ -363,7 +605,11 @@ export default function WhatsAppInboxPage() {
         // Fallback refresh in case the realtime connection is interrupted.
         const fallbackInterval = setInterval(() => {
             if (active) void loadInbox(false);
-        }, 30000);
+
+        
+}, 2000);
+
+
 
         return () => {
             active = false;
@@ -775,10 +1021,9 @@ export default function WhatsAppInboxPage() {
                         <div className="flex items-center gap-2">
                             <button
                                 type="button"
-                                onClick={() => void loadInbox(true)}
-                                disabled={loading}
                                 title="Refresh inbox"
-                                className="flex size-8 items-center justify-center rounded-full text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+                                onClick={() => void loadInbox()}
+                                className="..."
                             >
                                 <RefreshCw
                                     size={16}
@@ -786,7 +1031,17 @@ export default function WhatsAppInboxPage() {
                                 />
                             </button>
 
-                            <MessageSquare size={18} className="text-gray-500" />
+                            <button
+                                type="button"
+                                onClick={() => void enableInboxNotifications()}
+                                title="Enable sound and desktop notifications"
+                                className={`flex h-8 items-center gap-1 rounded-full px-2 text-xs font-medium ${notificationsEnabled
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    }`}
+                            >
+                                🔔 {notificationsEnabled ? "On" : "Notify"}
+                            </button>
                         </div>
                     </div>
 
@@ -1087,46 +1342,46 @@ export default function WhatsAppInboxPage() {
                                     {botLoading ? "Starting..." : "Start Bot"}
                                 </button>
                                 {selectedBotActive && (
-                                <button
-                                    type="button"
-                                    disabled={endingBot}
-                                    onClick={async () => {
-                                        if (!selectedPhone || endingBot) return;
+                                    <button
+                                        type="button"
+                                        disabled={endingBot}
+                                        onClick={async () => {
+                                            if (!selectedPhone || endingBot) return;
 
-                                        setEndingBot(true);
-                                        setError("");
-                                        setNotice("");
+                                            setEndingBot(true);
+                                            setError("");
+                                            setNotice("");
 
-                                        try {
-                                            const phone = normalizePhone(selectedPhone);
+                                            try {
+                                                const phone = normalizePhone(selectedPhone);
 
-                                            const { error: endError } = await supabase
-                                                .from("whatsapp_bot_sessions")
-                                                .update({ status: "paused" })
-                                                .eq("phone_number", phone)
-                                                .eq("status", "active");
+                                                const { error: endError } = await supabase
+                                                    .from("whatsapp_bot_sessions")
+                                                    .update({ status: "paused" })
+                                                    .eq("phone_number", phone)
+                                                    .eq("status", "active");
 
-                                            if (endError) throw endError;
+                                                if (endError) throw endError;
 
-                                            await loadInbox(false);
-                                            setNotice("Bot Session successfully ended.");
-                                        } catch (err) {
-                                            setError(
-                                                err instanceof Error
-                                                    ? err.message
-                                                    : "Bot Session end nahi hua."
-                                            );
-                                        } finally {
-                                            setEndingBot(false);
-                                        }
-                                    }}
-                                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                                >
-                                    {endingBot ? "Ending..." : "End Bot"}
-                                </button>
-                            )}
+                                                await loadInbox(false);
+                                                setNotice("Bot Session successfully ended.");
+                                            } catch (err) {
+                                                setError(
+                                                    err instanceof Error
+                                                        ? err.message
+                                                        : "Bot Session end nahi hua."
+                                                );
+                                            } finally {
+                                                setEndingBot(false);
+                                            }
+                                        }}
+                                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                                    >
+                                        {endingBot ? "Ending..." : "End Bot"}
+                                    </button>
+                                )}
                             </div>
-                            
+
                             {/* Messages */}
                             <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto bg-[#efeae2] px-3 py-4 sm:px-5 md:px-8">
                                 <div
