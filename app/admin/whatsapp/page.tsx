@@ -78,6 +78,7 @@ export default function WhatsAppBulkPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [templateId, setTemplateId] = useState("");
+  const [headerImageUrl, setHeaderImageUrl] = useState("");
   const [campaignName, setCampaignName] = useState("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -162,6 +163,7 @@ export default function WhatsAppBulkPage() {
   const selectedTemplate = templates.find(
     (item) => item.id === templateId
   );
+  const templateHasImageHeader = Array.isArray(selectedTemplate?.components) && selectedTemplate.components.some((item: any) => item?.type?.toUpperCase() === "HEADER" && item?.format?.toUpperCase() === "IMAGE");
   const filteredContacts = useMemo(() => {
     const term = search.trim().toLowerCase();
     return contacts.filter((contact) => {
@@ -231,6 +233,10 @@ export default function WhatsAppBulkPage() {
       setError("Selected template Active nahi hai.");
       return;
     }
+    if (templateHasImageHeader && !/^https:\/\//i.test(headerImageUrl.trim())) {
+      setError("Image Header wale template ke liye public HTTPS image URL dena zaroori hai.");
+      return;
+    }
     const recipients = Array.from(
       new Set([
         ...selectedContacts.map((contact) => contact.phone),
@@ -264,9 +270,20 @@ export default function WhatsAppBulkPage() {
             template_id: selectedTemplate.id,
             template_name: selectedTemplate.template_name,
             language_code: selectedTemplate.language_code,
+            header_image_url: templateHasImageHeader
+  ? headerImageUrl.trim()
+  : null,
           },
         });
-      if (invokeError) throw invokeError;
+      if (invokeError) {
+        const details = await (invokeError as any).context?.json?.().catch(() => null);
+        throw new Error(
+          details?.error ||
+          details?.message ||
+          invokeError.message ||
+          "WhatsApp Edge Function failed"
+        );
+      }
       if (!data?.success) {
         throw new Error(data?.error || "Messages send nahi ho sake.");
       }
@@ -318,7 +335,6 @@ export default function WhatsAppBulkPage() {
           Refresh
         </button>
       </div>
-      
       {error && (
         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
           <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
@@ -352,7 +368,7 @@ export default function WhatsAppBulkPage() {
           value={`₹${estimatedCost.toFixed(2)}`}
         />
       </div>
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.8fr)]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)\_minmax(320px,0.8fr)]">
         <section className="min-w-0 rounded-xl border bg-white">
           <div className="border-b p-4">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -503,6 +519,13 @@ export default function WhatsAppBulkPage() {
                 </option>
               ))}
             </select>
+            {templateHasImageHeader && (
+              <div className="mt-4">
+                <label htmlFor="template-header-image" className="block text-sm font-medium text-gray-700">Template Header Image URL <span className="text-red-600">*</span></label>
+                <input id="template-header-image" type="url" value={headerImageUrl} onChange={(event) => setHeaderImageUrl(event.target.value)} placeholder="https://example.com/image.jpg" className="mt-2 w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-green-600" />
+                <p className="mt-1 text-xs text-gray-500">Public HTTPS image URL dein. Test se pehle browser mein URL kholkar check karein.</p>
+              </div>
+            )}
             {selectedTemplate && (
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
@@ -595,75 +618,7 @@ export default function WhatsAppBulkPage() {
               category, recipient country, current pricing and applicable taxes.
             </p>
             <button
-              onClick={async () => {
-                setError("");
-                setSuccess("");
-                if (!campaignName.trim()) {
-                  setError("Campaign Name bharna zaroori hai.");
-                  return;
-                }
-                if (!selectedTemplate) {
-                  setError("Pehle WhatsApp template select karein.");
-                  return;
-                }
-                if (selectedTemplate.status?.toLowerCase() !== "active") {
-                  setError("Selected template Active nahi hai.");
-                  return;
-                }
-                const recipients = Array.from(
-                  new Set([
-                    ...selectedContacts.map((contact) => contact.phone),
-                    ...pastedRecipients,
-                  ]),
-                );
-                const structuredRecipients = recipients.map((phone) => {
-                  const contact = selectedContacts.find((item) => item.phone === phone);
-                  return {
-                    phone,
-                    source_type: contact?.source ?? "manual",
-                    source_record_id: contact?.id ?? null,
-                  };
-                });
-                if (recipients.length === 0) {
-                  setError("Pehle mobile numbers paste karein ya contacts select karein.");
-                  return;
-                }
-                if (recipients.length > 100) {
-                  setError("Ek campaign mein maximum 100 unique numbers bhejein.");
-                  return;
-                }
-                setLoading(true);
-                try {
-                  const { data, error } = await supabase.functions.invoke(
-                    "whatsapp-bulk-send",
-                    {
-                      body: {
-                        to: recipients,
-                        recipients: structuredRecipients,
-                        campaign_name: campaignName.trim(),
-                        template_id: selectedTemplate.id,
-                        template_name: selectedTemplate.template_name,
-                        language_code: selectedTemplate.language_code,
-                      },
-                    },
-                  );
-                  if (error) throw error;
-                  if (!data?.success) {
-                    throw new Error(data?.error || "Message sending failed.");
-                  }
-                  setSuccess(
-                    `Total: ${data.total ?? 0} | Meta accepted: ${data.accepted ?? 0} | Failed: ${data.failed ?? 0}`,
-                  );
-                } catch (err: unknown) {
-                  setError(
-                    err instanceof Error
-                      ? err.message
-                      : "Test failed.",
-                  );
-                } finally {
-                  setLoading(false);
-                }
-              }}
+              onClick={handleCreateCampaign}
               disabled={loading}
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
             >
@@ -676,7 +631,6 @@ export default function WhatsAppBulkPage() {
           </section>
         </div>
       </div>
-      
     </div>
   );
 }

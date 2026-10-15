@@ -23,6 +23,84 @@ const initialForm: FormData = {
     demo_class_time: "",
     knows_zoom: "",
 };
+
+const TIME_SEPARATOR = " || ";
+
+const DEMO_TIME_OPTIONS = [
+    "सुबह 8 बजे",
+    "सुबह 9 बजे",
+    "सुबह 10 बजे",
+    "सुबह 11 बजे",
+    "दोपहर 12 बजे",
+    "दोपहर 1 बजे",
+    "दोपहर 2 बजे",
+    "दोपहर 3 बजे",
+    "शाम 4 बजे",
+    "शाम 5 बजे",
+    "शाम 6 बजे",
+    "शाम 7 बजे",
+    "रात 8 बजे",
+    "रात 9 बजे",
+];
+
+const splitDemoTimes = (value: string) => {
+    if (!value.includes(TIME_SEPARATOR)) {
+        return { weekday: "", sunday: "" };
+    }
+
+    const [weekday, sunday] = value.split(TIME_SEPARATOR);
+
+    return {
+        weekday: weekday || "",
+        sunday: sunday || "",
+    };
+};
+
+const getCommunityKey = (value: string) => {
+    const oldOptions = [
+        "सुबह 8 से 11 के बीच",
+        "दोपहर 11 से 4 के बीच",
+        "शाम 4 से 7 के बीच",
+        "शाम 7 के बाद",
+    ];
+
+    if (oldOptions.includes(value)) return value;
+
+    const weekdayTime = value;
+
+   if (
+    ["सुबह 8 बजे", "सुबह 9 बजे", "सुबह 10 बजे", "सुबह 11 बजे"].includes(
+        weekdayTime
+    )
+) {
+    return "सुबह 8 से 11 के बीच";
+}
+
+    if (
+        [
+            "सुबह 11 बजे",
+            "दोपहर 12 बजे",
+            "दोपहर 1 बजे",
+            "दोपहर 2 बजे",
+            "दोपहर 3 बजे",
+        ].includes(weekdayTime)
+    ) {
+        return "दोपहर 11 से 4 के बीच";
+    }
+
+    if (
+        ["शाम 4 बजे", "शाम 5 बजे", "शाम 6 बजे"].includes(weekdayTime)
+    ) {
+        return "शाम 4 से 7 के बीच";
+    }
+
+    if (["शाम 7 बजे", "रात 8 बजे", "रात 9 बजे"].includes(weekdayTime)) {
+        return "शाम 7 के बाद";
+    }
+
+    return "";
+};
+
 const formatName = (name: string) =>
     name
         .trim()
@@ -67,7 +145,8 @@ function EnquiryPage() {
     const [editingExistingId, setEditingExistingId] =
         useState<string | null>(null);
     const [questionStep, setQuestionStep] = useState(0);
-
+    const [weekdayTime, setWeekdayTime] = useState("");
+    const [sundayTime, setSundayTime] = useState("");
     const nameIsValid =
         formData.full_name.trim().length >= 2 &&
         /^[A-Za-z\u0900-\u097F ]+$/.test(formData.full_name.trim());
@@ -93,8 +172,8 @@ function EnquiryPage() {
         const value = e.target.value;
 
         if (/^[A-Za-z\u0900-\u097F ]*$/.test(value)) {
-    updateField("full_name", value);
-}
+            updateField("full_name", value);
+        }
     };
 
     const handlePhoneChange = (
@@ -114,7 +193,7 @@ function EnquiryPage() {
             .select(
                 "id, created_time, full_name, whatsapp_number, age, education, english_level, demo_class_time, knows_zoom"
             )
-            
+
             .eq("whatsapp_number", phone)
             .order("created_time", { ascending: false })
             .limit(1);
@@ -183,7 +262,7 @@ function EnquiryPage() {
         ) {
             return;
         }
-
+        
         let error;
         let submittedId: string | null = editingExistingId;
         if (editingExistingId) {
@@ -263,7 +342,7 @@ function EnquiryPage() {
         if (!editingExistingId) {
             (window as any).fbq?.("track", "Lead");
         }
-
+        
         setSubmittedLeadId(submittedId);
         setSubmitted(true);
 
@@ -418,7 +497,10 @@ function EnquiryPage() {
                                             knows_zoom:
                                                 existingEnquiry.knows_zoom || "",
                                         });
+                                        const savedTimes = splitDemoTimes(existingEnquiry.demo_class_time || "");
 
+                                        setWeekdayTime(savedTimes.weekday);
+                                        setSundayTime(savedTimes.sunday);
                                         setEditingExistingId(existingEnquiry.id);
                                         setExistingEnquiry(null);
                                         setStarted(true);
@@ -484,10 +566,11 @@ function EnquiryPage() {
             },
         } as const;
 
-        const selectedCommunity =
-            communityData[
-            formData.demo_class_time as keyof typeof communityData
-            ];
+        const communityKey = getCommunityKey(formData.demo_class_time);
+
+        const selectedCommunity = communityData[
+            communityKey as keyof typeof communityData
+        ];
 
         return (
             <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-green-50 px-4 py-8">
@@ -612,14 +695,8 @@ function EnquiryPage() {
 
                 {/* HEADER */}
                 <div className="mb-5 text-center">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                        English Club
-                    </h1>
 
-                    <p className="mt-1 text-sm sm:text-base text-gray-600">
-                        अपना Perfect Demo Class Time जानने के लिए
-                        कुछ आसान सवालों के जवाब दें।
-                    </p>
+
                 </div>
                 {/* FIRST SCREEN JOURNEY */}
                 {!started && (
@@ -630,7 +707,7 @@ function EnquiryPage() {
                             </p>
 
                             <p className="mt-1 text-sm text-gray-600">
-                                अगले 2 महीनों में हमें अपना लक्ष्‍य पाना ही है
+                                अपना Perfect Demo Class Time जानने के लिए कुछ आसान सवालों के जवाब दें।
                             </p>
                         </div>
 
@@ -940,47 +1017,80 @@ function EnquiryPage() {
                                 </div>
                             )}
 
+
+                            {/* QUESTION 4 — DEMO TIME */}
+
                             {/* QUESTION 4 — DEMO TIME */}
                             {questionStep === 4 && (
-                                <div>
-                                    <label className="mb-4 block text-lg font-semibold text-gray-800">
-                                        आप फ्री डेमो क्लास कब ज्वाइन करना चाहेंगे? *
-                                    </label>
+                                <div className="space-y-6">
+                                    <h2 className="text-lg font-bold text-gray-800">
+                                        आप किस समय Demo Class ले सकते हैं? *
+                                    </h2>
 
-                                    <div className="space-y-2">
+                                    {/* Monday to Saturday */}
+                                    <div>
+
+
                                         {[
-                                            "सुबह 8 से 11 के बीच",
-                                            "दोपहर 11 से 4 के बीच",
-                                            "शाम 4 से 7 के बीच",
-                                            "शाम 7 के बाद",
-                                        ].map((option) => (
-                                            <button
-                                                type="button"
-                                                key={option}
-                                                onClick={() =>
-                                                    handleOption(
-                                                        "demo_class_time",
-                                                        option
-                                                    )
-                                                }
-                                                className={optionClass(
-                                                    formData.demo_class_time ===
-                                                    option
-                                                )}
-                                            >
-                                                <span className="mr-3">
-                                                    {formData.demo_class_time ===
-                                                        option
-                                                        ? "◉"
-                                                        : "○"}
-                                                </span>
-
-                                                {option}
-                                            </button>
+                                            {
+                                                title: "🌅 सुबह",
+                                                times: [
+                                                    "सुबह 8 बजे",
+                                                    "सुबह 9 बजे",
+                                                    "सुबह 10 बजे",
+                                                    "सुबह 11 बजे",
+                                                ],
+                                            },
+                                            {
+                                                title: "☀️ दोपहर",
+                                                times: [
+                                                    "दोपहर 12 बजे",
+                                                    "दोपहर 1 बजे",
+                                                    "दोपहर 2 बजे",
+                                                    "दोपहर 3 बजे",
+                                                ],
+                                            },
+                                            {
+                                                title: "🌆 शाम",
+                                                times: ["शाम 4 बजे", "शाम 5 बजे", "शाम 6 बजे", "शाम 7 बजे"],
+                                            },
+                                            {
+                                                title: "🌙 रात",
+                                                times: ["रात 8 बजे", "रात 9 बजे"],
+                                            },
+                                        ].map((section) => (
+                                            <div key={section.title} className="mb-4">
+                                                <p className="mb-2 text-sm font-semibold text-gray-600">
+                                                    {section.title}
+                                                </p>
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    {section.times.map((time) => (
+                                                        <button
+                                                            key={time}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                updateField("demo_class_time", time);
+                                                                setQuestionStep(5);
+                                                            }}
+                                                            className={`min-h-12 rounded-xl border-2 px-2 py-3 text-sm font-semibold transition ${formData.demo_class_time === time
+                                                                ? "border-blue-600 bg-blue-600 text-white"
+                                                                : "border-gray-200 bg-white text-gray-800 hover:border-blue-400"
+                                                                }`}
+                                                        >
+                                                            {time.replace("सुबह ", "").replace("दोपहर ", "").replace("शाम ", "").replace("रात ", "")}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         ))}
                                     </div>
+
+
+
+                                    
                                 </div>
                             )}
+
 
                             {/* QUESTION 5 — ZOOM */}
                             {questionStep === 5 && (
