@@ -214,35 +214,81 @@ export default function WhatsAppInboxPage() {
     const previousInboundIdsRef = useRef<Set<string>>(new Set());
     const inboxInitializedRef = useRef(false);
     const audioContextRef = useRef<AudioContext | null>(null);
-    function playNotificationSound() {
-        const audio = audioContextRef.current;
 
-        if (!audio) return;
+    useEffect(() => {
+        const unlockAudio = () => {
+            if (audioContextRef.current) {
+                if (audioContextRef.current.state === "suspended") {
+                    void audioContextRef.current.resume();
+                }
+                return;
+            }
 
-        try {
+            const AudioContextClass =
+                window.AudioContext ||
+                (window as typeof window & {
+                    webkitAudioContext?: typeof AudioContext;
+                }).webkitAudioContext;
+
+            if (!AudioContextClass) return;
+
+            const audio = new AudioContextClass();
+            audioContextRef.current = audio;
+
             if (audio.state === "suspended") {
                 void audio.resume();
             }
+        };
 
-            const oscillator = audio.createOscillator();
-            const gain = audio.createGain();
+        window.addEventListener("pointerdown", unlockAudio);
+        window.addEventListener("keydown", unlockAudio);
 
-            oscillator.type = "sine";
-            oscillator.frequency.value = 880;
-            gain.gain.setValueAtTime(0.001, audio.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.25, audio.currentTime + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.3);
+        return () => {
+            window.removeEventListener("pointerdown", unlockAudio);
+            window.removeEventListener("keydown", unlockAudio);
+        };
+    }, []);
 
-            oscillator.connect(gain);
-            gain.connect(audio.destination);
+    function playNotificationSound() {
+        const audio = audioContextRef.current;
+        if (!audio) return;
 
-            oscillator.start();
-            oscillator.stop(audio.currentTime + 0.3);
-        } catch (error) {
-            console.error("Notification sound failed:", error);
-        }
+        void (async () => {
+            try {
+                if (audio.state === "suspended") {
+                    await audio.resume();
+                }
+
+                const now = audio.currentTime;
+
+                [1046, 1397].forEach((frequency, index) => {
+                    const start = now + index * 0.16;
+                    const oscillator = audio.createOscillator();
+                    const gain = audio.createGain();
+
+                    oscillator.type = "triangle";
+                    oscillator.frequency.value = frequency;
+
+                    gain.gain.setValueAtTime(0.001, start);
+                    gain.gain.linearRampToValueAtTime(0.5, start + 0.015);
+                    gain.gain.setValueAtTime(0.5, start + 0.12);
+                    gain.gain.linearRampToValueAtTime(0.001, start + 0.32);
+
+                    oscillator.connect(gain);
+                    gain.connect(audio.destination);
+
+                    oscillator.start(start);
+                    oscillator.stop(start + 0.33);
+                });
+            } catch (error) {
+                console.error("Notification sound failed:", error);
+            }
+        })();
     }
-    
+
+
+
+
     async function enableInboxNotifications() {
         try {
             setError("");
@@ -333,17 +379,13 @@ export default function WhatsAppInboxPage() {
                 return;
             }
 
-            const AudioContextClass =
-                window.AudioContext ||
-                (window as typeof window & {
-                    webkitAudioContext?: typeof AudioContext;
-                }).webkitAudioContext;
 
-            if (AudioContextClass) {
-                const audio = new AudioContextClass();
+            const audio = audioContextRef.current;
+
+            if (audio && audio.state === "suspended") {
                 await audio.resume();
-                audioContextRef.current = audio;
             }
+
 
             setNotificationsEnabled(true);
             setNotice("Subscription save ho gayi. Test notification bhej rahe hain...");
@@ -427,25 +469,11 @@ export default function WhatsAppInboxPage() {
             ]);
 
             const nextContacts = (contactsResult.data ?? []) as Contact[];
+
+            
             const nextInbound = (inboundResult.data ?? []) as InboundMessage[];
 
-            if (inboxInitializedRef.current) {
-                const previousIds = previousInboundIdsRef.current;
-
-                const hasNewInbound = nextInbound.some(
-                    (message) => !previousIds.has(message.id)
-                );
-
-                if (hasNewInbound) {
-                    playNotificationSound();
-                }
-            }
-
-            previousInboundIdsRef.current = new Set(
-                nextInbound.map((message) => message.id)
-            );
-
-            inboxInitializedRef.current = true;
+            const currentIds = new Set(nextInbound.map((message) => message.id));
 
             if (inboxInitializedRef.current) {
                 const previousIds = previousInboundIdsRef.current;
@@ -459,12 +487,11 @@ export default function WhatsAppInboxPage() {
                 }
             }
 
-            previousInboundIdsRef.current = new Set(
-                nextInbound.map((message) => message.id)
-            );
-
+            previousInboundIdsRef.current = currentIds;
             inboxInitializedRef.current = true;
+
             const nextLogs = (logsResult.data ?? []) as MessageLog[];
+
 
             setContacts(nextContacts);
             setInbound(nextInbound);
