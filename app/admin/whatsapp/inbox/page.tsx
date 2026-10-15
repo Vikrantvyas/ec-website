@@ -242,50 +242,7 @@ export default function WhatsAppInboxPage() {
             console.error("Notification sound failed:", error);
         }
     }
-
-
-
-
-    function playNotificationSound() {
-        const audio = audioContextRef.current;
-        if (!audio) return;
-
-        void (async () => {
-            try {
-                if (audio.state === "suspended") {
-                    await audio.resume();
-                }
-
-                const now = audio.currentTime;
-
-                [1046, 1397].forEach((frequency, index) => {
-                    const start = now + index * 0.16;
-                    const oscillator = audio.createOscillator();
-                    const gain = audio.createGain();
-
-                    oscillator.type = "triangle";
-                    oscillator.frequency.value = frequency;
-
-                    gain.gain.setValueAtTime(0.001, start);
-                    gain.gain.linearRampToValueAtTime(0.5, start + 0.015);
-                    gain.gain.setValueAtTime(0.5, start + 0.12);
-                    gain.gain.linearRampToValueAtTime(0.001, start + 0.32);
-
-                    oscillator.connect(gain);
-                    gain.connect(audio.destination);
-
-                    oscillator.start(start);
-                    oscillator.stop(start + 0.33);
-                });
-            } catch (error) {
-                console.error("Notification sound failed:", error);
-            }
-        })();
-    }
-
-
-
-
+    
     async function enableInboxNotifications() {
         try {
             setError("");
@@ -606,8 +563,8 @@ export default function WhatsAppInboxPage() {
         const fallbackInterval = setInterval(() => {
             if (active) void loadInbox(false);
 
-        
-}, 2000);
+
+        }, 2000);
 
 
 
