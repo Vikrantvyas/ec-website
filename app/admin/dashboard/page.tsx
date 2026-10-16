@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+
 import {
   UserPlus,
   Users,
@@ -15,10 +16,15 @@ import {
   List,
   Layers,
   ReceiptText,
-  BookOpen,      // ✅ English
-  User,          // ✅ User
-  BarChart3,     // ✅ Meta Report
+  BookOpen,
+  User,
+  BarChart3,
+  MessageCircle,
+  Inbox,
+  Bot,
+  FileText,
 } from "lucide-react";
+
 
 export default function AdminDashboard() {
 
@@ -44,6 +50,11 @@ export default function AdminDashboard() {
     // ✅ NEW ADDED
     { name: "English", href: "/admin/english", icon: BookOpen },
     { name: "User", href: "/admin/users", icon: User },
+
+{ name: "WhatsApp", href: "/admin/whatsapp", icon: MessageCircle },
+{ name: "Inbox", href: "/admin/whatsapp/inbox", icon: Inbox },
+{ name: "Bots", href: "/admin/whatsapp/bots", icon: Bot },
+{ name: "Templates", href: "/admin/whatsapp/templates", icon: FileText },
 
     { name: "Reports", href: "/admin/reports", icon: FileBarChart },
 

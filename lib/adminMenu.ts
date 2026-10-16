@@ -17,6 +17,9 @@ import {
   ReceiptText,
   ClipboardList,
   MessageCircle,
+  Inbox,
+  Bot,
+  FileText,
 } from "lucide-react";
 
 export const adminMenu = [
@@ -45,4 +48,9 @@ export const adminMenu = [
   { name: "Settings", href: "/admin/settings", icon: Settings },
 
   { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageCircle },
+  
+  { name: "Inbox", href: "/admin/whatsapp/inbox", icon: Inbox },
+  { name: "Bots", href: "/admin/whatsapp/bots", icon: Bot },
+  { name: "Templates", href: "/admin/whatsapp/templates", icon: FileText },
+
 ];
