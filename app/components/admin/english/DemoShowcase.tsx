@@ -1195,30 +1195,30 @@ LOAD COURSE TOPICS FOR DEMO
                                                     >
 
                                                         {position === "center" ? (
-    <div
-        className="w-full h-full relative"
-        onWheel={(e) =>
-            handleCarouselWheel(
-                e,
-                currentIndex,
-                videos.length,
-                setSelectedVideoIndex
-            )
-        }
-    >
-        <iframe
-            src={
-                videoId
-                    ? `https://www.youtube.com/embed/${videoId}`
-                    : video.video_url
-            }
-            title={video.name}
-            className="w-full h-full rounded-2xl pointer-events-none"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-        />
-    </div>
-) : (
+                                                            <div
+                                                                className="w-full h-full relative"
+                                                                onWheel={(e) =>
+                                                                    handleCarouselWheel(
+                                                                        e,
+                                                                        currentIndex,
+                                                                        videos.length,
+                                                                        setSelectedVideoIndex
+                                                                    )
+                                                                }
+                                                            >
+                                                                <iframe
+                                                                    src={
+                                                                        videoId
+                                                                            ? `https://www.youtube.com/embed/${videoId}`
+                                                                            : video.video_url
+                                                                    }
+                                                                    title={video.name}
+                                                                    className="w-full h-full rounded-2xl pointer-events-none"
+                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                    allowFullScreen
+                                                                />
+                                                            </div>
+                                                        ) : (
                                                             <div className="relative w-full h-full">
 
                                                                 {thumbnail ? (

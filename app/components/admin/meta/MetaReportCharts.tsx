@@ -263,7 +263,7 @@ export default function MetaReportCharts({
     "english_level"
   );
 
-   const demoTimes = getCounts(
+  const demoTimes = getCounts(
     leads,
     "demo_class_time"
   );

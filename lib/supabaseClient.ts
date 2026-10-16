@@ -30,4 +30,5 @@ export async function getUserPermissions() {
     .single();
 
   return roleData?.permissions || [];
+  
 }
