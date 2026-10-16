@@ -51,10 +51,10 @@ export default function AdminDashboard() {
     { name: "English", href: "/admin/english", icon: BookOpen },
     { name: "User", href: "/admin/users", icon: User },
 
-{ name: "WhatsApp", href: "/admin/whatsapp", icon: MessageCircle },
-{ name: "Inbox", href: "/admin/whatsapp/inbox", icon: Inbox },
-{ name: "Bots", href: "/admin/whatsapp/bots", icon: Bot },
-{ name: "Templates", href: "/admin/whatsapp/templates", icon: FileText },
+    { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageCircle },
+    { name: "Inbox", href: "/admin/whatsapp/inbox", icon: Inbox },
+    { name: "Bots", href: "/admin/whatsapp/bots", icon: Bot },
+    { name: "Templates", href: "/admin/whatsapp/templates", icon: FileText },
 
     { name: "Reports", href: "/admin/reports", icon: FileBarChart },
 
@@ -85,7 +85,15 @@ export default function AdminDashboard() {
               className="cursor-pointer bg-white rounded-xl shadow hover:shadow-md transition p-4 flex flex-col items-center justify-center text-center"
             >
 
-              <Icon className="w-8 h-8 mb-2 text-blue-600" />
+              
+<Icon
+  className={`w-8 h-8 mb-2 ${
+    ["WhatsApp", "Inbox", "Bots", "Templates"].includes(item.name)
+      ? "text-green-600"
+      : "text-blue-600"
+  }`}
+/>
+
 
               <div className="text-sm font-medium">
                 {item.name}
