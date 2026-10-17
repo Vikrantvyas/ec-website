@@ -37,8 +37,8 @@ type BotNode = {
     question: string;
     type: "buttons" | "list" | "text";
     options: BotOption[];
+    delayMinutes?: number;
 };
-
 type BotFlow = {
     nodes: BotNode[];
 };
@@ -96,7 +96,12 @@ function normalizeFlow(value: unknown): BotFlow {
         "nodes" in value &&
         Array.isArray((value as BotFlow).nodes)
     ) {
-        return value as BotFlow;
+        return {
+    nodes: (value as BotFlow).nodes.map((node) => ({
+        ...node,
+        delayMinutes: node.delayMinutes ?? 0,
+    })),
+};
     }
 
     return { nodes: [] };
@@ -978,13 +983,9 @@ export default function WhatsAppBotsPage() {
                                         onChange={(event) =>
                                             setTriggerKeyword(event.target.value)
                                         }
-                                        placeholder="e.g. ADMISSION"
+                                        placeholder="Phrases या words ko # se alag karein"
                                     />
-                                    <span className="block text-xs font-normal text-slate-500">
-                                        अभी यह keyword केवल configuration में Save होगा। इसे
-                                        वास्तविक automatic trigger बनाने के लिए webhook integration
-                                        आवश्यक है।
-                                    </span>
+                                   
                                 </label>
                             )}
                         </section>
