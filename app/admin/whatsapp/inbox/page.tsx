@@ -1232,66 +1232,111 @@ export default function WhatsAppInboxPage() {
                                                 throw new Error("Is Bot mein koi Question nahi hai.");
                                             }
 
-                                            // Step 1: First question ke reply buttons prepare karein
-                                            const firstNode = nodes[0];
+                                            // Step 1: Pehla Question prepare karein
+const firstNode = nodes[0];
 
-                                            if (firstNode.type !== "buttons") {
-                                                throw new Error("First question ka type buttons hona chahiye.");
-                                            }
+if (!firstNode.id || !firstNode.question?.trim()) {
+    throw new Error("First question ka message khaali hai.");
+}
 
-                                            const options = Array.isArray(firstNode.options)
-                                                ? firstNode.options
-                                                : [];
+const options = Array.isArray(firstNode.options)
+    ? firstNode.options
+    : [];
 
-                                            if (options.length < 1 || options.length > 3) {
-                                                throw new Error("Reply Buttons ke liye 1 se 3 options zaroori hain.");
-                                            }
+let requestBody: Record<string, unknown>;
+let loggedMessage = firstNode.question;
+let loggedMessageType = "text";
 
-                                            // Step 2: WhatsApp par pehla question bhejein
-                                            const { data: sendData, error: sendError } =
-                                                await supabase.functions.invoke("whatsapp-send", {
-                                                    body: {
-                                                        to: phone,
-                                                        type: "buttons",
-                                                        message: firstNode.question,
-                                                        buttons: options.map((option: { id: string; title: string }) => ({
-                                                            id: option.id,
-                                                            title: option.title,
-                                                        })),
-                                                    },
-                                                });
+if (firstNode.type === "text") {
+    requestBody = {
+        to: phone,
+        type: "text",
+        message: firstNode.question,
+    };
+} else if (firstNode.type === "buttons") {
+    if (options.length < 1 || options.length > 3) {
+        throw new Error("Reply Buttons ke liye 1 se 3 options zaroori hain.");
+    }
 
-                                            if (sendError) throw sendError;
+    requestBody = {
+        to: phone,
+        type: "buttons",
+        message: firstNode.question,
+        buttons: options.map((option: { id: string; title: string }) => ({
+            id: option.id,
+            title: option.title,
+        })),
+    };
 
-                                            if (!sendData?.success || !sendData?.message_id) {
-                                                throw new Error(sendData?.error || "Pehla WhatsApp question send nahi hua.");
-                                            }
+    loggedMessageType = "interactive";
+    loggedMessage += "\n" + options
+        .map((option: { title: string }) => `• ${option.title}`)
+        .join("\n");
+} else if (firstNode.type === "list") {
+    if (options.length < 1 || options.length > 10) {
+        throw new Error("List ke liye 1 se 10 options zaroori hain.");
+    }
 
-                                            // Step 3: Message log save karein
-                                            const { data: contact } = await supabase
-                                                .from("whatsapp_contacts")
-                                                .select("id")
-                                                .eq("phone_number", phone)
-                                                .maybeSingle();
+    requestBody = {
+        to: phone,
+        type: "list",
+        message: firstNode.question,
+        button_text: "Options",
+        sections: [
+            {
+                title: "Options",
+                rows: options.map(
+                    (option: { id: string; title: string }) => ({
+                        id: option.id,
+                        title: option.title,
+                    })
+                ),
+            },
+        ],
+    };
 
-                                            const { error: logError } = await supabase
-                                                .from("whatsapp_message_logs")
-                                                .insert({
-                                                    contact_id: contact?.id ?? null,
-                                                    direction: "outbound",
-                                                    message_id: sendData.message_id,
-                                                    message_type: "interactive",
-                                                    message_text:
-                                                        firstNode.question +
-                                                        "\n" +
-                                                        options.map((option: { id: string; title: string }) => `• ${option.title}`).join("\n"),
-                                                    status: sendData.initial_status ?? "accepted",
-                                                    event_at: new Date().toISOString(),
-                                                });
+    loggedMessageType = "interactive";
+    loggedMessage += "\n" + options
+        .map((option: { title: string }) => `• ${option.title}`)
+        .join("\n");
+} else {
+    throw new Error("Question type Text, Buttons ya List hona chahiye.");
+}
 
-                                            if (logError) {
-                                                console.error("Bot message log save failed:", logError.message);
-                                            }
+// Step 2: WhatsApp par pehla question bhejein
+const { data: sendData, error: sendError } =
+    await supabase.functions.invoke("whatsapp-send", {
+        body: requestBody,
+    });
+
+if (sendError) throw sendError;
+
+if (!sendData?.success || !sendData?.message_id) {
+    throw new Error(sendData?.error || "Pehla WhatsApp question send nahi hua.");
+}
+
+// Step 3: Message log save karein
+const { data: contact } = await supabase
+    .from("whatsapp_contacts")
+    .select("id")
+    .eq("phone_number", phone)
+    .maybeSingle();
+
+const { error: logError } = await supabase
+    .from("whatsapp_message_logs")
+    .insert({
+        contact_id: contact?.id ?? null,
+        direction: "outbound",
+        message_id: sendData.message_id,
+        message_type: loggedMessageType,
+        message_text: loggedMessage,
+        status: sendData.initial_status ?? "accepted",
+        event_at: new Date().toISOString(),
+    });
+
+if (logError) {
+    console.error("Bot message log save failed:", logError.message);
+}
 
                                             // Step 4: Session create karein
                                             const { error: insertError } = await supabase

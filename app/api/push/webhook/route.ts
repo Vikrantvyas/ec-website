@@ -78,6 +78,105 @@ export async function POST(request: NextRequest) {
             privateKey
         );
 
+        // Load the incoming WhatsApp message details.
+        const { data: message, error: messageError } = await supabase
+            .from("whatsapp_inbound_messages")
+            .select("phone_number, message_type, message_text, contact_id")
+            .eq("message_id", body.messageId)
+            .maybeSingle();
+
+        if (messageError) {
+            console.error(
+                "Incoming message lookup failed:",
+                messageError.message
+            );
+
+            return NextResponse.json(
+                { success: false, message: "Could not load message details." },
+                { status: 500 }
+            );
+        }
+
+        if (!message) {
+            return NextResponse.json(
+                { success: false, message: "Incoming message not found." },
+                { status: 404 }
+            );
+        }
+
+        // Load the sender's WhatsApp profile name.
+        let senderName: string | null = null;
+
+        if (message.contact_id) {
+            const { data: contact, error: contactError } = await supabase
+                .from("whatsapp_contacts")
+                .select("name")
+                .eq("id", message.contact_id)
+                .maybeSingle();
+
+            if (contactError) {
+                console.error(
+                    "Contact name lookup failed:",
+                    contactError.message
+                );
+            } else {
+                senderName = contact?.name?.trim() || null;
+            }
+        }
+
+        const phoneNumber =
+            typeof message.phone_number === "string"
+                ? message.phone_number.trim()
+                : "";
+
+        const title =
+            senderName || phoneNumber || "New WhatsApp Message";
+
+        const messageType = String(
+            message.message_type || ""
+        ).toLowerCase();
+
+        const messageText =
+            typeof message.message_text === "string"
+                ? message.message_text.trim()
+                : "";
+
+        let preview = messageText;
+
+        if (!preview) {
+            const typeLabels: Record<string, string> = {
+                image: "📷 Photo",
+                video: "🎥 Video",
+                audio: "🎤 Audio message",
+                document: "📎 Document",
+                sticker: "Sticker",
+                location: "📍 Location",
+                contacts: "Contact shared",
+                interactive: "Interactive reply",
+                button: "Button reply",
+                reaction: "Reaction",
+            };
+
+            preview =
+                typeLabels[messageType] || "New WhatsApp message";
+        }
+
+        if (preview.length > 120) {
+            preview = `${preview.slice(0, 117)}...`;
+        }
+
+        const notificationBody = phoneNumber
+            ? `${phoneNumber} • ${preview}`
+            : preview;
+
+        // Keep the notification tag unique for each incoming message.
+        const payload = JSON.stringify({
+            title,
+            body: notificationBody,
+            url: "/admin/whatsapp/inbox",
+            tag: `whatsapp-${body.messageId}`,
+        });
+
         const { data: subscriptions, error: dbError } = await supabase
             .from("push_subscriptions")
             .select("id, subscription");
@@ -99,19 +198,11 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // Do not include the customer's actual message in the notification.
-        const payload = JSON.stringify({
-            title: "New WhatsApp Message",
-            body: "Aapke WhatsApp Inbox mein naya message aaya hai.",
-            url: "/admin/whatsapp/inbox",
-            tag: `whatsapp-${body.messageId}`,
-        });
-
         let sentCount = 0;
         let failedCount = 0;
         const expiredIds: string[] = [];
 
-        const results = await Promise.all(
+        await Promise.all(
             subscriptions.map(async (item) => {
                 try {
                     await webpush.sendNotification(
@@ -138,7 +229,9 @@ export async function POST(request: NextRequest) {
                     console.error(
                         "Push delivery failed:",
                         statusCode || "unknown",
-                        error instanceof Error ? error.message : "Unknown error"
+                        error instanceof Error
+                            ? error.message
+                            : "Unknown error"
                     );
                 }
             })
