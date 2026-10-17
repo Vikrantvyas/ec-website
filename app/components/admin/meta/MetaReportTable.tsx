@@ -48,7 +48,7 @@ type ColumnKey =
   | "source"
   | "community"
   | "communityTime"
-;
+  ;
 type MetaReportTableProps = {
   leads: MetaLead[];
   totalLeads: number;
@@ -176,6 +176,13 @@ function getWhatsAppUrl(number: string) {
       : cleanNumber;
   return `https://wa.me/${whatsappNumber}`;
 }
+function normalizePhoneForMatch(value: string) {
+  const digits = value.replace(/\D/g, "");
+
+  return digits.length === 12 && digits.startsWith("91")
+    ? digits.slice(2)
+    : digits;
+}
 export default function MetaReportTable({
   leads,
   totalLeads,
@@ -187,6 +194,27 @@ export default function MetaReportTable({
   const lastSelectedIndexRef = useRef<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [savingStatus, setSavingStatus] = useState(false);
+  const [inboxPhones, setInboxPhones] = useState<string[]>([]);
+  useEffect(() => {
+    async function loadInboxPhones() {
+      const { data, error } = await supabase
+        .from("whatsapp_contacts")
+        .select("phone_number");
+
+      if (error) {
+        console.error("Inbox contacts load failed:", error.message);
+        return;
+      }
+
+      setInboxPhones(
+        (data ?? [])
+          .map((contact) => normalizePhoneForMatch(contact.phone_number ?? ""))
+          .filter(Boolean)
+      );
+    }
+
+    void loadInboxPhones();
+  }, []);
   const [visibleColumns, setVisibleColumns] = useState<
     Record<ColumnKey, boolean>
   >(() => {
@@ -566,6 +594,17 @@ export default function MetaReportTable({
                       ) : column.key === "name" ? (
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span>{lead.full_name || "-"}</span>
+                          {lead.whatsapp_number &&
+  inboxPhones.includes(
+    normalizePhoneForMatch(lead.whatsapp_number)
+  ) && (
+    <span
+      title="This lead is already in WhatsApp Inbox"
+      className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2 py-0.5 text-[10px] font-semibold leading-4 text-green-800"
+    >
+      Inbox
+    </span>
+  )}
                           {lead.community_joined && (
                             <button type="button" disabled={savingStatus} onClick={() => toggleLeadStatus(lead, "community_joined", "Community")} title="Community joined — click to remove" className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2 py-0.5 text-[10px] font-semibold leading-4 text-green-800 hover:bg-green-200 disabled:opacity-50">Com</button>
                           )}
