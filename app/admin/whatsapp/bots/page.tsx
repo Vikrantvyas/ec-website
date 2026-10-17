@@ -38,6 +38,9 @@ type BotNode = {
     type: "buttons" | "list" | "text";
     options: BotOption[];
     delayMinutes?: number;
+    followUpEnabled?: boolean;
+    followUpMinutes?: number;
+    followUpMessage?: string;
 };
 type BotFlow = {
     nodes: BotNode[];
@@ -97,11 +100,14 @@ function normalizeFlow(value: unknown): BotFlow {
         Array.isArray((value as BotFlow).nodes)
     ) {
         return {
-    nodes: (value as BotFlow).nodes.map((node) => ({
-        ...node,
-        delayMinutes: node.delayMinutes ?? 0,
-    })),
-};
+            nodes: (value as BotFlow).nodes.map((node) => ({
+                ...node,
+                delayMinutes: node.delayMinutes ?? 0,
+                followUpEnabled: node.followUpEnabled ?? false,
+                followUpMinutes: node.followUpMinutes ?? 60,
+                followUpMessage: node.followUpMessage ?? "",
+            })),
+        };
     }
 
     return { nodes: [] };
@@ -415,6 +421,22 @@ export default function WhatsAppBotsPage() {
         }
 
         for (const node of flow.nodes) {
+            
+            if (node.followUpEnabled) {
+                if (
+                    !Number.isFinite(node.followUpMinutes) ||
+                    (node.followUpMinutes ?? 0) < 1
+                ) {
+                    setError("Follow-up का समय कम-से-कम 1 मिनट रखें।");
+                    return;
+                }
+
+                if (!node.followUpMessage?.trim()) {
+                    setError("Follow-up चालू है, इसलिए उसका Message लिखना जरूरी है।");
+                    return;
+                }
+            }
+
             if (!node.question.trim()) {
                 setError("हर Question का Text भरें।");
                 return;
@@ -985,7 +1007,7 @@ export default function WhatsAppBotsPage() {
                                         }
                                         placeholder="Phrases या words ko # se alag karein"
                                     />
-                                   
+
                                 </label>
                             )}
                         </section>
@@ -1065,6 +1087,64 @@ export default function WhatsAppBotsPage() {
                                                     placeholder="ग्राहक को क्या प्रश्न भेजना है?"
                                                 />
                                             </label>
+
+                                            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+                                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={node.followUpEnabled ?? false}
+                                                        onChange={(event) =>
+                                                            updateNode(node.id, {
+                                                                followUpEnabled: event.target.checked,
+                                                            })
+                                                        }
+                                                        className="h-4 w-4 accent-emerald-600"
+                                                    />
+                                                    Enable Follow-up Message
+                                                </label>
+
+                                                {node.followUpEnabled && (
+                                                    <div className="mt-4 space-y-3">
+                                                        <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                            Follow-up कब भेजना है? (Minutes)
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                max="43200"
+                                                                className={field}
+                                                                value={node.followUpMinutes ?? 60}
+                                                                onChange={(event) =>
+                                                                    updateNode(node.id, {
+                                                                        followUpMinutes: Math.max(
+                                                                            1,
+                                                                            Number(event.target.value) || 1
+                                                                        ),
+                                                                    })
+                                                                }
+                                                            />
+                                                        </label>
+
+                                                        <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                            Follow-up Message *
+                                                            <textarea
+                                                                rows={3}
+                                                                className={field}
+                                                                value={node.followUpMessage ?? ""}
+                                                                onChange={(event) =>
+                                                                    updateNode(node.id, {
+                                                                        followUpMessage: event.target.value,
+                                                                    })
+                                                                }
+                                                                placeholder="अपना Follow-up संदेश लिखें..."
+                                                            />
+                                                        </label>
+
+                                                        <p className="text-xs text-slate-500">
+                                                            उदाहरण: 60 मिनट = 1 घंटा। Follow-up तभी भेजा जाएगा जब Form Submit नहीं हुआ हो।
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
 
                                             <label className="mb-4 block space-y-1.5 text-sm font-medium text-slate-700">
                                                 Reply Type

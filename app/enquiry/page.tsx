@@ -116,6 +116,7 @@ const formatName = (name: string) =>
 function EnquiryPage() {
     const [formData, setFormData] = useState<FormData>(initialForm);
     const searchParams = useSearchParams();
+    const trackingId = searchParams.get("tracking_id");
 
     const leadSource =
         searchParams.get("source") || "direct";
@@ -342,6 +343,33 @@ function EnquiryPage() {
         if (!editingExistingId) {
             (window as any).fbq?.("track", "Lead");
         }
+        
+if (trackingId) {
+    const { data: functionResult, error: functionError } =
+        await supabase.functions.invoke("whatsapp-form-submit", {
+            body: {
+                tracking_id: trackingId,
+                lead_id: submittedId,
+            },
+        });
+
+    if (functionError) {
+        console.error(
+            "Form submit notification function failed:",
+            functionError
+        );
+    } else if (!functionResult?.success) {
+        console.error(
+            "Form submit notification failed:",
+            functionResult
+        );
+    } else {
+        console.log(
+            "Form submit tracking result:",
+            functionResult
+        );
+    }
+}
 
         setSubmittedLeadId(submittedId);
         setSubmitted(true);
