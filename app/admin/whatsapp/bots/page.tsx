@@ -41,6 +41,8 @@ type BotNode = {
     followUpEnabled?: boolean;
     followUpMinutes?: number;
     followUpMessage?: string;
+    followUpType?: "buttons" | "list" | "text";
+    followUpOptions?: BotOption[];
 };
 type BotFlow = {
     nodes: BotNode[];
@@ -106,6 +108,10 @@ function normalizeFlow(value: unknown): BotFlow {
                 followUpEnabled: node.followUpEnabled ?? false,
                 followUpMinutes: node.followUpMinutes ?? 60,
                 followUpMessage: node.followUpMessage ?? "",
+                followUpType: node.followUpType ?? "buttons",
+                followUpOptions: Array.isArray(node.followUpOptions)
+                    ? node.followUpOptions
+                    : [],
             })),
         };
     }
@@ -421,8 +427,38 @@ export default function WhatsAppBotsPage() {
         }
 
         for (const node of flow.nodes) {
-            
+
             if (node.followUpEnabled) {
+                                const followUpOptions = node.followUpOptions ?? [];
+                const followUpType = node.followUpType ?? "buttons";
+                const maxOptions = followUpType === "list" ? 10 : 3;
+                const maxTitleLength = followUpType === "list" ? 24 : 20;
+
+                if (followUpType !== "text") {
+                    if (
+                        followUpOptions.length === 0 ||
+                        followUpOptions.length > maxOptions
+                    ) {
+                        setError(
+                            `Follow-up में ${followUpType === "list" ? "1 से 10" : "1 से 3"} Options रखें।`
+                        );
+                        return;
+                    }
+
+                    const invalidOption = followUpOptions.some(
+                        (option) =>
+                            !option.id.trim() ||
+                            !option.title.trim() ||
+                            option.title.length > maxTitleLength
+                    );
+
+                    if (invalidOption) {
+                        setError(
+                            `Follow-up के हर Option में ID और नाम जरूरी है। नाम ${maxTitleLength} characters से अधिक न हो।`
+                        );
+                        return;
+                    }
+                }
                 if (
                     !Number.isFinite(node.followUpMinutes) ||
                     (node.followUpMinutes ?? 0) < 1
@@ -1142,6 +1178,102 @@ export default function WhatsAppBotsPage() {
                                                         <p className="text-xs text-slate-500">
                                                             उदाहरण: 60 मिनट = 1 घंटा। Follow-up तभी भेजा जाएगा जब Form Submit नहीं हुआ हो।
                                                         </p>
+                                                        <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                            Follow-up Reply Type
+                                                            <select
+                                                                className={field}
+                                                                value={node.followUpType ?? "buttons"}
+                                                                onChange={(event) =>
+                                                                    updateNode(node.id, {
+                                                                        followUpType: event.target.value as "buttons" | "list" | "text",
+                                                                    })
+                                                                }
+                                                            >
+                                                                <option value="text">Normal Text</option>
+                                                                <option value="buttons">Reply Buttons (max 3)</option>
+                                                                <option value="list">List Message (max 10)</option>
+                                                            </select>
+                                                        </label>
+
+                                                        {(node.followUpType ?? "buttons") !== "text" && (
+                                                            <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+                                                                <div className="text-sm font-semibold text-slate-700">
+                                                                    Follow-up Reply Options
+                                                                </div>
+
+                                                                {(node.followUpOptions ?? []).map((option, optionIndex) => (
+                                                                    <div
+                                                                        key={option.id}
+                                                                        className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]"
+                                                                    >
+                                                                        <input
+                                                                            className={field}
+                                                                            value={option.title}
+                                                                            placeholder="Button/Option का नाम"
+                                                                            maxLength={node.followUpType === "list" ? 24 : 20}
+                                                                            onChange={(event) => {
+                                                                                const options = [...(node.followUpOptions ?? [])];
+                                                                                options[optionIndex] = {
+                                                                                    ...options[optionIndex],
+                                                                                    title: event.target.value,
+                                                                                };
+                                                                                updateNode(node.id, { followUpOptions: options });
+                                                                            }}
+                                                                        />
+
+                                                                        <input
+                                                                            className={field}
+                                                                            value={option.id}
+                                                                            placeholder="Option ID"
+                                                                            onChange={(event) => {
+                                                                                const options = [...(node.followUpOptions ?? [])];
+                                                                                options[optionIndex] = {
+                                                                                    ...options[optionIndex],
+                                                                                    id: event.target.value,
+                                                                                };
+                                                                                updateNode(node.id, { followUpOptions: options });
+                                                                            }}
+                                                                        />
+
+                                                                        <button
+                                                                            type="button"
+                                                                            className="rounded-md border border-red-200 px-3 py-2 text-sm text-red-600"
+                                                                            onClick={() =>
+                                                                                updateNode(node.id, {
+                                                                                    followUpOptions: (node.followUpOptions ?? []).filter(
+                                                                                        (_, index) => index !== optionIndex
+                                                                                    ),
+                                                                                })
+                                                                            }
+                                                                        >
+                                                                            हटाएँ
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+
+                                                                <button
+                                                                    type="button"
+                                                                    className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                                                    disabled={(node.followUpOptions ?? []).length >= (
+                                                                        node.followUpType === "list" ? 10 : 3
+                                                                    )}
+                                                                    onClick={() =>
+                                                                        updateNode(node.id, {
+                                                                            followUpOptions: [
+                                                                                ...(node.followUpOptions ?? []),
+                                                                                {
+                                                                                    id: makeId(),
+                                                                                    title: "",
+                                                                                    nextNodeId: "",
+                                                                                },
+                                                                            ],
+                                                                        })
+                                                                    }
+                                                                >
+                                                                    + Add Follow-up Option
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
