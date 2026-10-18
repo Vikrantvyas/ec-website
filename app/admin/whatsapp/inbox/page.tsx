@@ -179,6 +179,7 @@ function StatusIcon({ status }: { status: string }) {
 
 export default function WhatsAppInboxPage() {
     const [contacts, setContacts] = useState<Contact[]>([]);
+    const [formSubmittedPhones, setFormSubmittedPhones] = useState<string[]>([]);
     const [inbound, setInbound] = useState<InboundMessage[]>([]);
     const [logs, setLogs] = useState<MessageLog[]>([]);
 
@@ -428,6 +429,7 @@ export default function WhatsAppInboxPage() {
                 inboundResult,
                 logsResult,
                 botSessionsResult,
+                formSubmittedResult,
             ] = await Promise.all([
                 supabase
                     .from("whatsapp_contacts")
@@ -449,16 +451,33 @@ export default function WhatsAppInboxPage() {
                     )
                     .order("event_at", { ascending: false })
                     .limit(2000),
+
                 supabase
                     .from("whatsapp_bot_sessions")
                     .select("phone_number")
                     .eq("status", "active"),
+
+                supabase
+                    .from("whatsapp_form_followups")
+                    .select("phone_number")
+                    .eq("status", "submitted"),
             ]);
+
 
             if (contactsResult.error) throw contactsResult.error;
             if (inboundResult.error) throw inboundResult.error;
             if (logsResult.error) throw logsResult.error;
             if (botSessionsResult.error) throw botSessionsResult.error;
+
+            if (formSubmittedResult.error) throw formSubmittedResult.error;
+
+            setFormSubmittedPhones([
+                ...new Set(
+                    (formSubmittedResult.data ?? []).map((item) =>
+                        normalizePhone(item.phone_number)
+                    )
+                ),
+            ]);
 
             setActiveBotPhones([
                 ...new Set(
@@ -470,7 +489,7 @@ export default function WhatsAppInboxPage() {
 
             const nextContacts = (contactsResult.data ?? []) as Contact[];
 
-            
+
             const nextInbound = (inboundResult.data ?? []) as InboundMessage[];
 
             const currentIds = new Set(nextInbound.map((message) => message.id));
@@ -745,14 +764,31 @@ export default function WhatsAppInboxPage() {
             (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime(),
         );
     }, [inbound, logs, selectedPhone, selectedContact]);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
+    const shouldAutoScrollRef = useRef(true);
+    const previousSelectedPhoneRef = useRef("");
+
+    
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "end",
-        });
-    }, [chatMessages]);
+        const container = messagesContainerRef.current;
+        if (!container) return;
+
+        const conversationChanged =
+            previousSelectedPhoneRef.current !== selectedPhone;
+
+        previousSelectedPhoneRef.current = selectedPhone;
+
+        if (conversationChanged) {
+            shouldAutoScrollRef.current = true;
+            container.scrollTop = container.scrollHeight;
+            return;
+        }
+
+        if (shouldAutoScrollRef.current) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }, [chatMessages, selectedPhone]);
 
     async function sendReply() {
         const message = draft.trim();
@@ -1090,6 +1126,11 @@ export default function WhatsAppInboxPage() {
                                                     <span className="flex min-w-0 items-center gap-1.5">
                                                         <span className="truncate text-[14px] font-medium text-[#111b21]">
                                                             {conversation.name}
+                                                            {formSubmittedPhones.includes(normalizePhone(conversation.phone)) && (
+                                                                <span className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
+                                                                    Form
+                                                                </span>
+                                                            )}
                                                         </span>
 
                                                         {activeBotPhones.includes(
@@ -1233,110 +1274,110 @@ export default function WhatsAppInboxPage() {
                                             }
 
                                             // Step 1: Pehla Question prepare karein
-const firstNode = nodes[0];
+                                            const firstNode = nodes[0];
 
-if (!firstNode.id || !firstNode.question?.trim()) {
-    throw new Error("First question ka message khaali hai.");
-}
+                                            if (!firstNode.id || !firstNode.question?.trim()) {
+                                                throw new Error("First question ka message khaali hai.");
+                                            }
 
-const options = Array.isArray(firstNode.options)
-    ? firstNode.options
-    : [];
+                                            const options = Array.isArray(firstNode.options)
+                                                ? firstNode.options
+                                                : [];
 
-let requestBody: Record<string, unknown>;
-let loggedMessage = firstNode.question;
-let loggedMessageType = "text";
+                                            let requestBody: Record<string, unknown>;
+                                            let loggedMessage = firstNode.question;
+                                            let loggedMessageType = "text";
 
-if (firstNode.type === "text") {
-    requestBody = {
-        to: phone,
-        type: "text",
-        message: firstNode.question,
-    };
-} else if (firstNode.type === "buttons") {
-    if (options.length < 1 || options.length > 3) {
-        throw new Error("Reply Buttons ke liye 1 se 3 options zaroori hain.");
-    }
+                                            if (firstNode.type === "text") {
+                                                requestBody = {
+                                                    to: phone,
+                                                    type: "text",
+                                                    message: firstNode.question,
+                                                };
+                                            } else if (firstNode.type === "buttons") {
+                                                if (options.length < 1 || options.length > 3) {
+                                                    throw new Error("Reply Buttons ke liye 1 se 3 options zaroori hain.");
+                                                }
 
-    requestBody = {
-        to: phone,
-        type: "buttons",
-        message: firstNode.question,
-        buttons: options.map((option: { id: string; title: string }) => ({
-            id: option.id,
-            title: option.title,
-        })),
-    };
+                                                requestBody = {
+                                                    to: phone,
+                                                    type: "buttons",
+                                                    message: firstNode.question,
+                                                    buttons: options.map((option: { id: string; title: string }) => ({
+                                                        id: option.id,
+                                                        title: option.title,
+                                                    })),
+                                                };
 
-    loggedMessageType = "interactive";
-    loggedMessage += "\n" + options
-        .map((option: { title: string }) => `• ${option.title}`)
-        .join("\n");
-} else if (firstNode.type === "list") {
-    if (options.length < 1 || options.length > 10) {
-        throw new Error("List ke liye 1 se 10 options zaroori hain.");
-    }
+                                                loggedMessageType = "interactive";
+                                                loggedMessage += "\n" + options
+                                                    .map((option: { title: string }) => `• ${option.title}`)
+                                                    .join("\n");
+                                            } else if (firstNode.type === "list") {
+                                                if (options.length < 1 || options.length > 10) {
+                                                    throw new Error("List ke liye 1 se 10 options zaroori hain.");
+                                                }
 
-    requestBody = {
-        to: phone,
-        type: "list",
-        message: firstNode.question,
-        button_text: "Options",
-        sections: [
-            {
-                title: "Options",
-                rows: options.map(
-                    (option: { id: string; title: string }) => ({
-                        id: option.id,
-                        title: option.title,
-                    })
-                ),
-            },
-        ],
-    };
+                                                requestBody = {
+                                                    to: phone,
+                                                    type: "list",
+                                                    message: firstNode.question,
+                                                    button_text: "Options",
+                                                    sections: [
+                                                        {
+                                                            title: "Options",
+                                                            rows: options.map(
+                                                                (option: { id: string; title: string }) => ({
+                                                                    id: option.id,
+                                                                    title: option.title,
+                                                                })
+                                                            ),
+                                                        },
+                                                    ],
+                                                };
 
-    loggedMessageType = "interactive";
-    loggedMessage += "\n" + options
-        .map((option: { title: string }) => `• ${option.title}`)
-        .join("\n");
-} else {
-    throw new Error("Question type Text, Buttons ya List hona chahiye.");
-}
+                                                loggedMessageType = "interactive";
+                                                loggedMessage += "\n" + options
+                                                    .map((option: { title: string }) => `• ${option.title}`)
+                                                    .join("\n");
+                                            } else {
+                                                throw new Error("Question type Text, Buttons ya List hona chahiye.");
+                                            }
 
-// Step 2: WhatsApp par pehla question bhejein
-const { data: sendData, error: sendError } =
-    await supabase.functions.invoke("whatsapp-send", {
-        body: requestBody,
-    });
+                                            // Step 2: WhatsApp par pehla question bhejein
+                                            const { data: sendData, error: sendError } =
+                                                await supabase.functions.invoke("whatsapp-send", {
+                                                    body: requestBody,
+                                                });
 
-if (sendError) throw sendError;
+                                            if (sendError) throw sendError;
 
-if (!sendData?.success || !sendData?.message_id) {
-    throw new Error(sendData?.error || "Pehla WhatsApp question send nahi hua.");
-}
+                                            if (!sendData?.success || !sendData?.message_id) {
+                                                throw new Error(sendData?.error || "Pehla WhatsApp question send nahi hua.");
+                                            }
 
-// Step 3: Message log save karein
-const { data: contact } = await supabase
-    .from("whatsapp_contacts")
-    .select("id")
-    .eq("phone_number", phone)
-    .maybeSingle();
+                                            // Step 3: Message log save karein
+                                            const { data: contact } = await supabase
+                                                .from("whatsapp_contacts")
+                                                .select("id")
+                                                .eq("phone_number", phone)
+                                                .maybeSingle();
 
-const { error: logError } = await supabase
-    .from("whatsapp_message_logs")
-    .insert({
-        contact_id: contact?.id ?? null,
-        direction: "outbound",
-        message_id: sendData.message_id,
-        message_type: loggedMessageType,
-        message_text: loggedMessage,
-        status: sendData.initial_status ?? "accepted",
-        event_at: new Date().toISOString(),
-    });
+                                            const { error: logError } = await supabase
+                                                .from("whatsapp_message_logs")
+                                                .insert({
+                                                    contact_id: contact?.id ?? null,
+                                                    direction: "outbound",
+                                                    message_id: sendData.message_id,
+                                                    message_type: loggedMessageType,
+                                                    message_text: loggedMessage,
+                                                    status: sendData.initial_status ?? "accepted",
+                                                    event_at: new Date().toISOString(),
+                                                });
 
-if (logError) {
-    console.error("Bot message log save failed:", logError.message);
-}
+                                            if (logError) {
+                                                console.error("Bot message log save failed:", logError.message);
+                                            }
 
                                             // Step 4: Session create karein
                                             const { error: insertError } = await supabase
@@ -1412,7 +1453,22 @@ if (logError) {
                             </div>
 
                             {/* Messages */}
-                            <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto bg-[#efeae2] px-3 py-4 sm:px-5 md:px-8">
+                          
+<div
+    ref={messagesContainerRef}
+    onScroll={(event) => {
+        const container = event.currentTarget;
+
+        const distanceFromBottom =
+            container.scrollHeight -
+            container.scrollTop -
+            container.clientHeight;
+
+        shouldAutoScrollRef.current = distanceFromBottom < 100;
+    }}
+    className="relative flex min-h-0 flex-1 flex-col overflow-y-auto bg-[#efeae2] px-3 py-4 sm:px-5 md:px-8"
+>
+
                                 <div
                                     className="pointer-events-none absolute inset-0 opacity-[0.12]"
                                     style={{
@@ -1422,10 +1478,9 @@ if (logError) {
                                     }}
                                 />
 
-                                <div
-                                    ref={messagesEndRef}
-                                    className="relative z-10 my-0 flex flex-col gap-2"
-                                >
+
+                                <div className="relative z-10 my-0 flex flex-col gap-2">
+
                                     {chatMessages.length === 0 ? (
                                         <div className="m-auto mt-8 max-w-xs rounded-lg bg-[#fff7df] px-4 py-3 text-center text-xs leading-5 text-gray-600 shadow-sm">
                                             Messages sent or received with this contact will appear
