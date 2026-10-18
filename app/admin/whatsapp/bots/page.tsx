@@ -969,12 +969,12 @@ export default function WhatsAppBotsPage() {
                                                         question: body?.text ?? "",
                                                         type: quickReplies.length > 0 ? "buttons" : "text",
                                                         options: quickReplies.slice(0, 3).map(
-                                                            (item: any) => ({
-                                                                id: item.text,
-                                                                title: item.text,
-                                                                nextNodeId: "",
-                                                            })
-                                                        ),
+    (item: any) => ({
+        id: makeId(),
+        title: item.text,
+        nextNodeId: "",
+    })
+),
                                                     },
                                                 ],
                                             });

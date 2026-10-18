@@ -768,7 +768,7 @@ export default function WhatsAppInboxPage() {
     const shouldAutoScrollRef = useRef(true);
     const previousSelectedPhoneRef = useRef("");
 
-    
+
 
     useEffect(() => {
         const container = messagesContainerRef.current;
@@ -822,7 +822,7 @@ export default function WhatsAppInboxPage() {
                 return;
             }
 
-            if (titles.some((title) => title.length > 20)) {
+            if (titles.some((title) => title.length > 60)) {
                 setError("Har button title maximum 20 characters ka hona chahiye.");
                 return;
             }
@@ -1453,21 +1453,21 @@ export default function WhatsAppInboxPage() {
                             </div>
 
                             {/* Messages */}
-                          
-<div
-    ref={messagesContainerRef}
-    onScroll={(event) => {
-        const container = event.currentTarget;
 
-        const distanceFromBottom =
-            container.scrollHeight -
-            container.scrollTop -
-            container.clientHeight;
+                            <div
+                                ref={messagesContainerRef}
+                                onScroll={(event) => {
+                                    const container = event.currentTarget;
 
-        shouldAutoScrollRef.current = distanceFromBottom < 100;
-    }}
-    className="relative flex min-h-0 flex-1 flex-col overflow-y-auto bg-[#efeae2] px-3 py-4 sm:px-5 md:px-8"
->
+                                    const distanceFromBottom =
+                                        container.scrollHeight -
+                                        container.scrollTop -
+                                        container.clientHeight;
+
+                                    shouldAutoScrollRef.current = distanceFromBottom < 100;
+                                }}
+                                className="relative flex min-h-0 flex-1 flex-col overflow-y-auto bg-[#efeae2] px-3 py-4 sm:px-5 md:px-8"
+                            >
 
                                 <div
                                     className="pointer-events-none absolute inset-0 opacity-[0.12]"
@@ -1572,21 +1572,21 @@ export default function WhatsAppInboxPage() {
                                                 <input
                                                     value={button1}
                                                     onChange={(event) => setButton1(event.target.value)}
-                                                    maxLength={20}
+                                                    maxLength={60}
                                                     placeholder="Button 1 (required)"
                                                     className="min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
                                                 />
                                                 <input
                                                     value={button2}
                                                     onChange={(event) => setButton2(event.target.value)}
-                                                    maxLength={20}
+                                                    maxLength={60}
                                                     placeholder="Button 2 (optional)"
                                                     className="min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
                                                 />
                                                 <input
                                                     value={button3}
                                                     onChange={(event) => setButton3(event.target.value)}
-                                                    maxLength={20}
+                                                    maxLength={60}
                                                     placeholder="Button 3 (optional)"
                                                     className="min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
                                                 />
@@ -1600,7 +1600,7 @@ export default function WhatsAppInboxPage() {
                                             <input
                                                 value={listButtonText}
                                                 onChange={(event) => setListButtonText(event.target.value)}
-                                                maxLength={20}
+                                                maxLength={60}
                                                 placeholder="List button text"
                                                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
                                             />
