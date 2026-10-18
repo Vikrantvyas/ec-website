@@ -429,7 +429,7 @@ export default function WhatsAppBotsPage() {
         for (const node of flow.nodes) {
 
             if (node.followUpEnabled) {
-                                const followUpOptions = node.followUpOptions ?? [];
+                const followUpOptions = node.followUpOptions ?? [];
                 const followUpType = node.followUpType ?? "buttons";
                 const maxOptions = followUpType === "list" ? 10 : 3;
                 const maxTitleLength = followUpType === "list" ? 24 : 20;
@@ -1204,7 +1204,7 @@ export default function WhatsAppBotsPage() {
                                                                 {(node.followUpOptions ?? []).map((option, optionIndex) => (
                                                                     <div
                                                                         key={option.id}
-                                                                        className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]"
+                                                                        className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_1.5fr_auto]"
                                                                     >
                                                                         <input
                                                                             className={field}
@@ -1234,7 +1234,32 @@ export default function WhatsAppBotsPage() {
                                                                                 updateNode(node.id, { followUpOptions: options });
                                                                             }}
                                                                         />
+                                                                        <select
+                                                                            className={field}
+                                                                            value={option.nextNodeId ?? ""}
+                                                                            onChange={(event) => {
+                                                                                const options = [...(node.followUpOptions ?? [])];
 
+                                                                                options[optionIndex] = {
+                                                                                    ...options[optionIndex],
+                                                                                    nextNodeId: event.target.value,
+                                                                                };
+
+                                                                                updateNode(node.id, { followUpOptions: options });
+                                                                            }}
+                                                                        >
+                                                                            <option value="">End / No next question</option>
+
+                                                                            {flow.nodes
+                                                                                .filter((target) => target.id !== node.id)
+                                                                                .map((target) => (
+                                                                                    <option key={target.id} value={target.id}>
+                                                                                        {target.question.trim()
+                                                                                            ? target.question.slice(0, 55)
+                                                                                            : `Question ${flow.nodes.indexOf(target) + 1}`}
+                                                                                    </option>
+                                                                                ))}
+                                                                        </select>
                                                                         <button
                                                                             type="button"
                                                                             className="rounded-md border border-red-200 px-3 py-2 text-sm text-red-600"
