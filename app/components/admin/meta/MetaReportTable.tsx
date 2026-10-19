@@ -193,6 +193,10 @@ export default function MetaReportTable({
   const columnMenuRef = useRef<HTMLDivElement>(null);
   const lastSelectedIndexRef = useRef<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const [sortColumn, setSortColumn] = useState<ColumnKey | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   const [savingStatus, setSavingStatus] = useState(false);
   const [inboxPhones, setInboxPhones] = useState<string[]>([]);
   useEffect(() => {
@@ -392,6 +396,39 @@ export default function MetaReportTable({
     });
     setVisibleColumns(allHidden);
   }
+
+  function handleSort(column: ColumnKey) {
+    if (sortColumn === column) {
+      setSortDirection((current) => current === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  }
+
+  const sortedLeads = [...leads].sort((a, b) => {
+    if (!sortColumn) return 0;
+
+    let valueA = getCellValue(a, sortColumn);
+    let valueB = getCellValue(b, sortColumn);
+
+    if (sortColumn === "date" || sortColumn === "communityTime") {
+      const dateA = sortColumn === "date" ? a.created_time : a.community_button_clicked_at;
+      const dateB = sortColumn === "date" ? b.created_time : b.community_button_clicked_at;
+
+      valueA = dateA || "";
+      valueB = dateB || "";
+    }
+
+    const comparison = String(valueA).localeCompare(
+      String(valueB),
+      undefined,
+      { numeric: true, sensitivity: "base" }
+    );
+
+    return sortDirection === "asc" ? comparison : -comparison;
+  });
+
   const visibleColumnList = columns.filter(
     (column) => visibleColumns[column.key]
   );
@@ -497,7 +534,11 @@ export default function MetaReportTable({
                         className="h-4 w-4 rounded border-gray-300"
                       />
                       <span className="text-sm text-gray-700">
+
+
                         {column.label}
+
+
                       </span>
                     </label>
                   ))}
@@ -533,21 +574,65 @@ export default function MetaReportTable({
           <table className="min-w-max w-full text-left text-sm">
             <thead className="bg-gray-50 text-xs uppercase text-gray-500">
               <tr>
+
                 <th className="whitespace-nowrap px-4 py-3">
-                  Select
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={
+                        leads.length > 0 &&
+                        leads.every((lead) => selectedIds.includes(lead.id))
+                      }
+                      onChange={(event) => {
+                        if (event.target.checked) {
+                          setSelectedIds((current) =>
+                            Array.from(
+                              new Set([...current, ...leads.map((lead) => lead.id)])
+                            )
+                          );
+                        } else {
+                          setSelectedIds((current) =>
+                            current.filter(
+                              (id) => !leads.some((lead) => lead.id === id)
+                            )
+                          );
+                          lastSelectedIndexRef.current = null;
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-gray-300"
+                      aria-label="Select all filtered leads"
+                    />
+
+                  </label>
                 </th>
+
                 {visibleColumnList.map((column) => (
                   <th
                     key={column.key}
                     className="whitespace-nowrap px-4 py-3"
                   >
-                    {column.label}
+
+                    <button
+                      type="button"
+                      onClick={() => handleSort(column.key)}
+                      
+className="inline-flex cursor-pointer items-center gap-1 font-semibold hover:text-blue-600"
+
+                    >
+                      {column.label}
+                      {sortColumn === column.key && (
+                        <span>{sortDirection === "asc" ? "↑" : "↓"}</span>
+                      )}
+                    </button>
+
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {leads.map((lead, index) => (
+
+              {sortedLeads.map((lead, index) => (
+
                 <tr
                   key={lead.id}
                   className={
@@ -595,16 +680,16 @@ export default function MetaReportTable({
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span>{lead.full_name || "-"}</span>
                           {lead.whatsapp_number &&
-  inboxPhones.includes(
-    normalizePhoneForMatch(lead.whatsapp_number)
-  ) && (
-    <span
-      title="This lead is already in WhatsApp Inbox"
-      className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2 py-0.5 text-[10px] font-semibold leading-4 text-green-800"
-    >
-      Inbox
-    </span>
-  )}
+                            inboxPhones.includes(
+                              normalizePhoneForMatch(lead.whatsapp_number)
+                            ) && (
+                              <span
+                                title="This lead is already in WhatsApp Inbox"
+                                className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2 py-0.5 text-[10px] font-semibold leading-4 text-green-800"
+                              >
+                                Inbox
+                              </span>
+                            )}
                           {lead.community_joined && (
                             <button type="button" disabled={savingStatus} onClick={() => toggleLeadStatus(lead, "community_joined", "Community")} title="Community joined — click to remove" className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2 py-0.5 text-[10px] font-semibold leading-4 text-green-800 hover:bg-green-200 disabled:opacity-50">Com</button>
                           )}
