@@ -273,9 +273,16 @@ export default function MetaReportPage() {
             if (englishLevel && lead.english_level !== englishLevel) {
                 return false;
             }
-            if (demoTime && lead.demo_class_time !== demoTime) {
-                return false;
-            }
+            
+if (demoTime) {
+    const selectedDemoTimes = demoTime.split(",").filter(Boolean);
+    const leadDemoTime = normalizeMetaValue(lead.demo_class_time ?? "");
+
+    if (!selectedDemoTimes.includes(leadDemoTime)) {
+        return false;
+    }
+}
+
             if (zoom && lead.knows_zoom !== zoom) {
                 return false;
             }

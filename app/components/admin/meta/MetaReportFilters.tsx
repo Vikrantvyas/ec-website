@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 type FilterOption = {
   value: string;
   label: string;
@@ -72,6 +74,9 @@ export default function MetaReportFilters({
   onChange,
   onReset,
 }: MetaReportFiltersProps) {
+
+  const [demoTimeOpen, setDemoTimeOpen] = useState(false);
+
   const inputClass =
     "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500";
 
@@ -250,13 +255,70 @@ export default function MetaReportFilters({
             Demo Time
           </label>
 
-          <select
-            value={demoTime}
-            onChange={(e) => onChange("demoTime", e.target.value)}
-            className={selectClass}
-          >
-            {options(demoTimes)}
-          </select>
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setDemoTimeOpen((open) => !open)}
+              className={`${selectClass} flex items-center justify-between text-left`}
+            >
+              <span className="truncate">
+                {!demoTime
+                  ? "All"
+                  : demoTime.split(",").length === 1
+                    ? demoTimes.find((item) => item.value === demoTime)?.label || demoTime
+                    : `${demoTime.split(",").length} selected`}
+              </span>
+              <span className="ml-2">▾</span>
+            </button>
+
+            {demoTimeOpen && (
+              <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-300 bg-white p-2 shadow-lg">
+                <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100">
+                  <input
+                    type="checkbox"
+                    checked={!demoTime}
+                    onChange={() => {
+                      onChange("demoTime", "");
+                      setDemoTimeOpen(false);
+                    }}
+                  />
+                  All
+                </label>
+
+                {demoTimes.map((item) => {
+                  const selected = demoTime
+                    ? demoTime.split(",").includes(item.value)
+                    : false;
+
+                  return (
+                    <label
+                      key={item.value}
+                      className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-100"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => {
+                          const current = demoTime
+                            ? demoTime.split(",").filter(Boolean)
+                            : [];
+
+                          const next = selected
+                            ? current.filter((value) => value !== item.value)
+                            : [...current, item.value];
+
+                          onChange("demoTime", next.join(","));
+                        }}
+                      />
+                      <span>{item.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
         </div>
 
         <div>
