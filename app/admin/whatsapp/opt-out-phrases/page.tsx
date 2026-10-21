@@ -39,7 +39,15 @@ type OptOutContact = {
   consent_source: string | null;
   consent_at: string | null;
   updated_at: string | null;
+  campaign_name?: string | null;
+  campaign_date?: string | null;
+  opt_out_message?: string | null;
+  opt_out_received_at?: string | null;
 };
+
+type InboundMessage = { contact_id: string | null; phone_number: string; message_text: string | null; received_at: string };
+type CampaignRecipient = { contact_id: string | null; campaign_id: string; sent_at: string | null; created_at: string };
+type Campaign = { id: string; name: string; created_at: string; started_at: string | null };
 
 const BLOCKED_STATUSES = ["opted_out", "optout", "unsubscribed", "stopped", "blocked"];
 
@@ -102,9 +110,61 @@ export default function WhatsAppOptOutPhrasesPage() {
     if (queryError) {
       setError(`Opt-out contacts load nahi hue: ${queryError.message}`);
       setOptOutContacts([]);
-    } else {
-      setOptOutContacts((data ?? []) as OptOutContact[]);
+      setContactsLoading(false);
+      return;
     }
+
+    const contacts = (data ?? []) as OptOutContact[];
+    if (contacts.length === 0) {
+      setOptOutContacts([]);
+      setContactsLoading(false);
+      return;
+    }
+
+    // Each opted-out contact ke latest incoming reply aur usse pehle bheje gaye campaign ko match karein.
+    const ids = contacts.map((item) => item.id);
+    const phones = [...new Set(contacts.map((item) => item.phone_number))];
+    const [{ data: inboundData }, { data: recipientData }] = await Promise.all([
+      supabase.from("whatsapp_inbound_messages")
+        .select("contact_id, phone_number, message_text, received_at")
+        .in("contact_id", ids)
+        .order("received_at", { ascending: false }),
+      supabase.from("whatsapp_campaign_recipients")
+        .select("contact_id, campaign_id, sent_at, created_at")
+        .in("contact_id", ids)
+        .order("sent_at", { ascending: false }),
+    ]);
+
+    const inbound = (inboundData ?? []) as InboundMessage[];
+    const recipients = (recipientData ?? []) as CampaignRecipient[];
+    const campaignIds = [...new Set(recipients.map((r) => r.campaign_id))];
+    let campaigns: Campaign[] = [];
+    if (campaignIds.length) {
+      const { data: campaignData } = await supabase.from("whatsapp_campaigns")
+        .select("id, name, created_at, started_at")
+        .in("id", campaignIds);
+      campaigns = (campaignData ?? []) as Campaign[];
+    }
+
+    const enriched = contacts.map((contact) => {
+      const reply = inbound.find((m) => m.contact_id === contact.id) ??
+        inbound.find((m) => m.phone_number.replace(/\D/g, "").slice(-10) === contact.phone_number.replace(/\D/g, "").slice(-10));
+      const replyTime = reply ? new Date(reply.received_at).getTime() : Number.POSITIVE_INFINITY;
+      const matchingRecipients = recipients
+        .filter((r) => r.contact_id === contact.id)
+        .filter((r) => !r.sent_at || new Date(r.sent_at).getTime() <= replyTime)
+        .sort((a, b) => new Date(b.sent_at ?? b.created_at).getTime() - new Date(a.sent_at ?? a.created_at).getTime());
+      const recipient = matchingRecipients[0];
+      const campaign = recipient ? campaigns.find((c) => c.id === recipient.campaign_id) : undefined;
+      return {
+        ...contact,
+        campaign_name: campaign?.name ?? null,
+        campaign_date: recipient?.sent_at ?? campaign?.started_at ?? campaign?.created_at ?? null,
+        opt_out_message: reply?.message_text ?? null,
+        opt_out_received_at: reply?.received_at ?? null,
+      };
+    });
+    setOptOutContacts(enriched);
     setContactsLoading(false);
   }, []);
 
@@ -924,27 +984,39 @@ export default function WhatsAppOptOutPhrasesPage() {
                 {allFilteredContactsSelected ? "Deselect all" : "Select all shown"}
               </button>
             </div>
-            <div className="divide-y divide-gray-100">
-              {filteredContacts.map((item) => (
-                <div key={item.id} className="flex flex-col gap-3 p-4 hover:bg-gray-50 sm:flex-row sm:items-center">
-                  <button
-                    type="button"
-                    onClick={() => toggleContactSelected(item.id)}
-                    aria-label={selectedContacts.includes(item.id) ? "Deselect contact" : "Select contact"}
-                    className="self-start rounded p-1 text-gray-500 hover:text-blue-600 sm:self-center"
-                  >
-                    {selectedContacts.includes(item.id) ? <CheckSquare size={19} className="text-blue-600" /> : <Square size={19} />}
-                  </button>
-                  <div className="min-w-0 flex-1">
-                    <p className="break-words text-sm font-semibold text-gray-900">{item.name?.trim() || "Naam available nahi"}</p>
-                    <p className="mt-1 break-all text-sm text-gray-700">{item.phone_number}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 font-medium text-red-800">{item.consent_status || "opted_out"}</span>
-                      {item.consent_source && <span>Source: {item.consent_source}</span>}
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] border-collapse text-left text-sm">
+                <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
+                  <tr>
+                    <th className="w-12 px-3 py-3">Select</th>
+                    <th className="px-3 py-3">Name</th>
+                    <th className="px-3 py-3">WhatsApp number</th>
+                    <th className="px-3 py-3">Campaign</th>
+                    <th className="px-3 py-3">Campaign date</th>
+                    <th className="px-3 py-3">Status</th>
+                    <th className="px-3 py-3">Reply</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredContacts.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-3 py-3">
+                        <button type="button" onClick={() => toggleContactSelected(item.id)}
+                          aria-label={selectedContacts.includes(item.id) ? "Deselect contact" : "Select contact"}
+                          className="rounded p-1 text-gray-500 hover:text-blue-600">
+                          {selectedContacts.includes(item.id) ? <CheckSquare size={18} className="text-blue-600" /> : <Square size={18} />}
+                        </button>
+                      </td>
+                      <td className="px-3 py-3 font-medium text-gray-900">{item.name?.trim() || "Naam available nahi"}</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-gray-700">{item.phone_number}</td>
+                      <td className="px-3 py-3">{item.campaign_name || <span className="text-gray-400">Campaign nahi mila</span>}</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-gray-600">{item.campaign_date ? new Date(item.campaign_date).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
+                      <td className="px-3 py-3"><span className="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">{item.consent_status || "opted_out"}</span></td>
+                      <td className="max-w-xs px-3 py-3 text-gray-600" title={item.opt_out_message ?? ""}><span className="line-clamp-2">{item.opt_out_message || "—"}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </>
         )}
