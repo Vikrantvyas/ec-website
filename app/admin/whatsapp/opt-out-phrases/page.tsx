@@ -496,10 +496,7 @@ export default function WhatsAppOptOutPhrasesPage() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">
             WhatsApp Opt-out Phrases
           </h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Incoming reply mein active phrase milne par opt-out process ke liye
-            istemal hone wale phrases manage karein.
-          </p>
+          
         </div>
 
         <button
@@ -569,13 +566,8 @@ export default function WhatsAppOptOutPhrasesPage() {
 
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
         <h2 className="text-lg font-semibold text-gray-900">
-          Naya phrase add karein
-        </h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Ek phrase add karein ya multiple phrases ko alag-alag lines mein
-          paste karein.
-        </p>
-
+          Add new phrase        </h2>
+      
         <form
           className="mt-4 flex flex-col gap-3 sm:flex-row"
           onSubmit={(event) => {
@@ -911,11 +903,9 @@ export default function WhatsAppOptOutPhrasesPage() {
               <ShieldCheck size={20} className="text-amber-700" />
               Opt-out contacts
             </h2>
-            <p className="mt-1 text-sm text-gray-600">
-              Sirf un contacts ko re-activate karein jinki written consent aapne verify kar li ho.
-            </p>
+            
             <p className="mt-1 text-sm font-medium text-amber-800">
-              {filteredContacts.length} dikh rahe hain · {selectedContacts.length} selected · Total {optOutContacts.length} opted-out
+              {filteredContacts.length} Records · {selectedContacts.length} selected · Total {optOutContacts.length} opted-out
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">

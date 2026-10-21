@@ -50,17 +50,17 @@ export default function AdminDashboard() {
     // ✅ NEW ADDED
     { name: "English", href: "/admin/english", icon: BookOpen },
     { name: "User", href: "/admin/users", icon: User },
-{ name: "Reports", href: "/admin/reports", icon: FileBarChart },
-{ name: "Meta Report", href: "/admin/meta-report", icon: BarChart3 },
+    { name: "Reports", href: "/admin/reports", icon: FileBarChart },
+    { name: "Meta Report", href: "/admin/meta-report", icon: BarChart3 },
     { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageCircle },
     { name: "Inbox", href: "/admin/whatsapp/inbox", icon: Inbox },
     { name: "Bots", href: "/admin/whatsapp/bots", icon: Bot },
     { name: "Templates", href: "/admin/whatsapp/templates", icon: FileText },
     { name: "Campaign Report", href: "/admin/whatsapp/campaign-analysis", icon: FileBarChart },
-
+    { name: "Opt-out Phrases", href: "/admin/whatsapp/opt-out-phrases", icon: ShieldCheck },
 
     // ✅ META REPORT
-    
+
 
     { name: "Masters", href: "/admin/masters", icon: Database },
 
@@ -88,10 +88,10 @@ export default function AdminDashboard() {
 
 
               <Icon
-                className={`w-8 h-8 mb-2 ${["WhatsApp", "Inbox", "Bots", "Templates", "Campaign Report"].includes(item.name)
-  ? "text-green-600"
-  : "text-blue-600"
-  }`}
+                className={`w-8 h-8 mb-2 ${["WhatsApp", "Inbox", "Bots", "Templates", "Campaign Report", "Opt-out Phrases"].includes(item.name)
+                  ? "text-green-600"
+                  : "text-blue-600"
+                  }`}
               />
 
 
