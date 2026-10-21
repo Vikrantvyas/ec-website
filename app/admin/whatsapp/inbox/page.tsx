@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useSearchParams } from "next/navigation";
+
 import {
     Search,
     Send,
@@ -178,6 +180,8 @@ function StatusIcon({ status }: { status: string }) {
 }
 
 export default function WhatsAppInboxPage() {
+    const searchParams = useSearchParams();
+    const requestedPhone = searchParams.get("phone") ?? "";
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [formSubmittedPhones, setFormSubmittedPhones] = useState<string[]>([]);
     const [inbound, setInbound] = useState<InboundMessage[]>([]);
@@ -639,6 +643,27 @@ export default function WhatsAppInboxPage() {
 
         void loadBotTemplates();
     }, []);
+    useEffect(() => {
+        if (!requestedPhone || contacts.length === 0 && inbound.length === 0) {
+            return;
+        }
+
+        const requestedNormalized = normalizePhone(requestedPhone);
+
+        const matchingPhone =
+            contacts.find(
+                (contact) =>
+                    normalizePhone(contact.phone_number) === requestedNormalized
+            )?.phone_number ??
+            inbound.find(
+                (message) =>
+                    normalizePhone(message.phone_number) === requestedNormalized
+            )?.phone_number;
+
+        if (matchingPhone) {
+            openConversation(matchingPhone);
+        }
+    }, [requestedPhone, contacts, inbound]);
     const conversations = useMemo(() => {
         const map = new Map<string, Conversation>();
 
