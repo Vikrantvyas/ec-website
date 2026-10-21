@@ -27,7 +27,13 @@ type Contact = {
     name: string | null;
     phone_number: string;
 };
-
+type OnlineEnquiry = {
+    whatsapp_number: string;
+    education: string | null;
+    english_level: string | null;
+    demo_class_time: string | null;
+    created_time: string;
+};
 type InboundMessage = {
     id: string;
     contact_id: string | null;
@@ -70,7 +76,19 @@ type Conversation = {
 function normalizePhone(value: string) {
     return value.replace(/\D/g, "");
 }
+function normalizeEnquiryPhone(value: string) {
+    let phone = normalizePhone(value);
 
+    if (phone.length === 12 && phone.startsWith("91")) {
+        phone = phone.slice(2);
+    }
+
+    if (phone.length === 11 && phone.startsWith("0")) {
+        phone = phone.slice(1);
+    }
+
+    return phone;
+}
 function formatTime(value: string) {
     const date = new Date(value);
 
@@ -183,6 +201,9 @@ export default function WhatsAppInboxPage() {
     const searchParams = useSearchParams();
     const requestedPhone = searchParams.get("phone") ?? "";
     const [contacts, setContacts] = useState<Contact[]>([]);
+    const [onlineEnquiries, setOnlineEnquiries] = useState<
+        Record<string, OnlineEnquiry>
+    >({});
     const [formSubmittedPhones, setFormSubmittedPhones] = useState<string[]>([]);
     const [inbound, setInbound] = useState<InboundMessage[]>([]);
     const [logs, setLogs] = useState<MessageLog[]>([]);
@@ -428,6 +449,7 @@ export default function WhatsAppInboxPage() {
         if (showLoader) setLoading(true);
 
         try {
+            
             const [
                 contactsResult,
                 inboundResult,
@@ -443,7 +465,7 @@ export default function WhatsAppInboxPage() {
                 supabase
                     .from("whatsapp_inbound_messages")
                     .select(
-                        "id,contact_id,phone_number,message_id,message_type,message_text,received_at",
+                        "id,contact_id,phone_number,message_id,message_type,message_text,received_at"
                     )
                     .order("received_at", { ascending: false })
                     .limit(1000),
@@ -451,7 +473,7 @@ export default function WhatsAppInboxPage() {
                 supabase
                     .from("whatsapp_message_logs")
                     .select(
-                        "id,contact_id,recipient_id,direction,message_id,message_type,message_text,status,error_message,event_at",
+                        "id,contact_id,recipient_id,direction,message_id,message_type,message_text,status,error_message,event_at"
                     )
                     .order("event_at", { ascending: false })
                     .limit(2000),
@@ -463,17 +485,117 @@ export default function WhatsAppInboxPage() {
 
                 supabase
                     .from("whatsapp_form_followups")
-                    .select("phone_number")
-                    .eq("status", "submitted"),
+                    .select("phone_number,lead_id,status,submitted_at")
+                    .eq("status", "submitted")
+                    .order("submitted_at", { ascending: false }),
             ]);
-
 
             if (contactsResult.error) throw contactsResult.error;
             if (inboundResult.error) throw inboundResult.error;
             if (logsResult.error) throw logsResult.error;
             if (botSessionsResult.error) throw botSessionsResult.error;
-
             if (formSubmittedResult.error) throw formSubmittedResult.error;
+const nextContacts = (contactsResult.data ?? []) as Contact[];
+            const submittedFollowups = (formSubmittedResult.data ?? []) as {
+                phone_number: string;
+                lead_id: string | null;
+                status: string;
+                submitted_at: string | null;
+            }[];
+
+            setFormSubmittedPhones([
+                ...new Set(
+                    submittedFollowups
+                        .map((item) => normalizeEnquiryPhone(item.phone_number))
+                        .filter(Boolean)
+                ),
+            ]);
+
+            const leadIds = [
+                ...new Set(
+                    submittedFollowups
+                        .map((item) => item.lead_id)
+                        .filter((id): id is string => Boolean(id))
+                ),
+            ];
+
+            const enquiryMap: Record<string, OnlineEnquiry> = {};
+
+            if (leadIds.length > 0) {
+                const { data: linkedLeads, error: linkedLeadsError } =
+                    await supabase
+                        .from("meta_leads")
+                        .select(
+                            "id,whatsapp_number,education,english_level,demo_class_time,created_time"
+                        )
+                        .in("id", leadIds);
+
+                if (linkedLeadsError) throw linkedLeadsError;
+
+                const leadsById = new Map(
+                    (linkedLeads ?? []).map((lead) => [lead.id, lead])
+                );
+
+                for (const followup of submittedFollowups) {
+                    const phone = normalizeEnquiryPhone(followup.phone_number);
+
+                    if (!phone || !followup.lead_id || enquiryMap[phone]) {
+                        continue;
+                    }
+
+                    const lead = leadsById.get(followup.lead_id);
+
+                    if (!lead) continue;
+
+                    enquiryMap[phone] = {
+                        whatsapp_number: lead.whatsapp_number,
+                        education: lead.education,
+                        english_level: lead.english_level,
+                        demo_class_time: lead.demo_class_time,
+                        created_time: lead.created_time,
+                    };
+                }
+            }
+
+            const { data: sameNumberLeads, error: sameNumberLeadsError } =
+    await supabase
+        .from("meta_leads")
+        .select(
+            "whatsapp_number,education,english_level,demo_class_time,created_time"
+        )
+        .eq("platform", "website")
+        .order("created_time", { ascending: false })
+        .limit(2000);
+
+if (sameNumberLeadsError) throw sameNumberLeadsError;
+
+const sameNumberPhones: string[] = [];
+
+for (const lead of sameNumberLeads ?? []) {
+    const phone = normalizeEnquiryPhone(lead.whatsapp_number);
+
+    if (!phone) continue;
+
+    sameNumberPhones.push(phone);
+
+    if (!enquiryMap[phone]) {
+        enquiryMap[phone] = {
+            whatsapp_number: lead.whatsapp_number,
+            education: lead.education,
+            english_level: lead.english_level,
+            demo_class_time: lead.demo_class_time,
+            created_time: lead.created_time,
+        };
+    }
+}
+
+setOnlineEnquiries(enquiryMap);
+
+setFormSubmittedPhones((previous) => [
+    ...new Set([...previous, ...sameNumberPhones]),
+]);
+
+
 
             setFormSubmittedPhones([
                 ...new Set(
@@ -491,9 +613,7 @@ export default function WhatsAppInboxPage() {
                 ),
             ]);
 
-            const nextContacts = (contactsResult.data ?? []) as Contact[];
-
-
+           
             const nextInbound = (inboundResult.data ?? []) as InboundMessage[];
 
             const currentIds = new Set(nextInbound.map((message) => message.id));
@@ -934,7 +1054,8 @@ export default function WhatsAppInboxPage() {
             let contact =
                 selectedContact ??
                 contacts.find(
-                    (item) => normalizePhone(item.phone_number) === phone,
+                    (item) =>
+                        normalizeEnquiryPhone(item.phone_number) === phone,
                 );
 
             if (!contact) {
@@ -1151,11 +1272,20 @@ export default function WhatsAppInboxPage() {
                                                     <span className="flex min-w-0 items-center gap-1.5">
                                                         <span className="truncate text-[14px] font-medium text-[#111b21]">
                                                             {conversation.name}
-                                                            {formSubmittedPhones.includes(normalizePhone(conversation.phone)) && (
-                                                                <span className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
-                                                                    Form
-                                                                </span>
-                                                            )}
+                                                            {(
+                                                                formSubmittedPhones.includes(
+                                                                    normalizeEnquiryPhone(conversation.phone)
+                                                                ) ||
+                                                                Boolean(
+                                                                    onlineEnquiries[
+                                                                    normalizeEnquiryPhone(conversation.phone)
+                                                                    ]
+                                                                )
+                                                            ) && (
+                                                                    <span className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
+                                                                        Form
+                                                                    </span>
+                                                                )}
                                                         </span>
 
                                                         {activeBotPhones.includes(
@@ -1212,8 +1342,36 @@ export default function WhatsAppInboxPage() {
                                 </div>
 
                                 <div className="min-w-0 flex-1">
-                                    <div className="truncate text-sm font-semibold">
-                                        {selectedContact?.name || selectedPhone}
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                        <div className="truncate text-sm font-semibold">
+                                            {selectedContact?.name || selectedPhone}
+                                        </div>
+
+                                        {onlineEnquiries[normalizeEnquiryPhone(selectedPhone)] && (
+                                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                                                {onlineEnquiries[normalizeEnquiryPhone(selectedPhone)].demo_class_time && (
+                                                    <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700">
+                                                        Demo: {onlineEnquiries[normalizeEnquiryPhone(selectedPhone)].demo_class_time}
+                                                    </span>
+                                                )}
+
+                                                {onlineEnquiries[normalizeEnquiryPhone(selectedPhone)].education && (
+                                                    <span className="rounded bg-purple-50 px-1.5 py-0.5 text-purple-700">
+                                                        Education: {onlineEnquiries[normalizeEnquiryPhone(selectedPhone)].education}
+                                                    </span>
+                                                )}
+
+                                                {onlineEnquiries[normalizeEnquiryPhone(selectedPhone)].english_level && (
+                                                    <span className="rounded bg-amber-50 px-1.5 py-0.5 text-amber-800">
+                                                        English: {
+                                                            onlineEnquiries[normalizeEnquiryPhone(selectedPhone)].english_level === "need_advanced_batch"
+                                                                ? "Advanced Batch की जरूरत है"
+                                                                : onlineEnquiries[normalizeEnquiryPhone(selectedPhone)].english_level
+                                                        }
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
