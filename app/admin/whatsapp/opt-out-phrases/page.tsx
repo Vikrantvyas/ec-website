@@ -1025,13 +1025,6 @@ export default function WhatsAppOptOutPhrasesPage() {
         </div>
       </section>
 
-      <p className="text-xs leading-5 text-gray-500">
-        Dhyan dein: is page par phrase add, edit, disable ya delete karne se
-        incoming WhatsApp replies par actual opt-out action tabhi hoga jab
-        deployed webhook active phrases ko read karke match kare. Opt-out ho
-        chuke contacts ko future promotional campaigns se block karne ke liye
-        bulk-send function mein bhi opt-out check zaroori hai.
-      </p>
     </main>
   );
 }
