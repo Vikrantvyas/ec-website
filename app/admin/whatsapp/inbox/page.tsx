@@ -27,6 +27,18 @@ type Contact = {
     name: string | null;
     phone_number: string;
 };
+type WhatsAppTemplate = {
+    id: string;
+    template_name: string;
+    language_code: string;
+    category: string | null;
+    status: string;
+    components: Array<{
+        type?: string;
+        text?: string;
+        format?: string;
+    }>;
+};
 type OnlineEnquiry = {
     whatsapp_number: string;
     education: string | null;
@@ -212,7 +224,10 @@ export default function WhatsAppInboxPage() {
     const [search, setSearch] = useState("");
     const [draft, setDraft] = useState("");
 
-    const [messageMode, setMessageMode] = useState<"text" | "buttons" | "list">("text");
+    const [messageMode, setMessageMode] = useState<"text" | "buttons" | "list" | "template">("text");
+    const [approvedTemplates, setApprovedTemplates] = useState<WhatsAppTemplate[]>([]);
+    const [selectedTemplateId, setSelectedTemplateId] = useState("");
+    const [templateParameters, setTemplateParameters] = useState<string[]>([]);
     const [button1, setButton1] = useState("");
     const [button2, setButton2] = useState("");
     const [button3, setButton3] = useState("");
@@ -449,7 +464,7 @@ export default function WhatsAppInboxPage() {
         if (showLoader) setLoading(true);
 
         try {
-            
+
             const [
                 contactsResult,
                 inboundResult,
@@ -495,7 +510,7 @@ export default function WhatsAppInboxPage() {
             if (logsResult.error) throw logsResult.error;
             if (botSessionsResult.error) throw botSessionsResult.error;
             if (formSubmittedResult.error) throw formSubmittedResult.error;
-const nextContacts = (contactsResult.data ?? []) as Contact[];
+            const nextContacts = (contactsResult.data ?? []) as Contact[];
             const submittedFollowups = (formSubmittedResult.data ?? []) as {
                 phone_number: string;
                 lead_id: string | null;
@@ -558,42 +573,42 @@ const nextContacts = (contactsResult.data ?? []) as Contact[];
             }
 
             const { data: sameNumberLeads, error: sameNumberLeadsError } =
-    await supabase
-        .from("meta_leads")
-        .select(
-            "whatsapp_number,education,english_level,demo_class_time,created_time"
-        )
-        .eq("platform", "website")
-        .order("created_time", { ascending: false })
-        .limit(2000);
+                await supabase
+                    .from("meta_leads")
+                    .select(
+                        "whatsapp_number,education,english_level,demo_class_time,created_time"
+                    )
+                    .eq("platform", "website")
+                    .order("created_time", { ascending: false })
+                    .limit(2000);
 
-if (sameNumberLeadsError) throw sameNumberLeadsError;
+            if (sameNumberLeadsError) throw sameNumberLeadsError;
 
-const sameNumberPhones: string[] = [];
+            const sameNumberPhones: string[] = [];
 
-for (const lead of sameNumberLeads ?? []) {
-    const phone = normalizeEnquiryPhone(lead.whatsapp_number);
+            for (const lead of sameNumberLeads ?? []) {
+                const phone = normalizeEnquiryPhone(lead.whatsapp_number);
 
-    if (!phone) continue;
+                if (!phone) continue;
 
-    sameNumberPhones.push(phone);
+                sameNumberPhones.push(phone);
 
-    if (!enquiryMap[phone]) {
-        enquiryMap[phone] = {
-            whatsapp_number: lead.whatsapp_number,
-            education: lead.education,
-            english_level: lead.english_level,
-            demo_class_time: lead.demo_class_time,
-            created_time: lead.created_time,
-        };
-    }
-}
+                if (!enquiryMap[phone]) {
+                    enquiryMap[phone] = {
+                        whatsapp_number: lead.whatsapp_number,
+                        education: lead.education,
+                        english_level: lead.english_level,
+                        demo_class_time: lead.demo_class_time,
+                        created_time: lead.created_time,
+                    };
+                }
+            }
 
-setOnlineEnquiries(enquiryMap);
+            setOnlineEnquiries(enquiryMap);
 
-setFormSubmittedPhones((previous) => [
-    ...new Set([...previous, ...sameNumberPhones]),
-]);
+            setFormSubmittedPhones((previous) => [
+                ...new Set([...previous, ...sameNumberPhones]),
+            ]);
 
 
 
@@ -613,7 +628,7 @@ setFormSubmittedPhones((previous) => [
                 ),
             ]);
 
-           
+
             const nextInbound = (inboundResult.data ?? []) as InboundMessage[];
 
             const currentIds = new Set(nextInbound.map((message) => message.id));
@@ -745,6 +760,30 @@ setFormSubmittedPhones((previous) => [
         };
     }, [loadInbox]);
     useEffect(() => {
+        async function loadApprovedTemplates() {
+            const { data, error } = await supabase
+                .from("whatsapp_templates")
+                .select("id, template_name, language_code, category, status, components")
+                .order("template_name");
+
+            if (error) {
+                console.error("Approved WhatsApp templates load failed:", error.message);
+                setError("Approved templates load nahi hue: " + error.message);
+                return;
+            }
+
+            const templates = (data ?? []) as WhatsAppTemplate[];
+
+setApprovedTemplates(
+    templates.filter((template) =>
+        ["active", "approved"].includes(template.status?.toLowerCase() ?? "")
+    )
+);
+        }
+
+        void loadApprovedTemplates();
+    }, []);
+    useEffect(() => {
         async function loadBotTemplates() {
             const { data, error } = await supabase
                 .from("whatsapp_bot_templates")
@@ -849,7 +888,22 @@ setFormSubmittedPhones((previous) => [
             );
         });
     }, [contacts, inbound, logs, search]);
+    const selectedTemplate = approvedTemplates.find(
+        (template) => template.id === selectedTemplateId
+    );
 
+    const selectedTemplateBody =
+        selectedTemplate?.components?.find(
+            (component) => component.type?.toUpperCase() === "BODY"
+        )?.text ?? "";
+
+    const templateVariableCount = Math.max(
+        0,
+        ...Array.from(
+            selectedTemplateBody.matchAll(/\{\{(\d+)\}\}/g),
+            (match) => Number(match[1])
+        )
+    );
     const selectedContact = contacts.find(
         (contact) =>
             normalizePhone(contact.phone_number) ===
@@ -939,7 +993,24 @@ setFormSubmittedPhones((previous) => [
         const message = draft.trim();
         const phone = normalizePhone(selectedPhone);
 
-        if (!phone || !message || sending) return;
+        if (!phone || sending) return;
+
+        if (messageMode === "template") {
+            if (!selectedTemplate) {
+                setError("Pehle ek approved WhatsApp template select karein.");
+                return;
+            }
+
+            if (
+                templateParameters.length !== templateVariableCount ||
+                templateParameters.some((value) => !value.trim())
+            ) {
+                setError("Template ke sabhi required variables bharein.");
+                return;
+            }
+        } else if (!message) {
+            return;
+        }
 
         if (messageMode === "text" && message.length > 4096) {
             setError("Message 4096 characters se chhota hona chahiye.");
@@ -955,6 +1026,16 @@ setFormSubmittedPhones((previous) => [
             to: phone,
             message,
         };
+
+        if (messageMode === "template" && selectedTemplate) {
+            requestBody = {
+                to: phone,
+                type: "template",
+                template_name: selectedTemplate.template_name,
+                language_code: selectedTemplate.language_code,
+                template_parameters: templateParameters,
+            };
+        }
 
         if (messageMode === "buttons") {
             const titles = [button1, button2, button3]
@@ -1074,18 +1155,23 @@ setFormSubmittedPhones((previous) => [
             }
 
             const loggedMessage =
-                messageMode === "text"
-                    ? message
-                    : messageMode === "buttons"
-                        ? `${message}\n${[button1, button2, button3]
-                            .map((title) => title.trim())
-                            .filter(Boolean)
-                            .map((title) => `• ${title}`)
-                            .join("\n")}`
-                        : `${message}\n${listRows
-                            .filter((row) => row.title.trim())
-                            .map((row) => `• ${row.title.trim()}${row.description.trim() ? ` — ${row.description.trim()}` : ""}`)
-                            .join("\n")}`;
+                messageMode === "template"
+                    ? `${selectedTemplate?.template_name ?? "WhatsApp Template"}\n${selectedTemplateBody.replace(
+                        /\{\{(\d+)\}\}/g,
+                        (_, number) => templateParameters[Number(number) - 1] ?? `{{${number}}}`
+                    )}`
+                    : messageMode === "text"
+                        ? message
+                        : messageMode === "buttons"
+                            ? `${message}\n${[button1, button2, button3]
+                                .map((title) => title.trim())
+                                .filter(Boolean)
+                                .map((title) => `• ${title}`)
+                                .join("\n")}`
+                            : `${message}\n${listRows
+                                .filter((row) => row.title.trim())
+                                .map((row) => `• ${row.title.trim()}${row.description.trim() ? ` — ${row.description.trim()}` : ""}`)
+                                .join("\n")}`;
 
             const { error: logError } = await supabase
                 .from("whatsapp_message_logs")
@@ -1093,7 +1179,12 @@ setFormSubmittedPhones((previous) => [
                     contact_id: contact?.id ?? null,
                     direction: "outbound",
                     message_id: data.message_id,
-                    message_type: messageMode === "text" ? "text" : "interactive",
+                    message_type:
+                        messageMode === "template"
+                            ? "template"
+                            : messageMode === "text"
+                                ? "text"
+                                : "interactive",
                     message_text: loggedMessage,
                     status: data.initial_status ?? "accepted",
                     event_at: new Date().toISOString(),
@@ -1115,7 +1206,10 @@ setFormSubmittedPhones((previous) => [
                     { title: "", description: "" },
                 ]);
             }
-
+            if (messageMode === "template") {
+                setSelectedTemplateId("");
+                setTemplateParameters([]);
+            }
             setMessageMode("text");
 
             if (logError) {
@@ -1743,8 +1837,83 @@ setFormSubmittedPhones((previous) => [
                             {/* Message composer */}
 
 
+                            {messageMode === "template" && (
+                                <div className="shrink-0 space-y-3 border-t border-gray-100 bg-white px-3 py-3 sm:px-4">
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-semibold text-gray-700">
+                                            Approved WhatsApp Template
+                                        </span>
+                                        <select
+                                            value={selectedTemplateId}
+                                            onChange={(event) => {
+                                                const template = approvedTemplates.find(
+                                                    (item) => item.id === event.target.value
+                                                );
 
-                            {messageMode !== "text" && (
+                                                setSelectedTemplateId(event.target.value);
+
+                                                const bodyText =
+                                                    template?.components?.find(
+                                                        (component) => component.type?.toUpperCase() === "BODY"
+                                                    )?.text ?? "";
+
+                                                const count = Math.max(
+                                                    0,
+                                                    ...Array.from(
+                                                        bodyText.matchAll(/\{\{(\d+)\}\}/g),
+                                                        (match) => Number(match[1])
+                                                    )
+                                                );
+
+                                                setTemplateParameters(Array.from({ length: count }, () => ""));
+                                                setError("");
+                                            }}
+                                            disabled={sending}
+                                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#008069]"
+                                        >
+                                            <option value="">Select an approved template...</option>
+                                            {approvedTemplates.map((template) => (
+                                                <option key={template.id} value={template.id}>
+                                                    {template.template_name} ({template.language_code})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+
+                                    {approvedTemplates.length === 0 && (
+                                        <p className="text-xs text-amber-700">
+                                            Koi Active template nahi mila. Template Manager mein status sync karke check karein.
+                                        </p>
+                                    )}
+
+                                    {selectedTemplate && (
+                                        <div className="space-y-2">
+                                            <p className="whitespace-pre-wrap rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                                                {selectedTemplateBody || "Template body preview available nahi hai."}
+                                            </p>
+
+                                            {Array.from({ length: templateVariableCount }, (_, index) => (
+                                                <input
+                                                    key={`${selectedTemplate.id}-${index}`}
+                                                    value={templateParameters[index] ?? ""}
+                                                    onChange={(event) =>
+                                                        setTemplateParameters((current) =>
+                                                            current.map((value, i) =>
+                                                                i === index ? event.target.value : value
+                                                            )
+                                                        )
+                                                    }
+                                                    maxLength={1024}
+                                                    placeholder={`Variable {{${index + 1}}} (required)`}
+                                                    disabled={sending}
+                                                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {messageMode !== "text" && messageMode !== "template" && (
                                 <div className="shrink-0 space-y-3 border-t border-gray-100 bg-white px-3 py-3 sm:px-4">
                                     {messageMode === "buttons" ? (
                                         <div className="space-y-2">
@@ -1846,9 +2015,16 @@ setFormSubmittedPhones((previous) => [
                                 <div className="flex items-end gap-2 sm:gap-3">
                                     <select
                                         value={messageMode}
-                                        onChange={(event) =>
-                                            setMessageMode(event.target.value as "text" | "buttons" | "list")
-                                        }
+                                        onChange={(event) => {
+                                            const mode = event.target.value as "text" | "buttons" | "list" | "template";
+                                            setMessageMode(mode);
+                                            setError("");
+                                            setNotice("");
+                                            if (mode !== "template") {
+                                                setSelectedTemplateId("");
+                                                setTemplateParameters([]);
+                                            }
+                                        }}
                                         disabled={sending}
                                         aria-label="Message type"
                                         className="h-11 w-28 shrink-0 rounded-xl border border-gray-200 bg-white px-2 text-sm outline-none focus:border-[#008069] sm:w-36"
@@ -1856,31 +2032,43 @@ setFormSubmittedPhones((previous) => [
                                         <option value="text">Normal Text</option>
                                         <option value="buttons">Reply Buttons</option>
                                         <option value="list">List Message</option>
+                                        <option value="template">WhatsApp Template</option>
                                     </select>
-                                    <div className="flex h-11 min-h-11 min-w-0 flex-1 items-center rounded-xl bg-white px-3 py-1.5 shadow-sm">
-                                        <textarea
-                                            value={draft}
-                                            onChange={(event) => setDraft(event.target.value)}
-                                            onKeyDown={(event) => {
-                                                if (
-                                                    event.key === "Enter" &&
-                                                    !event.shiftKey &&
-                                                    !event.nativeEvent.isComposing
-                                                ) {
-                                                    event.preventDefault();
-                                                    void sendReply();
-                                                }
-                                            }}
-                                            maxLength={4096}
-                                            rows={1}
-                                            placeholder="Type a message"
-                                            className="h-8 max-h-8 min-h-8 flex-1 resize-none self-center overflow-y-auto bg-transparent py-1.5 text-sm leading-5 outline-none placeholder:text-gray-500"
-                                        />
-                                    </div>
+                                    {messageMode !== "template" ? (
+                                        <div className="flex h-11 min-h-11 min-w-0 flex-1 items-center rounded-xl bg-white px-3 py-1.5 shadow-sm">
+                                            <textarea
+                                                value={draft}
+                                                onChange={(event) => setDraft(event.target.value)}
+                                                onKeyDown={(event) => {
+                                                    if (
+                                                        event.key === "Enter" &&
+                                                        !event.shiftKey &&
+                                                        !event.nativeEvent.isComposing
+                                                    ) {
+                                                        event.preventDefault();
+                                                        void sendReply();
+                                                    }
+                                                }}
+                                                maxLength={4096}
+                                                rows={1}
+                                                placeholder="Type a message"
+                                                className="h-8 max-h-8 min-h-8 flex-1 resize-none self-center overflow-y-auto bg-transparent py-1.5 text-sm leading-5 outline-none placeholder:text-gray-500"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="min-w-0 flex-1" />
+                                    )}
 
                                     <button
                                         type="submit"
-                                        disabled={sending || !draft.trim()}
+                                        disabled={
+                                            sending ||
+                                            (messageMode === "template"
+                                                ? !selectedTemplate ||
+                                                templateParameters.length !== templateVariableCount ||
+                                                templateParameters.some((value) => !value.trim())
+                                                : !draft.trim())
+                                        }
                                         title="Send message"
                                         className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#008069] text-white transition hover:bg-[#006e5b] disabled:cursor-not-allowed disabled:bg-gray-300"
                                     >
