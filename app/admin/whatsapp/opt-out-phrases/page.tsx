@@ -17,6 +17,8 @@ import {
   Trash2,
   ToggleLeft,
   ToggleRight,
+  UserRound,
+  ShieldCheck,
   X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
@@ -29,6 +31,18 @@ type Phrase = {
   updated_at: string;
 };
 
+type OptOutContact = {
+  id: string;
+  name: string | null;
+  phone_number: string;
+  consent_status: string | null;
+  consent_source: string | null;
+  consent_at: string | null;
+  updated_at: string | null;
+};
+
+const BLOCKED_STATUSES = ["opted_out", "optout", "unsubscribed", "stopped", "blocked"];
+
 function errorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
   if (typeof error === "object" && error !== null && "message" in error) {
@@ -39,6 +53,11 @@ function errorMessage(error: unknown) {
 
 export default function WhatsAppOptOutPhrasesPage() {
   const [phrases, setPhrases] = useState<Phrase[]>([]);
+  const [optOutContacts, setOptOutContacts] = useState<OptOutContact[]>([]);
+  const [contactSearch, setContactSearch] = useState("");
+  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(true);
+  const [contactsSaving, setContactsSaving] = useState(false);
   const [newPhrase, setNewPhrase] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
@@ -72,9 +91,27 @@ export default function WhatsAppOptOutPhrasesPage() {
     setLoading(false);
   }, []);
 
+  const loadOptOutContacts = useCallback(async () => {
+    setContactsLoading(true);
+    const { data, error: queryError } = await supabase
+      .from("whatsapp_contacts")
+      .select("id, name, phone_number, consent_status, consent_source, consent_at, updated_at")
+      .in("consent_status", BLOCKED_STATUSES)
+      .order("updated_at", { ascending: false });
+
+    if (queryError) {
+      setError(`Opt-out contacts load nahi hue: ${queryError.message}`);
+      setOptOutContacts([]);
+    } else {
+      setOptOutContacts((data ?? []) as OptOutContact[]);
+    }
+    setContactsLoading(false);
+  }, []);
+
   useEffect(() => {
     void loadPhrases();
-  }, [loadPhrases]);
+    void loadOptOutContacts();
+  }, [loadPhrases, loadOptOutContacts]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase();
@@ -83,6 +120,16 @@ export default function WhatsAppOptOutPhrasesPage() {
       item.phrase.toLocaleLowerCase().includes(term)
     );
   }, [phrases, search]);
+
+  const filteredContacts = useMemo(() => {
+    const term = contactSearch.trim().toLocaleLowerCase();
+    if (!term) return optOutContacts;
+    return optOutContacts.filter((item) =>
+      `${item.name ?? ""} ${item.phone_number}`.toLocaleLowerCase().includes(term)
+    );
+  }, [optOutContacts, contactSearch]);
+  const allFilteredContactsSelected =
+    filteredContacts.length > 0 && filteredContacts.every((item) => selectedContacts.includes(item.id));
 
   const activeCount = phrases.filter((item) => item.is_active).length;
   const inactiveCount = phrases.length - activeCount;
@@ -307,6 +354,74 @@ export default function WhatsAppOptOutPhrasesPage() {
     }
   }
 
+  function toggleContactSelected(id: string) {
+    setSelectedContacts((old) =>
+      old.includes(id) ? old.filter((value) => value !== id) : [...old, id]
+    );
+  }
+
+  function toggleAllFilteredContacts() {
+    if (allFilteredContactsSelected) {
+      setSelectedContacts((old) => old.filter((id) => !filteredContacts.some((item) => item.id === id)));
+    } else {
+      setSelectedContacts((old) => [...new Set([...old, ...filteredContacts.map((item) => item.id)])]);
+    }
+  }
+
+  async function reactivateSelectedContacts() {
+    const chosen = optOutContacts.filter((item) => selectedContacts.includes(item.id));
+    if (chosen.length === 0) return;
+
+    const confirmation = `Aapne confirm kiya hai ki in ${chosen.length} contact(s) se written consent mil chuki hai?\n\n${chosen.map((item) => `${item.name || "Naam nahi"} — ${item.phone_number}`).join("\n")}\n\nSirf written consent verify karne ke baad hi OK karein.`;
+    if (!window.confirm(confirmation)) return;
+
+    setContactsSaving(true);
+    setError("");
+    setNotice("");
+
+    const phoneVariants = [...new Set(chosen.flatMap((item) => {
+      const digits = item.phone_number.trim();
+      const withoutPlus = digits.startsWith("+") ? digits.slice(1) : digits;
+      return [digits, withoutPlus, `+${withoutPlus}`];
+    }))];
+    const contactIds = chosen.map((item) => item.id);
+    const now = new Date().toISOString();
+
+    // Meta lead flag ko bhi clear karein; bulk-send checker dono tables dekhta hai.
+    const { error: leadsError } = await supabase
+      .from("meta_leads")
+      .update({ whatsapp_opted_out: false })
+      .in("whatsapp_number", phoneVariants);
+
+    if (leadsError) {
+      setContactsSaving(false);
+      setError(`Meta leads ka opt-out flag clear nahi hua: ${leadsError.message}. Contacts ko opted-out hi rakha gaya hai.`);
+      return;
+    }
+
+    const { error: contactsError } = await supabase
+      .from("whatsapp_contacts")
+      .update({
+        consent_status: "opted_in",
+        consent_source: "manual_written_consent",
+        consent_at: now,
+        updated_at: now,
+      })
+      .in("id", contactIds);
+
+    setContactsSaving(false);
+
+    if (contactsError) {
+      setError(`Meta leads flag clear ho gaya, lekin contact status update nahi hua: ${contactsError.message}. Is number ko abhi opted-out samjhein aur database status verify karein.`);
+      await loadOptOutContacts();
+      return;
+    }
+
+    setSelectedContacts([]);
+    showNotice(`${chosen.length} contact(s) ko opted-in mark kiya gaya. Written consent record aap apne paas surakshit rakhein.`);
+    await loadOptOutContacts();
+  }
+
   function startEdit(item: Phrase) {
     setEditId(item.id);
     setEditText(item.phrase);
@@ -329,8 +444,8 @@ export default function WhatsAppOptOutPhrasesPage() {
 
         <button
           type="button"
-          onClick={() => void loadPhrases()}
-          disabled={loading || saving}
+          onClick={() => { void loadPhrases(); void loadOptOutContacts(); }}
+          disabled={loading || saving || contactsLoading || contactsSaving}
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
         >
           <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
@@ -727,6 +842,115 @@ export default function WhatsAppOptOutPhrasesPage() {
             })}
           </div>
         )}
+      </section>
+
+      <section className="overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-amber-100 bg-amber-50 p-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+              <ShieldCheck size={20} className="text-amber-700" />
+              Opt-out contacts
+            </h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Sirf un contacts ko re-activate karein jinki written consent aapne verify kar li ho.
+            </p>
+            <p className="mt-1 text-sm font-medium text-amber-800">
+              {filteredContacts.length} dikh rahe hain · {selectedContacts.length} selected · Total {optOutContacts.length} opted-out
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="relative">
+              <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={contactSearch}
+                onChange={(event) => setContactSearch(event.target.value)}
+                placeholder="Naam ya WhatsApp number search"
+                className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500 sm:w-64"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadOptOutContacts()}
+              disabled={contactsLoading || contactsSaving}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <RefreshCw size={15} className={contactsLoading ? "animate-spin" : ""} /> Refresh list
+            </button>
+          </div>
+        </div>
+
+        {selectedContacts.length > 0 && (
+          <div className="flex flex-col gap-3 border-b border-amber-100 bg-amber-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-sm font-medium text-gray-800">{selectedContacts.length} contact(s) selected</span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => void reactivateSelectedContacts()}
+                disabled={contactsSaving}
+                className="inline-flex items-center gap-2 rounded-lg bg-green-700 px-3 py-2 text-sm font-semibold text-white hover:bg-green-800 disabled:opacity-50"
+              >
+                {contactsSaving ? <LoaderCircle size={15} className="animate-spin" /> : <UserRound size={15} />}
+                Written consent verified — Remove opt-out
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedContacts([])}
+                disabled={contactsSaving}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >Clear selection</button>
+            </div>
+          </div>
+        )}
+
+        {contactsLoading ? (
+          <div className="flex items-center justify-center gap-2 p-10 text-sm text-gray-500">
+            <LoaderCircle size={20} className="animate-spin" /> Opt-out contacts load ho rahe hain...
+          </div>
+        ) : filteredContacts.length === 0 ? (
+          <div className="p-10 text-center">
+            <p className="font-medium text-gray-800">Koi opted-out contact nahi mila</p>
+            <p className="mt-1 text-sm text-gray-500">Search badal kar dekhein ya list refresh karein.</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+              <span className="text-sm text-gray-600">Contact list</span>
+              <button
+                type="button"
+                onClick={toggleAllFilteredContacts}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                {allFilteredContactsSelected ? <CheckSquare size={16} /> : <Square size={16} />}
+                {allFilteredContactsSelected ? "Deselect all" : "Select all shown"}
+              </button>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {filteredContacts.map((item) => (
+                <div key={item.id} className="flex flex-col gap-3 p-4 hover:bg-gray-50 sm:flex-row sm:items-center">
+                  <button
+                    type="button"
+                    onClick={() => toggleContactSelected(item.id)}
+                    aria-label={selectedContacts.includes(item.id) ? "Deselect contact" : "Select contact"}
+                    className="self-start rounded p-1 text-gray-500 hover:text-blue-600 sm:self-center"
+                  >
+                    {selectedContacts.includes(item.id) ? <CheckSquare size={19} className="text-blue-600" /> : <Square size={19} />}
+                  </button>
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words text-sm font-semibold text-gray-900">{item.name?.trim() || "Naam available nahi"}</p>
+                    <p className="mt-1 break-all text-sm text-gray-700">{item.phone_number}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 font-medium text-red-800">{item.consent_status || "opted_out"}</span>
+                      {item.consent_source && <span>Source: {item.consent_source}</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+        <div className="border-t border-amber-100 bg-amber-50/60 p-4 text-xs leading-5 text-gray-600">
+          Important: button dabane par confirmation maangi jayegi. Written consent pehle manually verify karein. Agar database RLS policy update ko rokegi, page error dikhayega; service-role key browser mein kabhi add na karein.
+        </div>
       </section>
 
       <p className="text-xs leading-5 text-gray-500">
