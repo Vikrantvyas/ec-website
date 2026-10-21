@@ -56,7 +56,7 @@ export default function AdminDashboard() {
     { name: "Inbox", href: "/admin/whatsapp/inbox", icon: Inbox },
     { name: "Bots", href: "/admin/whatsapp/bots", icon: Bot },
     { name: "Templates", href: "/admin/whatsapp/templates", icon: FileText },
-    
+    { name: "Campaign Report", href: "/admin/whatsapp/campaign-analysis", icon: FileBarChart },
 
 
     // ✅ META REPORT
@@ -88,10 +88,10 @@ export default function AdminDashboard() {
 
 
               <Icon
-                className={`w-8 h-8 mb-2 ${["WhatsApp", "Inbox", "Bots", "Templates"].includes(item.name)
-                  ? "text-green-600"
-                  : "text-blue-600"
-                  }`}
+                className={`w-8 h-8 mb-2 ${["WhatsApp", "Inbox", "Bots", "Templates", "Campaign Report"].includes(item.name)
+  ? "text-green-600"
+  : "text-blue-600"
+  }`}
               />
 
 

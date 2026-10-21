@@ -48,7 +48,11 @@ export async function POST(request: NextRequest) {
 
         const body = await request.json().catch(() => ({}));
         const subscription = body?.subscription;
-
+        const source =
+            request.headers.get("origin") &&
+                new URL(request.headers.get("origin")!).hostname === "localhost"
+                ? "localhost"
+                : "live";
         // Sirf login verification ki request
         if (!subscription) {
             return NextResponse.json({
@@ -96,6 +100,7 @@ export async function POST(request: NextRequest) {
                 user_id: data.user.id,
                 endpoint: subscription.endpoint,
                 subscription,
+                source,
             });
 
         if (insertError) {

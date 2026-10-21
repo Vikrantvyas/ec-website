@@ -20,6 +20,7 @@ import {
   Inbox,
   Bot,
   FileText,
+  BarChart3,
 } from "lucide-react";
 
 export const adminMenu = [
@@ -52,5 +53,9 @@ export const adminMenu = [
   { name: "Inbox", href: "/admin/whatsapp/inbox", icon: Inbox },
   { name: "Bots", href: "/admin/whatsapp/bots", icon: Bot },
   { name: "Templates", href: "/admin/whatsapp/templates", icon: FileText },
-
+  {
+    name: "WhatsApp Campaign Analysis",
+    href: "/admin/whatsapp/campaign-analysis",
+    icon: BarChart3,
+  },
 ];

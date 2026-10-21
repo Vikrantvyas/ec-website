@@ -496,7 +496,20 @@ export default function WhatsAppBotsPage() {
                 );
                 return;
             }
+const maxTitleLength = node.type === "list" ? 24 : 20;
 
+const invalidTitle = node.options.some(
+    (option) =>
+        !option.title.trim() ||
+        option.title.length > maxTitleLength
+);
+
+if (invalidTitle) {
+    setError(
+        `हर Option का नाम जरूरी है और ${maxTitleLength} characters से अधिक नहीं होना चाहिए।`
+    );
+    return;
+}
             const invalidNext = node.options.some(
                 (option) =>
                     option.nextNodeId &&
@@ -969,12 +982,12 @@ export default function WhatsAppBotsPage() {
                                                         question: body?.text ?? "",
                                                         type: quickReplies.length > 0 ? "buttons" : "text",
                                                         options: quickReplies.slice(0, 3).map(
-    (item: any) => ({
-        id: makeId(),
-        title: item.text,
-        nextNodeId: "",
-    })
-),
+                                                            (item: any) => ({
+                                                                id: makeId(),
+                                                                title: item.text,
+                                                                nextNodeId: "",
+                                                            })
+                                                        ),
                                                     },
                                                 ],
                                             });
@@ -998,6 +1011,79 @@ export default function WhatsAppBotsPage() {
                                         कोई approved template नहीं मिला। पहले Templates page पर Sync करें।
                                     </p>
                                 )}
+                                {selectedTemplateId && (() => {
+                                    const selectedTemplate = approvedTemplates.find(
+                                        (item) => item.id === selectedTemplateId
+                                    );
+
+                                    if (!selectedTemplate) return null;
+
+                                    const components = selectedTemplate.components ?? [];
+                                    const body = components.find((item: any) => item.type === "BODY");
+                                    const header = components.find((item: any) => item.type === "HEADER");
+                                    const footer = components.find((item: any) => item.type === "FOOTER");
+                                    const buttons = components.find((item: any) => item.type === "BUTTONS");
+
+                                    return (
+                                        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+                                            <h3 className="mb-3 font-semibold text-slate-800">
+                                                Original Approved Template Preview
+                                            </h3>
+
+                                            {header?.format === "TEXT" && header.text && (
+                                                <p className="mb-2 font-semibold text-slate-800">
+                                                    {header.text}
+                                                </p>
+                                            )}
+
+                                            {body?.text && (
+                                                <p className="whitespace-pre-wrap text-sm text-slate-700">
+                                                    {body.text}
+                                                </p>
+                                            )}
+
+                                            {footer?.text && (
+                                                <p className="mt-3 text-xs text-slate-500">
+                                                    {footer.text}
+                                                </p>
+                                            )}
+
+                                            {buttons?.buttons?.length > 0 && (
+                                                <div className="mt-4 space-y-2">
+                                                    {buttons.buttons.map((button: any, index: number) => (
+                                                        <div
+                                                            key={`${button.type}-${index}`}
+                                                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                                                        >
+                                                            {button.type === "URL" ? (
+                                                                <a
+                                                                    href={button.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="font-medium text-blue-700 underline"
+                                                                >
+                                                                    🔗 {button.text}
+                                                                </a>
+                                                            ) : (
+                                                                <span className="font-medium text-emerald-700">
+                                                                    ↩ {button.text}
+                                                                </span>
+                                                            )}
+
+                                                            <span className="ml-2 text-xs text-slate-400">
+                                                                {button.type === "URL"
+                                                                    ? "URL Button"
+                                                                    : button.type === "QUICK_REPLY"
+                                                                        ? "Quick Reply"
+                                                                        : button.type}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             <div className="mt-5">
@@ -1319,9 +1405,69 @@ export default function WhatsAppBotsPage() {
                                                     <option value="text">Text Question</option>
                                                 </select>
                                             </label>
+                                            {index === 0 &&
+                                                selectedTemplateId &&
+                                                (() => {
+                                                    const template = approvedTemplates.find(
+                                                        (item) => item.id === selectedTemplateId
+                                                    );
 
+                                                    const buttonsComponent = template?.components?.find(
+                                                        (item: any) => item.type === "BUTTONS"
+                                                    );
+
+                                                    const templateButtons = buttonsComponent?.buttons ?? [];
+                                                    const displayButtons = templateButtons.filter(
+                                                        (button: any) => button.type !== "QUICK_REPLY"
+                                                    );
+                                                    if (displayButtons.length === 0) return null;
+
+                                                    return (
+                                                        <div className="mb-4 space-y-2">
+                                                            <p className="text-sm font-semibold text-slate-800">
+                                                                Original Template Buttons
+                                                            </p>
+
+                                                            {displayButtons.map((button: any, buttonIndex: number) => (
+                                                                <div
+                                                                    key={`${button.type}-${buttonIndex}`}
+                                                                    className="grid grid-cols-1 gap-2 rounded-xl bg-slate-50 p-3 md:grid-cols-[1fr_1fr_1.5fr]"
+                                                                >
+                                                                    <input
+                                                                        className={field}
+                                                                        value={button.text ?? button.title ?? button.type}
+                                                                        readOnly
+                                                                        title="Original Template Button"
+                                                                    />
+
+                                                                    <input
+                                                                        className={field}
+                                                                        value={button.type}
+                                                                        readOnly
+                                                                        title="Button Type"
+                                                                    />
+
+                                                                    <input
+                                                                        className={field}
+                                                                        value={
+                                                                            button.type === "URL"
+                                                                                ? button.url ?? ""
+                                                                                : button.type === "PHONE_NUMBER"
+                                                                                    ? button.phone_number ?? ""
+                                                                                    : ""
+                                                                        }
+                                                                        readOnly
+                                                                        title="Button Action"
+                                                                        placeholder="No URL or phone number"
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                })()}
                                             {node.type !== "text" && (
                                                 <div className="space-y-3">
+
                                                     <div className="flex items-center justify-between">
                                                         <p className="text-sm font-semibold text-slate-800">
                                                             Reply Options
@@ -1352,6 +1498,7 @@ export default function WhatsAppBotsPage() {
                                                                     })
                                                                 }
                                                                 placeholder="Button / Option label"
+                                                                maxLength={node.type === "list" ? 24 : 20}
                                                             />
                                                             <input
                                                                 className={field}
