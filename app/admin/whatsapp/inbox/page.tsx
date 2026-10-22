@@ -842,9 +842,16 @@ export default function WhatsAppInboxPage() {
                 at: message.received_at,
             })),
 
-            ...logs
-                .filter((message) => message.direction === "outbound")
-                .map((message) => {
+           ...logs
+    .filter((message) => {
+        if (message.direction !== "outbound") return false;
+
+        // Campaign/template delivery logs ko chat-list activity na maanein.
+        if (message.message_type === "template") return false;
+
+        return true;
+    })
+    .map((message) => {
                     const contact = contacts.find(
                         (item) => item.id === message.contact_id,
                     );
