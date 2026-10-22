@@ -46,6 +46,7 @@ type BotTemplate = {
 
 type Props = {
     conversations: InboxConversation[];
+    formSubmittedPhones: string[];
     contacts: InboxContact[];
     inbound: InboxInbound[];
     logs: InboxLog[];
@@ -60,7 +61,19 @@ type Props = {
 function normalizePhone(value: string) {
     return value.replace(/\D/g, "");
 }
+function normalizeEnquiryPhone(value: string) {
+    let phone = normalizePhone(value);
 
+    if (phone.length === 12 && phone.startsWith("91")) {
+        phone = phone.slice(2);
+    }
+
+    if (phone.length === 11 && phone.startsWith("0")) {
+        phone = phone.slice(1);
+    }
+
+    return phone;
+}
 function getMessageText(text: string | null | undefined, type?: string | null) {
     if (text?.trim()) return text;
 
@@ -78,6 +91,7 @@ function getMessageText(text: string | null | undefined, type?: string | null) {
 
 export default function InboxBulkActions({
     conversations,
+    formSubmittedPhones,
     contacts,
     inbound,
     logs,
@@ -102,7 +116,10 @@ export default function InboxBulkActions({
     const [sending, setSending] = useState(false);
     const [error, setError] = useState("");
     const [notice, setNotice] = useState("");
-
+    const formSubmittedPhoneSet = useMemo(
+        () => new Set(formSubmittedPhones.map(normalizeEnquiryPhone).filter(Boolean)),
+        [formSubmittedPhones]
+    );
 
     const windowOpenConversations = useMemo(() => {
         if (!openTextOnly) return conversations;
@@ -945,8 +962,19 @@ export default function InboxBulkActions({
                                             <div className="flex min-w-0 items-center justify-between gap-2">
                                                 <div className="flex min-w-0 items-center gap-1.5">
                                                     <span className="truncate text-[15px] font-medium leading-5 text-[#111b21]">
-                                                        {conversation.name}
-                                                    </span>
+    {conversation.name}
+</span>
+
+{formSubmittedPhoneSet.has(
+    normalizeEnquiryPhone(conversation.phone)
+) && (
+    <span
+        className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-800"
+        title="Form submitted"
+    >
+        Form Filled
+    </span>
+)}
 
                                                     {botActive && (
                                                         <span
@@ -999,7 +1027,7 @@ export default function InboxBulkActions({
                                     </button>
                                 </InboxRightClick>
                             </div>
-                        
+
                         );
                     })
                 )}

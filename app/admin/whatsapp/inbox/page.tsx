@@ -519,13 +519,7 @@ export default function WhatsAppInboxPage() {
                 submitted_at: string | null;
             }[];
 
-            setFormSubmittedPhones([
-                ...new Set(
-                    submittedFollowups
-                        .map((item) => normalizeEnquiryPhone(item.phone_number))
-                        .filter(Boolean)
-                ),
-            ]);
+
 
             const leadIds = [
                 ...new Set(
@@ -574,14 +568,13 @@ export default function WhatsAppInboxPage() {
             }
 
             const { data: sameNumberLeads, error: sameNumberLeadsError } =
-                await supabase
-                    .from("meta_leads")
-                    .select(
-                        "whatsapp_number,education,english_level,demo_class_time,created_time"
-                    )
-                    .eq("platform", "website")
-                    .order("created_time", { ascending: false })
-                    .limit(2000);
+    await supabase
+        .from("meta_leads")
+        .select(
+            "whatsapp_number,education,english_level,demo_class_time,created_time"
+        )
+        .order("created_time", { ascending: false })
+        .limit(2000);
 
             if (sameNumberLeadsError) throw sameNumberLeadsError;
 
@@ -604,23 +597,18 @@ export default function WhatsAppInboxPage() {
                     };
                 }
             }
-
             setOnlineEnquiries(enquiryMap);
 
-            setFormSubmittedPhones((previous) => [
-                ...new Set([...previous, ...sameNumberPhones]),
-            ]);
-
-
+            const submittedPhones = submittedFollowups
+                .map((item) => normalizeEnquiryPhone(item.phone_number))
+                .filter(Boolean);
 
             setFormSubmittedPhones([
-                ...new Set(
-                    (formSubmittedResult.data ?? []).map((item) =>
-                        normalizePhone(item.phone_number)
-                    )
-                ),
+                ...new Set([
+                    ...submittedPhones,
+                    ...sameNumberPhones,
+                ]),
             ]);
-
             setActiveBotPhones([
                 ...new Set(
                     (botSessionsResult.data ?? []).map((session) =>
@@ -842,16 +830,16 @@ export default function WhatsAppInboxPage() {
                 at: message.received_at,
             })),
 
-           ...logs
-    .filter((message) => {
-        if (message.direction !== "outbound") return false;
+            ...logs
+                .filter((message) => {
+                    if (message.direction !== "outbound") return false;
 
-        // Campaign/template delivery logs ko chat-list activity na maanein.
-        if (message.message_type === "template") return false;
+                    // Campaign/template delivery logs ko chat-list activity na maanein.
+                    if (message.message_type === "template") return false;
 
-        return true;
-    })
-    .map((message) => {
+                    return true;
+                })
+                .map((message) => {
                     const contact = contacts.find(
                         (item) => item.id === message.contact_id,
                     );
@@ -1307,6 +1295,7 @@ export default function WhatsAppInboxPage() {
 
                     <InboxBulkActions
                         conversations={conversations}
+                        formSubmittedPhones={formSubmittedPhones}
                         contacts={contacts}
                         inbound={inbound}
                         logs={logs}
