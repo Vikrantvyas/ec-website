@@ -496,20 +496,20 @@ export default function WhatsAppBotsPage() {
                 );
                 return;
             }
-const maxTitleLength = node.type === "list" ? 24 : 20;
+            const maxTitleLength = node.type === "list" ? 24 : 20;
 
-const invalidTitle = node.options.some(
-    (option) =>
-        !option.title.trim() ||
-        option.title.length > maxTitleLength
-);
+            const invalidTitle = node.options.some(
+                (option) =>
+                    !option.title.trim() ||
+                    option.title.length > maxTitleLength
+            );
 
-if (invalidTitle) {
-    setError(
-        `हर Option का नाम जरूरी है और ${maxTitleLength} characters से अधिक नहीं होना चाहिए।`
-    );
-    return;
-}
+            if (invalidTitle) {
+                setError(
+                    `हर Option का नाम जरूरी है और ${maxTitleLength} characters से अधिक नहीं होना चाहिए।`
+                );
+                return;
+            }
             const invalidNext = node.options.some(
                 (option) =>
                     option.nextNodeId &&
@@ -613,22 +613,38 @@ if (invalidTitle) {
         await loadBots();
     }
 
-    async function deleteBot(bot: BotTemplate) {
-        if (!window.confirm(`"${bot.name}" को Delete करना है?`)) return;
+    
+async function deleteBot(bot: BotTemplate) {
+  if (
+    !window.confirm(
+      `"${bot.name}" को Delete करना है?\n\nइस bot के सभी sessions भी delete होंगे। यह action वापस नहीं किया जा सकेगा।`
+    )
+  ) {
+    return;
+  }
 
-        const { error: deleteError } = await supabase
-            .from("whatsapp_bot_templates")
-            .delete()
-            .eq("id", bot.id);
+  setError("");
+  setNotice("");
 
-        if (deleteError) {
-            setError(deleteError.message);
-            return;
-        }
+  const { data, error: deleteError } = await supabase.rpc(
+    "delete_whatsapp_bot",
+    { p_bot_id: bot.id }
+  );
 
-        setNotice("Bot Delete कर दिया गया।");
-        await loadBots();
-    }
+  if (deleteError) {
+    setError(`Bot delete नहीं हुआ: ${deleteError.message}`);
+    return;
+  }
+
+  if (!data?.success) {
+    setError("Bot delete नहीं हुआ। कृपया दोबारा जाँचें।");
+    return;
+  }
+
+  setNotice("Bot और उसके sessions delete कर दिए गए।");
+  await loadBots();
+}
+
 
     const activeCount = bots.filter((bot) => bot.status === "active").length;
     const draftCount = bots.filter((bot) => bot.status === "draft").length;
