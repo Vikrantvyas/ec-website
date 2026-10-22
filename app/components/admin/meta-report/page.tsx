@@ -172,37 +172,76 @@ export default function MetaReportPage() {
         () => uniqueOptions(leads, "age"),
         [leads]
     );
-    const educations = useMemo(
-        () => uniqueOptions(leads, "education"),
-        [leads]
-    );
-   const englishLevels = useMemo(() => {
-    const values = Array.from(
-        new Set(
-            leads
-                .map((lead) => lead.english_level)
-                .filter(
-                    (value): value is string =>
-                        typeof value === "string" && value.trim() !== ""
-                )
-        )
-    );
+    const educations = useMemo(() => {
+        const values = Array.from(
+            new Set(
+                leads
+                    .map((lead) => lead.education)
+                    .filter(
+                        (value): value is string =>
+                            typeof value === "string" && value.trim() !== ""
+                    )
+                    .map((value) => normalizeMetaValue(value))
+                    .filter(Boolean)
+                    .filter(
+                        (value) => !/\bschool\b/i.test(value)
+                    )
+            )
+        );
 
-    return values
-        .sort((a, b) => a.localeCompare(b))
-        .map((value) => ({
-            value,
-            label: value,
-        }));
-}, [leads]);
+        return values
+            .sort((a, b) => a.localeCompare(b, "hi"))
+            .map((value) => ({
+                value,
+                label: value,
+            }));
+    }, [leads]);
+    const englishLevels = useMemo(() => {
+        const values = Array.from(
+            new Set(
+                leads
+                    .map((lead) => lead.english_level)
+                    .filter(
+                        (value): value is string =>
+                            typeof value === "string" && value.trim() !== ""
+                    )
+                    .map((value) => normalizeMetaValue(value))
+                    .filter(Boolean)
+            )
+        );
+
+        return values
+            .sort((a, b) => a.localeCompare(b, "hi"))
+            .map((value) => ({
+                value,
+                label: value,
+            }));
+    }, [leads]);
     const demoTimes = useMemo(
         () => uniqueOptions(leads, "demo_class_time"),
         [leads]
     );
-    const zoomOptions = useMemo(
-        () => uniqueOptions(leads, "knows_zoom"),
-        [leads]
-    );
+    const zoomOptions = useMemo(() => {
+        const values = Array.from(
+            new Set(
+                leads
+                    .map((lead) => lead.knows_zoom)
+                    .filter(
+                        (value): value is string =>
+                            typeof value === "string" && value.trim() !== ""
+                    )
+                    .map((value) => normalizeMetaValue(value))
+                    .filter(Boolean)
+            )
+        );
+
+        return values
+            .sort((a, b) => a.localeCompare(b, "hi"))
+            .map((value) => ({
+                value,
+                label: value,
+            }));
+    }, [leads]);
     const leadSources = useMemo(
         () => [
             { value: "meta_lead_form", label: "Meta Lead Form" },
@@ -282,10 +321,16 @@ export default function MetaReportPage() {
             if (age && lead.age !== age) {
                 return false;
             }
-            if (education && lead.education !== education) {
+            if (
+                education &&
+                normalizeMetaValue(lead.education ?? "") !== education
+            ) {
                 return false;
             }
-            if (englishLevel && lead.english_level !== englishLevel) {
+            if (
+                englishLevel &&
+                normalizeMetaValue(lead.english_level ?? "") !== englishLevel
+            ) {
                 return false;
             }
 
@@ -298,7 +343,10 @@ export default function MetaReportPage() {
                 }
             }
 
-            if (zoom && lead.knows_zoom !== zoom) {
+            if (
+                zoom &&
+                normalizeMetaValue(lead.knows_zoom ?? "") !== zoom
+            ) {
                 return false;
             }
             if (
