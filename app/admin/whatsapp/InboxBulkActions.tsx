@@ -90,6 +90,7 @@ export default function InboxBulkActions({
 }: Props) {
     const [search, setSearch] = useState("");
     const [selectedPhones, setSelectedPhones] = useState<string[]>([]);
+    const [showBulkActions, setShowBulkActions] = useState(false);
     const [actionMode, setActionMode] = useState<"text" | "bot">("text");
     const [bulkText, setBulkText] = useState("");
     const [sending, setSending] = useState(false);
@@ -574,120 +575,208 @@ export default function InboxBulkActions({
                     </p>
                 )}
 
-                <label className="flex items-center gap-2 rounded-lg bg-[#f0f2f5] px-3">
-                    <Search size={16} className="shrink-0 text-gray-500" />
-                    <input
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Search name, phone, Bot question or answer"
-                        className="h-9 min-w-0 flex-1 bg-transparent text-xs outline-none"
-                    />
-                    {search && (
-                        <button type="button" onClick={() => setSearch("")}>×</button>
-                    )}
-                </label>
+                <div className="flex items-center gap-2">
+                    <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-[#f0f2f5] px-3">
+                        <Search size={16} className="shrink-0 text-gray-500" />
 
-                <div className="flex items-center justify-between gap-2">
-                    <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
                         <input
-                            type="checkbox"
-                            checked={allVisibleSelected}
-                            onChange={toggleAllVisible}
-                            disabled={!filteredConversations.length || sending}
-                            className="accent-[#008069]"
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            placeholder="Search name, phone, Bot question or answer"
+                            className="h-9 min-w-0 w-full bg-transparent text-xs outline-none"
                         />
-                        Select all filtered
-                    </label>
 
-                    <span className="text-xs text-gray-500">
-                        {selectedPhones.length} selected
-                    </span>
+                        {search && (
+                            <button
+                                type="button"
+                                onClick={() => setSearch("")}
+                                className="shrink-0 text-gray-500"
+                            >
+                                ×
+                            </button>
+                        )}
+                    </label>
 
                     <button
                         type="button"
-                        onClick={() => setSelectedPhones([])}
-                        disabled={!selectedPhones.length || sending}
-                        className="text-xs font-medium text-[#008069] disabled:text-gray-400"
+                        onClick={() => setShowBulkActions(true)}
+                        className="flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
                     >
-                        Clear
+                        <Send size={14} />
+                        Go
+                        <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-xs font-semibold text-green-800">
+                            {selectedPhones.length}
+                        </span>
                     </button>
                 </div>
 
-                <select
-                    value={actionMode}
-                    onChange={(event) =>
-                        setActionMode(event.target.value as "text" | "bot")
-                    }
-                    disabled={sending}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-                >
-                    <option value="text">Normal Text</option>
-                    <option value="bot">Start Bot</option>
-                </select>
-
-                {actionMode === "text" ? (
-                    <textarea
-                        value={bulkText}
-                        onChange={(event) => setBulkText(event.target.value)}
-                        maxLength={4096}
-                        rows={3}
-                        placeholder="Type message for selected contacts..."
+                {selectedPhones.length > 0 && (
+                    <button
+                        type="button"
+                        onClick={() => setSelectedPhones([])}
                         disabled={sending}
-                        className="w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
-                    />
-                ) : (
-                    <label className="block space-y-1">
-                        <span className="text-xs font-medium text-gray-600">
-                            Select Bot
-                        </span>
-                        <select
-                            value={selectedBotId}
-                            onChange={(event) => onSelectedBotIdChange(event.target.value)}
-                            disabled={sending}
-                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-                        >
-                            <option value="">Select an active bot...</option>
-                            {botTemplates.map((bot) => (
-                                <option key={bot.id} value={bot.id}>
-                                    {bot.name}
-                                </option>
-                            ))}
-                        </select>
-                        {selectedBot && (
-                            <span className="text-[11px] text-gray-500">
-                                Selected: {selectedBot.name}
-                            </span>
-                        )}
-                    </label>
+                        className="text-xs font-medium text-[#008069] hover:bg-green-50 disabled:opacity-50"
+                    >
+                        Clear selection
+                    </button>
                 )}
 
-                <button
-                    type="button"
-                    onClick={() => void sendBulkAction()}
-                    disabled={
-                        sending ||
-                        selectedPhones.length === 0 ||
-                        (actionMode === "text" && !bulkText.trim()) ||
-                        (actionMode === "bot" && !selectedBotId)
-                    }
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#008069] px-3 py-2.5 text-sm font-semibold text-white hover:bg-[#006e5b] disabled:cursor-not-allowed disabled:bg-gray-300"
-                >
-                    {sending ? (
-                        <>
-                            <LoaderCircle size={16} className="animate-spin" />
-                            Processing...
-                        </>
-                    ) : (
-                        <>
-                            <Send size={16} />
-                            {actionMode === "bot"
-                                ? `Start Bot (${selectedPhones.length})`
-                                : `Send Text (${selectedPhones.length})`}
-                        </>
-                    )}
-                </button>
+                {showBulkActions && (
+                    <div
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-3 sm:p-5"
+                        onMouseDown={(event) => {
+                            if (event.target === event.currentTarget && !sending) {
+                                setShowBulkActions(false);
+                            }
+                        }}
+                    >
+                        <div
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="bulk-actions-title"
+                            className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-2xl"
+                        >
+                            <div className="sticky top-0 flex items-center justify-between border-b bg-white px-4 py-3">
+                                <div>
+                                    <h3
+                                        id="bulk-actions-title"
+                                        className="font-semibold text-gray-900"
+                                    >
+                                        Bulk Actions
+                                    </h3>
+                                    <p className="mt-1 text-xs text-gray-500">
+                                        {selectedPhones.length} contacts selected
+                                    </p>
+                                </div>
 
-              
+                                <button
+                                    type="button"
+                                    onClick={() => setShowBulkActions(false)}
+                                    disabled={sending}
+                                    className="flex size-9 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+                                    aria-label="Close bulk actions"
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            <div className="space-y-3 p-4">
+                                <div className="flex items-center justify-between gap-2">
+                                    <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+                                        <input
+                                            type="checkbox"
+                                            checked={allVisibleSelected}
+                                            onChange={toggleAllVisible}
+                                            disabled={!filteredConversations.length || sending}
+                                            className="accent-[#008069]"
+                                        />
+                                        Select all filtered ({filteredConversations.length})
+                                    </label>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedPhones([])}
+                                        disabled={!selectedPhones.length || sending}
+                                        className="text-xs font-medium text-[#008069] disabled:text-gray-400"
+                                    >
+                                        Clear selection
+                                    </button>
+                                </div>
+
+                                <select
+                                    value={actionMode}
+                                    onChange={(event) =>
+                                        setActionMode(event.target.value as "text" | "bot")
+                                    }
+                                    disabled={sending}
+                                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+                                >
+                                    <option value="text">Normal Text</option>
+                                    <option value="bot">Start Bot</option>
+                                </select>
+
+                                {actionMode === "text" ? (
+                                    <textarea
+                                        value={bulkText}
+                                        onChange={(event) => setBulkText(event.target.value)}
+                                        maxLength={4096}
+                                        rows={4}
+                                        placeholder="Type message for selected contacts..."
+                                        disabled={sending}
+                                        className="w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#008069]"
+                                    />
+                                ) : (
+                                    <label className="block space-y-1">
+                                        <span className="text-xs font-medium text-gray-600">
+                                            Select Bot
+                                        </span>
+
+                                        <select
+                                            value={selectedBotId}
+                                            onChange={(event) =>
+                                                onSelectedBotIdChange(event.target.value)
+                                            }
+                                            disabled={sending}
+                                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+                                        >
+                                            <option value="">Select an active bot...</option>
+                                            {botTemplates.map((bot) => (
+                                                <option key={bot.id} value={bot.id}>
+                                                    {bot.name}
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                        {selectedBot && (
+                                            <span className="text-xs text-gray-500">
+                                                Selected: {selectedBot.name}
+                                            </span>
+                                        )}
+                                    </label>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => void sendBulkAction()}
+                                    disabled={
+                                        sending ||
+                                        selectedPhones.length === 0 ||
+                                        (actionMode === "text" && !bulkText.trim()) ||
+                                        (actionMode === "bot" && !selectedBotId)
+                                    }
+                                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#008069] px-3 py-3 text-sm font-semibold text-white hover:bg-[#006e5b] disabled:cursor-not-allowed disabled:bg-gray-300"
+                                >
+                                    {sending ? (
+                                        <>
+                                            <LoaderCircle size={16} className="animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send size={16} />
+                                            {actionMode === "bot"
+                                                ? `Start Bot (${selectedPhones.length})`
+                                                : `Send Text (${selectedPhones.length})`}
+                                        </>
+                                    )}
+                                </button>
+
+                                {error && (
+                                    <div className="whitespace-pre-wrap rounded-lg bg-red-50 p-3 text-xs text-red-700">
+                                        {error}
+                                    </div>
+                                )}
+
+                                {notice && (
+                                    <div className="rounded-lg bg-green-50 p-3 text-xs text-green-800">
+                                        {notice}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -712,7 +801,7 @@ export default function InboxBulkActions({
                         return (
                             <div
                                 key={phoneKey}
-                                className={`flex items-center gap-2 border-b border-gray-100 pr-2 ${checked ? "bg-[#f0f2f5]" : "bg-white"
+                                className={`flex items-center gap-2 border-b border-[#f0f2f5] pr-2 ${checked ? "bg-[#f0f2f5]" : "bg-white"
                                     }`}
                             >
                                 <input
@@ -727,29 +816,68 @@ export default function InboxBulkActions({
                                 <button
                                     type="button"
                                     onClick={() => onOpenConversation(conversation.phone)}
-                                    className="flex min-w-0 flex-1 items-center gap-3 py-3 text-left hover:bg-[#f5f6f6]"
+                                    className="flex min-w-0 flex-1 items-center gap-3 text-left hover:bg-[#f5f6f6]"
                                 >
                                     <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#dfe5e7] text-sm font-semibold text-gray-600">
                                         {conversation.name.slice(0, 1).toUpperCase()}
                                     </div>
 
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <span className="truncate text-sm font-medium text-[#111b21]">
-                                                {conversation.name}
-                                                {botActive && (
-                                                    <span className="ml-2 inline-block size-2 rounded-full bg-green-500" />
-                                                )}
-                                            </span>
-                                        </div>
+                                    <div className="min-w-0 flex-1 py-2">
+                                        {/* Name and time */}
+<div className="flex min-w-0 items-center justify-between gap-2">
+    <div className="flex min-w-0 items-center gap-1.5">
+        <span className="truncate text-[15px] font-medium leading-5 text-[#111b21]">
+            {conversation.name}
+        </span>
 
-                                        <div className="mt-1 truncate text-xs text-gray-500">
-                                            {conversation.phone}
-                                        </div>
+        {botActive && (
+            <span
+                className="size-2 shrink-0 rounded-full bg-[#25d366]"
+                title="Bot Active"
+            />
+        )}
+    </div>
 
-                                        <div className="mt-1 truncate text-[13px] text-[#667781]">
-                                            {conversation.lastText}
-                                        </div>
+    <span className="shrink-0 text-[11px] leading-4 text-[#667781]">
+        {(() => {
+            if (!conversation.lastAt) return "";
+
+            const date = new Date(conversation.lastAt);
+            if (Number.isNaN(date.getTime())) return "";
+
+            const today = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(today.getDate() - 1);
+
+            const isSameDay = (a: Date, b: Date) =>
+                a.getFullYear() === b.getFullYear() &&
+                a.getMonth() === b.getMonth() &&
+                a.getDate() === b.getDate();
+
+            if (isSameDay(date, today)) {
+                return date.toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                });
+            }
+
+            if (isSameDay(date, yesterday)) {
+                return "Yesterday";
+            }
+
+            return date.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            });
+        })()}
+    </span>
+</div>
+
+{/* Last message preview */}
+<div className="mt-1 truncate text-[13px] leading-[19px] text-[#667781]">
+    {conversation.lastText || "No messages yet"}
+</div>
                                     </div>
                                 </button>
                             </div>
