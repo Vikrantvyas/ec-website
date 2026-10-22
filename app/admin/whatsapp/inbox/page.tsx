@@ -568,13 +568,13 @@ export default function WhatsAppInboxPage() {
             }
 
             const { data: sameNumberLeads, error: sameNumberLeadsError } =
-    await supabase
-        .from("meta_leads")
-        .select(
-            "whatsapp_number,education,english_level,demo_class_time,created_time"
-        )
-        .order("created_time", { ascending: false })
-        .limit(2000);
+                await supabase
+                    .from("meta_leads")
+                    .select(
+                        "whatsapp_number,education,english_level,demo_class_time,created_time"
+                    )
+                    .order("created_time", { ascending: false })
+                    .limit(2000);
 
             if (sameNumberLeadsError) throw sameNumberLeadsError;
 
@@ -832,13 +832,8 @@ export default function WhatsAppInboxPage() {
 
             ...logs
                 .filter((message) => {
-                    if (message.direction !== "outbound") return false;
-
-                    // Campaign/template delivery logs ko chat-list activity na maanein.
-                    if (message.message_type === "template") return false;
-
-                    return true;
-                })
+    return message.direction === "outbound";
+})
                 .map((message) => {
                     const contact = contacts.find(
                         (item) => item.id === message.contact_id,
