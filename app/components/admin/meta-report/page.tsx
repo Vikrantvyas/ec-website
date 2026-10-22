@@ -176,10 +176,25 @@ export default function MetaReportPage() {
         () => uniqueOptions(leads, "education"),
         [leads]
     );
-    const englishLevels = useMemo(
-        () => uniqueOptions(leads, "english_level"),
-        [leads]
+   const englishLevels = useMemo(() => {
+    const values = Array.from(
+        new Set(
+            leads
+                .map((lead) => lead.english_level)
+                .filter(
+                    (value): value is string =>
+                        typeof value === "string" && value.trim() !== ""
+                )
+        )
     );
+
+    return values
+        .sort((a, b) => a.localeCompare(b))
+        .map((value) => ({
+            value,
+            label: value,
+        }));
+}, [leads]);
     const demoTimes = useMemo(
         () => uniqueOptions(leads, "demo_class_time"),
         [leads]
@@ -273,15 +288,15 @@ export default function MetaReportPage() {
             if (englishLevel && lead.english_level !== englishLevel) {
                 return false;
             }
-            
-if (demoTime) {
-    const selectedDemoTimes = demoTime.split(",").filter(Boolean);
-    const leadDemoTime = normalizeMetaValue(lead.demo_class_time ?? "");
 
-    if (!selectedDemoTimes.includes(leadDemoTime)) {
-        return false;
-    }
-}
+            if (demoTime) {
+                const selectedDemoTimes = demoTime.split(",").filter(Boolean);
+                const leadDemoTime = normalizeMetaValue(lead.demo_class_time ?? "");
+
+                if (!selectedDemoTimes.includes(leadDemoTime)) {
+                    return false;
+                }
+            }
 
             if (zoom && lead.knows_zoom !== zoom) {
                 return false;

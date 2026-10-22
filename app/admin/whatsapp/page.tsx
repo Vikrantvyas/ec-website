@@ -255,50 +255,97 @@ export default function WhatsAppBulkPage() {
       setError("Mobile numbers paste karein ya contacts select karein.");
       return;
     }
-    if (recipients.length > 100) {
-      setError("Ek campaign mein maximum 100 unique numbers bhejein.");
-      return;
-    }
+
+
     setLoading(true);
+
+    const BATCH_SIZE = 100;
+    let total = 0;
+    let accepted = 0;
+    let failed = 0;
+    let skipped = 0;
+    let completedBatches = 0;
+
+    const totalBatches = Math.ceil(recipients.length / BATCH_SIZE);
+
     try {
-      const { data, error: invokeError } =
-        await supabase.functions.invoke("whatsapp-bulk-send", {
-          body: {
-            to: recipients,
-            recipients: structuredRecipients,
-            campaign_name: campaignName.trim(),
-            template_id: selectedTemplate.id,
-            template_name: selectedTemplate.template_name,
-            language_code: selectedTemplate.language_code,
-            header_image_url: templateHasImageHeader
-  ? headerImageUrl.trim()
-  : null,
-          },
-        });
-      if (invokeError) {
-        const details = await (invokeError as any).context?.json?.().catch(() => null);
-        throw new Error(
-          details?.error ||
-          details?.message ||
-          invokeError.message ||
-          "WhatsApp Edge Function failed"
+      for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+        const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+        const batch = recipients.slice(i, i + BATCH_SIZE);
+        const batchRecipients = structuredRecipients.slice(
+          i,
+          i + BATCH_SIZE,
+        );
+
+        setSuccess(
+          `Sending batch ${batchNumber}/${totalBatches}... ` +
+          `Accepted: ${accepted}, Failed: ${failed}, Skipped: ${skipped}`,
+        );
+        setError("");
+
+        const { data, error: invokeError } =
+          await supabase.functions.invoke("whatsapp-bulk-send", {
+            body: {
+              to: batch,
+              recipients: batchRecipients,
+              campaign_name: campaignName.trim(),
+              template_id: selectedTemplate.id,
+              template_name: selectedTemplate.template_name,
+              language_code: selectedTemplate.language_code,
+              header_image_url: templateHasImageHeader
+                ? headerImageUrl.trim()
+                : null,
+            },
+          });
+
+        if (invokeError) {
+          const details = await (invokeError as any).context?.json?.()
+            .catch(() => null);
+
+          throw new Error(
+            `Batch ${batchNumber}/${totalBatches} request failed: ` +
+            `${details?.error || details?.message || invokeError.message}. ` +
+            `Earlier batches may already have sent messages. Check logs before retrying.`,
+          );
+        }
+
+        if (!data || data.error) {
+          throw new Error(
+            `Batch ${batchNumber}/${totalBatches}: ` +
+            `${data?.error || "No response received"}. ` +
+            `Earlier batches may already have sent messages.`,
+          );
+        }
+
+        total += Number(data.total ?? batch.length);
+        accepted += Number(data.accepted ?? 0);
+        failed += Number(data.failed ?? 0);
+        skipped += Number(data.skipped ?? 0);
+        completedBatches++;
+
+        setSuccess(
+          `Progress: ${completedBatches}/${totalBatches} batches | ` +
+          `Total: ${total} | Meta accepted: ${accepted} | ` +
+          `Failed: ${failed} | Skipped: ${skipped}`,
         );
       }
-      if (!data?.success) {
-        throw new Error(data?.error || "Messages send nahi ho sake.");
-      }
+
       setSuccess(
-        `Total: ${data.total ?? 0} | Meta accepted: ${data.accepted ?? 0} | Failed: ${data.failed ?? 0}`,
+        `Campaign processing complete | Batches: ${completedBatches}/${totalBatches} | ` +
+        `Total: ${total} | Meta accepted: ${accepted} | ` +
+        `Failed: ${failed} | Skipped: ${skipped}`,
       );
     } catch (err: unknown) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Messages send karte waqt error aayi.",
+        `${err instanceof Error ? err.message : "Sending failed."} ` +
+        `Progress before the error: ${completedBatches}/${totalBatches} batches | ` +
+        `Total: ${total} | Accepted: ${accepted} | ` +
+        `Failed: ${failed} | Skipped: ${skipped}.`,
       );
     } finally {
       setLoading(false);
     }
+
   }
   const bodyText = selectedTemplate
     ? getTemplateBody(selectedTemplate.components)

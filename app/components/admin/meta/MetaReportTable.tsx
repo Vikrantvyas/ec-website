@@ -320,10 +320,7 @@ export default function MetaReportTable({
       window.alert("Selected Leads mein valid WhatsApp number nahi mila.");
       return;
     }
-    if (selectedLeads.length > 100) {
-      window.alert("Ek baar mein maximum 100 Leads bhej sakte hain.");
-      return;
-    }
+  
     try {
       sessionStorage.setItem(
         "ec_meta_report_selected_leads",
