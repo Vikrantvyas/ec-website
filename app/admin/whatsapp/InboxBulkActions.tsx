@@ -91,24 +91,55 @@ export default function InboxBulkActions({
     const [search, setSearch] = useState("");
     const [selectedPhones, setSelectedPhones] = useState<string[]>([]);
     const [showBulkActions, setShowBulkActions] = useState(false);
+    const [openTextOnly, setOpenTextOnly] = useState(false);
+    const [openTextLoading, setOpenTextLoading] = useState(false);
+    const [latestInboundByPhone, setLatestInboundByPhone] = useState<
+        Record<string, number>
+    >({});
+
     const [actionMode, setActionMode] = useState<"text" | "bot">("text");
     const [bulkText, setBulkText] = useState("");
     const [sending, setSending] = useState(false);
     const [error, setError] = useState("");
     const [notice, setNotice] = useState("");
 
+
+    const windowOpenConversations = useMemo(() => {
+        if (!openTextOnly) return conversations;
+
+        const now = Date.now();
+        const windowMs = 24 * 60 * 60 * 1000;
+
+        return conversations.filter((conversation) => {
+            const phoneKey = normalizePhone(conversation.phone);
+            const latestInboundAt = latestInboundByPhone[phoneKey];
+
+            return (
+                latestInboundAt !== undefined &&
+                latestInboundAt <= now &&
+                now - latestInboundAt <= windowMs
+            );
+        });
+    }, [openTextOnly, conversations, latestInboundByPhone]);
+
+
     const filteredConversations = useMemo(() => {
         const query = search.trim().toLowerCase();
         const normalizedQuery = normalizePhone(query);
 
-        if (!query) return conversations;
+        if (!query) return windowOpenConversations;
 
-        return conversations.filter((conversation) => {
+        return windowOpenConversations.filter((conversation) => {
             const phoneKey = normalizePhone(conversation.phone);
 
             const incomingText = inbound
-                .filter((message) => normalizePhone(message.phone_number) === phoneKey)
-                .map((message) => getMessageText(message.message_text, message.message_type))
+                .filter(
+                    (message) =>
+                        normalizePhone(message.phone_number) === phoneKey
+                )
+                .map((message) =>
+                    getMessageText(message.message_text, message.message_type)
+                )
                 .join(" ");
 
             const contact = contacts.find(
@@ -142,10 +173,65 @@ export default function InboxBulkActions({
                 (!!normalizedQuery && phoneKey.includes(normalizedQuery))
             );
         });
-    }, [search, conversations, inbound, logs, contacts]);
+    }, [search, windowOpenConversations, inbound, logs, contacts]);
 
     const selectedBot = botTemplates.find((bot) => bot.id === selectedBotId);
+    async function loadOpenTextContacts() {
+        if (openTextLoading) return;
 
+        setOpenTextLoading(true);
+        setError("");
+
+        try {
+            const latestByPhone: Record<string, number> = {};
+            const batchSize = 1000;
+            let from = 0;
+
+            while (true) {
+                const { data, error: queryError } = await supabase
+                    .from("whatsapp_inbound_messages")
+                    .select("phone_number, received_at")
+                    .order("received_at", { ascending: false })
+                    .range(from, from + batchSize - 1);
+
+                if (queryError) throw queryError;
+
+                const rows = data ?? [];
+
+                for (const row of rows) {
+                    const phone = normalizePhone(row.phone_number);
+                    const timestamp = new Date(row.received_at).getTime();
+
+                    if (
+                        phone &&
+                        Number.isFinite(timestamp) &&
+                        latestByPhone[phone] === undefined
+                    ) {
+                        latestByPhone[phone] = timestamp;
+                    }
+                }
+
+                if (rows.length < batchSize) break;
+
+                from += batchSize;
+            }
+
+            setLatestInboundByPhone(latestByPhone);
+            setOpenTextOnly(true);
+            setSelectedPhones([]);
+            setActionMode("text");
+            setNotice("");
+            setShowBulkActions(true);
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? `Open Text filter load nahi hua: ${err.message}`
+                    : "Open Text filter load nahi hua."
+            );
+        } finally {
+            setOpenTextLoading(false);
+        }
+    }
     function togglePhone(phone: string) {
         const key = normalizePhone(phone);
 
@@ -780,8 +866,30 @@ export default function InboxBulkActions({
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
-                <div className="px-3 py-2 text-xs text-gray-500">
-                    Chats ({filteredConversations.length})
+                <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-gray-500">
+                    <span>
+                        Chats ({filteredConversations.length})
+                    </span>
+
+                    <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-[#111b21]">
+                        <input
+                            type="checkbox"
+                            checked={openTextOnly}
+                            onChange={(event) => {
+                                const checked = event.target.checked;
+
+                                if (checked) {
+                                    void loadOpenTextContacts();
+                                } else {
+                                    setOpenTextOnly(false);
+                                    setSelectedPhones([]);
+                                }
+                            }}
+                            disabled={sending || openTextLoading}
+                            className="size-3.5 accent-[#008069]"
+                        />
+                        Open Text
+                    </label>
                 </div>
 
                 {filteredConversations.length === 0 ? (
@@ -824,60 +932,60 @@ export default function InboxBulkActions({
 
                                     <div className="min-w-0 flex-1 py-2">
                                         {/* Name and time */}
-<div className="flex min-w-0 items-center justify-between gap-2">
-    <div className="flex min-w-0 items-center gap-1.5">
-        <span className="truncate text-[15px] font-medium leading-5 text-[#111b21]">
-            {conversation.name}
-        </span>
+                                        <div className="flex min-w-0 items-center justify-between gap-2">
+                                            <div className="flex min-w-0 items-center gap-1.5">
+                                                <span className="truncate text-[15px] font-medium leading-5 text-[#111b21]">
+                                                    {conversation.name}
+                                                </span>
 
-        {botActive && (
-            <span
-                className="size-2 shrink-0 rounded-full bg-[#25d366]"
-                title="Bot Active"
-            />
-        )}
-    </div>
+                                                {botActive && (
+                                                    <span
+                                                        className="size-2 shrink-0 rounded-full bg-[#25d366]"
+                                                        title="Bot Active"
+                                                    />
+                                                )}
+                                            </div>
 
-    <span className="shrink-0 text-[11px] leading-4 text-[#667781]">
-        {(() => {
-            if (!conversation.lastAt) return "";
+                                            <span className="shrink-0 text-[11px] leading-4 text-[#667781]">
+                                                {(() => {
+                                                    if (!conversation.lastAt) return "";
 
-            const date = new Date(conversation.lastAt);
-            if (Number.isNaN(date.getTime())) return "";
+                                                    const date = new Date(conversation.lastAt);
+                                                    if (Number.isNaN(date.getTime())) return "";
 
-            const today = new Date();
-            const yesterday = new Date();
-            yesterday.setDate(today.getDate() - 1);
+                                                    const today = new Date();
+                                                    const yesterday = new Date();
+                                                    yesterday.setDate(today.getDate() - 1);
 
-            const isSameDay = (a: Date, b: Date) =>
-                a.getFullYear() === b.getFullYear() &&
-                a.getMonth() === b.getMonth() &&
-                a.getDate() === b.getDate();
+                                                    const isSameDay = (a: Date, b: Date) =>
+                                                        a.getFullYear() === b.getFullYear() &&
+                                                        a.getMonth() === b.getMonth() &&
+                                                        a.getDate() === b.getDate();
 
-            if (isSameDay(date, today)) {
-                return date.toLocaleTimeString("en-US", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                });
-            }
+                                                    if (isSameDay(date, today)) {
+                                                        return date.toLocaleTimeString("en-US", {
+                                                            hour: "numeric",
+                                                            minute: "2-digit",
+                                                        });
+                                                    }
 
-            if (isSameDay(date, yesterday)) {
-                return "Yesterday";
-            }
+                                                    if (isSameDay(date, yesterday)) {
+                                                        return "Yesterday";
+                                                    }
 
-            return date.toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
-        })()}
-    </span>
-</div>
+                                                    return date.toLocaleDateString("en-GB", {
+                                                        day: "2-digit",
+                                                        month: "2-digit",
+                                                        year: "numeric",
+                                                    });
+                                                })()}
+                                            </span>
+                                        </div>
 
-{/* Last message preview */}
-<div className="mt-1 truncate text-[13px] leading-[19px] text-[#667781]">
-    {conversation.lastText || "No messages yet"}
-</div>
+                                        {/* Last message preview */}
+                                        <div className="mt-1 truncate text-[13px] leading-[19px] text-[#667781]">
+                                            {conversation.lastText || "No messages yet"}
+                                        </div>
                                     </div>
                                 </button>
                             </div>
