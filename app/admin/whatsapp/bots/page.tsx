@@ -613,37 +613,37 @@ export default function WhatsAppBotsPage() {
         await loadBots();
     }
 
-    
-async function deleteBot(bot: BotTemplate) {
-  if (
-    !window.confirm(
-      `"${bot.name}" को Delete करना है?\n\nइस bot के सभी sessions भी delete होंगे। यह action वापस नहीं किया जा सकेगा।`
-    )
-  ) {
-    return;
-  }
 
-  setError("");
-  setNotice("");
+    async function deleteBot(bot: BotTemplate) {
+        if (
+            !window.confirm(
+                `"${bot.name}" को Delete करना है?\n\nइस bot के सभी sessions भी delete होंगे। यह action वापस नहीं किया जा सकेगा।`
+            )
+        ) {
+            return;
+        }
 
-  const { data, error: deleteError } = await supabase.rpc(
-    "delete_whatsapp_bot",
-    { p_bot_id: bot.id }
-  );
+        setError("");
+        setNotice("");
 
-  if (deleteError) {
-    setError(`Bot delete नहीं हुआ: ${deleteError.message}`);
-    return;
-  }
+        const { data, error: deleteError } = await supabase.rpc(
+            "delete_whatsapp_bot",
+            { p_bot_id: bot.id }
+        );
 
-  if (!data?.success) {
-    setError("Bot delete नहीं हुआ। कृपया दोबारा जाँचें।");
-    return;
-  }
+        if (deleteError) {
+            setError(`Bot delete नहीं हुआ: ${deleteError.message}`);
+            return;
+        }
 
-  setNotice("Bot और उसके sessions delete कर दिए गए।");
-  await loadBots();
-}
+        if (!data?.success) {
+            setError("Bot delete नहीं हुआ। कृपया दोबारा जाँचें।");
+            return;
+        }
+
+        setNotice("Bot और उसके sessions delete कर दिए गए।");
+        await loadBots();
+    }
 
 
     const activeCount = bots.filter((bot) => bot.status === "active").length;
@@ -1308,20 +1308,32 @@ async function deleteBot(bot: BotTemplate) {
                                                                         key={option.id}
                                                                         className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_1.5fr_auto]"
                                                                     >
-                                                                        <input
-                                                                            className={field}
-                                                                            value={option.title}
-                                                                            placeholder="Button/Option का नाम"
-                                                                            maxLength={node.followUpType === "list" ? 24 : 20}
-                                                                            onChange={(event) => {
-                                                                                const options = [...(node.followUpOptions ?? [])];
-                                                                                options[optionIndex] = {
-                                                                                    ...options[optionIndex],
-                                                                                    title: event.target.value,
-                                                                                };
-                                                                                updateNode(node.id, { followUpOptions: options });
-                                                                            }}
-                                                                        />
+                                                                        
+<div className="space-y-1">
+    <input
+        className={field}
+        value={option.title}
+        placeholder={
+            node.followUpType === "list"
+                ? "List title (max 24 characters)"
+                : "Button title (max 20 characters)"
+        }
+        maxLength={node.followUpType === "list" ? 24 : 20}
+        onChange={(event) => {
+            const options = [...(node.followUpOptions ?? [])];
+            options[optionIndex] = {
+                ...options[optionIndex],
+                title: event.target.value,
+            };
+            updateNode(node.id, { followUpOptions: options });
+        }}
+    />
+    <p className="text-right text-xs text-slate-500">
+        {option.title.length}/{node.followUpType === "list" ? 24 : 20}
+        {" characters"}
+    </p>
+</div>
+
 
                                                                         <input
                                                                             className={field}
@@ -1513,9 +1525,16 @@ async function deleteBot(bot: BotTemplate) {
                                                                         title: event.target.value,
                                                                     })
                                                                 }
-                                                                placeholder="Button / Option label"
+                                                                placeholder={
+                                                                    node.type === "list"
+                                                                        ? "List title (max 24 characters)"
+                                                                        : "Button title (max 20 characters)"
+                                                                }
                                                                 maxLength={node.type === "list" ? 24 : 20}
                                                             />
+                                                            <span className="text-xs text-slate-500">
+                                                                {option.title.length}/{node.type === "list" ? 24 : 20}
+                                                            </span>
                                                             <input
                                                                 className={field}
                                                                 value={option.id}
