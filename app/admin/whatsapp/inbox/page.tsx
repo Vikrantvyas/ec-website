@@ -21,11 +21,12 @@ import {
     WifiOff,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-
+import InboxBulkActions from "@/app/admin/whatsapp/InboxBulkActions";
 type Contact = {
     id: string;
     name: string | null;
     phone_number: string;
+    consent_status?: string | null;
 };
 type WhatsAppTemplate = {
     id: string;
@@ -221,7 +222,7 @@ export default function WhatsAppInboxPage() {
     const [logs, setLogs] = useState<MessageLog[]>([]);
 
     const [selectedPhone, setSelectedPhone] = useState("");
-    const [search, setSearch] = useState("");
+
     const [draft, setDraft] = useState("");
 
     const [messageMode, setMessageMode] = useState<"text" | "buttons" | "list" | "template">("text");
@@ -474,7 +475,7 @@ export default function WhatsAppInboxPage() {
             ] = await Promise.all([
                 supabase
                     .from("whatsapp_contacts")
-                    .select("id,name,phone_number")
+                    .select("id,name,phone_number,consent_status")
                     .order("updated_at", { ascending: false }),
 
                 supabase
@@ -774,11 +775,11 @@ export default function WhatsAppInboxPage() {
 
             const templates = (data ?? []) as WhatsAppTemplate[];
 
-setApprovedTemplates(
-    templates.filter((template) =>
-        ["active", "approved"].includes(template.status?.toLowerCase() ?? "")
-    )
-);
+            setApprovedTemplates(
+                templates.filter((template) =>
+                    ["active", "approved"].includes(template.status?.toLowerCase() ?? "")
+                )
+            );
         }
 
         void loadApprovedTemplates();
@@ -878,16 +879,8 @@ setApprovedTemplates(
             });
         }
 
-        return [...map.values()].filter((conversation) => {
-            const query = search.trim().toLowerCase();
-
-            return (
-                !query ||
-                conversation.name.toLowerCase().includes(query) ||
-                conversation.phone.includes(query)
-            );
-        });
-    }, [contacts, inbound, logs, search]);
+        return [...map.values()];
+    }, [contacts, inbound, logs]);
     const selectedTemplate = approvedTemplates.find(
         (template) => template.id === selectedTemplateId
     );
@@ -1305,112 +1298,20 @@ setApprovedTemplates(
                         </div>
                     </div>
 
-                    <div className="shrink-0 bg-white px-3 py-2">
-                        <label className="flex items-center gap-3 rounded-lg bg-[#f0f2f5] px-3">
-                            <Search size={17} className="shrink-0 text-gray-500" />
+                    <InboxBulkActions
+                        conversations={conversations}
+                        contacts={contacts}
+                        inbound={inbound}
+                        logs={logs}
+                        botTemplates={botTemplates}
+                        selectedBotId={selectedBotId}
+                        onSelectedBotIdChange={setSelectedBotId}
+                        activeBotPhones={activeBotPhones}
+                        onOpenConversation={openConversation}
+                        onRefreshInbox={loadInbox}
+                    />
 
-                            <input
-                                value={search}
-                                onChange={(event) => setSearch(event.target.value)}
-                                placeholder="Search name or phone"
-                                className="h-9 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-gray-500"
-                            />
 
-                            {search && (
-                                <button
-                                    type="button"
-                                    onClick={() => setSearch("")}
-                                    className="text-gray-500"
-                                    aria-label="Clear search"
-                                >
-                                    ×
-                                </button>
-                            )}
-                        </label>
-                    </div>
-
-                    <div className="min-h-0 flex-1 overflow-y-auto">
-                        {loading && conversations.length === 0 ? (
-                            <div className="flex items-center justify-center gap-2 p-8 text-sm text-gray-500">
-                                <LoaderCircle size={18} className="animate-spin" />
-                                Loading chats...
-                            </div>
-                        ) : conversations.length === 0 ? (
-                            <div className="flex flex-col items-center gap-2 px-5 py-12 text-center text-gray-500">
-                                <MessageCircle size={34} strokeWidth={1.4} />
-                                <p className="text-sm">No conversations found</p>
-                            </div>
-                        ) : (
-                            conversations.map((conversation) => {
-                                const isSelected =
-                                    normalizePhone(selectedPhone) ===
-                                    normalizePhone(conversation.phone);
-
-                                return (
-                                    <button
-                                        key={normalizePhone(conversation.phone)}
-                                        type="button"
-                                        onClick={() => openConversation(conversation.phone)}
-                                        className={`flex w-full items-center gap-3 border-b border-gray-100 px-3 py-3 text-left transition ${isSelected
-                                            ? "bg-[#f0f2f5]"
-                                            : "bg-white hover:bg-[#f5f6f6]"
-                                            }`}
-                                    >
-                                        <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#dfe5e7] text-gray-600">
-                                            <UserRound size={23} strokeWidth={1.6} />
-                                        </div>
-
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center justify-between gap-2">
-                                                <span className="truncate text-[14px] font-medium text-[#111b21]">
-                                                    <span className="flex min-w-0 items-center gap-1.5">
-                                                        <span className="truncate text-[14px] font-medium text-[#111b21]">
-                                                            {conversation.name}
-                                                            {(
-                                                                formSubmittedPhones.includes(
-                                                                    normalizeEnquiryPhone(conversation.phone)
-                                                                ) ||
-                                                                Boolean(
-                                                                    onlineEnquiries[
-                                                                    normalizeEnquiryPhone(conversation.phone)
-                                                                    ]
-                                                                )
-                                                            ) && (
-                                                                    <span className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
-                                                                        Form
-                                                                    </span>
-                                                                )}
-                                                        </span>
-
-                                                        {activeBotPhones.includes(
-                                                            normalizePhone(conversation.phone)
-                                                        ) && (
-                                                                <span
-                                                                    title="Bot Session Active"
-                                                                    className="size-2 shrink-0 rounded-full bg-green-500"
-                                                                />
-                                                            )}
-                                                    </span>
-                                                </span>
-
-                                                <span className="shrink-0 text-[10px] text-gray-500">
-                                                    {formatTime(conversation.lastAt)}
-                                                </span>
-                                            </div>
-
-                                            <div className="mt-1 truncate text-xs text-gray-500">
-                                                {conversation.phone}
-                                            </div>
-
-                                            <div className="mt-1 truncate text-[13px] text-[#667781]">
-                                                {conversation.lastText}
-                                            </div>
-                                        </div>
-                                    </button>
-                                );
-                            })
-                        )}
-                    </div>
                 </aside>
 
                 {/* Chat panel */}
@@ -1668,12 +1569,10 @@ setApprovedTemplates(
 
                                             if (insertError) throw insertError;
 
-                                            setNotice(`Bot "${bot.name}" ka pehla question WhatsApp par bhej diya gaya.`);
-                                            await loadInbox(false);
-
                                             setNotice(
-                                                `Bot "${bot.name}" customer ${phone} ke liye start ho gaya. Abhi sirf session create hua hai; pehla WhatsApp question agle step mein bhejenge.`
+                                                `Bot "${bot.name}" ka pehla question ${phone} ko bhej diya gaya.`
                                             );
+                                            await loadInbox(false);
                                         } catch (err) {
                                             setError(
                                                 err instanceof Error
