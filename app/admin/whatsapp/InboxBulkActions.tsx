@@ -4,7 +4,7 @@
 import { useMemo, useState } from "react";
 import { AlertCircle, LoaderCircle, Search, Send } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-
+import InboxRightClick from "@/app/admin/whatsapp/InboxRightClick";
 type InboxConversation = {
     phone: string;
     contactId: string | null;
@@ -921,74 +921,85 @@ export default function InboxBulkActions({
                                     className="ml-3 size-4 shrink-0 accent-[#008069]"
                                 />
 
-                                <button
-                                    type="button"
-                                    onClick={() => onOpenConversation(conversation.phone)}
-                                    className="flex min-w-0 flex-1 items-center gap-3 text-left hover:bg-[#f5f6f6]"
+                                <InboxRightClick
+                                    phone={conversation.phone}
+                                    name={conversation.name}
+                                    contactId={
+                                        contacts.find(
+                                            (item) =>
+                                                normalizePhone(item.phone_number) === phoneKey
+                                        )?.id ?? conversation.contactId
+                                    }
+                                    onUpdated={onRefreshInbox}
                                 >
-                                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#dfe5e7] text-sm font-semibold text-gray-600">
-                                        {conversation.name.slice(0, 1).toUpperCase()}
-                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => onOpenConversation(conversation.phone)}
+                                        className="flex min-w-0 flex-1 items-center gap-3 text-left hover:bg-[#f5f6f6]"
+                                    >
+                                        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#dfe5e7] text-sm font-semibold text-gray-600">
+                                            {conversation.name.slice(0, 1).toUpperCase()}
+                                        </div>
 
-                                    <div className="min-w-0 flex-1 py-2">
-                                        {/* Name and time */}
-                                        <div className="flex min-w-0 items-center justify-between gap-2">
-                                            <div className="flex min-w-0 items-center gap-1.5">
-                                                <span className="truncate text-[15px] font-medium leading-5 text-[#111b21]">
-                                                    {conversation.name}
+                                        <div className="min-w-0 flex-1 py-2">
+                                            <div className="flex min-w-0 items-center justify-between gap-2">
+                                                <div className="flex min-w-0 items-center gap-1.5">
+                                                    <span className="truncate text-[15px] font-medium leading-5 text-[#111b21]">
+                                                        {conversation.name}
+                                                    </span>
+
+                                                    {botActive && (
+                                                        <span
+                                                            className="size-2 shrink-0 rounded-full bg-[#25d366]"
+                                                            title="Bot Active"
+                                                        />
+                                                    )}
+                                                </div>
+
+                                                <span className="shrink-0 text-[11px] leading-4 text-[#667781]">
+                                                    {(() => {
+                                                        if (!conversation.lastAt) return "";
+
+                                                        const date = new Date(conversation.lastAt);
+                                                        if (Number.isNaN(date.getTime())) return "";
+
+                                                        const today = new Date();
+                                                        const yesterday = new Date();
+                                                        yesterday.setDate(today.getDate() - 1);
+
+                                                        const isSameDay = (a: Date, b: Date) =>
+                                                            a.getFullYear() === b.getFullYear() &&
+                                                            a.getMonth() === b.getMonth() &&
+                                                            a.getDate() === b.getDate();
+
+                                                        if (isSameDay(date, today)) {
+                                                            return date.toLocaleTimeString("en-US", {
+                                                                hour: "numeric",
+                                                                minute: "2-digit",
+                                                            });
+                                                        }
+
+                                                        if (isSameDay(date, yesterday)) {
+                                                            return "Yesterday";
+                                                        }
+
+                                                        return date.toLocaleDateString("en-GB", {
+                                                            day: "2-digit",
+                                                            month: "2-digit",
+                                                            year: "numeric",
+                                                        });
+                                                    })()}
                                                 </span>
-
-                                                {botActive && (
-                                                    <span
-                                                        className="size-2 shrink-0 rounded-full bg-[#25d366]"
-                                                        title="Bot Active"
-                                                    />
-                                                )}
                                             </div>
 
-                                            <span className="shrink-0 text-[11px] leading-4 text-[#667781]">
-                                                {(() => {
-                                                    if (!conversation.lastAt) return "";
-
-                                                    const date = new Date(conversation.lastAt);
-                                                    if (Number.isNaN(date.getTime())) return "";
-
-                                                    const today = new Date();
-                                                    const yesterday = new Date();
-                                                    yesterday.setDate(today.getDate() - 1);
-
-                                                    const isSameDay = (a: Date, b: Date) =>
-                                                        a.getFullYear() === b.getFullYear() &&
-                                                        a.getMonth() === b.getMonth() &&
-                                                        a.getDate() === b.getDate();
-
-                                                    if (isSameDay(date, today)) {
-                                                        return date.toLocaleTimeString("en-US", {
-                                                            hour: "numeric",
-                                                            minute: "2-digit",
-                                                        });
-                                                    }
-
-                                                    if (isSameDay(date, yesterday)) {
-                                                        return "Yesterday";
-                                                    }
-
-                                                    return date.toLocaleDateString("en-GB", {
-                                                        day: "2-digit",
-                                                        month: "2-digit",
-                                                        year: "numeric",
-                                                    });
-                                                })()}
-                                            </span>
+                                            <div className="mt-1 truncate text-[13px] leading-[19px] text-[#667781]">
+                                                {conversation.lastText || "No messages yet"}
+                                            </div>
                                         </div>
-
-                                        {/* Last message preview */}
-                                        <div className="mt-1 truncate text-[13px] leading-[19px] text-[#667781]">
-                                            {conversation.lastText || "No messages yet"}
-                                        </div>
-                                    </div>
-                                </button>
+                                    </button>
+                                </InboxRightClick>
                             </div>
+                        
                         );
                     })
                 )}
