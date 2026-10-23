@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, LoaderCircle, Search, Send } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import InboxRightClick from "@/app/admin/whatsapp/InboxRightClick";
@@ -61,6 +61,31 @@ type Props = {
 function normalizePhone(value: string) {
     return value.replace(/\D/g, "");
 }
+
+const HIDDEN_CHATS_STORAGE_KEY = "ec_whatsapp_inbox_hidden_chats_v1";
+const HIDDEN_CHAT_EVENT = "inbox-chat-hidden";
+
+type HiddenChats = Record<string, number>;
+
+function readHiddenChats(): HiddenChats {
+    try {
+        const saved = window.localStorage.getItem(HIDDEN_CHATS_STORAGE_KEY);
+        if (!saved) return {};
+
+        const parsed: unknown = JSON.parse(saved);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+
+        const result: HiddenChats = {};
+        for (const [phone, timestamp] of Object.entries(parsed)) {
+            if (phone && typeof timestamp === "number" && Number.isFinite(timestamp)) {
+                result[phone] = timestamp;
+            }
+        }
+        return result;
+    } catch {
+        return {};
+    }
+}
 function normalizeEnquiryPhone(value: string) {
     let phone = normalizePhone(value);
 
@@ -110,6 +135,67 @@ export default function InboxBulkActions({
     const [latestInboundByPhone, setLatestInboundByPhone] = useState<
         Record<string, number>
     >({});
+    const [hiddenChats, setHiddenChats] = useState<HiddenChats>({});
+
+    useEffect(() => {
+        setHiddenChats(readHiddenChats());
+
+        function handleChatHidden(event: Event) {
+            const customEvent = event as CustomEvent<{ phoneKey?: string }>;
+            const phoneKey = customEvent.detail?.phoneKey;
+            if (!phoneKey) return;
+            setHiddenChats(readHiddenChats());
+            setSelectedPhones((current) =>
+                current.filter((phone) => normalizePhone(phone) !== phoneKey)
+            );
+        }
+
+        window.addEventListener(HIDDEN_CHAT_EVENT, handleChatHidden);
+        return () => window.removeEventListener(HIDDEN_CHAT_EVENT, handleChatHidden);
+    }, []);
+
+    // Naya incoming message agar hide kiye jane ke baad aaya ho, to chat ko wapas dikhayein.
+    useEffect(() => {
+        if (inbound.length === 0) return;
+
+        const latestInboundAtByPhone: Record<string, number> = {};
+        for (const message of inbound) {
+            const phoneKey = normalizePhone(message.phone_number);
+            const timestamp = new Date(message.received_at).getTime();
+            if (!phoneKey || !Number.isFinite(timestamp)) continue;
+            if (
+                latestInboundAtByPhone[phoneKey] === undefined ||
+                timestamp > latestInboundAtByPhone[phoneKey]
+            ) {
+                latestInboundAtByPhone[phoneKey] = timestamp;
+            }
+        }
+
+        setHiddenChats((current) => {
+            const next = { ...current };
+            let changed = false;
+            for (const [phoneKey, hiddenAt] of Object.entries(current)) {
+                const latestInboundAt = latestInboundAtByPhone[phoneKey];
+                if (latestInboundAt !== undefined && latestInboundAt > hiddenAt) {
+                    delete next[phoneKey];
+                    changed = true;
+                }
+            }
+            if (changed) {
+                try {
+                    window.localStorage.setItem(HIDDEN_CHATS_STORAGE_KEY, JSON.stringify(next));
+                } catch {
+                    // State mein chat show rahegi; storage error ko silently handle karein.
+                }
+            }
+            return changed ? next : current;
+        });
+    }, [inbound]);
+
+    const visibleConversations = useMemo(
+        () => conversations.filter((conversation) => !hiddenChats[normalizePhone(conversation.phone)]),
+        [conversations, hiddenChats]
+    );
 
     const [actionMode, setActionMode] = useState<"text" | "bot">("text");
     const [bulkText, setBulkText] = useState("");
@@ -122,12 +208,12 @@ export default function InboxBulkActions({
     );
 
     const windowOpenConversations = useMemo(() => {
-        if (!openTextOnly) return conversations;
+        if (!openTextOnly) return visibleConversations;
 
         const now = Date.now();
         const windowMs = 24 * 60 * 60 * 1000;
 
-        return conversations.filter((conversation) => {
+        return visibleConversations.filter((conversation) => {
             const phoneKey = normalizePhone(conversation.phone);
             const latestInboundAt = latestInboundByPhone[phoneKey];
 
@@ -137,7 +223,7 @@ export default function InboxBulkActions({
                 now - latestInboundAt <= windowMs
             );
         });
-    }, [openTextOnly, conversations, latestInboundByPhone]);
+    }, [openTextOnly, visibleConversations, latestInboundByPhone]);
 
 
     const filteredConversations = useMemo(() => {
@@ -952,29 +1038,25 @@ export default function InboxBulkActions({
                                     <button
                                         type="button"
                                         onClick={() => onOpenConversation(conversation.phone)}
-                                        className="flex min-w-0 flex-1 items-center gap-3 text-left hover:bg-[#f5f6f6]"
+                                        className="flex min-w-0 flex-1 items-center gap-2 text-left hover:bg-[#f5f6f6]"
                                     >
-                                        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#dfe5e7] text-sm font-semibold text-gray-600">
-                                            {conversation.name.slice(0, 1).toUpperCase()}
-                                        </div>
-
                                         <div className="min-w-0 flex-1 py-2">
                                             <div className="flex min-w-0 items-center justify-between gap-2">
                                                 <div className="flex min-w-0 items-center gap-1.5">
                                                     <span className="truncate text-[15px] font-medium leading-5 text-[#111b21]">
-    {conversation.name}
-</span>
+                                                        {conversation.name}
+                                                    </span>
 
-{formSubmittedPhoneSet.has(
-    normalizeEnquiryPhone(conversation.phone)
-) && (
-    <span
-        className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-800"
-        title="Form submitted"
-    >
-        Form Filled
-    </span>
-)}
+                                                    {formSubmittedPhoneSet.has(
+                                                        normalizeEnquiryPhone(conversation.phone)
+                                                    ) && (
+                                                            <span
+                                                                className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-800"
+                                                                title="Form submitted"
+                                                            >
+                                                                Form Filled
+                                                            </span>
+                                                        )}
 
                                                     {botActive && (
                                                         <span

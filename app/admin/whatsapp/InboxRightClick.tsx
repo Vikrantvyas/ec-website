@@ -9,6 +9,7 @@ import {
     CalendarCheck,
     Users,
     LoaderCircle,
+    Trash2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -184,6 +185,48 @@ export default function InboxRightClick({
             document.removeEventListener("keydown", closeOnEscape);
         };
     }, [position]);
+
+    function hideChatTemporarily() {
+        const phoneKey = normalizePhone(phone);
+        if (!phoneKey) {
+            setError("Is chat ka phone number sahi nahi hai.");
+            return;
+        }
+
+        if (
+            !window.confirm(
+                `${name || phone} ko Inbox list se hide karein? Chat history delete nahi hogi. Is number se naya incoming message aane par chat wapas dikhne lagegi.`
+            )
+        ) {
+            return;
+        }
+
+        try {
+            const storageKey = "ec_whatsapp_inbox_hidden_chats_v1";
+            let hiddenChats: Record<string, number> = {};
+
+            try {
+                const saved = window.localStorage.getItem(storageKey);
+                if (saved) {
+                    const parsed: unknown = JSON.parse(saved);
+                    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                        hiddenChats = parsed as Record<string, number>;
+                    }
+                }
+            } catch {
+                // Corrupt local setting ko ignore karke fresh map use karein.
+            }
+
+            hiddenChats[phoneKey] = Date.now();
+            window.localStorage.setItem(storageKey, JSON.stringify(hiddenChats));
+            window.dispatchEvent(
+                new CustomEvent("inbox-chat-hidden", { detail: { phoneKey } })
+            );
+            setPosition(null);
+        } catch {
+            setError("Chat hide nahi ho saki. Browser storage permission check karein.");
+        }
+    }
 
     async function updateLeadStatus(
         field: "community_joined" | "demo_attended" | "class_joined",
@@ -386,6 +429,19 @@ export default function InboxRightClick({
                             >
                                 <ShieldCheck size={16} />
                                 {isOptedOut ? "Opt-in (Consent verified)" : "Opt-out"}
+                            </button>
+
+                            <div className="my-1 border-t border-gray-100" />
+
+                            <button
+                                type="button"
+                                role="menuitem"
+                                disabled={saving}
+                                onClick={hideChatTemporarily}
+                                className={`${menuButton} text-red-700 hover:bg-red-50`}
+                            >
+                                <Trash2 size={16} />
+                                Delete Chat (Hide only)
                             </button>
 
                             <div className="my-1 border-t border-gray-100" />

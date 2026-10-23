@@ -9,7 +9,6 @@ import {
     Send,
     RefreshCw,
     MessageCircle,
-    UserRound,
     Phone,
     Check,
     CheckCheck,
@@ -1313,7 +1312,7 @@ export default function WhatsAppInboxPage() {
                     {selectedPhone ? (
                         <>
                             {/* Chat contact header */}
-                            <header className="flex shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-3 py-1.5 sm:px-4">
+                            <header className="flex shrink-0 items-center gap-2 border-b border-gray-200 bg-white px-3 py-1.5 sm:px-4">
                                 <button
                                     type="button"
                                     onClick={() => setMobileChatOpen(false)}
@@ -1322,10 +1321,6 @@ export default function WhatsAppInboxPage() {
                                 >
                                     <ArrowLeft size={20} />
                                 </button>
-
-                                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#dfe5e7] text-gray-600">
-                                    <UserRound size={22} strokeWidth={1.6} />
-                                </div>
 
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -1360,10 +1355,10 @@ export default function WhatsAppInboxPage() {
                                         )}
                                     </div>
 
-                                    <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
-                                        <Phone size={11} />
-                                        <span>{selectedPhone}</span>
-                                    </div>
+                                   <div className="mt-0.5 flex items-center gap-1 text-sm text-gray-600">
+    <Phone size={13} />
+    <span>{selectedPhone}</span>
+</div>
                                 </div>
                             </header>
                             {/* Bot Starter */}
