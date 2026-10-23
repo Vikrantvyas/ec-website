@@ -271,9 +271,8 @@ export function BotAnalysis() {
                         className="inline-flex items-center gap-2 rounded-lg border bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
                     >
                         <RefreshCw
-                            className={`h-4 w-4 ${
-                                loading ? "animate-spin" : ""
-                            }`}
+                            className={`h-4 w-4 ${loading ? "animate-spin" : ""
+                                }`}
                         />
                         Refresh
                     </button>
@@ -462,15 +461,15 @@ export function BotAnalysis() {
                                                                             )}
                                                                         </td>
 
-                                                                       <td className="whitespace-nowrap px-3 py-3">
-    <Link
-        href={`/admin/whatsapp/inbox?phone=${encodeURIComponent(session.phone_number)}`}
-        className="font-medium text-green-700 underline decoration-green-300 underline-offset-2 hover:text-green-900"
-        title="WhatsApp Inbox mein chat kholein"
-    >
-        {session.phone_number}
-    </Link>
-</td>
+                                                                        <td className="whitespace-nowrap px-3 py-3">
+                                                                            <Link
+                                                                                href={`/admin/whatsapp/inbox?phone=${encodeURIComponent(session.phone_number)}`}
+                                                                                className="font-medium text-green-700 underline decoration-green-300 underline-offset-2 hover:text-green-900"
+                                                                                title="WhatsApp Inbox mein chat kholein"
+                                                                            >
+                                                                                {session.phone_number}
+                                                                            </Link>
+                                                                        </td>
 
                                                                         <td className="px-3 py-3">
                                                                             {getStatusLabel(
@@ -484,7 +483,7 @@ export function BotAnalysis() {
 
                                                                         <td className="max-w-md px-3 py-3">
                                                                             {sessionReplies.length ===
-                                                                            0 ? (
+                                                                                0 ? (
                                                                                 <span className="text-gray-400">
                                                                                     Is date ke data mein reply nahi mila.
                                                                                 </span>

@@ -831,8 +831,8 @@ export default function WhatsAppInboxPage() {
 
             ...logs
                 .filter((message) => {
-    return message.direction === "outbound";
-})
+                    return message.direction === "outbound";
+                })
                 .map((message) => {
                     const contact = contacts.find(
                         (item) => item.id === message.contact_id,
@@ -1355,10 +1355,10 @@ export default function WhatsAppInboxPage() {
                                         )}
                                     </div>
 
-                                   <div className="mt-0.5 flex items-center gap-1 text-sm text-gray-600">
-    <Phone size={13} />
-    <span>{selectedPhone}</span>
-</div>
+                                    <div className="mt-0.5 flex items-center gap-1 text-sm text-gray-600">
+                                        <Phone size={13} />
+                                        <span>{selectedPhone}</span>
+                                    </div>
                                 </div>
                             </header>
                             {/* Bot Starter */}

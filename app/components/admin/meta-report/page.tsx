@@ -197,26 +197,31 @@ export default function MetaReportPage() {
             }));
     }, [leads]);
     const englishLevels = useMemo(() => {
-        const values = Array.from(
-            new Set(
-                leads
-                    .map((lead) => lead.english_level)
-                    .filter(
-                        (value): value is string =>
-                            typeof value === "string" && value.trim() !== ""
-                    )
-                    .map((value) => normalizeMetaValue(value))
-                    .filter(Boolean)
-            )
-        );
+    const values = Array.from(
+        new Set(
+            leads
+                .map((lead) => lead.english_level)
+                .filter(
+                    (value): value is string =>
+                        typeof value === "string" && value.trim() !== ""
+                )
+                .map((value) => normalizeMetaValue(value))
+                .filter(Boolean)
+        )
+    );
 
-        return values
-            .sort((a, b) => a.localeCompare(b, "hi"))
-            .map((value) => ({
-                value,
-                label: value,
-            }));
-    }, [leads]);
+    const englishLevelLabels: Record<string, string> = {
+    need_advanced_batch: "Need Advanced Batch",
+    need_english_to_english_batch: "Need English to English Batch",
+};
+
+    return values
+        .sort((a, b) => a.localeCompare(b, "hi"))
+        .map((value) => ({
+            value,
+            label: englishLevelLabels[value] || value,
+        }));
+}, [leads]);
     const demoTimes = useMemo(
         () => uniqueOptions(leads, "demo_class_time"),
         [leads]

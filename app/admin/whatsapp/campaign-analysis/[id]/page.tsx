@@ -744,24 +744,24 @@ function CampaignDetailsContent() {
                                                     <td className="px-3 py-3">
                                                         {contact?.name || "—"}
                                                     </td>
-                                                  <td className="whitespace-nowrap px-3 py-3">
-    {contact?.phone_number ? (
-        <button
-            type="button"
-            onClick={() =>
-                router.push(
-                    `/admin/whatsapp/inbox?phone=${encodeURIComponent(contact.phone_number!)}`
-                )
-            }
-            className="font-medium text-green-700 underline decoration-green-300 underline-offset-2 hover:text-green-900"
-            title="WhatsApp Inbox mein chat kholein"
-        >
-            {contact.phone_number}
-        </button>
-    ) : (
-        "—"
-    )}
-</td>
+                                                    <td className="whitespace-nowrap px-3 py-3">
+                                                        {contact?.phone_number ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    router.push(
+                                                                        `/admin/whatsapp/inbox?phone=${encodeURIComponent(contact.phone_number!)}`
+                                                                    )
+                                                                }
+                                                                className="font-medium text-green-700 underline decoration-green-300 underline-offset-2 hover:text-green-900"
+                                                                title="WhatsApp Inbox mein chat kholein"
+                                                            >
+                                                                {contact.phone_number}
+                                                            </button>
+                                                        ) : (
+                                                            "—"
+                                                        )}
+                                                    </td>
                                                     <td
                                                         className="max-w-[320px] px-3 py-3"
                                                         title={

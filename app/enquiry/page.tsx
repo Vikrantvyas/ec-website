@@ -343,33 +343,33 @@ function EnquiryPage() {
         if (!editingExistingId) {
             (window as any).fbq?.("track", "Lead");
         }
-        
-if (trackingId) {
-    const { data: functionResult, error: functionError } =
-        await supabase.functions.invoke("whatsapp-form-submit", {
-            body: {
-                tracking_id: trackingId,
-                lead_id: submittedId,
-            },
-        });
 
-    if (functionError) {
-        console.error(
-            "Form submit notification function failed:",
-            functionError
-        );
-    } else if (!functionResult?.success) {
-        console.error(
-            "Form submit notification failed:",
-            functionResult
-        );
-    } else {
-        console.log(
-            "Form submit tracking result:",
-            functionResult
-        );
-    }
-}
+        if (trackingId) {
+            const { data: functionResult, error: functionError } =
+                await supabase.functions.invoke("whatsapp-form-submit", {
+                    body: {
+                        tracking_id: trackingId,
+                        lead_id: submittedId,
+                    },
+                });
+
+            if (functionError) {
+                console.error(
+                    "Form submit notification function failed:",
+                    functionError
+                );
+            } else if (!functionResult?.success) {
+                console.error(
+                    "Form submit notification failed:",
+                    functionResult
+                );
+            } else {
+                console.log(
+                    "Form submit tracking result:",
+                    functionResult
+                );
+            }
+        }
 
         setSubmittedLeadId(submittedId);
         setSubmitted(true);
@@ -402,7 +402,9 @@ if (trackingId) {
         const englishLevelText =
             existingEnquiry.english_level === "need_advanced_batch"
                 ? "Advanced Batch की जरूरत है"
-                : existingEnquiry.english_level;
+                : existingEnquiry.english_level === "need_english_to_english_batch"
+                    ? "Need English to English Batch"
+                    : existingEnquiry.english_level;
 
         return (
             <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-blue-50 px-4 py-8">
@@ -1006,7 +1008,7 @@ if (trackingId) {
                                     </div>
                                 )}
 
-                                {/* QUESTION 3 — ENGLISH LEVEL */}
+                                {/* {/* QUESTION 3 — ENGLISH LEVEL */}
                                 {questionStep === 3 && (
                                     <div>
                                         <label className="mb-4 block text-lg font-semibold text-gray-800">
@@ -1015,38 +1017,44 @@ if (trackingId) {
 
                                         <div className="space-y-2">
                                             {[
-                                                "इंग्लिश पढ़ना भी नहीं आता है",
-                                                "शुरू से सीखना है",
-                                                "need_advanced_batch",
+                                                {
+                                                    value: "इंग्लिश पढ़ना भी नहीं आता है",
+                                                    label: "इंग्लिश पढ़ना भी नहीं आता है",
+                                                },
+                                                {
+                                                    value: "शुरू से सीखना है",
+                                                    label: "शुरू से सीखना है",
+                                                },
+                                                {
+                                                    value: "need_advanced_batch",
+                                                    label: "Need Advanced Batch",
+                                                },
+                                                {
+                                                    value: "need_english_to_english_batch",
+                                                    label: "Need English to English Batch",
+                                                },
                                             ].map((option) => (
                                                 <button
                                                     type="button"
-                                                    key={option}
+                                                    key={option.value}
                                                     onClick={() =>
-                                                        handleOption(
-                                                            "english_level",
-                                                            option
-                                                        )
+                                                        handleOption("english_level", option.value)
                                                     }
                                                     className={optionClass(
-                                                        formData.english_level === option
+                                                        formData.english_level === option.value
                                                     )}
                                                 >
                                                     <span className="mr-3">
-                                                        {formData.english_level === option
+                                                        {formData.english_level === option.value
                                                             ? "◉"
                                                             : "○"}
                                                     </span>
-
-                                                    {option}
+                                                    {option.label}
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
                                 )}
-
-
-                                {/* QUESTION 4 — DEMO TIME */}
 
                                 {/* QUESTION 4 — DEMO TIME */}
                                 {questionStep === 4 && (
@@ -1192,8 +1200,8 @@ if (trackingId) {
                         )}
                     </div>
                 </form>
-            </div>
-        </main>
+            </div >
+        </main >
     );
 }
 export default function EnquiryPageWrapper() {
