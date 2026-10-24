@@ -559,6 +559,7 @@ export default function WhatsAppInboxPage() {
                     if (!lead) continue;
 
                     enquiryMap[phone] = {
+                        full_name: lead.full_name,
                         whatsapp_number: lead.whatsapp_number,
                         education: lead.education,
                         english_level: lead.english_level,
@@ -866,12 +867,14 @@ export default function WhatsAppInboxPage() {
                 phone: message.phone,
                 contactId: message.contactId ?? contact?.id ?? null,
                 name:
-                    contact?.name &&
-                        contact.name.trim() !== contact.phone_number
-                        ? contact.name
-                        : onlineEnquiries[normalizeEnquiryPhone(message.phone)]?.full_name?.trim() ||
-                        contact?.name ||
-                        message.phone,
+    onlineEnquiries[normalizeEnquiryPhone(message.phone)]?.full_name?.trim() ||
+    (
+        contact?.name?.trim() &&
+        normalizeEnquiryPhone(contact.name) !==
+            normalizeEnquiryPhone(contact.phone_number)
+            ? contact.name.trim()
+            : message.phone
+    ),
                 lastText: message.text,
                 lastAt: message.at,
             });
