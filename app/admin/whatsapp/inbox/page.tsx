@@ -40,12 +40,14 @@ type WhatsAppTemplate = {
     }>;
 };
 type OnlineEnquiry = {
+    full_name: string | null;
     whatsapp_number: string;
     education: string | null;
     english_level: string | null;
     demo_class_time: string | null;
     created_time: string;
 };
+
 type InboundMessage = {
     id: string;
     contact_id: string | null;
@@ -535,7 +537,7 @@ export default function WhatsAppInboxPage() {
                     await supabase
                         .from("meta_leads")
                         .select(
-                            "id,whatsapp_number,education,english_level,demo_class_time,created_time"
+                            "id,full_name,whatsapp_number,education,english_level,demo_class_time,created_time"
                         )
                         .in("id", leadIds);
 
@@ -570,7 +572,7 @@ export default function WhatsAppInboxPage() {
                 await supabase
                     .from("meta_leads")
                     .select(
-                        "whatsapp_number,education,english_level,demo_class_time,created_time"
+                        "full_name,whatsapp_number,education,english_level,demo_class_time,created_time"
                     )
                     .order("created_time", { ascending: false })
                     .limit(2000);
@@ -588,6 +590,7 @@ export default function WhatsAppInboxPage() {
 
                 if (!enquiryMap[phone]) {
                     enquiryMap[phone] = {
+                        full_name: lead.full_name,
                         whatsapp_number: lead.whatsapp_number,
                         education: lead.education,
                         english_level: lead.english_level,
@@ -862,14 +865,20 @@ export default function WhatsAppInboxPage() {
             map.set(phoneKey, {
                 phone: message.phone,
                 contactId: message.contactId ?? contact?.id ?? null,
-                name: contact?.name || message.phone,
+                name:
+                    contact?.name &&
+                        contact.name.trim() !== contact.phone_number
+                        ? contact.name
+                        : onlineEnquiries[normalizeEnquiryPhone(message.phone)]?.full_name?.trim() ||
+                        contact?.name ||
+                        message.phone,
                 lastText: message.text,
                 lastAt: message.at,
             });
         }
 
         return [...map.values()];
-    }, [contacts, inbound, logs]);
+    }, [contacts, inbound, logs, onlineEnquiries]);
     const selectedTemplate = approvedTemplates.find(
         (template) => template.id === selectedTemplateId
     );
@@ -1252,7 +1261,7 @@ export default function WhatsAppInboxPage() {
                     className={`${mobileChatOpen ? "hidden sm:flex" : "flex"
                         } w-full shrink-0 flex-col border-r border-gray-200 sm:w-[300px] md:w-[330px] lg:w-[360px] xl:w-[390px]`}
                 >
-                    
+
                     <InboxBulkActions
                         conversations={conversations}
                         selectedPhone={selectedPhone}
