@@ -10,6 +10,7 @@ import {
     Users,
     LoaderCircle,
     Trash2,
+    CalendarDays,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -35,6 +36,14 @@ type Props = {
     children: ReactNode;
     onUpdated?: () => Promise<unknown> | void;
 };
+
+function localDateString() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
 
 function normalizePhone(value: string) {
     return value.replace(/\D/g, "");
@@ -85,6 +94,10 @@ export default function InboxRightClick({
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [notice, setNotice] = useState("");
+    const [demoModalOpen, setDemoModalOpen] = useState(false);
+    const [demoDate, setDemoDate] = useState(localDateString());
+    const [demoTime, setDemoTime] = useState("08:00");
+    const [demoSaving, setDemoSaving] = useState(false);
 
     const isOptedOut = BLOCKED_STATUSES.includes(
         String(contact?.consent_status ?? "").toLowerCase()
@@ -297,6 +310,44 @@ export default function InboxRightClick({
         }
     }
 
+    async function saveDemoSchedule() {
+        if (!lead) {
+            setError("Is number ke liye Meta Report mein enquiry nahi mili.");
+            return;
+        }
+        if (!demoDate || !demoTime) {
+            setError("Demo ki date aur time select karein.");
+            return;
+        }
+
+        setDemoSaving(true);
+        setError("");
+        setNotice("");
+        try {
+            const { error: insertError } = await supabase
+                .from("demo_schedules")
+                .insert({
+                    lead_id: String(lead.id),
+                    student_name: name || phone,
+                    phone_number: phone,
+                    demo_date: demoDate,
+                    start_time: demoTime,
+                    status: "scheduled",
+                });
+
+            if (insertError) throw insertError;
+            setDemoModalOpen(false);
+            setPosition(null);
+            setNotice("Demo schedule save ho gaya.");
+            await onUpdated?.();
+            window.alert(`${name || phone} ka demo ${demoDate} ko ${demoTime} par schedule ho gaya.`);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Demo schedule save nahi hua.");
+        } finally {
+            setDemoSaving(false);
+        }
+    }
+
     async function updateOptOut(optOut: boolean) {
         if (saving) return;
 
@@ -450,6 +501,27 @@ export default function InboxRightClick({
                                 type="button"
                                 role="menuitem"
                                 disabled={saving || !lead}
+                                onClick={() => {
+                                    setError("");
+                                    setNotice("");
+                                    setDemoDate(localDateString());
+                                    setDemoTime("08:00");
+                                    setPosition(null);
+                                    setDemoModalOpen(true);
+                                }}
+                                className={`${menuButton} text-indigo-700 hover:bg-indigo-50`}
+                                title={!lead ? "Meta Lead nahi mili" : "Demo date aur time set karein"}
+                            >
+                                <CalendarDays size={16} />
+                                Demo Schedule
+                            </button>
+
+                            <div className="my-1 border-t border-gray-100" />
+
+                            <button
+                                type="button"
+                                role="menuitem"
+                                disabled={saving || !lead}
                                 onClick={() =>
                                     void updateLeadStatus("class_joined", "Class")
                                 }
@@ -516,6 +588,45 @@ export default function InboxRightClick({
                     >
                         Close
                     </button>
+                </div>
+            )}
+
+            {demoModalOpen && (
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4" onMouseDown={(event) => {
+                    if (event.target === event.currentTarget && !demoSaving) setDemoModalOpen(false);
+                }}>
+                    <div role="dialog" aria-modal="true" aria-labelledby="demo-schedule-title" className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+                        <div className="mb-4 flex items-start justify-between gap-3">
+                            <div>
+                                <h2 id="demo-schedule-title" className="text-lg font-semibold text-gray-900">Demo Schedule</h2>
+                                <p className="mt-1 text-sm text-gray-500">{name || phone} · {phone}</p>
+                            </div>
+                            <button type="button" onClick={() => setDemoModalOpen(false)} disabled={demoSaving} className="rounded-lg px-2 py-1 text-gray-500 hover:bg-gray-100">✕</button>
+                        </div>
+                        <div className="space-y-4">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Demo Date
+                                <input type="date" value={demoDate} onChange={(event) => setDemoDate(event.target.value)} min={localDateString()} className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                            </label>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Demo Time
+                                <select value={demoTime} onChange={(event) => setDemoTime(event.target.value)} className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                                    {Array.from({ length: 14 }, (_, index) => {
+                                        const hour = index + 8;
+                                        const value = `${String(hour).padStart(2, "0")}:00`;
+                                        const labelHour = hour % 12 || 12;
+                                        const period = hour < 12 ? "AM" : "PM";
+                                        return <option key={value} value={value}>{`${labelHour}:00 ${period} (${value})`}</option>;
+                                    })}
+                                </select>
+                            </label>
+                            {error && <p role="alert" className="whitespace-pre-wrap rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+                            <div className="flex justify-end gap-2 pt-1">
+                                <button type="button" onClick={() => setDemoModalOpen(false)} disabled={demoSaving} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                                <button type="button" onClick={() => void saveDemoSchedule()} disabled={demoSaving || !lead} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{demoSaving ? "Saving..." : "Save Demo"}</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </>
