@@ -23,6 +23,7 @@ import {
   Inbox,
   Bot,
   FileText,
+  Clock,
 } from "lucide-react";
 
 
@@ -52,6 +53,7 @@ export default function AdminDashboard() {
     { name: "User", href: "/admin/users", icon: User },
     { name: "Reports", href: "/admin/reports", icon: FileBarChart },
     { name: "Meta Report", href: "/admin/meta-report", icon: BarChart3 },
+    { name: "Demo Planner", href: "/admin/demo-planner", icon: Clock },
     { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageCircle },
     { name: "Inbox", href: "/admin/whatsapp/inbox", icon: Inbox },
     { name: "Bots", href: "/admin/whatsapp/bots", icon: Bot },
