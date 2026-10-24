@@ -1252,43 +1252,10 @@ export default function WhatsAppInboxPage() {
                     className={`${mobileChatOpen ? "hidden sm:flex" : "flex"
                         } w-full shrink-0 flex-col border-r border-gray-200 sm:w-[300px] md:w-[330px] lg:w-[360px] xl:w-[390px]`}
                 >
-                    <div className="flex shrink-0 items-center justify-between bg-white px-3 py-2">
-                        <h2 className="text-sm font-semibold">
-                            Chats
-                            <span className="ml-2 font-normal text-gray-500">
-                                {conversations.length}
-                            </span>
-                        </h2>
-
-                        <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                title="Refresh inbox"
-                                onClick={() => void loadInbox()}
-                                className="..."
-                            >
-                                <RefreshCw
-                                    size={16}
-                                    className={loading ? "animate-spin" : ""}
-                                />
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => void enableInboxNotifications()}
-                                title="Enable sound and desktop notifications"
-                                className={`flex h-8 items-center gap-1 rounded-full px-2 text-xs font-medium ${notificationsEnabled
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                    }`}
-                            >
-                                🔔 {notificationsEnabled ? "On" : "Notify"}
-                            </button>
-                        </div>
-                    </div>
-
+                    
                     <InboxBulkActions
                         conversations={conversations}
+                        selectedPhone={selectedPhone}
                         formSubmittedPhones={formSubmittedPhones}
                         contacts={contacts}
                         inbound={inbound}

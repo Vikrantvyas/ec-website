@@ -55,6 +55,7 @@ type Props = {
     onSelectedBotIdChange: (id: string) => void;
     activeBotPhones: string[];
     onOpenConversation: (phone: string) => void;
+    selectedPhone: string;
     onRefreshInbox: () => Promise<unknown> | void;
 };
 
@@ -125,6 +126,7 @@ export default function InboxBulkActions({
     onSelectedBotIdChange,
     activeBotPhones,
     onOpenConversation,
+    selectedPhone,
     onRefreshInbox,
 }: Props) {
     const [search, setSearch] = useState("");
@@ -1008,12 +1010,18 @@ export default function InboxBulkActions({
                         const botActive = activeBotPhones.some(
                             (phone) => normalizePhone(phone) === phoneKey
                         );
-
+                        const isActiveChat =
+                            normalizePhone(selectedPhone) === phoneKey;
                         return (
                             <div
                                 key={phoneKey}
-                                className={`flex items-center gap-2 border-b border-[#f0f2f5] pr-2 ${checked ? "bg-[#f0f2f5]" : "bg-white"
-                                    }`}
+                                className={`flex items-center gap-2 border-b border-[#f0f2f5] border-l-4 pr-2 ${
+    isActiveChat
+        ? "border-l-[#008069] bg-[#e7fce9]"
+        : checked
+            ? "border-l-transparent bg-[#f0f2f5]"
+            : "border-l-transparent bg-white"
+}`}
                             >
                                 <input
                                     type="checkbox"
