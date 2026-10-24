@@ -867,14 +867,14 @@ export default function WhatsAppInboxPage() {
                 phone: message.phone,
                 contactId: message.contactId ?? contact?.id ?? null,
                 name:
-    onlineEnquiries[normalizeEnquiryPhone(message.phone)]?.full_name?.trim() ||
-    (
-        contact?.name?.trim() &&
-        normalizeEnquiryPhone(contact.name) !==
-            normalizeEnquiryPhone(contact.phone_number)
-            ? contact.name.trim()
-            : message.phone
-    ),
+                    onlineEnquiries[normalizeEnquiryPhone(message.phone)]?.full_name?.trim() ||
+                    (
+                        contact?.name?.trim() &&
+                            normalizeEnquiryPhone(contact.name) !==
+                            normalizeEnquiryPhone(contact.phone_number)
+                            ? contact.name.trim()
+                            : message.phone
+                    ),
                 lastText: message.text,
                 lastAt: message.at,
             });
@@ -898,6 +898,33 @@ export default function WhatsAppInboxPage() {
             (match) => Number(match[1])
         )
     );
+    const selectedLastInboundAt = useMemo(() => {
+        const phone = normalizePhone(selectedPhone);
+
+        if (!phone) return null;
+
+        const latest = inbound
+            .filter(
+                (message) =>
+                    normalizePhone(message.phone_number) === phone
+            )
+            .reduce<number | null>((current, message) => {
+                const timestamp = new Date(message.received_at).getTime();
+
+                if (!Number.isFinite(timestamp)) return current;
+
+                return current === null || timestamp > current
+                    ? timestamp
+                    : current;
+            }, null);
+
+        return latest;
+    }, [inbound, selectedPhone]);
+
+    const isCustomerWindowOpen =
+        selectedLastInboundAt !== null &&
+        Date.now() >= selectedLastInboundAt &&
+        Date.now() - selectedLastInboundAt < 24 * 60 * 60 * 1000;
     const selectedContact = contacts.find(
         (contact) =>
             normalizePhone(contact.phone_number) ===
@@ -988,7 +1015,12 @@ export default function WhatsAppInboxPage() {
         const phone = normalizePhone(selectedPhone);
 
         if (!phone || sending) return;
-
+        if (messageMode !== "template" && !isCustomerWindowOpen) {
+            setError(
+                "WhatsApp ki 24-hour customer service window band hai. Message bhejne ke liye approved WhatsApp Template select karein."
+            );
+            return;
+        }
         if (messageMode === "template") {
             if (!selectedTemplate) {
                 setError("Pehle ek approved WhatsApp template select karein.");
@@ -1876,6 +1908,21 @@ export default function WhatsAppInboxPage() {
                                 className="shrink-0 border-t border-gray-200 bg-transparent px-2 py-2 sm:px-4 sm:py-3"
                             >
                                 <div className="bg-white"></div>
+                                {!isCustomerWindowOpen && (
+                                    <div className="mb-2 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                                        <AlertCircle size={18} className="mt-0.5 shrink-0" />
+
+                                        <div>
+                                            <p className="font-semibold">
+                                                24-hour WhatsApp Window Closed
+                                            </p>
+
+                                            <p className="mt-1 text-xs leading-5">
+                                                Msg Window Closed
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex items-end gap-2 sm:gap-3">
                                     <select
                                         value={messageMode}
@@ -1893,7 +1940,9 @@ export default function WhatsAppInboxPage() {
                                         aria-label="Message type"
                                         className="h-11 w-28 shrink-0 rounded-xl border border-gray-200 bg-white px-2 text-sm outline-none focus:border-[#008069] sm:w-36"
                                     >
-                                        <option value="text">Normal Text</option>
+                                        <option value="text">
+                                            {isCustomerWindowOpen ? "Normal Text" : "Normal Text (Window Closed)"}
+                                        </option>
                                         <option value="buttons">Reply Buttons</option>
                                         <option value="list">List Message</option>
                                         <option value="template">WhatsApp Template</option>

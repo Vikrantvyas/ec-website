@@ -320,7 +320,7 @@ export default function MetaReportTable({
       window.alert("Selected Leads mein valid WhatsApp number nahi mila.");
       return;
     }
-  
+
     try {
       sessionStorage.setItem(
         "ec_meta_report_selected_leads",
@@ -612,8 +612,8 @@ export default function MetaReportTable({
                     <button
                       type="button"
                       onClick={() => handleSort(column.key)}
-                      
-className="inline-flex cursor-pointer items-center gap-1 font-semibold hover:text-blue-600"
+
+                      className="inline-flex cursor-pointer items-center gap-1 font-semibold hover:text-blue-600"
 
                     >
                       {column.label}
@@ -666,10 +666,11 @@ className="inline-flex cursor-pointer items-center gap-1 font-semibold hover:tex
                     >
                       {column.key === "whatsapp" && lead.whatsapp_number ? (
                         <a
-                          href={getWhatsAppUrl(lead.whatsapp_number)}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          href={`/admin/whatsapp/inbox?phone=${encodeURIComponent(
+                            lead.whatsapp_number
+                          )}`}
                           className="font-medium text-green-600 hover:text-green-700 hover:underline"
+                          title="WhatsApp Inbox mein chat kholen"
                         >
                           {lead.whatsapp_number}
                         </a>

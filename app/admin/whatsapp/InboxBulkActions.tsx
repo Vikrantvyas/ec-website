@@ -249,7 +249,41 @@ export default function InboxBulkActions({
             return changed ? next : current;
         });
     }, [inbound]);
+    const latestInboundAtByPhone = useMemo(() => {
+        const latest: Record<string, number> = {};
 
+        for (const message of inbound) {
+            const phone = normalizePhone(message.phone_number);
+            const timestamp = new Date(message.received_at).getTime();
+
+            if (!phone || !Number.isFinite(timestamp)) continue;
+
+            if (
+                latest[phone] === undefined ||
+                timestamp > latest[phone]
+            ) {
+                latest[phone] = timestamp;
+            }
+        }
+
+        return latest;
+    }, [inbound]);
+
+    function getWindowStatus(phone: string) {
+        const lastInboundAt = latestInboundAtByPhone[normalizePhone(phone)];
+
+        if (lastInboundAt === undefined) {
+            return "unknown" as const;
+        }
+
+        const elapsed = Date.now() - lastInboundAt;
+
+        if (elapsed < 0) return "unknown" as const;
+
+        return elapsed < 24 * 60 * 60 * 1000
+            ? "open" as const
+            : "closed" as const;
+    }
     const visibleConversations = useMemo(
         () => conversations.filter((conversation) => !hiddenChats[normalizePhone(conversation.phone)]),
         [conversations, hiddenChats]
@@ -1146,40 +1180,39 @@ export default function InboxBulkActions({
                                                     </span>
 
                                                     {formSubmittedPhoneSet.has(
-    normalizeEnquiryPhone(conversation.phone)
-) && (
-    <span
-        className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-800"
-        title="Form submitted"
-    >
-        Form Filled
-    </span>
-)}
+                                                        normalizeEnquiryPhone(conversation.phone)
+                                                    ) && (
+                                                            <span
+                                                                className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-800"
+                                                                title="Form submitted"
+                                                            >
+                                                                Form Filled
+                                                            </span>
+                                                        )}
 
-{(() => {
-    const schedule = demoScheduleByPhone.get(
-        normalizeEnquiryPhone(conversation.phone)
-    );
+                                                    {(() => {
+                                                        const schedule = demoScheduleByPhone.get(
+                                                            normalizeEnquiryPhone(conversation.phone)
+                                                        );
 
-    if (!schedule) return null;
+                                                        if (!schedule) return null;
 
-    const isToday =
-        schedule.demo_date === getLocalDateString(new Date());
+                                                        const isToday =
+                                                            schedule.demo_date === getLocalDateString(new Date());
 
-    return (
-        <span
-            title={`Demo scheduled for ${schedule.demo_date} at ${formatDemoTime(schedule.start_time)}`}
-            className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${
-                isToday
-                    ? "animate-pulse border-fuchsia-300 bg-gradient-to-r from-fuchsia-100 via-amber-100 to-cyan-100 text-fuchsia-800 shadow-sm"
-                    : "border-indigo-200 bg-indigo-50 text-indigo-700"
-            }`}
-        >
-            <span className="mr-1">●</span>
-            {formatDemoTime(schedule.start_time)}
-        </span>
-    );
-})()}
+                                                        return (
+                                                            <span
+                                                                title={`Demo scheduled for ${schedule.demo_date} at ${formatDemoTime(schedule.start_time)}`}
+                                                                className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${isToday
+                                                                    ? "animate-pulse border-fuchsia-300 bg-gradient-to-r from-fuchsia-100 via-amber-100 to-cyan-100 text-fuchsia-800 shadow-sm"
+                                                                    : "border-indigo-200 bg-indigo-50 text-indigo-700"
+                                                                    }`}
+                                                            >
+                                                                <span className="mr-1">●</span>
+                                                                {formatDemoTime(schedule.start_time)}
+                                                            </span>
+                                                        );
+                                                    })()}
 
                                                     {botActive && (
                                                         <span
@@ -1225,8 +1258,32 @@ export default function InboxBulkActions({
                                                 </span>
                                             </div>
 
-                                            <div className="mt-1 truncate text-[13px] leading-[19px] text-[#667781]">
-                                                {conversation.lastText || "No messages yet"}
+                                            <div className="mt-1 flex items-center gap-2">
+                                                <div className="min-w-0 flex-1 truncate text-[13px] leading-[19px] text-[#667781]">
+                                                    {conversation.lastText || "No messages yet"}
+                                                </div>
+
+                                                {(() => {
+                                                    const status = getWindowStatus(conversation.phone);
+
+                                                    if (status === "unknown") return null;
+
+                                                    return status === "open" ? (
+                                                        <span
+                                                            className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-800"
+                                                            title="Customer service window open"
+                                                        >
+                                                            Open
+                                                        </span>
+                                                    ) : (
+                                                        <span
+                                                            className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800"
+                                                            title="Customer service window closed"
+                                                        >
+                                                            Closed
+                                                        </span>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     </button>
