@@ -43,7 +43,13 @@ type BotTemplate = {
     status: string;
     start_mode: string;
 };
-
+type DemoSchedule = {
+    id: string;
+    phone_number: string;
+    demo_date: string;
+    start_time: string;
+    status: string;
+};
 type Props = {
     conversations: InboxConversation[];
     formSubmittedPhones: string[];
@@ -131,6 +137,56 @@ export default function InboxBulkActions({
 }: Props) {
     const [search, setSearch] = useState("");
     const [selectedPhones, setSelectedPhones] = useState<string[]>([]);
+    const [demoSchedules, setDemoSchedules] = useState<DemoSchedule[]>([]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadDemoSchedules() {
+            const now = new Date();
+            const today =
+                `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+            const { data, error } = await supabase
+                .from("demo_schedules")
+                .select("id, phone_number, demo_date, start_time, status")
+                .gte("demo_date", today)
+                .eq("status", "scheduled")
+                .order("demo_date", { ascending: true })
+                .order("start_time", { ascending: true });
+
+            if (cancelled) return;
+
+            if (error) {
+                console.error("Demo schedules load failed:", error.message);
+                return;
+            }
+
+            setDemoSchedules((data ?? []) as DemoSchedule[]);
+        }
+
+        loadDemoSchedules();
+
+        const channel = supabase
+            .channel("inbox-demo-schedules")
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "demo_schedules",
+                },
+                () => {
+                    loadDemoSchedules();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            cancelled = true;
+            supabase.removeChannel(channel);
+        };
+    }, []);
     const [showBulkActions, setShowBulkActions] = useState(false);
     const [openTextOnly, setOpenTextOnly] = useState(false);
     const [openTextLoading, setOpenTextLoading] = useState(false);
@@ -208,7 +264,42 @@ export default function InboxBulkActions({
         () => new Set(formSubmittedPhones.map(normalizeEnquiryPhone).filter(Boolean)),
         [formSubmittedPhones]
     );
+    const demoScheduleByPhone = useMemo(() => {
+        const scheduleMap = new Map<string, DemoSchedule>();
 
+        for (const schedule of demoSchedules) {
+            const phone = normalizeEnquiryPhone(schedule.phone_number);
+
+            if (phone && !scheduleMap.has(phone)) {
+                scheduleMap.set(phone, schedule);
+            }
+        }
+
+        return scheduleMap;
+    }, [demoSchedules]);
+
+    function formatDemoTime(value: string) {
+        const [hoursText, minutesText] = value.split(":");
+        const hours = Number(hoursText);
+        const minutes = Number(minutesText);
+
+        if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+            return value;
+        }
+
+        const suffix = hours >= 12 ? "PM" : "AM";
+        const displayHour = hours % 12 || 12;
+
+        return `${displayHour}:${String(minutes).padStart(2, "0")} ${suffix}`;
+    }
+
+    function getLocalDateString(date: Date) {
+        return [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, "0"),
+            String(date.getDate()).padStart(2, "0"),
+        ].join("-");
+    }
     const windowOpenConversations = useMemo(() => {
         if (!openTextOnly) return visibleConversations;
 
@@ -1015,13 +1106,12 @@ export default function InboxBulkActions({
                         return (
                             <div
                                 key={phoneKey}
-                                className={`flex items-center gap-2 border-b border-[#f0f2f5] border-l-4 pr-2 ${
-    isActiveChat
-        ? "border-l-[#008069] bg-[#e7fce9]"
-        : checked
-            ? "border-l-transparent bg-[#f0f2f5]"
-            : "border-l-transparent bg-white"
-}`}
+                                className={`flex items-center gap-2 border-b border-[#f0f2f5] border-l-4 pr-2 ${isActiveChat
+                                    ? "border-l-[#008069] bg-[#e7fce9]"
+                                    : checked
+                                        ? "border-l-transparent bg-[#f0f2f5]"
+                                        : "border-l-transparent bg-white"
+                                    }`}
                             >
                                 <input
                                     type="checkbox"
@@ -1056,15 +1146,40 @@ export default function InboxBulkActions({
                                                     </span>
 
                                                     {formSubmittedPhoneSet.has(
-                                                        normalizeEnquiryPhone(conversation.phone)
-                                                    ) && (
-                                                            <span
-                                                                className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-800"
-                                                                title="Form submitted"
-                                                            >
-                                                                Form Filled
-                                                            </span>
-                                                        )}
+    normalizeEnquiryPhone(conversation.phone)
+) && (
+    <span
+        className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-800"
+        title="Form submitted"
+    >
+        Form Filled
+    </span>
+)}
+
+{(() => {
+    const schedule = demoScheduleByPhone.get(
+        normalizeEnquiryPhone(conversation.phone)
+    );
+
+    if (!schedule) return null;
+
+    const isToday =
+        schedule.demo_date === getLocalDateString(new Date());
+
+    return (
+        <span
+            title={`Demo scheduled for ${schedule.demo_date} at ${formatDemoTime(schedule.start_time)}`}
+            className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${
+                isToday
+                    ? "animate-pulse border-fuchsia-300 bg-gradient-to-r from-fuchsia-100 via-amber-100 to-cyan-100 text-fuchsia-800 shadow-sm"
+                    : "border-indigo-200 bg-indigo-50 text-indigo-700"
+            }`}
+        >
+            <span className="mr-1">●</span>
+            {formatDemoTime(schedule.start_time)}
+        </span>
+    );
+})()}
 
                                                     {botActive && (
                                                         <span
