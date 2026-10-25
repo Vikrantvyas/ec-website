@@ -1165,7 +1165,31 @@ export default function InboxBulkActions({
                                                 normalizePhone(item.phone_number) === phoneKey
                                         )?.id ?? conversation.contactId
                                     }
-                                    onUpdated={onRefreshInbox}
+                                    onUpdated={async () => {
+    await onRefreshInbox();
+
+    const now = new Date();
+    const today = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    const { data, error } = await supabase
+        .from("demo_schedules")
+        .select("id, phone_number, demo_date, start_time, status")
+        .gte("demo_date", today)
+        .eq("status", "scheduled")
+        .order("demo_date", { ascending: true })
+        .order("start_time", { ascending: true });
+
+    if (error) {
+        console.error("Demo schedules refresh failed:", error.message);
+        return;
+    }
+
+    setDemoSchedules((data ?? []) as DemoSchedule[]);
+}}
                                 >
                                     <button
                                         type="button"
