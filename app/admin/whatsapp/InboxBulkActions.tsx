@@ -300,8 +300,32 @@ export default function InboxBulkActions({
     );
     const demoScheduleByPhone = useMemo(() => {
         const scheduleMap = new Map<string, DemoSchedule>();
+        const now = new Date();
+        const today = getLocalDateString(now);
+        const currentTime = [
+            String(now.getHours()).padStart(2, "0"),
+            String(now.getMinutes()).padStart(2, "0"),
+            "00",
+        ].join(":");
 
-        for (const schedule of demoSchedules) {
+        const sortedSchedules = [...demoSchedules].sort((a, b) => {
+            const aUpcoming =
+                a.demo_date > today ||
+                (a.demo_date === today && a.start_time >= currentTime);
+
+            const bUpcoming =
+                b.demo_date > today ||
+                (b.demo_date === today && b.start_time >= currentTime);
+
+            if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1;
+
+            const aDateTime = `${a.demo_date} ${a.start_time}`;
+            const bDateTime = `${b.demo_date} ${b.start_time}`;
+
+            return aDateTime.localeCompare(bDateTime);
+        });
+
+        for (const schedule of sortedSchedules) {
             const phone = normalizeEnquiryPhone(schedule.phone_number);
 
             if (phone && !scheduleMap.has(phone)) {
@@ -1166,30 +1190,30 @@ export default function InboxBulkActions({
                                         )?.id ?? conversation.contactId
                                     }
                                     onUpdated={async () => {
-    await onRefreshInbox();
+                                        await onRefreshInbox();
 
-    const now = new Date();
-    const today = [
-        now.getFullYear(),
-        String(now.getMonth() + 1).padStart(2, "0"),
-        String(now.getDate()).padStart(2, "0"),
-    ].join("-");
+                                        const now = new Date();
+                                        const today = [
+                                            now.getFullYear(),
+                                            String(now.getMonth() + 1).padStart(2, "0"),
+                                            String(now.getDate()).padStart(2, "0"),
+                                        ].join("-");
 
-    const { data, error } = await supabase
-        .from("demo_schedules")
-        .select("id, phone_number, demo_date, start_time, status")
-        .gte("demo_date", today)
-        .eq("status", "scheduled")
-        .order("demo_date", { ascending: true })
-        .order("start_time", { ascending: true });
+                                        const { data, error } = await supabase
+                                            .from("demo_schedules")
+                                            .select("id, phone_number, demo_date, start_time, status")
+                                            .gte("demo_date", today)
+                                            .eq("status", "scheduled")
+                                            .order("demo_date", { ascending: true })
+                                            .order("start_time", { ascending: true });
 
-    if (error) {
-        console.error("Demo schedules refresh failed:", error.message);
-        return;
-    }
+                                        if (error) {
+                                            console.error("Demo schedules refresh failed:", error.message);
+                                            return;
+                                        }
 
-    setDemoSchedules((data ?? []) as DemoSchedule[]);
-}}
+                                        setDemoSchedules((data ?? []) as DemoSchedule[]);
+                                    }}
                                 >
                                     <button
                                         type="button"

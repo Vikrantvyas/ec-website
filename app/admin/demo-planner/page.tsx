@@ -28,6 +28,7 @@ type DemoSchedule = {
     status: DemoStatus;
     notes: string | null;
     created_at: string;
+    english_level?: string | null;
 };
 
 const SLOT_STARTS = Array.from({ length: 14 }, (_, index) => index + 8);
@@ -39,7 +40,39 @@ function localDateString(date = new Date()) {
 
     return `${year}-${month}-${day}`;
 }
+function normalizePhone(value: string) {
+    return String(value || "")
+        .replace(/\D/g, "")
+        .replace(/^91(?=\d{10}$)/, "");
+}
 
+async function hasDuplicateSlot(
+    demo: DemoSchedule,
+    targetDate: string,
+    targetTime: string
+): Promise<boolean> {
+    const { data, error } = await supabase
+        .from("demo_schedules")
+        .select("id, lead_id, phone_number")
+        .eq("demo_date", targetDate)
+        .eq("start_time", targetTime)
+        .neq("id", demo.id);
+
+    if (error) throw error;
+
+    return (data || []).some((item) => {
+        const sameLead =
+            Boolean(demo.lead_id) &&
+            item.lead_id === demo.lead_id;
+
+        const samePhone =
+            Boolean(demo.phone_number) &&
+            normalizePhone(item.phone_number) ===
+            normalizePhone(demo.phone_number);
+
+        return sameLead || samePhone;
+    });
+}
 function timeValue(value: string) {
     return String(value || "08:00").slice(0, 5);
 }
@@ -100,7 +133,30 @@ export default function DemoPlannerPage() {
 
             if (queryError) throw queryError;
 
-            setDemos((data || []) as DemoSchedule[]);
+            const demoRows = data || [];
+            const leadIds = [...new Set(demoRows.map((demo) => demo.lead_id))];
+
+            let levelMap: Record<string, string | null> = {};
+
+            if (leadIds.length > 0) {
+                const { data: leadRows, error: leadError } = await supabase
+                    .from("meta_leads")
+                    .select("id, english_level")
+                    .in("id", leadIds);
+
+                if (leadError) throw leadError;
+
+                levelMap = Object.fromEntries(
+                    (leadRows || []).map((lead) => [lead.id, lead.english_level])
+                );
+            }
+
+            setDemos(
+                demoRows.map((demo) => ({
+                    ...demo,
+                    english_level: levelMap[demo.lead_id] ?? null,
+                })) as DemoSchedule[]
+            );
         } catch (err) {
             setError(
                 err instanceof Error ? err.message : "Demo list load nahi hui."
@@ -135,6 +191,16 @@ export default function DemoPlannerPage() {
             if (groups[hour]) {
                 groups[hour].push(demo);
             }
+        }
+
+        for (const hour of SLOT_STARTS) {
+            groups[hour].sort((a, b) =>
+                (a.student_name || "").localeCompare(
+                    b.student_name || "",
+                    undefined,
+                    { sensitivity: "base" }
+                )
+            );
         }
 
         return groups;
@@ -173,6 +239,19 @@ export default function DemoPlannerPage() {
         setNotice("");
 
         try {
+            const duplicate = await hasDuplicateSlot(
+                demo,
+                selectedDate,
+                newTime
+            );
+
+            if (duplicate) {
+                setError(
+                    "यह विद्यार्थी इस तारीख और स्लॉट में पहले से मौजूद है।"
+                );
+                return;
+            }
+
             const { error: updateError } = await supabase
                 .from("demo_schedules")
                 .update({ start_time: newTime })
@@ -212,6 +291,33 @@ export default function DemoPlannerPage() {
         setNotice("");
 
         try {
+            const currentDemo = demos.find((item) => item.id === id);
+
+            if (
+                currentDemo &&
+                (changes.demo_date !== undefined ||
+                    changes.start_time !== undefined)
+            ) {
+                const targetDate =
+                    changes.demo_date ?? currentDemo.demo_date;
+
+                const targetTime =
+                    changes.start_time ?? currentDemo.start_time;
+
+                const duplicate = await hasDuplicateSlot(
+                    currentDemo,
+                    targetDate,
+                    targetTime
+                );
+
+                if (duplicate) {
+                    setError(
+                        "यह विद्यार्थी इस तारीख और स्लॉट में पहले से मौजूद है।"
+                    );
+                    return false;
+                }
+            }
+
             const { error: updateError } = await supabase
                 .from("demo_schedules")
                 .update(changes)
@@ -278,22 +384,22 @@ export default function DemoPlannerPage() {
 
         try {
             const { data: deletedRows, error: deleteError } = await supabase
-  .from("demo_schedules")
-  .delete()
-  .eq("id", demo.id)
-  .select("id");
+                .from("demo_schedules")
+                .delete()
+                .eq("id", demo.id)
+                .select("id");
 
-if (deleteError) throw deleteError;
+            if (deleteError) throw deleteError;
 
-if (!deletedRows || deletedRows.length === 0) {
-  throw new Error(
-    "Record delete nahi hua. Supabase DELETE permission / RLS policy check karein."
-  );
-}
+            if (!deletedRows || deletedRows.length === 0) {
+                throw new Error(
+                    "Record delete nahi hua. Supabase DELETE permission / RLS policy check karein."
+                );
+            }
 
-setDemos((current) => current.filter((item) => item.id !== demo.id));
-setNotice("Demo schedule delete ho gaya.");
-await loadDemos();
+            setDemos((current) => current.filter((item) => item.id !== demo.id));
+            setNotice("Demo schedule delete ho gaya.");
+            await loadDemos();
         } catch (err) {
             setError(
                 err instanceof Error
@@ -537,9 +643,13 @@ await loadDemos();
                                                 />
 
                                                 <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-900">
-                                                    {demo.student_name || "Unnamed student"}
-                                                </span>
-
+    {demo.student_name || "Unnamed student"}
+    {demo.english_level && (
+        <span className="ml-1 font-medium text-indigo-600">
+            ({demo.english_level})
+        </span>
+    )}
+</span>
                                                 <span className="shrink-0 whitespace-nowrap text-[11px] text-slate-500">
                                                     {demo.phone_number}
                                                 </span>
