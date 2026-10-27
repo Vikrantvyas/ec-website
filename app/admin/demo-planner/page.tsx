@@ -10,6 +10,7 @@ import {
     Clock3,
     GripVertical,
     LoaderCircle,
+    MessageCircle,
     RefreshCw,
     Save,
     X,
@@ -589,14 +590,33 @@ export default function DemoPlannerPage() {
                                             </h2>
                                         </div>
 
-                                        <span
-                                            className={`rounded-full px-2.5 py-1 text-xs font-bold ${slotDemos.length
-                                                ? "bg-indigo-100 text-indigo-700"
-                                                : "bg-slate-200 text-slate-600"
-                                                }`}
-                                        >
-                                            {slotDemos.length} students
-                                        </span>
+                                        <div className="flex shrink-0 items-center gap-1.5">
+                                            <span
+                                                className={`rounded-full px-2.5 py-1 text-xs font-bold ${slotDemos.length
+                                                        ? "bg-indigo-100 text-indigo-700"
+                                                        : "bg-slate-200 text-slate-600"
+                                                    }`}
+                                            >
+                                                {slotDemos.length} students
+                                            </span>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const params = new URLSearchParams({
+                                                        demoDate: selectedDate,
+                                                        demoTime: `${String(hour).padStart(2, "0")}:00`,
+                                                    });
+
+                                                    window.location.href = `/admin/whatsapp/inbox?${params.toString()}`;
+                                                }}
+                                                title="Is slot ke students Inbox mein kholein"
+                                                aria-label={`${timeLabel(hour)} students ko Inbox mein kholein`}
+                                                className="flex h-7 w-7 items-center justify-center rounded-md border border-indigo-200 bg-white text-indigo-600 hover:bg-indigo-50"
+                                            >
+                                                <MessageCircle size={15} />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div className="flex flex-1 flex-col gap-1 p-1.5">
@@ -643,13 +663,13 @@ export default function DemoPlannerPage() {
                                                 />
 
                                                 <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-900">
-    {demo.student_name || "Unnamed student"}
-    {demo.english_level && (
-        <span className="ml-1 font-medium text-indigo-600">
-            ({demo.english_level})
-        </span>
-    )}
-</span>
+                                                    {demo.student_name || "Unnamed student"}
+                                                    {demo.english_level && (
+                                                        <span className="ml-1 font-medium text-indigo-600">
+                                                            ({demo.english_level})
+                                                        </span>
+                                                    )}
+                                                </span>
                                                 <span className="shrink-0 whitespace-nowrap text-[11px] text-slate-500">
                                                     {demo.phone_number}
                                                 </span>
