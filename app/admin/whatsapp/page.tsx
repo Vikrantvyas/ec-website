@@ -87,6 +87,7 @@ export default function WhatsAppBulkPage() {
   const [success, setSuccess] = useState("");
   const [showSelectedOnly, setShowSelectedOnly] = useState(false);
   const [pastedNumbers, setPastedNumbers] = useState("");
+  const [excludedNumbers, setExcludedNumbers] = useState("");
   const [importedMetaContacts, setImportedMetaContacts] = useState<Contact[]>([]);
   const loadContacts = useCallback(() => {
     setContacts(importedMetaContacts);
@@ -184,6 +185,13 @@ export default function WhatsAppBulkPage() {
       .filter((value) => value.length >= 10 && value.length <= 15);
     return Array.from(new Set(numbers));
   }, [pastedNumbers]);
+  const excludedRecipients = useMemo(() => {
+    const numbers = excludedNumbers
+      .split(/[\n,;]+/)
+      .map((value) => normalizePhone(value.trim()))
+      .filter(Boolean);
+    return new Set(numbers);
+  }, [excludedNumbers]);
   const selectedContacts = useMemo(
     () => contacts.filter((contact) => selectedIds.includes(contact.id)),
     [contacts, selectedIds]
@@ -242,7 +250,7 @@ export default function WhatsAppBulkPage() {
         ...selectedContacts.map((contact) => contact.phone),
         ...pastedRecipients,
       ]),
-    );
+    ).filter((phone) => !excludedRecipients.has(phone));
     const structuredRecipients = recipients.map((phone) => {
       const contact = selectedContacts.find((item) => item.phone === phone);
       return {
@@ -430,6 +438,24 @@ export default function WhatsAppBulkPage() {
             />
             <p className="mt-2 text-sm text-gray-600">
               Unique valid numbers: {pastedRecipients.length}
+            </p>
+          </div>
+          <div className="border-b bg-amber-50 p-4">
+            <h2 className="font-semibold text-gray-900">
+              Exclude Mobile Numbers
+            </h2>
+            <p className="mt-1 text-sm text-gray-600">
+              जिन नंबरों को message नहीं भेजना है, उन्हें यहाँ paste करें।
+            </p>
+            <textarea
+              value={excludedNumbers}
+              onChange={(event) => setExcludedNumbers(event.target.value)}
+              placeholder={"919876543210\n919123456789"}
+              rows={4}
+              className="mt-3 w-full rounded-lg border bg-white px-3 py-2 text-sm"
+            />
+            <p className="mt-2 text-sm font-medium text-amber-800">
+              Excluded numbers: {excludedRecipients.size}
             </p>
           </div>
           <div className="border-b p-4">
@@ -640,9 +666,16 @@ export default function WhatsAppBulkPage() {
               </div>
               <SummaryRow label="Source" value={contacts.length > 0 ? "Filtered Meta Report contacts" : "No source selected"} />
               <SummaryRow
-                label="Selected recipients"
-                value={selectedContacts.length.toLocaleString("en-IN")}
-              />
+  label="Selected recipients"
+  value={Array.from(
+    new Set([
+      ...selectedContacts.map((contact) => contact.phone),
+      ...pastedRecipients,
+    ]),
+  )
+    .filter((phone) => !excludedRecipients.has(phone))
+    .length.toLocaleString("en-IN")}
+/>
               <SummaryRow
                 label="Template"
                 value={selectedTemplate?.template_name || "Not selected"}
