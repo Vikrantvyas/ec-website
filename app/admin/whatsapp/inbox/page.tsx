@@ -1517,8 +1517,60 @@ export default function WhatsAppInboxPage() {
                                                 loggedMessage += "\n" + options
                                                     .map((option: { title: string }) => `• ${option.title}`)
                                                     .join("\n");
+                                                                                        } else if (firstNode.type === "url_button") {
+                                                const buttonText = String(
+                                                    firstNode.urlButtonText ?? ""
+                                                ).trim();
+
+                                                const buttonUrl = String(
+                                                    firstNode.urlButtonUrl ?? ""
+                                                ).trim();
+
+                                                if (!buttonText) {
+                                                    throw new Error(
+                                                        "URL Button ka naam khaali hai."
+                                                    );
+                                                }
+
+                                                if (buttonText.length > 20) {
+                                                    throw new Error(
+                                                        "URL Button ka naam maximum 20 characters ka hona chahiye."
+                                                    );
+                                                }
+
+                                                let parsedUrl: URL;
+
+                                                try {
+                                                    parsedUrl = new URL(buttonUrl);
+                                                } catch {
+                                                    throw new Error(
+                                                        "URL Button ka URL sahi nahi hai."
+                                                    );
+                                                }
+
+                                                if (
+                                                    parsedUrl.protocol !== "https:" ||
+                                                    !parsedUrl.hostname.includes(".")
+                                                ) {
+                                                    throw new Error(
+                                                        "URL Button ke liye valid HTTPS URL chahiye."
+                                                    );
+                                                }
+
+                                                loggedMessage =
+                                                    `${firstNode.question}\n\n${buttonText}: ${parsedUrl.href}`;
+
+                                                requestBody = {
+                                                    to: phone,
+                                                    type: "text",
+                                                    message: loggedMessage,
+                                                };
+
+                                                loggedMessageType = "text";
                                             } else {
-                                                throw new Error("Question type Text, Buttons ya List hona chahiye.");
+                                                throw new Error(
+                                                    "Question type Text, Buttons, List ya URL Button hona chahiye."
+                                                );
                                             }
 
                                             // Step 2: WhatsApp par pehla question bhejein
