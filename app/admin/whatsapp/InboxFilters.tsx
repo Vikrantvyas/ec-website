@@ -10,6 +10,8 @@ import {
     ArrowRight,
     LoaderCircle,
     Search,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 
 export type InboxDemoSchedule = {
@@ -25,6 +27,12 @@ export type InboxSmartSearch = {
     scope: "incoming" | "outgoing" | "both";
     fromDate: string;
     toDate: string;
+};
+
+export type InboxLabelFilters = {
+    communityJoined: "all" | "joined" | "not_joined";
+    demoAttended: "all" | "attended" | "not_attended";
+    classJoined: "all" | "joined" | "not_joined";
 };
 
 type Props = {
@@ -43,6 +51,8 @@ type Props = {
     onNextToBulk?: () => void;
     smartSearch?: InboxSmartSearch;
     onApplySmartSearch?: (search: InboxSmartSearch) => void;
+    labelFilters?: InboxLabelFilters;
+    onApplyLabelFilters?: (filters: InboxLabelFilters) => void;
 };
 
 function formatDemoTime(value: string) {
@@ -79,6 +89,12 @@ function normalizeStudentPhone(value: string) {
 
     return phone;
 }
+const EMPTY_LABEL_FILTERS: InboxLabelFilters = {
+    communityJoined: "all",
+    demoAttended: "all",
+    classJoined: "all",
+};
+
 const EMPTY_SMART_SEARCH: InboxSmartSearch = {
     text: "",
     scope: "incoming",
@@ -101,10 +117,11 @@ export default function InboxFilters({
     onNextToBulk,
     smartSearch = EMPTY_SMART_SEARCH,
     onApplySmartSearch = () => { },
+    labelFilters = EMPTY_LABEL_FILTERS,
+    onApplyLabelFilters = () => { },
 }: Props) {
-    const [demoSlotsEnabled, setDemoSlotsEnabled] = useState(
-        selectedSlotKeys.length > 0
-    );
+    const [activeTab, setActiveTab] = useState<"search" | "demos" | "labels">("search");
+    const [draftLabelFilters, setDraftLabelFilters] = useState<InboxLabelFilters>(labelFilters);
 
     const defaultSmartSearch: InboxSmartSearch = {
         text: "",
@@ -182,8 +199,9 @@ export default function InboxFilters({
 
     function openPopup() {
         setDraftSlotKeys([...selectedSlotKeys]);
-        setDemoSlotsEnabled(selectedSlotKeys.length > 0);
         setDraftSearch(smartSearch ?? defaultSmartSearch);
+        setDraftLabelFilters(labelFilters ?? EMPTY_LABEL_FILTERS);
+        setActiveTab("search");
         setShowDemoSlots(true);
     }
 
@@ -193,7 +211,6 @@ export default function InboxFilters({
 
     function clearFilters() {
         setDraftSlotKeys([]);
-        setDemoSlotsEnabled(false);
         onApplySlots([]);
 
         const emptySearch: InboxSmartSearch = {
@@ -205,6 +222,8 @@ export default function InboxFilters({
 
         setDraftSearch(emptySearch);
         onApplySmartSearch?.(emptySearch);
+        setDraftLabelFilters(EMPTY_LABEL_FILTERS);
+        onApplyLabelFilters?.(EMPTY_LABEL_FILTERS);
 
         if (openTextOnly) {
             onOpenTextChange(false);
@@ -212,8 +231,9 @@ export default function InboxFilters({
     }
 
     function applySearch() {
-        onApplySlots(demoSlotsEnabled ? draftSlotKeys : []);
+        onApplySlots(draftSlotKeys);
         onApplySmartSearch?.(draftSearch);
+        onApplyLabelFilters?.(draftLabelFilters);
         onNextToBulk?.();
     }
 
@@ -223,9 +243,12 @@ export default function InboxFilters({
         draftSearch.toDate.length > 0;
 
     const hasSelectedFilters =
-        (demoSlotsEnabled && draftSlotKeys.length > 0) ||
+        draftSlotKeys.length > 0 ||
         openTextOnly ||
-        hasSearchCriteria;
+        hasSearchCriteria ||
+        draftLabelFilters.communityJoined !== "all" ||
+        draftLabelFilters.demoAttended !== "all" ||
+        draftLabelFilters.classJoined !== "all";
 
     const activeFilterCount =
         selectedSlotKeys.length +
@@ -234,7 +257,10 @@ export default function InboxFilters({
             smartSearch.fromDate ||
             smartSearch.toDate
             ? 1
-            : 0);
+            : 0) +
+        (labelFilters.communityJoined !== "all" ? 1 : 0) +
+        (labelFilters.demoAttended !== "all" ? 1 : 0) +
+        (labelFilters.classJoined !== "all" ? 1 : 0);
 
     return (
         <>
@@ -294,18 +320,55 @@ export default function InboxFilters({
                             </button>
                         </div>
 
+                        <div className="border-b px-4 pt-3">
+                            <div className="grid grid-cols-3 gap-2" role="tablist" aria-label="Filter categories">
+                                {([
+                                    ["search", "Search"],
+                                    ["demos", "Demo Slots"],
+                                    ["labels", "Labels"],
+                                ] as const).map(([tab, label]) => (
+                                    <button
+                                        key={tab}
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={activeTab === tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        className={`rounded-t-lg border px-3 py-2 text-sm font-semibold transition ${
+                                            activeTab === tab
+                                                ? "border-[#008069] bg-green-50 text-[#008069]"
+                                                : "border-transparent text-gray-500 hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
-                            {/* Smart message search */}
-                            <section className="rounded-lg border border-gray-200 p-4">
-                                <div className="mb-3 flex items-center gap-2">
-                                    <Search
-                                        size={17}
-                                        className="text-[#008069]"
+                            {/* Open Text remains separate from tabs */}
+                            <section className="rounded-lg border border-gray-200 bg-green-50/50 p-3">
+                                <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-gray-800">
+                                    <input
+                                        type="checkbox"
+                                        checked={openTextOnly}
+                                        disabled={openTextLoading}
+                                        onChange={(event) => onOpenTextChange(event.target.checked)}
+                                        className="accent-[#008069]"
                                     />
-                                    <h4 className="text-sm font-semibold text-gray-800">
-                                        Search Messages
-                                    </h4>
-                                </div>
+                                    Open Text
+                                    {openTextLoading && (
+                                        <LoaderCircle size={14} className="animate-spin text-gray-500" />
+                                    )}
+                                    <span className="ml-auto text-xs font-normal text-gray-500">
+                                        {openTextOnly ? "Enabled" : "Show contacts with open text window"}
+                                    </span>
+                                </label>
+                            </section>
+
+                            {activeTab === "search" && (
+                            <section className="rounded-lg border border-gray-200 p-4">
+                                
 
                                 <input
                                     type="text"
@@ -395,163 +458,185 @@ export default function InboxFilters({
                                 </div>
                             </section>
 
-                            {/* Existing Open Text and Demo Slots filters */}
-                            <section className="rounded-lg border border-gray-200 p-4">
-                                <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-gray-200 pb-4">
-                                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-800">
-                                        <input
-                                            type="checkbox"
-                                            checked={openTextOnly}
-                                            disabled={openTextLoading}
-                                            onChange={(event) =>
-                                                onOpenTextChange(
-                                                    event.target.checked
-                                                )
-                                            }
-                                            className="accent-[#008069]"
-                                        />
-                                        Open Text
+                            )}
 
-                                        {openTextLoading && (
-                                            <LoaderCircle
-                                                size={14}
-                                                className="animate-spin text-gray-500"
-                                            />
-                                        )}
-                                    </label>
+                            {activeTab === "demos" && (
+                                <section className="rounded-lg border border-gray-200 p-4">
+                                    
 
-                                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-800">
-                                        <input
-                                            type="checkbox"
-                                            checked={demoSlotsEnabled}
-                                            onChange={(event) => {
-                                                const checked =
-                                                    event.target.checked;
-
-                                                setDemoSlotsEnabled(checked);
-                                                setDraftSlotKeys([]);
-
-                                                if (checked) {
-                                                    setDemoSlotDate(
-                                                        getLocalDateString(
-                                                            new Date()
-                                                        )
-                                                    );
-                                                }
-                                            }}
-                                            className="accent-[#008069]"
-                                        />
-                                        <CalendarDays size={16} />
-                                        Demo Slots
-                                    </label>
-                                </div>
-
-                                {demoSlotsEnabled && (
-                                    <div className="pt-4">
-                                        <div className="flex flex-wrap items-center justify-between gap-3">
-                                            <label className="block text-xs font-medium text-gray-600">
-                                                Select Date
+                                    <div className="flex flex-wrap items-end justify-between gap-3">
+                                        <div>
+                                            
+                                            <div className="mt-1 flex items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    aria-label="Previous date"
+                                                    title="Previous date"
+                                                    onClick={() => {
+                                                        const date = new Date(`${demoSlotDate}T12:00:00`);
+                                                        date.setDate(date.getDate() - 1);
+                                                        const nextDate = getLocalDateString(date);
+                                                        setDemoSlotDate(nextDate);
+                                                        setDraftSlotKeys((current) =>
+                                                            current.filter((key) => key.startsWith(`${nextDate}|`))
+                                                        );
+                                                    }}
+                                                    className="rounded-lg border border-gray-300 p-2 text-gray-700 hover:bg-gray-100"
+                                                >
+                                                    <ChevronLeft size={16} />
+                                                </button>
                                                 <input
                                                     type="date"
                                                     value={demoSlotDate}
                                                     onChange={(event) => {
-                                                        const nextDate =
-                                                            event.target.value;
+                                                        const nextDate = event.target.value;
                                                         setDemoSlotDate(nextDate);
                                                         setDraftSlotKeys((current) =>
-                                                            current.filter((key) =>
-                                                                key.startsWith(
-                                                                    `${nextDate}|`
-                                                                )
-                                                            )
+                                                            current.filter((key) => key.startsWith(`${nextDate}|`))
                                                         );
                                                     }}
-                                                    className="mt-1 block w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                                                    className="block w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm"
                                                 />
-                                            </label>
-
-                                            <div className="rounded-lg bg-green-50 px-3 py-2 text-sm font-semibold text-green-800">
-                                                Total Students: {dateStudentCount}
+                                                <button
+                                                    type="button"
+                                                    aria-label="Next date"
+                                                    title="Next date"
+                                                    onClick={() => {
+                                                        const date = new Date(`${demoSlotDate}T12:00:00`);
+                                                        date.setDate(date.getDate() + 1);
+                                                        const nextDate = getLocalDateString(date);
+                                                        setDemoSlotDate(nextDate);
+                                                        setDraftSlotKeys((current) =>
+                                                            current.filter((key) => key.startsWith(`${nextDate}|`))
+                                                        );
+                                                    }}
+                                                    className="rounded-lg border border-gray-300 p-2 text-gray-700 hover:bg-gray-100"
+                                                >
+                                                    <ChevronRight size={16} />
+                                                </button>
                                             </div>
                                         </div>
-
-                                        <div className="mt-4 flex items-center justify-between gap-2 border-b border-gray-200 pb-2">
-                                            <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-gray-700">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={allDateSlotsSelected}
-                                                    onChange={(event) =>
-                                                        toggleAllDateSlots(
-                                                            event.target.checked
-                                                        )
-                                                    }
-                                                    disabled={!uniqueSlots.length}
-                                                    className="accent-[#008069]"
-                                                />
-                                                Select All Slots
-                                            </label>
-
-                                            <span className="text-xs text-gray-500">
-                                                {uniqueSlots.length} time slots
-                                            </span>
-                                        </div>
-
-                                        <div className="mt-2 max-h-56 space-y-1 overflow-y-auto rounded-md bg-gray-50 p-2">
-                                            {uniqueSlots.map(([key, schedule]) => (
-                                                <label
-                                                    key={key}
-                                                    className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-gray-100"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={draftSlotKeys.includes(
-                                                            key
-                                                        )}
-                                                        onChange={(event) => {
-                                                            const checked =
-                                                                event.target.checked;
-
-                                                            setDraftSlotKeys(
-                                                                (current) =>
-                                                                    checked
-                                                                        ? current.includes(
-                                                                            key
-                                                                        )
-                                                                            ? current
-                                                                            : [
-                                                                                ...current,
-                                                                                key,
-                                                                            ]
-                                                                        : current.filter(
-                                                                            (item) =>
-                                                                                item !== key
-                                                                        )
-                                                            );
-                                                        }}
-                                                        className="accent-[#008069]"
-                                                    />
-
-                                                    <span>
-                                                        {formatDemoTime(
-                                                            schedule.start_time
-                                                        )}
-                                                    </span>
-
-                                                    <span className="ml-auto rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                                                        {getSlotStudentCount(key)} students
-                                                    </span>
-                                                </label>
-                                            ))}
-
-                                            {uniqueSlots.length === 0 && (
-                                                <p className="p-3 text-xs text-gray-500">
-                                                    Is date par koi scheduled demo slot nahi hai.
-                                                </p>
-                                            )}
+                                        <div className="rounded-lg bg-green-50 px-3 py-2 text-sm font-semibold text-green-800">
+                                            Total Students: {dateStudentCount}
                                         </div>
                                     </div>
-                                )}
-                            </section>
+
+                                    <div className="mt-4 flex items-center justify-between gap-2 border-b border-gray-200 pb-2">
+                                        <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-gray-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={allDateSlotsSelected}
+                                                onChange={(event) => toggleAllDateSlots(event.target.checked)}
+                                                disabled={!uniqueSlots.length}
+                                                className="accent-[#008069]"
+                                            />
+                                            Select All Slots
+                                        </label>
+                                        <span className="text-xs text-gray-500">{uniqueSlots.length} time slots</span>
+                                    </div>
+
+                                    <div className="mt-2 max-h-56 space-y-1 overflow-y-auto rounded-md bg-gray-50 p-2">
+                                        {uniqueSlots.map(([key, schedule]) => (
+                                            <label
+                                                key={key}
+                                                className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-gray-100"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={draftSlotKeys.includes(key)}
+                                                    onChange={(event) => {
+                                                        const checked = event.target.checked;
+                                                        setDraftSlotKeys((current) =>
+                                                            checked
+                                                                ? current.includes(key) ? current : [...current, key]
+                                                                : current.filter((item) => item !== key)
+                                                        );
+                                                    }}
+                                                    className="accent-[#008069]"
+                                                />
+                                                <span>{formatDemoTime(schedule.start_time)}</span>
+                                                <span className="ml-auto rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                                                    {getSlotStudentCount(key)} students
+                                                </span>
+                                            </label>
+                                        ))}
+                                        {uniqueSlots.length === 0 && (
+                                            <p className="p-3 text-xs text-gray-500">
+                                                Is date par koi scheduled demo slot nahi hai.
+                                            </p>
+                                        )}
+                                    </div>
+                                </section>
+                            )}
+
+                            {activeTab === "labels" && (
+                                <section className="space-y-4 rounded-lg border border-gray-200 p-4">
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-gray-800">Community</h4>
+                                        <div className="mt-2 flex flex-wrap gap-4">
+                                            {([
+                                                ["all", "All"],
+                                                ["joined", "Joined"],
+                                                ["not_joined", "Not Joined"],
+                                            ] as const).map(([value, label]) => (
+                                                <label key={value} className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                                                    <input
+                                                        type="radio"
+                                                        name="community-label-filter"
+                                                        checked={draftLabelFilters.communityJoined === value}
+                                                        onChange={() => setDraftLabelFilters((current) => ({ ...current, communityJoined: value }))}
+                                                        className="accent-[#008069]"
+                                                    />
+                                                    {label}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="border-t pt-3">
+                                        <h4 className="text-sm font-semibold text-gray-800">Demo</h4>
+                                        <div className="mt-2 flex flex-wrap gap-4">
+                                            {([
+                                                ["all", "All"],
+                                                ["attended", "Attended"],
+                                                ["not_attended", "Not Attended"],
+                                            ] as const).map(([value, label]) => (
+                                                <label key={value} className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                                                    <input
+                                                        type="radio"
+                                                        name="demo-label-filter"
+                                                        checked={draftLabelFilters.demoAttended === value}
+                                                        onChange={() => setDraftLabelFilters((current) => ({ ...current, demoAttended: value }))}
+                                                        className="accent-[#008069]"
+                                                    />
+                                                    {label}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="border-t pt-3">
+                                        <h4 className="text-sm font-semibold text-gray-800">Class</h4>
+                                        <div className="mt-2 flex flex-wrap gap-4">
+                                            {([
+                                                ["all", "All"],
+                                                ["joined", "Joined"],
+                                                ["not_joined", "Not Joined"],
+                                            ] as const).map(([value, label]) => (
+                                                <label key={value} className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                                                    <input
+                                                        type="radio"
+                                                        name="class-label-filter"
+                                                        checked={draftLabelFilters.classJoined === value}
+                                                        onChange={() => setDraftLabelFilters((current) => ({ ...current, classJoined: value }))}
+                                                        className="accent-[#008069]"
+                                                    />
+                                                    {label}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                  
+                                </section>
+                            )}
                         </div>
 
                         <div className="flex items-center justify-between gap-2 border-t bg-gray-50 px-4 py-3">
