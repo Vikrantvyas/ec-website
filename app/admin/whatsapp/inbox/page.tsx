@@ -1323,7 +1323,9 @@ export default function WhatsAppInboxPage() {
                     {selectedPhone ? (
                         <>
                             {/* Chat contact header */}
-                            <header className="flex shrink-0 items-center gap-2 border-b border-gray-200 bg-white px-3 py-1.5 sm:px-4">
+                            
+<header className="relative z-20 flex shrink-0 items-center gap-2 border-b border-gray-200 bg-white px-3 py-1.5 shadow-md sm:px-4">
+
                                 <button
                                     type="button"
                                     onClick={() => setMobileChatOpen(false)}

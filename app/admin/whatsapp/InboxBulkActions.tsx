@@ -1196,7 +1196,7 @@ export default function InboxBulkActions({
 
             <div className="min-h-0 flex-1 overflow-y-auto">
 
-                <div className="sticky top-0 z-20 flex items-center justify-between gap-2 bg-white px-3 py-1.5 text-xs text-gray-500 shadow-md">
+                <div className="sticky top-0 z-20 -translate-y-3 mb-2 flex items-center justify-between gap-2 bg-white px-3 py-1.5 text-xs text-gray-500 shadow-md">
                     <span>
                         Chats ({filteredConversations.length})
                     </span>
