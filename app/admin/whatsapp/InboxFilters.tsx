@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type SetStateAction } from "react";
 import {
     CalendarDays,
     SlidersHorizontal,
@@ -24,7 +24,7 @@ type Props = {
     setShowDemoSlots: (value: boolean) => void;
     selectedSlotKeys: string[];
     draftSlotKeys: string[];
-    setDraftSlotKeys: (value: string[]) => void;
+    setDraftSlotKeys: (value: SetStateAction<string[]>) => void;
     demoSlotDate: string;
     setDemoSlotDate: (value: string) => void;
     onApplySlots: (slotKeys: string[]) => void;
