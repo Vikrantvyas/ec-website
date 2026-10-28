@@ -299,7 +299,7 @@ export default function InboxRightClick({
             setNotice(
                 `${label}: ${nextValue ? "Joined/Attended" : "Not Joined/Attended"} save ho gaya.`
             );
-
+setPosition(null);
             await onUpdated?.();
         } catch (err) {
             setError(
@@ -365,302 +365,302 @@ export default function InboxRightClick({
                     start_time: demoTime,
                     status: "scheduled",
                 });
-          
 
-        if (insertError) throw insertError;
-        setDemoModalOpen(false);
-        setPosition(null);
-        setNotice("Demo schedule save ho gaya.");
-        await onUpdated?.();
-        window.alert(`${name || phone} ka demo ${demoDate} ko ${demoTime} par schedule ho gaya.`);
-    } catch (err) {
-        setError(err instanceof Error ? err.message : "Demo schedule save nahi hua.");
-    } finally {
-        setDemoSaving(false);
-    }
-}
-
-async function updateOptOut(optOut: boolean) {
-    if (saving) return;
-
-    if (
-        !optOut &&
-        !window.confirm(
-            "Kya aapne is contact ki written consent verify kar li hai? Confirm karne par WhatsApp opt-out hataya jayega."
-        )
-    ) {
-        return;
-    }
-
-    if (
-        optOut &&
-        !window.confirm(
-            `${name || phone} ko WhatsApp opt-out mark karein? Is contact ko marketing messages nahi bhejne chahiye.`
-        )
-    ) {
-        return;
-    }
-
-    setSaving(true);
-    setError("");
-    setNotice("");
-
-    const now = new Date().toISOString();
-    const variants = phoneVariants(phone);
-
-    try {
-        // Campaign checker Meta Lead ka flag bhi check karta hai.
-        const { error: leadError } = await supabase
-            .from("meta_leads")
-            .update({ whatsapp_opted_out: optOut })
-            .in("whatsapp_number", variants);
-
-        if (leadError) throw leadError;
-
-        const consentStatus = optOut ? "opted_out" : "opted_in";
-
-        const contactUpdate = {
-            consent_status: consentStatus,
-            consent_source: optOut
-                ? "manual_admin"
-                : "manual_written_consent",
-            consent_at: now,
-            updated_at: now,
-        };
-
-        if (contact?.id) {
-            const { error: contactError } = await supabase
-                .from("whatsapp_contacts")
-                .update(contactUpdate)
-                .eq("id", contact.id);
-
-            if (contactError) throw contactError;
-        } else {
-            const { data: newContact, error: insertError } = await supabase
-                .from("whatsapp_contacts")
-                .insert({
-                    ...contactUpdate,
-                    phone_number: phone,
-                    name: name || phone,
-                })
-                .select("id,consent_status")
-                .single();
 
             if (insertError) throw insertError;
+            setDemoModalOpen(false);
+            setPosition(null);
+            setNotice("Demo schedule save ho gaya.");
+            await onUpdated?.();
+            window.alert(`${name || phone} ka demo ${demoDate} ko ${demoTime} par schedule ho gaya.`);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Demo schedule save nahi hua.");
+        } finally {
+            setDemoSaving(false);
+        }
+    }
 
-            setContact(newContact as ContactStatus);
+    async function updateOptOut(optOut: boolean) {
+        if (saving) return;
+
+        if (
+            !optOut &&
+            !window.confirm(
+                "Kya aapne is contact ki written consent verify kar li hai? Confirm karne par WhatsApp opt-out hataya jayega."
+            )
+        ) {
+            return;
         }
 
-        setContact((current) =>
-            current ? { ...current, consent_status: consentStatus } : current
-        );
+        if (
+            optOut &&
+            !window.confirm(
+                `${name || phone} ko WhatsApp opt-out mark karein? Is contact ko marketing messages nahi bhejne chahiye.`
+            )
+        ) {
+            return;
+        }
 
-        setNotice(
-            optOut
-                ? "Opt-out save ho gaya."
-                : "Opt-in save ho gaya. Written consent verify karke hi opt-in karein."
-        );
+        setSaving(true);
+        setError("");
+        setNotice("");
 
-        await onUpdated?.();
-    } catch (err) {
-        setError(
-            err instanceof Error
-                ? err.message
-                : "Opt-out status update nahi hua."
-        );
-    } finally {
-        setSaving(false);
+        const now = new Date().toISOString();
+        const variants = phoneVariants(phone);
+
+        try {
+            // Campaign checker Meta Lead ka flag bhi check karta hai.
+            const { error: leadError } = await supabase
+                .from("meta_leads")
+                .update({ whatsapp_opted_out: optOut })
+                .in("whatsapp_number", variants);
+
+            if (leadError) throw leadError;
+
+            const consentStatus = optOut ? "opted_out" : "opted_in";
+
+            const contactUpdate = {
+                consent_status: consentStatus,
+                consent_source: optOut
+                    ? "manual_admin"
+                    : "manual_written_consent",
+                consent_at: now,
+                updated_at: now,
+            };
+
+            if (contact?.id) {
+                const { error: contactError } = await supabase
+                    .from("whatsapp_contacts")
+                    .update(contactUpdate)
+                    .eq("id", contact.id);
+
+                if (contactError) throw contactError;
+            } else {
+                const { data: newContact, error: insertError } = await supabase
+                    .from("whatsapp_contacts")
+                    .insert({
+                        ...contactUpdate,
+                        phone_number: phone,
+                        name: name || phone,
+                    })
+                    .select("id,consent_status")
+                    .single();
+
+                if (insertError) throw insertError;
+
+                setContact(newContact as ContactStatus);
+            }
+
+            setContact((current) =>
+                current ? { ...current, consent_status: consentStatus } : current
+            );
+
+            setNotice(
+                optOut
+                    ? "Opt-out save ho gaya."
+                    : "Opt-in save ho gaya. Written consent verify karke hi opt-in karein."
+            );
+
+            await onUpdated?.();
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Opt-out status update nahi hua."
+            );
+        } finally {
+            setSaving(false);
+        }
     }
-}
 
-const menuButton =
-    "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50";
+    const menuButton =
+        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50";
 
-return (
-    <>
-        <div className="contents" onContextMenu={openMenu}>
-            {children}
-        </div>
+    return (
+        <>
+            <div className="contents" onContextMenu={openMenu}>
+                {children}
+            </div>
 
-        {position && (
-            <div
-                data-inbox-rightclick-menu
-                role="menu"
-                className="fixed z-[9999] w-56 max-h-[80vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-2 shadow-xl"
-                style={{ left: position.x, top: position.y }}
-            >
-                <div className="border-b border-gray-100 px-3 py-2">
-                    <p className="truncate text-sm font-semibold text-gray-900">
-                        {name || phone}
-                    </p>
-                    <p className="truncate text-xs text-gray-500">{phone}</p>
-                </div>
-
-                {loading ? (
-                    <div className="flex items-center gap-2 px-3 py-4 text-sm text-gray-500">
-                        <LoaderCircle size={16} className="animate-spin" />
-                        Status load ho raha hai...
-                    </div>
-                ) : (
-                    <div className="space-y-1 py-1">
-                        <button
-                            type="button"
-                            role="menuitem"
-                            disabled={saving}
-                            onClick={() => void updateOptOut(!isOptedOut)}
-                            className={menuButton}
-                        >
-                            <ShieldCheck size={16} />
-                            {isOptedOut ? "Opt-in (Consent verified)" : "Opt-out"}
-                        </button>
-
-                        <div className="my-1 border-t border-gray-100" />
-
-                        <button
-                            type="button"
-                            role="menuitem"
-                            disabled={saving}
-                            onClick={hideChatTemporarily}
-                            className={`${menuButton} text-red-700 hover:bg-red-50`}
-                        >
-                            <Trash2 size={16} />
-                            Delete Chat (Hide only)
-                        </button>
-
-                        <div className="my-1 border-t border-gray-100" />
-
-                        <button
-                            type="button"
-                            role="menuitem"
-                            disabled={saving || !lead}
-                            onClick={() => {
-                                setError("");
-                                setNotice("");
-                                setDemoDate(localDateString());
-                                setDemoTime("08:00");
-                                setPosition(null);
-                                setDemoModalOpen(true);
-                            }}
-                            className={`${menuButton} text-indigo-700 hover:bg-indigo-50`}
-                            title={!lead ? "Meta Lead nahi mili" : "Demo date aur time set karein"}
-                        >
-                            <CalendarDays size={16} />
-                            Demo Schedule
-                        </button>
-
-                        <div className="my-1 border-t border-gray-100" />
-
-                        <button
-                            type="button"
-                            role="menuitem"
-                            disabled={saving || !lead}
-                            onClick={() =>
-                                void updateLeadStatus("class_joined", "Class")
-                            }
-                            className={menuButton}
-                            title={!lead ? "Meta Lead nahi mili" : ""}
-                        >
-                            <GraduationCap size={16} />
-                            Class: {lead?.class_joined ? "Joined ✓" : "Not joined"}
-                        </button>
-
-                        <button
-                            type="button"
-                            role="menuitem"
-                            disabled={saving || !lead}
-                            onClick={() =>
-                                void updateLeadStatus("demo_attended", "Demo")
-                            }
-                            className={menuButton}
-                            title={!lead ? "Meta Lead nahi mili" : ""}
-                        >
-                            <CalendarCheck size={16} />
-                            Demo: {lead?.demo_attended ? "Attended ✓" : "Not attended"}
-                        </button>
-
-                        <button
-                            type="button"
-                            role="menuitem"
-                            disabled={saving || !lead}
-                            onClick={() =>
-                                void updateLeadStatus("community_joined", "Community")
-                            }
-                            className={menuButton}
-                            title={!lead ? "Meta Lead nahi mili" : ""}
-                        >
-                            <Users size={16} />
-                            Community: {lead?.community_joined ? "Joined ✓" : "Not joined"}
-                        </button>
-                    </div>
-                )}
-
-                {saving && (
-                    <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-500">
-                        <LoaderCircle size={14} className="animate-spin" />
-                        Saving...
-                    </div>
-                )}
-
-                {error && (
-                    <p role="alert" className="whitespace-pre-wrap px-3 py-2 text-xs text-red-700">
-                        {error}
-                    </p>
-                )}
-
-                {notice && (
-                    <p role="status" className="whitespace-pre-wrap px-3 py-2 text-xs text-green-700">
-                        {notice}
-                    </p>
-                )}
-
-                <button
-                    type="button"
-                    onClick={() => setPosition(null)}
-                    className="mt-1 w-full rounded-md border-t border-gray-100 px-3 py-2 text-left text-xs text-gray-500 hover:bg-gray-50"
+            {position && (
+                <div
+                    data-inbox-rightclick-menu
+                    role="menu"
+                    className="fixed z-[9999] w-56 max-h-[80vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-2 shadow-xl"
+                    style={{ left: position.x, top: position.y }}
                 >
-                    Close
-                </button>
-            </div>
-        )}
-
-        {demoModalOpen && (
-            <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4" onMouseDown={(event) => {
-                if (event.target === event.currentTarget && !demoSaving) setDemoModalOpen(false);
-            }}>
-                <div role="dialog" aria-modal="true" aria-labelledby="demo-schedule-title" className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
-                    <div className="mb-4 flex items-start justify-between gap-3">
-                        <div>
-                            <h2 id="demo-schedule-title" className="text-lg font-semibold text-gray-900">Demo Schedule</h2>
-                            <p className="mt-1 text-sm text-gray-500">{name || phone} · {phone}</p>
-                        </div>
-                        <button type="button" onClick={() => setDemoModalOpen(false)} disabled={demoSaving} className="rounded-lg px-2 py-1 text-gray-500 hover:bg-gray-100">✕</button>
+                    <div className="border-b border-gray-100 px-3 py-2">
+                        <p className="truncate text-sm font-semibold text-gray-900">
+                            {name || phone}
+                        </p>
+                        <p className="truncate text-xs text-gray-500">{phone}</p>
                     </div>
-                    <div className="space-y-4">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Demo Date
-                            <input type="date" value={demoDate} onChange={(event) => setDemoDate(event.target.value)} min={localDateString()} className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-                        </label>
-                        <label className="block text-sm font-medium text-gray-700">
-                            Demo Time
-                            <select value={demoTime} onChange={(event) => setDemoTime(event.target.value)} className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                                {Array.from({ length: 14 }, (_, index) => {
-                                    const hour = index + 8;
-                                    const value = `${String(hour).padStart(2, "0")}:00`;
-                                    const labelHour = hour % 12 || 12;
-                                    const period = hour < 12 ? "AM" : "PM";
-                                    return <option key={value} value={value}>{`${labelHour}:00 ${period} (${value})`}</option>;
-                                })}
-                            </select>
-                        </label>
-                        {error && <p role="alert" className="whitespace-pre-wrap rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-                        <div className="flex justify-end gap-2 pt-1">
-                            <button type="button" onClick={() => setDemoModalOpen(false)} disabled={demoSaving} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
-                            <button type="button" onClick={() => void saveDemoSchedule()} disabled={demoSaving || !lead} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{demoSaving ? "Saving..." : "Save Demo"}</button>
+
+                    {loading ? (
+                        <div className="flex items-center gap-2 px-3 py-4 text-sm text-gray-500">
+                            <LoaderCircle size={16} className="animate-spin" />
+                            Status load ho raha hai...
+                        </div>
+                    ) : (
+                        <div className="space-y-1 py-1">
+                            <button
+                                type="button"
+                                role="menuitem"
+                                disabled={saving}
+                                onClick={() => void updateOptOut(!isOptedOut)}
+                                className={menuButton}
+                            >
+                                <ShieldCheck size={16} />
+                                {isOptedOut ? "Opt-in (Consent verified)" : "Opt-out"}
+                            </button>
+
+                            <div className="my-1 border-t border-gray-100" />
+
+                            <button
+                                type="button"
+                                role="menuitem"
+                                disabled={saving}
+                                onClick={hideChatTemporarily}
+                                className={`${menuButton} text-red-700 hover:bg-red-50`}
+                            >
+                                <Trash2 size={16} />
+                                Delete Chat (Hide only)
+                            </button>
+
+                            <div className="my-1 border-t border-gray-100" />
+
+                            <button
+                                type="button"
+                                role="menuitem"
+                                disabled={saving || !lead}
+                                onClick={() => {
+                                    setError("");
+                                    setNotice("");
+                                    setDemoDate(localDateString());
+                                    setDemoTime("08:00");
+                                    setPosition(null);
+                                    setDemoModalOpen(true);
+                                }}
+                                className={`${menuButton} text-indigo-700 hover:bg-indigo-50`}
+                                title={!lead ? "Meta Lead nahi mili" : "Demo date aur time set karein"}
+                            >
+                                <CalendarDays size={16} />
+                                Demo Schedule
+                            </button>
+
+                            <div className="my-1 border-t border-gray-100" />
+
+                            <button
+                                type="button"
+                                role="menuitem"
+                                disabled={saving || !lead}
+                                onClick={() =>
+                                    void updateLeadStatus("class_joined", "Class")
+                                }
+                                className={menuButton}
+                                title={!lead ? "Meta Lead nahi mili" : ""}
+                            >
+                                <GraduationCap size={16} />
+                                Class: {lead?.class_joined ? "Joined ✓" : "Not joined"}
+                            </button>
+
+                            <button
+                                type="button"
+                                role="menuitem"
+                                disabled={saving || !lead}
+                                onClick={() =>
+                                    void updateLeadStatus("demo_attended", "Demo")
+                                }
+                                className={menuButton}
+                                title={!lead ? "Meta Lead nahi mili" : ""}
+                            >
+                                <CalendarCheck size={16} />
+                                Demo: {lead?.demo_attended ? "Attended ✓" : "Not attended"}
+                            </button>
+
+                            <button
+                                type="button"
+                                role="menuitem"
+                                disabled={saving || !lead}
+                                onClick={() =>
+                                    void updateLeadStatus("community_joined", "Community")
+                                }
+                                className={menuButton}
+                                title={!lead ? "Meta Lead nahi mili" : ""}
+                            >
+                                <Users size={16} />
+                                Community: {lead?.community_joined ? "Joined ✓" : "Not joined"}
+                            </button>
+                        </div>
+                    )}
+
+                    {saving && (
+                        <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-500">
+                            <LoaderCircle size={14} className="animate-spin" />
+                            Saving...
+                        </div>
+                    )}
+
+                    {error && (
+                        <p role="alert" className="whitespace-pre-wrap px-3 py-2 text-xs text-red-700">
+                            {error}
+                        </p>
+                    )}
+
+                    {notice && (
+                        <p role="status" className="whitespace-pre-wrap px-3 py-2 text-xs text-green-700">
+                            {notice}
+                        </p>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={() => setPosition(null)}
+                        className="mt-1 w-full rounded-md border-t border-gray-100 px-3 py-2 text-left text-xs text-gray-500 hover:bg-gray-50"
+                    >
+                        Close
+                    </button>
+                </div>
+            )}
+
+            {demoModalOpen && (
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4" onMouseDown={(event) => {
+                    if (event.target === event.currentTarget && !demoSaving) setDemoModalOpen(false);
+                }}>
+                    <div role="dialog" aria-modal="true" aria-labelledby="demo-schedule-title" className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+                        <div className="mb-4 flex items-start justify-between gap-3">
+                            <div>
+                                <h2 id="demo-schedule-title" className="text-lg font-semibold text-gray-900">Demo Schedule</h2>
+                                <p className="mt-1 text-sm text-gray-500">{name || phone} · {phone}</p>
+                            </div>
+                            <button type="button" onClick={() => setDemoModalOpen(false)} disabled={demoSaving} className="rounded-lg px-2 py-1 text-gray-500 hover:bg-gray-100">✕</button>
+                        </div>
+                        <div className="space-y-4">
+                            <label className="block text-sm font-medium text-gray-700">
+                                Demo Date
+                                <input type="date" value={demoDate} onChange={(event) => setDemoDate(event.target.value)} min={localDateString()} className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                            </label>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Demo Time
+                                <select value={demoTime} onChange={(event) => setDemoTime(event.target.value)} className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                                    {Array.from({ length: 14 }, (_, index) => {
+                                        const hour = index + 8;
+                                        const value = `${String(hour).padStart(2, "0")}:00`;
+                                        const labelHour = hour % 12 || 12;
+                                        const period = hour < 12 ? "AM" : "PM";
+                                        return <option key={value} value={value}>{`${labelHour}:00 ${period} (${value})`}</option>;
+                                    })}
+                                </select>
+                            </label>
+                            {error && <p role="alert" className="whitespace-pre-wrap rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+                            <div className="flex justify-end gap-2 pt-1">
+                                <button type="button" onClick={() => setDemoModalOpen(false)} disabled={demoSaving} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                                <button type="button" onClick={() => void saveDemoSchedule()} disabled={demoSaving || !lead} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{demoSaving ? "Saving..." : "Save Demo"}</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        )}
-    </>
-);
+            )}
+        </>
+    );
 }
