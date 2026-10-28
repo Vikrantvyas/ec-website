@@ -2,7 +2,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, CalendarDays, LoaderCircle, Search, Send } from "lucide-react";
+import { AlertCircle, LoaderCircle, Search, Send } from "lucide-react";
+import InboxFilters, {
+    type InboxDemoSchedule,
+} from "@/app/admin/whatsapp/InboxFilters";
 import { supabase } from "@/lib/supabaseClient";
 import InboxRightClick from "@/app/admin/whatsapp/InboxRightClick";
 type InboxConversation = {
@@ -43,13 +46,7 @@ type BotTemplate = {
     status: string;
     start_mode: string;
 };
-type DemoSchedule = {
-    id: string;
-    phone_number: string;
-    demo_date: string;
-    start_time: string;
-    status: string;
-};
+type DemoSchedule = InboxDemoSchedule;
 type Props = {
     conversations: InboxConversation[];
     formSubmittedPhones: string[];
@@ -152,14 +149,9 @@ export default function InboxBulkActions({
         let cancelled = false;
 
         async function loadDemoSchedules() {
-            const now = new Date();
-            const today =
-                `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-
             const { data, error } = await supabase
                 .from("demo_schedules")
                 .select("id, phone_number, demo_date, start_time, status")
-                .gte("demo_date", today)
                 .eq("status", "scheduled")
                 .order("demo_date", { ascending: true })
                 .order("start_time", { ascending: true });
@@ -206,12 +198,12 @@ export default function InboxBulkActions({
         const slotKey = `${demoDate}|${demoTime.slice(0, 5)}`;
 
         setSelectedSlotKeys([slotKey]);
+        setDraftSlotKeys([slotKey]);
         setShowDemoSlots(true);
     }, []);
     useEffect(() => {
         if (selectedSlotKeys.length === 0) {
             setSlotFilterPhones(null);
-            setSelectedPhones([]);
             return;
         }
 
@@ -244,9 +236,7 @@ export default function InboxBulkActions({
                 .map((conversation) => conversation.phone)
         );
 
-        if (selectedSlotKeys.length > 0) {
-            setShowBulkActions(true);
-        }
+
     }, [selectedSlotKeys, demoSchedules, conversations]);
     const [showBulkActions, setShowBulkActions] = useState(false);
     const [openTextOnly, setOpenTextOnly] = useState(false);
@@ -548,7 +538,7 @@ export default function InboxBulkActions({
             setSelectedPhones([]);
             setActionMode("text");
             setNotice("");
-            setShowBulkActions(true);
+
         } catch (err) {
             setError(
                 err instanceof Error
@@ -574,14 +564,7 @@ export default function InboxBulkActions({
             filteredConversations.map((item) => normalizePhone(item.phone))
         );
 
-        const allVisibleSelected =
-            filteredConversations.length > 0 &&
-            filteredConversations.every((conversation) =>
-                selectedPhones.some(
-                    (phone) =>
-                        normalizePhone(phone) === normalizePhone(conversation.phone)
-                )
-            );
+    
 
         setSelectedPhones((current) =>
             allVisibleSelected
@@ -988,50 +971,7 @@ export default function InboxBulkActions({
                     </p>
                 )}
 
-                {showDemoSlots && (
-                    <div className="max-h-52 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3">
-                        {[
-                            ...new Map(
-                                demoSchedules.map((schedule) => [
-                                    `${schedule.demo_date}|${schedule.start_time.slice(0, 5)}`,
-                                    schedule,
-                                ])
-                            ).values(),
-                        ].map((schedule) => {
-                            const key =
-                                `${schedule.demo_date}|${schedule.start_time.slice(0, 5)}`;
 
-                            return (
-                                <label
-                                    key={key}
-                                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-gray-50"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedSlotKeys.includes(key)}
-                                        onChange={(event) => {
-                                            setSelectedSlotKeys((current) =>
-                                                event.target.checked
-                                                    ? [...current, key]
-                                                    : current.filter((item) => item !== key)
-                                            );
-                                        }}
-                                    />
-
-                                    <span>
-                                        {schedule.demo_date} · {formatDemoTime(schedule.start_time)}
-                                    </span>
-                                </label>
-                            );
-                        })}
-
-                        {demoSchedules.length === 0 && (
-                            <p className="text-xs text-gray-500">
-                                Koi upcoming scheduled demo slot nahi mila.
-                            </p>
-                        )}
-                    </div>
-                )}
                 <div className="flex items-center gap-2">
                     <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-[#f0f2f5] px-3">
                         <Search size={16} className="shrink-0 text-gray-500" />
@@ -1080,7 +1020,7 @@ export default function InboxBulkActions({
 
                 {showBulkActions && (
                     <div
-                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-3 sm:p-5"
+                        className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 p-3 sm:p-5"
                         onMouseDown={(event) => {
                             if (event.target === event.currentTarget && !sending) {
                                 setShowBulkActions(false);
@@ -1105,7 +1045,14 @@ export default function InboxBulkActions({
                                         {selectedPhones.length} contacts selected
                                     </p>
                                 </div>
-
+                                <button
+                                    type="button"
+                                    onClick={() => setShowBulkActions(false)}
+                                    disabled={sending}
+                                    className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                >
+                                    ← Back to Filters
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => setShowBulkActions(false)}
@@ -1118,27 +1065,7 @@ export default function InboxBulkActions({
                             </div>
 
                             <div className="space-y-3 p-4">
-                                <div className="flex items-center justify-between gap-2">
-                                    <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-                                        <input
-                                            type="checkbox"
-                                            checked={allVisibleSelected}
-                                            onChange={toggleAllVisible}
-                                            disabled={!filteredConversations.length || sending}
-                                            className="accent-[#008069]"
-                                        />
-                                        Select all filtered ({filteredConversations.length})
-                                    </label>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => setSelectedPhones([])}
-                                        disabled={!selectedPhones.length || sending}
-                                        className="text-xs font-medium text-[#008069] disabled:text-gray-400"
-                                    >
-                                        Clear selection
-                                    </button>
-                                </div>
 
                                 <select
                                     value={actionMode}
@@ -1241,118 +1168,32 @@ export default function InboxBulkActions({
                     <span>
                         Chats ({filteredConversations.length})
                     </span>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setDraftSlotKeys([...selectedSlotKeys]);
-                            setShowDemoSlots(true);
+                    <InboxFilters
+                        demoSchedules={demoSchedules}
+                        showDemoSlots={showDemoSlots}
+                        setShowDemoSlots={setShowDemoSlots}
+                        selectedSlotKeys={selectedSlotKeys}
+                        draftSlotKeys={draftSlotKeys}
+                        setDraftSlotKeys={setDraftSlotKeys}
+                        demoSlotDate={demoSlotDate}
+                        setDemoSlotDate={setDemoSlotDate}
+
+                        onApplySlots={(slotKeys) => {
+                            setSelectedSlotKeys(slotKeys);
                         }}
-                        title="Filter chats by demo slot"
-                        className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-[#008069] hover:bg-green-50"
-                    >
-                        <CalendarDays size={16} />
-                    </button>
-                    <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-[#111b21]">
-                        <input
-                            type="checkbox"
-                            checked={openTextOnly}
-                            onChange={(event) => {
-                                const checked = event.target.checked;
+                        openTextOnly={openTextOnly}
+                        openTextLoading={openTextLoading}
+                        onOpenTextChange={(checked) => {
+                            if (checked) {
+                                void loadOpenTextContacts();
+                            } else {
+                                setOpenTextOnly(false);
+                                setSelectedPhones([]);
+                            }
+                        }}
+                        onNextToBulk={() => setShowBulkActions(true)}
 
-                                if (checked) {
-                                    void loadOpenTextContacts();
-                                } else {
-                                    setOpenTextOnly(false);
-                                    setSelectedPhones([]);
-                                }
-                            }}
-                            disabled={sending || openTextLoading}
-                            className="size-3.5 accent-[#008069]"
-                        />
-                        Open Text
-                    </label>
-{showDemoSlots && (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4">
-        <div className="w-full max-w-sm rounded-xl bg-white p-4 shadow-xl">
-            <h3 className="mb-3 text-base font-semibold text-gray-900">
-                Filter Demo Slots
-            </h3>
-
-            <label className="mb-3 block text-xs font-medium text-gray-600">
-                Select Date
-                <input
-                    type="date"
-                    value={demoSlotDate}
-                    onChange={(event) => {
-                        setDemoSlotDate(event.target.value);
-                        setDraftSlotKeys([]);
-                    }}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
-            </label>
-
-            <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3">
-                {[
-                    ...new Map(
-                        demoSchedules
-                            .filter((schedule) => schedule.demo_date === demoSlotDate)
-                            .map((schedule) => [
-                                `${schedule.demo_date}|${schedule.start_time.slice(0, 5)}`,
-                                schedule,
-                            ])
-                    ).entries(),
-                ].map(([key, schedule]) => (
-                    <label
-                        key={key}
-                        className="flex cursor-pointer items-center gap-2 text-sm"
-                    >
-                        <input
-                            type="checkbox"
-                            checked={draftSlotKeys.includes(key)}
-                            onChange={(event) => {
-                                setDraftSlotKeys((current) =>
-                                    event.target.checked
-                                        ? [...current, key]
-                                        : current.filter((item) => item !== key)
-                                );
-                            }}
-                        />
-                        {formatDemoTime(schedule.start_time)}
-                    </label>
-                ))}
-
-                {!demoSchedules.some(
-                    (schedule) => schedule.demo_date === demoSlotDate
-                ) && (
-                    <p className="text-xs text-gray-500">
-                        Is date par koi scheduled demo slot nahi hai.
-                    </p>
-                )}
-            </div>
-
-            <div className="mt-4 flex justify-end gap-2">
-                <button
-                    type="button"
-                    onClick={() => setShowDemoSlots(false)}
-                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm"
-                >
-                    Cancel
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => {
-                        setSelectedSlotKeys(draftSlotKeys);
-                        setShowDemoSlots(false);
-                    }}
-                    className="rounded-lg bg-[#008069] px-4 py-2 text-sm font-semibold text-white"
-                >
-                    OK
-                </button>
-            </div>
-        </div>
-    </div>
-)}
+                    />
 
                 </div>
 
@@ -1402,20 +1243,13 @@ export default function InboxBulkActions({
                                     onUpdated={async () => {
                                         await onRefreshInbox();
 
-                                        const now = new Date();
-                                        const today = [
-                                            now.getFullYear(),
-                                            String(now.getMonth() + 1).padStart(2, "0"),
-                                            String(now.getDate()).padStart(2, "0"),
-                                        ].join("-");
-
                                         const { data, error } = await supabase
                                             .from("demo_schedules")
                                             .select("id, phone_number, demo_date, start_time, status")
-                                            .gte("demo_date", today)
                                             .eq("status", "scheduled")
                                             .order("demo_date", { ascending: true })
                                             .order("start_time", { ascending: true });
+
 
                                         if (error) {
                                             console.error("Demo schedules refresh failed:", error.message);
@@ -1552,6 +1386,6 @@ export default function InboxBulkActions({
                     })
                 )}
             </div>
-        </div>
+        </div >
     );
 }
