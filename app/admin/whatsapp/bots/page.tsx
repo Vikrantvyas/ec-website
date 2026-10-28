@@ -35,8 +35,10 @@ type BotOption = {
 type BotNode = {
     id: string;
     question: string;
-    type: "buttons" | "list" | "text";
+    type: "buttons" | "list" | "text" | "url_button";
     options: BotOption[];
+    urlButtonText?: string;
+    urlButtonUrl?: string;
     delayMinutes?: number;
     followUpEnabled?: boolean;
     followUpMinutes?: number;
@@ -479,7 +481,7 @@ export default function WhatsAppBotsPage() {
             }
 
             if (
-                node.type !== "text" &&
+                (node.type === "buttons" || node.type === "list") &&
                 (node.options.length === 0 ||
                     node.options.some((option) => !option.title.trim()))
             ) {
@@ -496,19 +498,50 @@ export default function WhatsAppBotsPage() {
                 );
                 return;
             }
-            const maxTitleLength = node.type === "list" ? 24 : 20;
+            if (node.type === "buttons" || node.type === "list") {
+                const maxTitleLength = node.type === "list" ? 24 : 20;
 
-            const invalidTitle = node.options.some(
-                (option) =>
-                    !option.title.trim() ||
-                    option.title.length > maxTitleLength
-            );
-
-            if (invalidTitle) {
-                setError(
-                    `हर Option का नाम जरूरी है और ${maxTitleLength} characters से अधिक नहीं होना चाहिए।`
+                const invalidTitle = node.options.some(
+                    (option) =>
+                        !option.title.trim() ||
+                        option.title.length > maxTitleLength
                 );
-                return;
+
+                if (invalidTitle) {
+                    setError(
+                        `हर Option का नाम जरूरी है और ${maxTitleLength} characters से अधिक नहीं होना चाहिए।`
+                    );
+                    return;
+                }
+            }
+
+            if (node.type === "url_button") {
+                const buttonText = node.urlButtonText?.trim() ?? "";
+                const buttonUrl = node.urlButtonUrl?.trim() ?? "";
+
+                if (!buttonText) {
+                    setError("URL Button का नाम भरें।");
+                    return;
+                }
+
+                if (buttonText.length > 20) {
+                    setError("URL Button का नाम अधिकतम 20 characters का रखें।");
+                    return;
+                }
+
+                try {
+                    const parsedUrl = new URL(buttonUrl);
+
+                    if (
+                        parsedUrl.protocol !== "https:" ||
+                        !parsedUrl.hostname.includes(".")
+                    ) {
+                        throw new Error("Invalid HTTPS URL");
+                    }
+                } catch {
+                    setError("कृपया सही HTTPS URL भरें, जैसे https://ecindore.com/");
+                    return;
+                }
             }
             const invalidNext = node.options.some(
                 (option) =>
@@ -1294,6 +1327,7 @@ export default function WhatsAppBotsPage() {
                                                                 <option value="text">Normal Text</option>
                                                                 <option value="buttons">Reply Buttons (max 3)</option>
                                                                 <option value="list">List Message (max 10)</option>
+                                                                
                                                             </select>
                                                         </label>
 
@@ -1308,31 +1342,31 @@ export default function WhatsAppBotsPage() {
                                                                         key={option.id}
                                                                         className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_1.5fr_auto]"
                                                                     >
-                                                                        
-<div className="space-y-1">
-    <input
-        className={field}
-        value={option.title}
-        placeholder={
-            node.followUpType === "list"
-                ? "List title (max 24 characters)"
-                : "Button title (max 20 characters)"
-        }
-        maxLength={node.followUpType === "list" ? 24 : 20}
-        onChange={(event) => {
-            const options = [...(node.followUpOptions ?? [])];
-            options[optionIndex] = {
-                ...options[optionIndex],
-                title: event.target.value,
-            };
-            updateNode(node.id, { followUpOptions: options });
-        }}
-    />
-    <p className="text-right text-xs text-slate-500">
-        {option.title.length}/{node.followUpType === "list" ? 24 : 20}
-        {" characters"}
-    </p>
-</div>
+
+                                                                        <div className="space-y-1">
+                                                                            <input
+                                                                                className={field}
+                                                                                value={option.title}
+                                                                                placeholder={
+                                                                                    node.followUpType === "list"
+                                                                                        ? "List title (max 24 characters)"
+                                                                                        : "Button title (max 20 characters)"
+                                                                                }
+                                                                                maxLength={node.followUpType === "list" ? 24 : 20}
+                                                                                onChange={(event) => {
+                                                                                    const options = [...(node.followUpOptions ?? [])];
+                                                                                    options[optionIndex] = {
+                                                                                        ...options[optionIndex],
+                                                                                        title: event.target.value,
+                                                                                    };
+                                                                                    updateNode(node.id, { followUpOptions: options });
+                                                                                }}
+                                                                            />
+                                                                            <p className="text-right text-xs text-slate-500">
+                                                                                {option.title.length}/{node.followUpType === "list" ? 24 : 20}
+                                                                                {" characters"}
+                                                                            </p>
+                                                                        </div>
 
 
                                                                         <input
@@ -1431,6 +1465,7 @@ export default function WhatsAppBotsPage() {
                                                     <option value="buttons">Reply Buttons (max 3)</option>
                                                     <option value="list">List Message</option>
                                                     <option value="text">Text Question</option>
+                                                    <option value="url_button">URL Button (website link)</option>
                                                 </select>
                                             </label>
                                             {index === 0 &&
@@ -1493,7 +1528,52 @@ export default function WhatsAppBotsPage() {
                                                         </div>
                                                     );
                                                 })()}
-                                            {node.type !== "text" && (
+                                            {node.type === "url_button" && (
+                                                <div className="mb-4 space-y-3 rounded-xl border border-blue-200 bg-blue-50/50 p-4">
+                                                    <p className="text-sm font-semibold text-slate-800">
+                                                        URL Button Settings
+                                                    </p>
+
+                                                    <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                        URL Button Text
+                                                        <input
+                                                            className={field}
+                                                            value={node.urlButtonText ?? ""}
+                                                            onChange={(event) =>
+                                                                updateNode(node.id, {
+                                                                    urlButtonText: event.target.value,
+                                                                })
+                                                            }
+                                                            maxLength={20}
+                                                            placeholder="Visit Website"
+                                                        />
+                                                        <span className="block text-xs text-slate-500">
+                                                            {(node.urlButtonText ?? "").length}/20 characters
+                                                        </span>
+                                                    </label>
+
+                                                    <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                        Button URL
+                                                        <input
+                                                            className={field}
+                                                            type="url"
+                                                            value={node.urlButtonUrl ?? ""}
+                                                            onChange={(event) =>
+                                                                updateNode(node.id, {
+                                                                    urlButtonUrl: event.target.value,
+                                                                })
+                                                            }
+                                                            placeholder="https://ecindore.com/"
+                                                        />
+                                                    </label>
+
+                                                    <p className="text-xs text-slate-500">
+                                                        यह Bot Builder का preview/configuration है। WhatsApp पर
+                                                        URL Button भेजने की functionality अलग चरण में जोड़ी जाएगी।
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {(node.type === "buttons" || node.type === "list") && (
                                                 <div className="space-y-3">
 
                                                     <div className="flex items-center justify-between">
@@ -1606,7 +1686,7 @@ export default function WhatsAppBotsPage() {
                                                         {node.question || "Question text यहाँ लिखें"}
                                                     </p>
 
-                                                    {node.type !== "text" && (
+                                                    {(node.type === "buttons" || node.type === "list") && (
                                                         <div className="mt-3 flex flex-wrap gap-2">
                                                             {node.options.map((option) => {
                                                                 const target = flow.nodes.find(
@@ -1630,6 +1710,24 @@ export default function WhatsAppBotsPage() {
                                                                     </div>
                                                                 );
                                                             })}
+                                                        </div>
+                                                    )}
+                                                                                                        {node.type === "url_button" && (
+                                                        <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
+                                                            <p className="mb-2 text-xs font-semibold text-slate-600">
+                                                                URL BUTTON PREVIEW
+                                                            </p>
+
+                                                            <div className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700">
+                                                                <span>
+                                                                    {node.urlButtonText || "Visit Website"}
+                                                                </span>
+                                                                <span aria-hidden="true">↗</span>
+                                                            </div>
+
+                                                            <p className="mt-2 break-all text-xs text-slate-600">
+                                                                {node.urlButtonUrl || "https://example.com/"}
+                                                            </p>
                                                         </div>
                                                     )}
                                                 </div>
