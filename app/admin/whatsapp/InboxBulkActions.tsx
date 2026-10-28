@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, LoaderCircle, Search, Send } from "lucide-react";
+import { AlertCircle, LoaderCircle, Send } from "lucide-react";
 import InboxFilters, {
     type InboxDemoSchedule,
     type InboxSmartSearch,
@@ -133,7 +133,7 @@ export default function InboxBulkActions({
     selectedPhone,
     onRefreshInbox,
 }: Props) {
-    const [search, setSearch] = useState("");
+
     const [smartSearch, setSmartSearch] = useState<InboxSmartSearch>({
         text: "",
         scope: "incoming",
@@ -448,8 +448,6 @@ export default function InboxBulkActions({
         latestInboundByPhone,
     ]);
     const filteredConversations = useMemo(() => {
-        const query = search.trim().toLowerCase();
-        const normalizedQuery = normalizePhone(query);
 
         const smartText = smartSearch.text.trim().toLowerCase();
         const hasSmartCriteria =
@@ -459,51 +457,6 @@ export default function InboxBulkActions({
 
         return windowOpenConversations.filter((conversation) => {
             const phoneKey = normalizePhone(conversation.phone);
-
-            // Existing search box: keep its current behavior for now.
-            if (query) {
-                const incomingText = inbound
-                    .filter(
-                        (message) =>
-                            normalizePhone(message.phone_number) === phoneKey
-                    )
-                    .map((message) =>
-                        getMessageText(message.message_text, message.message_type)
-                    )
-                    .join(" ");
-
-                const contact = contacts.find(
-                    (item) => normalizePhone(item.phone_number) === phoneKey
-                );
-
-                const contactId = contact?.id ?? conversation.contactId;
-
-                const outgoingText = logs
-                    .filter(
-                        (message) =>
-                            Boolean(contactId) &&
-                            message.direction === "outbound" &&
-                            message.contact_id === contactId
-                    )
-                    .map((message) => message.message_text ?? "")
-                    .join(" ");
-
-                const searchableText = [
-                    conversation.name,
-                    conversation.phone,
-                    conversation.lastText,
-                    incomingText,
-                    outgoingText,
-                ]
-                    .join(" ")
-                    .toLowerCase();
-
-                const matchesOldSearch =
-                    searchableText.includes(query) ||
-                    (!!normalizedQuery && phoneKey.includes(normalizedQuery));
-
-                if (!matchesOldSearch) return false;
-            }
 
             // No Smart Search criteria: preserve the existing filters.
             if (!hasSmartCriteria) return true;
@@ -587,26 +540,25 @@ export default function InboxBulkActions({
             return incomingMatches() || outgoingMatches();
         });
     }, [
-        search,
         smartSearch,
         windowOpenConversations,
         inbound,
         logs,
         contacts,
     ]);
-useEffect(() => {
-    const hasSmartCriteria =
-        smartSearch.text.trim().length > 0 ||
-        smartSearch.fromDate.length > 0 ||
-        smartSearch.toDate.length > 0;
+    useEffect(() => {
+        const hasSmartCriteria =
+            smartSearch.text.trim().length > 0 ||
+            smartSearch.fromDate.length > 0 ||
+            smartSearch.toDate.length > 0;
 
-    if (!hasSmartCriteria) return;
+        if (!hasSmartCriteria) return;
 
-    // Smart Search ke matching chats Bulk Actions ke liye select karein.
-    setSelectedPhones(
-        filteredConversations.map((conversation) => conversation.phone)
-    );
-}, [smartSearch, filteredConversations]);
+        // Smart Search ke matching chats Bulk Actions ke liye select karein.
+        setSelectedPhones(
+            filteredConversations.map((conversation) => conversation.phone)
+        );
+    }, [smartSearch, filteredConversations]);
     const selectedBot = botTemplates.find((bot) => bot.id === selectedBotId);
     async function loadOpenTextContacts() {
         if (openTextLoading) return;
@@ -1071,7 +1023,7 @@ useEffect(() => {
 
     return (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="shrink-0 space-y-3 border-b border-gray-200 bg-white p-3">
+            <div className="shrink-0 space-y-3 bg-white p-3">
                 {error && (
                     <div className="flex items-start gap-2 whitespace-pre-wrap rounded-lg bg-red-50 p-2 text-xs text-red-700">
                         <AlertCircle size={15} className="mt-0.5 shrink-0" />
@@ -1085,42 +1037,6 @@ useEffect(() => {
                         {notice}
                     </p>
                 )}
-
-
-                <div className="flex items-center gap-2">
-                    <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-[#f0f2f5] px-3">
-                        <Search size={16} className="shrink-0 text-gray-500" />
-
-                        <input
-                            value={search}
-                            onChange={(event) => setSearch(event.target.value)}
-                            placeholder="Search name, phone, Bot question or answer"
-                            className="h-9 min-w-0 w-full bg-transparent text-xs outline-none"
-                        />
-
-                        {search && (
-                            <button
-                                type="button"
-                                onClick={() => setSearch("")}
-                                className="shrink-0 text-gray-500"
-                            >
-                                ×
-                            </button>
-                        )}
-                    </label>
-
-                    <button
-                        type="button"
-                        onClick={() => setShowBulkActions(true)}
-                        className="flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                    >
-                        <Send size={14} />
-                        Go
-                        <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-xs font-semibold text-green-800">
-                            {selectedPhones.length}
-                        </span>
-                    </button>
-                </div>
 
                 {selectedPhones.length > 0 && (
                     <button
@@ -1279,232 +1195,256 @@ useEffect(() => {
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
-                <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-gray-500">
+
+                <div className="sticky top-0 z-20 flex items-center justify-between gap-2 bg-white px-3 py-1.5 text-xs text-gray-500 shadow-md">
                     <span>
                         Chats ({filteredConversations.length})
                     </span>
-                    <InboxFilters
-                        demoSchedules={demoSchedules}
-                        showDemoSlots={showDemoSlots}
-                        setShowDemoSlots={setShowDemoSlots}
-                        selectedSlotKeys={selectedSlotKeys}
-                        draftSlotKeys={draftSlotKeys}
-                        setDraftSlotKeys={setDraftSlotKeys}
-                        demoSlotDate={demoSlotDate}
-                        setDemoSlotDate={setDemoSlotDate}
 
-                        onApplySlots={(slotKeys) => {
-                            setSelectedSlotKeys(slotKeys);
-                        }}
-                        openTextOnly={openTextOnly}
-                        openTextLoading={openTextLoading}
-                        onOpenTextChange={(checked) => {
-                            if (checked) {
-                                void loadOpenTextContacts();
-                            } else {
+                    <div className="flex shrink-0 items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSmartSearch({
+                                    text: "",
+                                    scope: "incoming",
+                                    fromDate: "",
+                                    toDate: "",
+                                });
+                                setSelectedSlotKeys([]);
+                                setDraftSlotKeys([]);
+                                setShowDemoSlots(false);
                                 setOpenTextOnly(false);
+                                setSlotFilterPhones(null);
                                 setSelectedPhones([]);
-                            }
-                        }}
-                        onNextToBulk={() => setShowBulkActions(true)}
-                        smartSearch={smartSearch}
-                        onApplySmartSearch={(nextSearch) => {
-                            setSearch("");
-                            setSmartSearch(nextSearch);
-                        }}
-                    />
+                            }}
+                            className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-100"
+                        >
+                            All
+                        </button>
 
+                        <InboxFilters
+
+                            demoSchedules={demoSchedules}
+                            showDemoSlots={showDemoSlots}
+                            setShowDemoSlots={setShowDemoSlots}
+                            selectedSlotKeys={selectedSlotKeys}
+                            draftSlotKeys={draftSlotKeys}
+                            setDraftSlotKeys={setDraftSlotKeys}
+                            demoSlotDate={demoSlotDate}
+                            setDemoSlotDate={setDemoSlotDate}
+
+                            onApplySlots={(slotKeys) => {
+                                setSelectedSlotKeys(slotKeys);
+                            }}
+                            openTextOnly={openTextOnly}
+                            openTextLoading={openTextLoading}
+                            onOpenTextChange={(checked) => {
+                                if (checked) {
+                                    void loadOpenTextContacts();
+                                } else {
+                                    setOpenTextOnly(false);
+                                    setSelectedPhones([]);
+                                }
+                            }}
+                            onNextToBulk={() => setShowBulkActions(true)}
+                            smartSearch={smartSearch}
+                            onApplySmartSearch={(nextSearch) => {
+                                setSmartSearch(nextSearch);
+                            }}
+                                               />
+                    </div>
                 </div>
 
                 {filteredConversations.length === 0 ? (
-                    <p className="px-4 py-8 text-center text-sm text-gray-500">
-                        No conversations found
-                    </p>
-                ) : (
-                    filteredConversations.map((conversation) => {
-                        const phoneKey = normalizePhone(conversation.phone);
-                        const checked = selectedPhones.some(
-                            (phone) => normalizePhone(phone) === phoneKey
-                        );
-                        const botActive = activeBotPhones.some(
-                            (phone) => normalizePhone(phone) === phoneKey
-                        );
-                        const isActiveChat =
-                            normalizePhone(selectedPhone) === phoneKey;
-                        return (
-                            <div
-                                key={phoneKey}
-                                className={`flex items-center gap-2 border-b border-[#f0f2f5] border-l-4 pr-2 ${isActiveChat
-                                    ? "border-l-[#008069] bg-[#e7fce9]"
-                                    : checked
-                                        ? "border-l-transparent bg-[#f0f2f5]"
-                                        : "border-l-transparent bg-white"
-                                    }`}
-                            >
-                                <input
-                                    type="checkbox"
-                                    aria-label={`Select ${conversation.name}`}
-                                    checked={checked}
-                                    onChange={() => togglePhone(conversation.phone)}
-                                    disabled={sending}
-                                    className="ml-3 size-4 shrink-0 accent-[#008069]"
-                                />
-
-                                <InboxRightClick
-                                    phone={conversation.phone}
-                                    name={conversation.name}
-                                    contactId={
-                                        contacts.find(
-                                            (item) =>
-                                                normalizePhone(item.phone_number) === phoneKey
-                                        )?.id ?? conversation.contactId
-                                    }
-                                    onUpdated={async () => {
-                                        await onRefreshInbox();
-
-                                        const { data, error } = await supabase
-                                            .from("demo_schedules")
-                                            .select("id, phone_number, demo_date, start_time, status")
-                                            .eq("status", "scheduled")
-                                            .order("demo_date", { ascending: true })
-                                            .order("start_time", { ascending: true });
-
-
-                                        if (error) {
-                                            console.error("Demo schedules refresh failed:", error.message);
-                                            return;
-                                        }
-
-                                        setDemoSchedules((data ?? []) as DemoSchedule[]);
-                                    }}
+                        <p className="px-4 py-8 text-center text-sm text-gray-500">
+                            No conversations found
+                        </p>
+                    ) : (
+                        filteredConversations.map((conversation) => {
+                            const phoneKey = normalizePhone(conversation.phone);
+                            const checked = selectedPhones.some(
+                                (phone) => normalizePhone(phone) === phoneKey
+                            );
+                            const botActive = activeBotPhones.some(
+                                (phone) => normalizePhone(phone) === phoneKey
+                            );
+                            const isActiveChat =
+                                normalizePhone(selectedPhone) === phoneKey;
+                            return (
+                                <div
+                                    key={phoneKey}
+                                    className={`flex items-center gap-2 border-b border-[#f0f2f5] border-l-4 pr-2 ${isActiveChat
+                                        ? "border-l-[#008069] bg-[#e7fce9]"
+                                        : checked
+                                            ? "border-l-transparent bg-[#f0f2f5]"
+                                            : "border-l-transparent bg-white"
+                                        }`}
                                 >
-                                    <button
-                                        type="button"
-                                        onClick={() => onOpenConversation(conversation.phone)}
-                                        className="flex min-w-0 flex-1 items-center gap-2 text-left hover:bg-[#f5f6f6]"
-                                    >
-                                        <div className="min-w-0 flex-1 py-2">
-                                            <div className="flex min-w-0 items-center justify-between gap-2">
-                                                <div className="flex min-w-0 items-center gap-1.5">
-                                                    <span className="truncate text-[15px] font-medium leading-5 text-[#111b21]">
-                                                        {conversation.name}
-                                                    </span>
+                                    <input
+                                        type="checkbox"
+                                        aria-label={`Select ${conversation.name}`}
+                                        checked={checked}
+                                        onChange={() => togglePhone(conversation.phone)}
+                                        disabled={sending}
+                                        className="ml-3 size-4 shrink-0 accent-[#008069]"
+                                    />
 
-                                                    {formSubmittedPhoneSet.has(
-                                                        normalizeEnquiryPhone(conversation.phone)
-                                                    ) && (
+                                    <InboxRightClick
+                                        phone={conversation.phone}
+                                        name={conversation.name}
+                                        contactId={
+                                            contacts.find(
+                                                (item) =>
+                                                    normalizePhone(item.phone_number) === phoneKey
+                                            )?.id ?? conversation.contactId
+                                        }
+                                        onUpdated={async () => {
+                                            await onRefreshInbox();
+
+                                            const { data, error } = await supabase
+                                                .from("demo_schedules")
+                                                .select("id, phone_number, demo_date, start_time, status")
+                                                .eq("status", "scheduled")
+                                                .order("demo_date", { ascending: true })
+                                                .order("start_time", { ascending: true });
+
+
+                                            if (error) {
+                                                console.error("Demo schedules refresh failed:", error.message);
+                                                return;
+                                            }
+
+                                            setDemoSchedules((data ?? []) as DemoSchedule[]);
+                                        }}
+                                    >
+                                        <button
+                                            type="button"
+                                            onClick={() => onOpenConversation(conversation.phone)}
+                                            className="flex min-w-0 flex-1 items-center gap-2 text-left hover:bg-[#f5f6f6]"
+                                        >
+                                            <div className="min-w-0 flex-1 py-2">
+                                                <div className="flex min-w-0 items-center justify-between gap-2">
+                                                    <div className="flex min-w-0 items-center gap-1.5">
+                                                        <span className="truncate text-[15px] font-medium leading-5 text-[#111b21]">
+                                                            {conversation.name}
+                                                        </span>
+
+                                                        {formSubmittedPhoneSet.has(
+                                                            normalizeEnquiryPhone(conversation.phone)
+                                                        ) && (
+                                                                <span
+                                                                    className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-800"
+                                                                    title="Form submitted"
+                                                                >
+                                                                    Form Filled
+                                                                </span>
+                                                            )}
+
+                                                        {(() => {
+                                                            const schedule = demoScheduleByPhone.get(
+                                                                normalizeEnquiryPhone(conversation.phone)
+                                                            );
+
+                                                            if (!schedule) return null;
+
+                                                            const isToday =
+                                                                schedule.demo_date === getLocalDateString(new Date());
+
+                                                            return (
+                                                                <span
+                                                                    title={`Demo scheduled for ${schedule.demo_date} at ${formatDemoTime(schedule.start_time)}`}
+                                                                    className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${isToday
+                                                                        ? "animate-pulse border-fuchsia-300 bg-gradient-to-r from-fuchsia-100 via-amber-100 to-cyan-100 text-fuchsia-800 shadow-sm"
+                                                                        : "border-indigo-200 bg-indigo-50 text-indigo-700"
+                                                                        }`}
+                                                                >
+                                                                    <span className="mr-1">●</span>
+                                                                    {formatDemoTime(schedule.start_time)}
+                                                                </span>
+                                                            );
+                                                        })()}
+
+                                                        {botActive && (
+                                                            <span
+                                                                className="size-2 shrink-0 rounded-full bg-[#25d366]"
+                                                                title="Bot Active"
+                                                            />
+                                                        )}
+                                                    </div>
+
+                                                    <span className="shrink-0 text-[11px] leading-4 text-[#667781]">
+                                                        {(() => {
+                                                            if (!conversation.lastAt) return "";
+
+                                                            const date = new Date(conversation.lastAt);
+                                                            if (Number.isNaN(date.getTime())) return "";
+
+                                                            const today = new Date();
+                                                            const yesterday = new Date();
+                                                            yesterday.setDate(today.getDate() - 1);
+
+                                                            const isSameDay = (a: Date, b: Date) =>
+                                                                a.getFullYear() === b.getFullYear() &&
+                                                                a.getMonth() === b.getMonth() &&
+                                                                a.getDate() === b.getDate();
+
+                                                            if (isSameDay(date, today)) {
+                                                                return date.toLocaleTimeString("en-US", {
+                                                                    hour: "numeric",
+                                                                    minute: "2-digit",
+                                                                });
+                                                            }
+
+                                                            if (isSameDay(date, yesterday)) {
+                                                                return "Yesterday";
+                                                            }
+
+                                                            return date.toLocaleDateString("en-GB", {
+                                                                day: "2-digit",
+                                                                month: "2-digit",
+                                                                year: "numeric",
+                                                            });
+                                                        })()}
+                                                    </span>
+                                                </div>
+
+                                                <div className="mt-1 flex items-center gap-2">
+                                                    <div className="min-w-0 flex-1 truncate text-[13px] leading-[19px] text-[#667781]">
+                                                        {conversation.lastText || "No messages yet"}
+                                                    </div>
+
+                                                    {(() => {
+                                                        const status = getWindowStatus(conversation.phone);
+
+                                                        if (status === "unknown") return null;
+
+                                                        return status === "open" ? (
                                                             <span
                                                                 className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-800"
-                                                                title="Form submitted"
+                                                                title="Customer service window open"
                                                             >
-                                                                Form Filled
+                                                                Open
                                                             </span>
-                                                        )}
-
-                                                    {(() => {
-                                                        const schedule = demoScheduleByPhone.get(
-                                                            normalizeEnquiryPhone(conversation.phone)
-                                                        );
-
-                                                        if (!schedule) return null;
-
-                                                        const isToday =
-                                                            schedule.demo_date === getLocalDateString(new Date());
-
-                                                        return (
+                                                        ) : (
                                                             <span
-                                                                title={`Demo scheduled for ${schedule.demo_date} at ${formatDemoTime(schedule.start_time)}`}
-                                                                className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${isToday
-                                                                    ? "animate-pulse border-fuchsia-300 bg-gradient-to-r from-fuchsia-100 via-amber-100 to-cyan-100 text-fuchsia-800 shadow-sm"
-                                                                    : "border-indigo-200 bg-indigo-50 text-indigo-700"
-                                                                    }`}
+                                                                className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800"
+                                                                title="Customer service window closed"
                                                             >
-                                                                <span className="mr-1">●</span>
-                                                                {formatDemoTime(schedule.start_time)}
+                                                                Closed
                                                             </span>
                                                         );
                                                     })()}
-
-                                                    {botActive && (
-                                                        <span
-                                                            className="size-2 shrink-0 rounded-full bg-[#25d366]"
-                                                            title="Bot Active"
-                                                        />
-                                                    )}
                                                 </div>
-
-                                                <span className="shrink-0 text-[11px] leading-4 text-[#667781]">
-                                                    {(() => {
-                                                        if (!conversation.lastAt) return "";
-
-                                                        const date = new Date(conversation.lastAt);
-                                                        if (Number.isNaN(date.getTime())) return "";
-
-                                                        const today = new Date();
-                                                        const yesterday = new Date();
-                                                        yesterday.setDate(today.getDate() - 1);
-
-                                                        const isSameDay = (a: Date, b: Date) =>
-                                                            a.getFullYear() === b.getFullYear() &&
-                                                            a.getMonth() === b.getMonth() &&
-                                                            a.getDate() === b.getDate();
-
-                                                        if (isSameDay(date, today)) {
-                                                            return date.toLocaleTimeString("en-US", {
-                                                                hour: "numeric",
-                                                                minute: "2-digit",
-                                                            });
-                                                        }
-
-                                                        if (isSameDay(date, yesterday)) {
-                                                            return "Yesterday";
-                                                        }
-
-                                                        return date.toLocaleDateString("en-GB", {
-                                                            day: "2-digit",
-                                                            month: "2-digit",
-                                                            year: "numeric",
-                                                        });
-                                                    })()}
-                                                </span>
                                             </div>
+                                        </button>
+                                    </InboxRightClick>
+                                </div>
 
-                                            <div className="mt-1 flex items-center gap-2">
-                                                <div className="min-w-0 flex-1 truncate text-[13px] leading-[19px] text-[#667781]">
-                                                    {conversation.lastText || "No messages yet"}
-                                                </div>
-
-                                                {(() => {
-                                                    const status = getWindowStatus(conversation.phone);
-
-                                                    if (status === "unknown") return null;
-
-                                                    return status === "open" ? (
-                                                        <span
-                                                            className="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-800"
-                                                            title="Customer service window open"
-                                                        >
-                                                            Open
-                                                        </span>
-                                                    ) : (
-                                                        <span
-                                                            className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-800"
-                                                            title="Customer service window closed"
-                                                        >
-                                                            Closed
-                                                        </span>
-                                                    );
-                                                })()}
-                                            </div>
-                                        </div>
-                                    </button>
-                                </InboxRightClick>
-                            </div>
-
-                        );
-                    })
-                )}
-            </div>
-        </div >
-    );
+                            );
+                        })
+                    )}
+                </div>
+            </div >
+            );
 }
