@@ -1324,7 +1324,7 @@ export default function WhatsAppInboxPage() {
                         <>
                             {/* Chat contact header */}
                             
-<header className="relative z-20 flex shrink-0 items-center gap-2 border-b border-gray-200 bg-white px-3 py-1.5 shadow-md sm:px-4">
+<header className="relative z-0 flex shrink-0 items-center gap-2 border-b border-gray-200 bg-white px-3 py-1.5 shadow-md sm:px-4">
 
                                 <button
                                     type="button"
