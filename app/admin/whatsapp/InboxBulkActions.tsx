@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, LoaderCircle, Search, Send } from "lucide-react";
 import InboxFilters, {
     type InboxDemoSchedule,
+    type InboxSmartSearch,
 } from "@/app/admin/whatsapp/InboxFilters";
 import { supabase } from "@/lib/supabaseClient";
 import InboxRightClick from "@/app/admin/whatsapp/InboxRightClick";
@@ -133,6 +134,12 @@ export default function InboxBulkActions({
     onRefreshInbox,
 }: Props) {
     const [search, setSearch] = useState("");
+    const [smartSearch, setSmartSearch] = useState<InboxSmartSearch>({
+        text: "",
+        scope: "incoming",
+        fromDate: "",
+        toDate: "",
+    });
     const [selectedPhones, setSelectedPhones] = useState<string[]>([]);
     const [demoSchedules, setDemoSchedules] = useState<DemoSchedule[]>([]);
     const [slotFilterPhones, setSlotFilterPhones] = useState<string[] | null>(null);
@@ -444,54 +451,162 @@ export default function InboxBulkActions({
         const query = search.trim().toLowerCase();
         const normalizedQuery = normalizePhone(query);
 
-        if (!query) return windowOpenConversations;
+        const smartText = smartSearch.text.trim().toLowerCase();
+        const hasSmartCriteria =
+            smartText.length > 0 ||
+            smartSearch.fromDate.length > 0 ||
+            smartSearch.toDate.length > 0;
 
         return windowOpenConversations.filter((conversation) => {
             const phoneKey = normalizePhone(conversation.phone);
 
-            const incomingText = inbound
-                .filter(
-                    (message) =>
-                        normalizePhone(message.phone_number) === phoneKey
-                )
-                .map((message) =>
-                    getMessageText(message.message_text, message.message_type)
-                )
-                .join(" ");
+            // Existing search box: keep its current behavior for now.
+            if (query) {
+                const incomingText = inbound
+                    .filter(
+                        (message) =>
+                            normalizePhone(message.phone_number) === phoneKey
+                    )
+                    .map((message) =>
+                        getMessageText(message.message_text, message.message_type)
+                    )
+                    .join(" ");
+
+                const contact = contacts.find(
+                    (item) => normalizePhone(item.phone_number) === phoneKey
+                );
+
+                const contactId = contact?.id ?? conversation.contactId;
+
+                const outgoingText = logs
+                    .filter(
+                        (message) =>
+                            Boolean(contactId) &&
+                            message.direction === "outbound" &&
+                            message.contact_id === contactId
+                    )
+                    .map((message) => message.message_text ?? "")
+                    .join(" ");
+
+                const searchableText = [
+                    conversation.name,
+                    conversation.phone,
+                    conversation.lastText,
+                    incomingText,
+                    outgoingText,
+                ]
+                    .join(" ")
+                    .toLowerCase();
+
+                const matchesOldSearch =
+                    searchableText.includes(query) ||
+                    (!!normalizedQuery && phoneKey.includes(normalizedQuery));
+
+                if (!matchesOldSearch) return false;
+            }
+
+            // No Smart Search criteria: preserve the existing filters.
+            if (!hasSmartCriteria) return true;
 
             const contact = contacts.find(
                 (item) => normalizePhone(item.phone_number) === phoneKey
             );
 
-            const conversationContactId = contact?.id ?? conversation.contactId;
+            const contactId = contact?.id ?? conversation.contactId;
 
-            const outgoingText = logs
-                .filter(
-                    (message) =>
-                        Boolean(conversationContactId) &&
-                        message.direction === "outbound" &&
-                        message.contact_id === conversationContactId
-                )
-                .map((message) => message.message_text ?? "")
-                .join(" ");
+            const inDateRange = (timestamp: string) => {
+                if (!timestamp) return false;
 
-            const searchableText = [
-                conversation.name,
-                conversation.phone,
-                conversation.lastText,
-                incomingText,
-                outgoingText,
-            ]
-                .join(" ")
-                .toLowerCase();
+                const date = new Date(timestamp);
+                if (!Number.isFinite(date.getTime())) return false;
 
-            return (
-                searchableText.includes(query) ||
-                (!!normalizedQuery && phoneKey.includes(normalizedQuery))
-            );
+                const messageDate = getLocalDateString(date);
+
+                if (
+                    smartSearch.fromDate &&
+                    messageDate < smartSearch.fromDate
+                ) {
+                    return false;
+                }
+
+                if (
+                    smartSearch.toDate &&
+                    messageDate > smartSearch.toDate
+                ) {
+                    return false;
+                }
+
+                return true;
+            };
+
+            const incomingMatches = () =>
+                inbound.some((message) => {
+                    if (
+                        normalizePhone(message.phone_number) !== phoneKey ||
+                        !inDateRange(message.received_at)
+                    ) {
+                        return false;
+                    }
+
+                    if (!smartText) return true;
+
+                    return getMessageText(
+                        message.message_text,
+                        message.message_type
+                    )
+                        .toLowerCase()
+                        .includes(smartText);
+                });
+
+            const outgoingMatches = () =>
+                logs.some((message) => {
+                    if (
+                        !contactId ||
+                        message.direction !== "outbound" ||
+                        message.contact_id !== contactId ||
+                        !inDateRange(message.event_at)
+                    ) {
+                        return false;
+                    }
+
+                    if (!smartText) return true;
+
+                    return (message.message_text ?? "")
+                        .toLowerCase()
+                        .includes(smartText);
+                });
+
+            if (smartSearch.scope === "incoming") {
+                return incomingMatches();
+            }
+
+            if (smartSearch.scope === "outgoing") {
+                return outgoingMatches();
+            }
+
+            return incomingMatches() || outgoingMatches();
         });
-    }, [search, windowOpenConversations, inbound, logs, contacts]);
+    }, [
+        search,
+        smartSearch,
+        windowOpenConversations,
+        inbound,
+        logs,
+        contacts,
+    ]);
+useEffect(() => {
+    const hasSmartCriteria =
+        smartSearch.text.trim().length > 0 ||
+        smartSearch.fromDate.length > 0 ||
+        smartSearch.toDate.length > 0;
 
+    if (!hasSmartCriteria) return;
+
+    // Smart Search ke matching chats Bulk Actions ke liye select karein.
+    setSelectedPhones(
+        filteredConversations.map((conversation) => conversation.phone)
+    );
+}, [smartSearch, filteredConversations]);
     const selectedBot = botTemplates.find((bot) => bot.id === selectedBotId);
     async function loadOpenTextContacts() {
         if (openTextLoading) return;
@@ -564,7 +679,7 @@ export default function InboxBulkActions({
             filteredConversations.map((item) => normalizePhone(item.phone))
         );
 
-    
+
 
         setSelectedPhones((current) =>
             allVisibleSelected
@@ -1192,7 +1307,11 @@ export default function InboxBulkActions({
                             }
                         }}
                         onNextToBulk={() => setShowBulkActions(true)}
-
+                        smartSearch={smartSearch}
+                        onApplySmartSearch={(nextSearch) => {
+                            setSearch("");
+                            setSmartSearch(nextSearch);
+                        }}
                     />
 
                 </div>

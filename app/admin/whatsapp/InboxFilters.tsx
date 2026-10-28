@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState, type SetStateAction } from "react";
@@ -8,6 +9,7 @@ import {
     X,
     ArrowRight,
     LoaderCircle,
+    Search,
 } from "lucide-react";
 
 export type InboxDemoSchedule = {
@@ -16,6 +18,13 @@ export type InboxDemoSchedule = {
     demo_date: string;
     start_time: string;
     status: string;
+};
+
+export type InboxSmartSearch = {
+    text: string;
+    scope: "incoming" | "outgoing" | "both";
+    fromDate: string;
+    toDate: string;
 };
 
 type Props = {
@@ -32,6 +41,8 @@ type Props = {
     openTextLoading: boolean;
     onOpenTextChange: (checked: boolean) => void;
     onNextToBulk?: () => void;
+    smartSearch?: InboxSmartSearch;
+    onApplySmartSearch?: (search: InboxSmartSearch) => void;
 };
 
 function formatDemoTime(value: string) {
@@ -43,10 +54,8 @@ function formatDemoTime(value: string) {
         return value;
     }
 
-    const suffix = hours >= 12 ? "PM" : "AM";
-    const displayHour = hours % 12 || 12;
-
-    return `${displayHour}:${String(minutes).padStart(2, "0")} ${suffix}`;
+    return `${hours % 12 || 12}:${String(minutes).padStart(2, "0")} ${hours >= 12 ? "PM" : "AM"
+        }`;
 }
 
 function getLocalDateString(date: Date) {
@@ -70,7 +79,12 @@ function normalizeStudentPhone(value: string) {
 
     return phone;
 }
-
+const EMPTY_SMART_SEARCH: InboxSmartSearch = {
+    text: "",
+    scope: "incoming",
+    fromDate: "",
+    toDate: "",
+};
 export default function InboxFilters({
     demoSchedules,
     showDemoSlots,
@@ -85,10 +99,22 @@ export default function InboxFilters({
     openTextLoading,
     onOpenTextChange,
     onNextToBulk,
+    smartSearch = EMPTY_SMART_SEARCH,
+    onApplySmartSearch = () => { },
 }: Props) {
     const [demoSlotsEnabled, setDemoSlotsEnabled] = useState(
         selectedSlotKeys.length > 0
     );
+
+    const defaultSmartSearch: InboxSmartSearch = {
+        text: "",
+        scope: "incoming",
+        fromDate: "",
+        toDate: "",
+    };
+
+    const [draftSearch, setDraftSearch] =
+        useState<InboxSmartSearch>(smartSearch ?? defaultSmartSearch);
 
     const dateSchedules = useMemo(
         () =>
@@ -141,22 +167,23 @@ export default function InboxFilters({
         setDraftSlotKeys((current) =>
             checked
                 ? [
-                      ...new Set([
-                          ...current.filter(
-                              (key) => !key.startsWith(`${demoSlotDate}|`)
-                          ),
-                          ...dateSlotKeys,
-                      ]),
-                  ]
+                    ...new Set([
+                        ...current.filter(
+                            (key) => !key.startsWith(`${demoSlotDate}|`)
+                        ),
+                        ...dateSlotKeys,
+                    ]),
+                ]
                 : current.filter(
-                      (key) => !key.startsWith(`${demoSlotDate}|`)
-                  )
+                    (key) => !key.startsWith(`${demoSlotDate}|`)
+                )
         );
     }
 
     function openPopup() {
         setDraftSlotKeys([...selectedSlotKeys]);
         setDemoSlotsEnabled(selectedSlotKeys.length > 0);
+        setDraftSearch(smartSearch ?? defaultSmartSearch);
         setShowDemoSlots(true);
     }
 
@@ -169,21 +196,45 @@ export default function InboxFilters({
         setDemoSlotsEnabled(false);
         onApplySlots([]);
 
+        const emptySearch: InboxSmartSearch = {
+            text: "",
+            scope: "incoming",
+            fromDate: "",
+            toDate: "",
+        };
+
+        setDraftSearch(emptySearch);
+        onApplySmartSearch?.(emptySearch);
+
         if (openTextOnly) {
             onOpenTextChange(false);
         }
     }
 
-    function openBulkActions() {
+    function applySearch() {
         onApplySlots(demoSlotsEnabled ? draftSlotKeys : []);
+        onApplySmartSearch?.(draftSearch);
         onNextToBulk?.();
     }
 
+    const hasSearchCriteria =
+        draftSearch.text.trim().length > 0 ||
+        draftSearch.fromDate.length > 0 ||
+        draftSearch.toDate.length > 0;
+
     const hasSelectedFilters =
-        (demoSlotsEnabled && draftSlotKeys.length > 0) || openTextOnly;
+        (demoSlotsEnabled && draftSlotKeys.length > 0) ||
+        openTextOnly ||
+        hasSearchCriteria;
 
     const activeFilterCount =
-        selectedSlotKeys.length + (openTextOnly ? 1 : 0);
+        selectedSlotKeys.length +
+        (openTextOnly ? 1 : 0) +
+        (smartSearch.text.trim() ||
+            smartSearch.fromDate ||
+            smartSearch.toDate
+            ? 1
+            : 0);
 
     return (
         <>
@@ -217,7 +268,7 @@ export default function InboxFilters({
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="inbox-filters-title"
-                        className="flex min-h-[400px] max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+                        className="flex max-h-[90dvh] min-h-[400px] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
                     >
                         <div className="flex items-center justify-between border-b px-4 py-3">
                             <div className="flex items-center gap-2">
@@ -243,9 +294,109 @@ export default function InboxFilters({
                             </button>
                         </div>
 
-                        <div className="min-h-0 flex-1 overflow-y-auto p-4">
-                            <div className="rounded-lg border border-gray-200 p-4">
-                                {/* Top filter options */}
+                        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+                            {/* Smart message search */}
+                            <section className="rounded-lg border border-gray-200 p-4">
+                                <div className="mb-3 flex items-center gap-2">
+                                    <Search
+                                        size={17}
+                                        className="text-[#008069]"
+                                    />
+                                    <h4 className="text-sm font-semibold text-gray-800">
+                                        Search Messages
+                                    </h4>
+                                </div>
+
+                                <input
+                                    type="text"
+                                    value={draftSearch.text}
+                                    onChange={(event) =>
+                                        setDraftSearch((current) => ({
+                                            ...current,
+                                            text: event.target.value,
+                                        }))
+                                    }
+                                    placeholder="Search message text, e.g. दोपहर 2 से 3"
+                                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-[#008069]"
+                                />
+
+                                <div className="mt-3">
+                                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                                        Search In
+                                    </label>
+
+                                    <div className="flex flex-wrap gap-4">
+                                        {(
+                                            [
+                                                ["incoming", "Student Replies"],
+                                                ["outgoing", "Our Replies"],
+                                                ["both", "Both"],
+                                            ] as const
+                                        ).map(([value, label]) => (
+                                            <label
+                                                key={value}
+                                                className="flex cursor-pointer items-center gap-2 text-sm text-gray-700"
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="inbox-search-scope"
+                                                    value={value}
+                                                    checked={
+                                                        draftSearch.scope === value
+                                                    }
+                                                    onChange={() =>
+                                                        setDraftSearch(
+                                                            (current) => ({
+                                                                ...current,
+                                                                scope: value,
+                                                            })
+                                                        )
+                                                    }
+                                                    className="accent-[#008069]"
+                                                />
+                                                {label}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <label className="text-xs font-medium text-gray-600">
+                                        From Date
+                                        <input
+                                            type="date"
+                                            value={draftSearch.fromDate}
+                                            max={draftSearch.toDate || undefined}
+                                            onChange={(event) =>
+                                                setDraftSearch((current) => ({
+                                                    ...current,
+                                                    fromDate: event.target.value,
+                                                }))
+                                            }
+                                            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                                        />
+                                    </label>
+
+                                    <label className="text-xs font-medium text-gray-600">
+                                        To Date
+                                        <input
+                                            type="date"
+                                            value={draftSearch.toDate}
+                                            min={draftSearch.fromDate || undefined}
+                                            onChange={(event) =>
+                                                setDraftSearch((current) => ({
+                                                    ...current,
+                                                    toDate: event.target.value,
+                                                }))
+                                            }
+                                            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                                        />
+                                    </label>
+                                </div>
+                            </section>
+
+                            {/* Existing Open Text and Demo Slots filters */}
+                            <section className="rounded-lg border border-gray-200 p-4">
                                 <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-gray-200 pb-4">
                                     <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-800">
                                         <input
@@ -259,7 +410,6 @@ export default function InboxFilters({
                                             }
                                             className="accent-[#008069]"
                                         />
-
                                         Open Text
 
                                         {openTextLoading && (
@@ -279,6 +429,7 @@ export default function InboxFilters({
                                                     event.target.checked;
 
                                                 setDemoSlotsEnabled(checked);
+                                                setDraftSlotKeys([]);
 
                                                 if (checked) {
                                                     setDemoSlotDate(
@@ -286,158 +437,121 @@ export default function InboxFilters({
                                                             new Date()
                                                         )
                                                     );
-                                                    setDraftSlotKeys([]);
-                                                } else {
-                                                    setDraftSlotKeys([]);
                                                 }
                                             }}
                                             className="accent-[#008069]"
                                         />
-
                                         <CalendarDays size={16} />
                                         Demo Slots
                                     </label>
                                 </div>
 
-                                {/* One shared content area */}
-                                <div className="pt-4">
-                                    {demoSlotsEnabled && (
-                                        <>
-                                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                                <label className="block text-xs font-medium text-gray-600">
-                                                    Select Date
+                                {demoSlotsEnabled && (
+                                    <div className="pt-4">
+                                        <div className="flex flex-wrap items-center justify-between gap-3">
+                                            <label className="block text-xs font-medium text-gray-600">
+                                                Select Date
+                                                <input
+                                                    type="date"
+                                                    value={demoSlotDate}
+                                                    onChange={(event) => {
+                                                        const nextDate =
+                                                            event.target.value;
+                                                        setDemoSlotDate(nextDate);
+                                                        setDraftSlotKeys((current) =>
+                                                            current.filter((key) =>
+                                                                key.startsWith(
+                                                                    `${nextDate}|`
+                                                                )
+                                                            )
+                                                        );
+                                                    }}
+                                                    className="mt-1 block w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                                                />
+                                            </label>
 
+                                            <div className="rounded-lg bg-green-50 px-3 py-2 text-sm font-semibold text-green-800">
+                                                Total Students: {dateStudentCount}
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-4 flex items-center justify-between gap-2 border-b border-gray-200 pb-2">
+                                            <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-gray-700">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={allDateSlotsSelected}
+                                                    onChange={(event) =>
+                                                        toggleAllDateSlots(
+                                                            event.target.checked
+                                                        )
+                                                    }
+                                                    disabled={!uniqueSlots.length}
+                                                    className="accent-[#008069]"
+                                                />
+                                                Select All Slots
+                                            </label>
+
+                                            <span className="text-xs text-gray-500">
+                                                {uniqueSlots.length} time slots
+                                            </span>
+                                        </div>
+
+                                        <div className="mt-2 max-h-56 space-y-1 overflow-y-auto rounded-md bg-gray-50 p-2">
+                                            {uniqueSlots.map(([key, schedule]) => (
+                                                <label
+                                                    key={key}
+                                                    className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-gray-100"
+                                                >
                                                     <input
-                                                        type="date"
-                                                        value={demoSlotDate}
+                                                        type="checkbox"
+                                                        checked={draftSlotKeys.includes(
+                                                            key
+                                                        )}
                                                         onChange={(event) => {
-                                                            const nextDate =
-                                                                event.target.value;
-
-                                                            setDemoSlotDate(
-                                                                nextDate
-                                                            );
+                                                            const checked =
+                                                                event.target.checked;
 
                                                             setDraftSlotKeys(
                                                                 (current) =>
-                                                                    current.filter(
-                                                                        (key) =>
-                                                                            key.startsWith(
-                                                                                `${nextDate}|`
-                                                                            )
-                                                                    )
+                                                                    checked
+                                                                        ? current.includes(
+                                                                            key
+                                                                        )
+                                                                            ? current
+                                                                            : [
+                                                                                ...current,
+                                                                                key,
+                                                                            ]
+                                                                        : current.filter(
+                                                                            (item) =>
+                                                                                item !== key
+                                                                        )
                                                             );
                                                         }}
-                                                        className="mt-1 block w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                                                    />
-                                                </label>
-
-                                                <div className="rounded-lg bg-green-50 px-3 py-2 text-sm font-semibold text-green-800">
-                                                    Total Students:{" "}
-                                                    {dateStudentCount}
-                                                </div>
-                                            </div>
-
-                                            <div className="mt-4 flex items-center justify-between gap-2 border-b border-gray-200 pb-2">
-                                                <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-gray-700">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={
-                                                            allDateSlotsSelected
-                                                        }
-                                                        onChange={(event) =>
-                                                            toggleAllDateSlots(
-                                                                event.target
-                                                                    .checked
-                                                            )
-                                                        }
-                                                        disabled={
-                                                            uniqueSlots.length ===
-                                                            0
-                                                        }
                                                         className="accent-[#008069]"
                                                     />
-                                                    Select All Slots
+
+                                                    <span>
+                                                        {formatDemoTime(
+                                                            schedule.start_time
+                                                        )}
+                                                    </span>
+
+                                                    <span className="ml-auto rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                                                        {getSlotStudentCount(key)} students
+                                                    </span>
                                                 </label>
+                                            ))}
 
-                                                <span className="text-xs text-gray-500">
-                                                    {uniqueSlots.length} time
-                                                    slots
-                                                </span>
-                                            </div>
-
-                                            <div className="mt-2 max-h-56 space-y-1 overflow-y-auto rounded-md bg-gray-50 p-2">
-                                                {uniqueSlots.map(
-                                                    ([key, schedule]) => (
-                                                        <label
-                                                            key={key}
-                                                            className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-gray-100"
-                                                        >
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={draftSlotKeys.includes(
-                                                                    key
-                                                                )}
-                                                                onChange={(
-                                                                    event
-                                                                ) => {
-                                                                    const checked =
-                                                                        event
-                                                                            .target
-                                                                            .checked;
-
-                                                                    setDraftSlotKeys(
-                                                                        (
-                                                                            current
-                                                                        ) =>
-                                                                            checked
-                                                                                ? current.includes(
-                                                                                      key
-                                                                                  )
-                                                                                    ? current
-                                                                                    : [
-                                                                                          ...current,
-                                                                                          key,
-                                                                                      ]
-                                                                                : current.filter(
-                                                                                      (
-                                                                                          item
-                                                                                      ) =>
-                                                                                          item !==
-                                                                                          key
-                                                                                  )
-                                                                    );
-                                                                }}
-                                                                className="accent-[#008069]"
-                                                            />
-
-                                                            <span>
-                                                                {formatDemoTime(
-                                                                    schedule.start_time
-                                                                )}
-                                                            </span>
-
-                                                            <span className="ml-auto rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                                                                {getSlotStudentCount(
-                                                                    key
-                                                                )}{" "}
-                                                                students
-                                                            </span>
-                                                        </label>
-                                                    )
-                                                )}
-
-                                                {uniqueSlots.length === 0 && (
-                                                    <p className="p-3 text-xs text-gray-500">
-                                                        Is date par koi scheduled
-                                                        demo slot nahi hai.
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
+                                            {uniqueSlots.length === 0 && (
+                                                <p className="p-3 text-xs text-gray-500">
+                                                    Is date par koi scheduled demo slot nahi hai.
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </section>
                         </div>
 
                         <div className="flex items-center justify-between gap-2 border-t bg-gray-50 px-4 py-3">
@@ -460,14 +574,16 @@ export default function InboxFilters({
 
                                 <button
                                     type="button"
-                                    onClick={openBulkActions}
+                                    onClick={applySearch}
                                     disabled={
-                                        !hasSelectedFilters || openTextLoading
+                                        (!hasSelectedFilters &&
+                                            !hasSearchCriteria) ||
+                                        openTextLoading
                                     }
                                     className="flex items-center gap-1.5 rounded-lg bg-[#008069] px-4 py-2 text-sm font-semibold text-white hover:bg-[#006e5b] disabled:cursor-not-allowed disabled:bg-gray-300"
                                 >
                                     <MessageCircle size={15} />
-                                    Bulk Actions
+                                    Apply & Bulk Actions
                                     <ArrowRight size={14} />
                                 </button>
                             </div>
