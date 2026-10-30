@@ -33,6 +33,33 @@ const initialForm: FormData = {
 const OFFICE_BACKGROUND =
     "linear-gradient(rgba(8,25,48,.58),rgba(8,25,48,.58)),url('https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1920&q=85')";
 
+const DEMO_TIME_SLOTS = Array.from(
+    { length: 13 },
+    (_, index) => {
+        const hour = index + 8;
+        const nextHour = hour + 1;
+
+        const formatTime = (value: number) => {
+            const period = value >= 12 ? "PM" : "AM";
+            const displayHour = value % 12 || 12;
+            return `${displayHour}:00 ${period}`;
+        };
+
+        return `${formatTime(hour)} - ${formatTime(nextHour)}`;
+    }
+);
+
+const EDUCATION_OPTIONS = [
+    "Below 10th",
+    "10th Pass",
+    "12th Pass",
+    "Diploma",
+    "Graduate",
+    "Postgraduate",
+    "Currently Studying",
+    "Other",
+];
+
 const formatName = (name: string) =>
     name
         .trim()
@@ -77,9 +104,6 @@ function InterviewEnquiryPage() {
 
     const [submitted, setSubmitted] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-
-    const [submittedLeadId, setSubmittedLeadId] =
-        useState<string | null>(null);
 
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -351,7 +375,6 @@ function InterviewEnquiryPage() {
                 }
             }
 
-            setSubmittedLeadId(submittedId);
             setSubmitted(true);
         } catch (error: any) {
             console.error(
@@ -377,6 +400,7 @@ function InterviewEnquiryPage() {
         {
             number: 1,
             title: "What is your age?",
+            type: "buttons" as const,
             options: [
                 "18–25 Years",
                 "26–35 Years",
@@ -387,21 +411,15 @@ function InterviewEnquiryPage() {
         {
             number: 2,
             title: "What is your highest educational qualification?",
-            options: [
-                "Below 10th",
-                "10th Pass",
-                "12th Pass",
-                "Diploma",
-                "Graduate",
-                "Postgraduate",
-                "Currently Studying",
-                "Other",
-            ],
+            type: "select" as const,
+            options: EDUCATION_OPTIONS,
             field: "education" as const,
+            placeholder: "Select your qualification",
         },
         {
             number: 3,
             title: "What is your current career status?",
+            type: "buttons" as const,
             options: [
                 "Fresher (Looking for My First Job)",
                 "Job Change (Looking for a Better Opportunity)",
@@ -411,19 +429,17 @@ function InterviewEnquiryPage() {
         {
             number: 4,
             title: "Have you ever attended a Job Interview?",
+            type: "buttons" as const,
             options: ["Yes", "No"],
             field: "interview_experience" as const,
         },
         {
             number: 5,
             title: "When would you like to attend a Free Demo Class?",
-            options: [
-                "Morning",
-                "Afternoon",
-                "Evening",
-                "Night",
-            ],
+            type: "select" as const,
+            options: DEMO_TIME_SLOTS,
             field: "demo_class_time" as const,
+            placeholder: "Select your preferred time",
         },
     ];
 
@@ -432,20 +448,22 @@ function InterviewEnquiryPage() {
     const progress = Math.min(questionStep - 1, 5) * 20;
 
     const optionClass = (selected: boolean) =>
-        `w-full rounded-xl border-2 px-4 py-4 text-left font-semibold transition-all duration-200 ${
-            selected
-                ? "border-blue-600 bg-blue-50 text-blue-800 shadow-sm"
-                : "border-gray-200 bg-white text-gray-800 hover:border-blue-400"
+        `w-full rounded-xl border-2 px-4 py-4 text-left font-semibold transition-all duration-200 ${selected
+            ? "border-blue-600 bg-blue-50 text-blue-800 shadow-sm"
+            : "border-gray-200 bg-white text-gray-800 hover:border-blue-400"
         }`;
+
+    const selectClass =
+        "w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-3.5 text-base text-gray-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 
     // Existing Interview Enquiry
     if (existingEnquiry) {
         return (
             <main
-                className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-fixed"
+                className="min-h-screen min-h-[100dvh] flex items-start sm:items-center justify-center p-3 pt-4 sm:p-6 bg-cover bg-center bg-fixed"
                 style={{ backgroundImage: OFFICE_BACKGROUND }}
             >
-                <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+                <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl sm:p-8">
                     <h2 className="text-xl font-bold text-gray-900">
                         Interview Enquiry Already Submitted
                     </h2>
@@ -509,7 +527,6 @@ function InterviewEnquiryPage() {
                         <button
                             type="button"
                             onClick={() => {
-                                setSubmittedLeadId(existingEnquiry.id);
                                 setExistingEnquiry(null);
                                 setSubmitted(true);
                             }}
@@ -527,10 +544,10 @@ function InterviewEnquiryPage() {
     if (submitted) {
         return (
             <main
-                className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-fixed"
+                className="min-h-screen min-h-[100dvh] flex items-start sm:items-center justify-center p-3 pt-4 sm:p-6 bg-cover bg-center bg-fixed"
                 style={{ backgroundImage: OFFICE_BACKGROUND }}
             >
-                <div className="w-full max-w-lg rounded-2xl bg-white p-7 text-center shadow-xl sm:p-9">
+                <div className="w-full max-w-lg rounded-2xl bg-white p-6 text-center shadow-xl sm:p-9">
                     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl text-green-600">
                         ✓
                     </div>
@@ -555,7 +572,7 @@ function InterviewEnquiryPage() {
 
     return (
         <main
-            className="min-h-screen flex items-center justify-center bg-cover bg-center bg-fixed px-4 py-6 sm:py-10"
+            className="min-h-screen min-h-[100dvh] flex items-start sm:items-center justify-center bg-cover bg-center bg-fixed px-3 pt-3 pb-6 sm:p-8"
             style={{ backgroundImage: OFFICE_BACKGROUND }}
         >
             <div className="w-full max-w-xl">
@@ -585,10 +602,10 @@ function InterviewEnquiryPage() {
                         </div>
                     )}
 
-                    <div className="p-5 sm:p-7">
+                    <div className="p-4 sm:p-7">
                         {/* BASIC DETAILS */}
                         {!started && (
-                            <div className="space-y-5">
+                            <div className="space-y-4">
                                 <div>
                                     <label className="mb-2 block text-sm font-medium text-gray-800">
                                         Full Name *
@@ -600,11 +617,10 @@ function InterviewEnquiryPage() {
                                         onChange={handleNameChange}
                                         placeholder="Enter your full name"
                                         autoComplete="name"
-                                        className={`w-full rounded-lg border px-4 py-3 outline-none focus:ring-2 ${
-                                            formData.full_name && !nameIsValid
+                                        className={`w-full rounded-lg border px-4 py-3 outline-none focus:ring-2 ${formData.full_name && !nameIsValid
                                                 ? "border-red-400 focus:ring-red-100"
                                                 : "border-gray-300 focus:border-blue-500 focus:ring-blue-100"
-                                        }`}
+                                            }`}
                                     />
 
                                     {formData.full_name && !nameIsValid && (
@@ -627,11 +643,10 @@ function InterviewEnquiryPage() {
                                         inputMode="numeric"
                                         autoComplete="tel"
                                         maxLength={10}
-                                        className={`w-full rounded-lg border px-4 py-3 outline-none focus:ring-2 ${
-                                            formData.whatsapp_number && !phoneIsValid
+                                        className={`w-full rounded-lg border px-4 py-3 outline-none focus:ring-2 ${formData.whatsapp_number && !phoneIsValid
                                                 ? "border-red-400 focus:ring-red-100"
                                                 : "border-gray-300 focus:border-blue-500 focus:ring-blue-100"
-                                        }`}
+                                            }`}
                                     />
 
                                     {formData.whatsapp_number && !phoneIsValid && (
@@ -651,11 +666,10 @@ function InterviewEnquiryPage() {
                                     type="button"
                                     disabled={!basicDetailsValid || checkingDuplicate}
                                     onClick={startForm}
-                                    className={`w-full rounded-lg px-4 py-3 font-semibold text-white transition ${
-                                        basicDetailsValid && !checkingDuplicate
+                                    className={`w-full rounded-lg px-4 py-3 font-semibold text-white transition ${basicDetailsValid && !checkingDuplicate
                                             ? "bg-blue-600 hover:bg-blue-700"
                                             : "cursor-not-allowed bg-gray-300"
-                                    }`}
+                                        }`}
                                 >
                                     {checkingDuplicate
                                         ? "Checking Your Details..."
@@ -681,30 +695,66 @@ function InterviewEnquiryPage() {
                                             {currentQuestion.title} *
                                         </h2>
 
-                                        <div className="space-y-2">
-                                            {currentQuestion.options.map((option) => (
-                                                <button
-                                                    type="button"
-                                                    key={option}
-                                                    onClick={() =>
-                                                        handleOption(
-                                                            currentQuestion.field,
-                                                            option
-                                                        )
-                                                    }
-                                                    className={optionClass(
-                                                        formData[currentQuestion.field] === option
-                                                    )}
-                                                >
-                                                    <span className="mr-3 text-blue-600">
-                                                        {formData[currentQuestion.field] === option
-                                                            ? "◉"
-                                                            : "○"}
-                                                    </span>
-                                                    {option}
-                                                </button>
-                                            ))}
-                                        </div>
+                                        {currentQuestion.type === "select" ? (
+                                            <select
+                                                value={
+                                                    formData[currentQuestion.field]
+                                                }
+                                                onChange={(e) =>
+                                                    handleOption(
+                                                        currentQuestion.field,
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className={selectClass}
+                                            >
+                                                <option value="" disabled>
+                                                    {currentQuestion.placeholder}
+                                                </option>
+
+                                                {currentQuestion.options.map(
+                                                    (option) => (
+                                                        <option
+                                                            key={option}
+                                                            value={option}
+                                                        >
+                                                            {option}
+                                                        </option>
+                                                    )
+                                                )}
+                                            </select>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {currentQuestion.options.map(
+                                                    (option) => (
+                                                        <button
+                                                            type="button"
+                                                            key={option}
+                                                            onClick={() =>
+                                                                handleOption(
+                                                                    currentQuestion.field,
+                                                                    option
+                                                                )
+                                                            }
+                                                            className={optionClass(
+                                                                formData[
+                                                                currentQuestion.field
+                                                                ] === option
+                                                            )}
+                                                        >
+                                                            <span className="mr-3 text-blue-600">
+                                                                {formData[
+                                                                    currentQuestion.field
+                                                                ] === option
+                                                                    ? "◉"
+                                                                    : "○"}
+                                                            </span>
+                                                            {option}
+                                                        </button>
+                                                    )
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -719,43 +769,58 @@ function InterviewEnquiryPage() {
                                             Submit your details to arrange your Free Demo Class.
                                         </p>
 
-                                        <div className="mt-5 space-y-3 rounded-xl bg-blue-50 p-4 text-left">
+
+                                        <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 rounded-xl bg-blue-50 p-4 text-left">
                                             <div>
-                                                <p className="text-xs text-gray-500">
-                                                    Full Name
-                                                </p>
+                                                <p className="text-xs text-gray-500">Full Name</p>
                                                 <p className="font-semibold text-gray-900">
                                                     {formatName(formData.full_name)}
                                                 </p>
                                             </div>
 
                                             <div>
-                                                <p className="text-xs text-gray-500">
-                                                    Education
+                                                <p className="text-xs text-gray-500">WhatsApp Number</p>
+                                                <p className="font-semibold text-gray-900">
+                                                    {formData.whatsapp_number}
                                                 </p>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-xs text-gray-500">Age</p>
+                                                <p className="font-semibold text-gray-900">
+                                                    {formData.age}
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-xs text-gray-500">Education</p>
                                                 <p className="font-semibold text-gray-900">
                                                     {formData.education}
                                                 </p>
                                             </div>
 
                                             <div>
-                                                <p className="text-xs text-gray-500">
-                                                    Career Status
-                                                </p>
+                                                <p className="text-xs text-gray-500">Career Status</p>
                                                 <p className="font-semibold text-gray-900">
                                                     {formData.career_status}
                                                 </p>
                                             </div>
 
                                             <div>
-                                                <p className="text-xs text-gray-500">
-                                                    Preferred Demo Time
+                                                <p className="text-xs text-gray-500">Interview Experience</p>
+                                                <p className="font-semibold text-gray-900">
+                                                    {formData.interview_experience}
                                                 </p>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-xs text-gray-500">Preferred Demo Time</p>
                                                 <p className="font-semibold text-blue-700">
                                                     {formData.demo_class_time}
                                                 </p>
                                             </div>
                                         </div>
+
 
                                         {errorMessage && (
                                             <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
