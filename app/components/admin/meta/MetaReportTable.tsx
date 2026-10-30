@@ -198,6 +198,7 @@ export default function MetaReportTable({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const [savingStatus, setSavingStatus] = useState(false);
+  const [deletingLeads, setDeletingLeads] = useState(false);
   const [inboxPhones, setInboxPhones] = useState<string[]>([]);
   useEffect(() => {
     async function loadInboxPhones() {
@@ -331,6 +332,56 @@ export default function MetaReportTable({
       window.alert("Selected Leads save nahi ho sake. Dobara try karein.");
     }
   }
+  async function deleteSelectedLeads() {
+    if (selectedIds.length === 0) {
+      window.alert("Pehle kam se kam ek Lead select karein.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Kya aap ${selectedIds.length} selected Meta Lead(s) ko delete karna chahte hain?\n\n` +
+      "Iske saath related WhatsApp Contacts, Messages, Campaign Records, Bot Sessions, Form Followups aur Demo Schedules bhi delete ho sakte hain.\n\n" +
+      "Offline CRM, Attendance aur Batch records delete nahi honge.\n\n" +
+      "Ye action undo nahi kiya ja sakta."
+    );
+
+    if (!confirmed) return;
+
+    setDeletingLeads(true);
+
+    try {
+      const { data, error } = await supabase.rpc(
+        "delete_meta_report_leads",
+        {
+          p_meta_ids: selectedIds,
+        }
+      );
+
+      if (error) {
+        window.alert(`Delete failed: ${error.message}`);
+        return;
+      }
+
+      const deletedCount = data?.deleted_meta_leads ?? 0;
+
+      setSelectedIds([]);
+      lastSelectedIndexRef.current = null;
+
+      window.alert(
+        `${deletedCount} Meta Lead(s) successfully deleted.`
+      );
+
+      onRefresh();
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Delete karte samay error aaya."
+      );
+    } finally {
+      setDeletingLeads(false);
+    }
+  }
   async function updateSelectedStatus(
     field: "community_joined" | "demo_attended" | "class_joined",
     value: boolean,
@@ -452,6 +503,20 @@ export default function MetaReportTable({
             className="rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Send Msg ({selectedIds.length})
+          </button>
+                    <button
+            type="button"
+            onClick={deleteSelectedLeads}
+            disabled={
+              savingStatus ||
+              deletingLeads ||
+              selectedIds.length === 0
+            }
+            className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {deletingLeads
+              ? "Deleting..."
+              : `Delete (${selectedIds.length})`}
           </button>
           <select
             value=""

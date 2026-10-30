@@ -355,25 +355,36 @@ function InterviewEnquiryPage() {
                 (window as any).fbq?.("track", "Lead");
             }
 
-            if (trackingId && submittedId) {
-                const { error } =
-                    await supabase.functions.invoke(
-                        "whatsapp-form-submit",
-                        {
-                            body: {
-                                tracking_id: trackingId,
-                                lead_id: submittedId,
-                            },
-                        }
-                    );
+            
+if (!editingExistingId && submittedId) {
+    const functionName = trackingId
+        ? "whatsapp-form-submit"
+        : "form-submission-confirmation";
 
-                if (error) {
-                    console.error(
-                        "Interview WhatsApp notification error:",
-                        error
-                    );
-                }
-            }
+    const requestBody = trackingId
+        ? {
+              tracking_id: trackingId,
+              lead_id: submittedId,
+          }
+        : {
+              lead_id: submittedId,
+          };
+
+    const { error } = await supabase.functions.invoke(
+        functionName,
+        {
+            body: requestBody,
+        }
+    );
+
+    if (error) {
+        console.error(
+            "Interview WhatsApp notification error:",
+            error
+        );
+    }
+}
+
 
             setSubmitted(true);
         } catch (error: any) {
