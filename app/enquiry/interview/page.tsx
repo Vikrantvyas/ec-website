@@ -9,6 +9,7 @@ type FormData = {
     full_name: string;
     whatsapp_number: string;
     age: string;
+    education: string;
     career_status: string;
     interview_experience: string;
     demo_class_time: string;
@@ -23,10 +24,14 @@ const initialForm: FormData = {
     full_name: "",
     whatsapp_number: "",
     age: "",
+    education: "",
     career_status: "",
     interview_experience: "",
     demo_class_time: "",
 };
+
+const OFFICE_BACKGROUND =
+    "linear-gradient(rgba(8,25,48,.58),rgba(8,25,48,.58)),url('https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1920&q=85')";
 
 const formatName = (name: string) =>
     name
@@ -129,6 +134,7 @@ function InterviewEnquiryPage() {
                 full_name,
                 whatsapp_number,
                 age,
+                education,
                 career_status,
                 interview_experience,
                 demo_class_time
@@ -182,7 +188,6 @@ function InterviewEnquiryPage() {
     ) => {
         updateField(field, value);
         setErrorMessage("");
-
         setQuestionStep((prev) => prev + 1);
     };
 
@@ -203,6 +208,7 @@ function InterviewEnquiryPage() {
             whatsapp_number:
                 existingEnquiry.whatsapp_number || "",
             age: existingEnquiry.age || "",
+            education: existingEnquiry.education || "",
             career_status:
                 existingEnquiry.career_status || "",
             interview_experience:
@@ -227,6 +233,7 @@ function InterviewEnquiryPage() {
         if (
             !basicDetailsValid ||
             !formData.age ||
+            !formData.education ||
             !formData.career_status ||
             !formData.interview_experience ||
             !formData.demo_class_time
@@ -251,6 +258,7 @@ function InterviewEnquiryPage() {
                         whatsapp_number:
                             formData.whatsapp_number,
                         age: formData.age,
+                        education: formData.education,
                         career_status: formData.career_status,
                         interview_experience:
                             formData.interview_experience,
@@ -304,6 +312,7 @@ function InterviewEnquiryPage() {
                             formData.whatsapp_number,
 
                         age: formData.age,
+                        education: formData.education,
                         career_status: formData.career_status,
                         interview_experience:
                             formData.interview_experience,
@@ -364,15 +373,6 @@ function InterviewEnquiryPage() {
         }
     };
 
-    const progress = Math.min(questionStep - 1, 4) * 25;
-
-    const optionClass = (selected: boolean) =>
-        `w-full rounded-xl border-2 px-4 py-4 text-left font-semibold transition-all duration-200 ${
-            selected
-                ? "border-blue-600 bg-blue-50 text-blue-800 shadow-sm"
-                : "border-gray-200 bg-white text-gray-800 hover:border-blue-400 hover:bg-blue-50/50"
-        }`;
-
     const questions = [
         {
             number: 1,
@@ -386,6 +386,21 @@ function InterviewEnquiryPage() {
         },
         {
             number: 2,
+            title: "What is your highest educational qualification?",
+            options: [
+                "Below 10th",
+                "10th Pass",
+                "12th Pass",
+                "Diploma",
+                "Graduate",
+                "Postgraduate",
+                "Currently Studying",
+                "Other",
+            ],
+            field: "education" as const,
+        },
+        {
+            number: 3,
             title: "What is your current career status?",
             options: [
                 "Fresher (Looking for My First Job)",
@@ -394,13 +409,13 @@ function InterviewEnquiryPage() {
             field: "career_status" as const,
         },
         {
-            number: 3,
+            number: 4,
             title: "Have you ever attended a Job Interview?",
             options: ["Yes", "No"],
             field: "interview_experience" as const,
         },
         {
-            number: 4,
+            number: 5,
             title: "When would you like to attend a Free Demo Class?",
             options: [
                 "Morning",
@@ -412,41 +427,35 @@ function InterviewEnquiryPage() {
         },
     ];
 
-    const currentQuestion =
-        questions[questionStep - 1];
+    const currentQuestion = questions[questionStep - 1];
+
+    const progress = Math.min(questionStep - 1, 5) * 20;
+
+    const optionClass = (selected: boolean) =>
+        `w-full rounded-xl border-2 px-4 py-4 text-left font-semibold transition-all duration-200 ${
+            selected
+                ? "border-blue-600 bg-blue-50 text-blue-800 shadow-sm"
+                : "border-gray-200 bg-white text-gray-800 hover:border-blue-400"
+        }`;
 
     // Existing Interview Enquiry
     if (existingEnquiry) {
         return (
             <main
                 className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-fixed"
-                style={{
-                    backgroundImage:
-                        "linear-gradient(rgba(8,25,48,.78),rgba(8,25,48,.78)),url('https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1920&q=85')",
-                }}
+                style={{ backgroundImage: OFFICE_BACKGROUND }}
             >
-                <div className="w-full max-w-lg rounded-3xl bg-white/95 p-6 shadow-2xl backdrop-blur-md sm:p-9">
-                    <div className="text-center">
-                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-3xl">
-                            ✓
-                        </div>
+                <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+                    <h2 className="text-xl font-bold text-gray-900">
+                        Interview Enquiry Already Submitted
+                    </h2>
 
-                        <h1 className="mt-5 text-2xl font-extrabold text-gray-900">
-                            Enquiry Already Submitted
-                        </h1>
-
-                        <p className="mt-2 text-sm leading-6 text-gray-600">
-                            We found an existing Interview Enquiry
-                            with this WhatsApp number.
-                        </p>
-                    </div>
-
-                    <div className="mt-6 space-y-3 rounded-2xl bg-blue-50 p-4">
+                    <div className="mt-5 space-y-3">
                         <div>
                             <p className="text-xs text-gray-500">
                                 Full Name
                             </p>
-                            <p className="font-bold text-gray-900">
+                            <p className="font-semibold text-gray-900">
                                 {existingEnquiry.full_name}
                             </p>
                         </div>
@@ -455,8 +464,17 @@ function InterviewEnquiryPage() {
                             <p className="text-xs text-gray-500">
                                 WhatsApp Number
                             </p>
-                            <p className="font-bold text-gray-900">
+                            <p className="font-semibold text-gray-900">
                                 {existingEnquiry.whatsapp_number}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p className="text-xs text-gray-500">
+                                Education
+                            </p>
+                            <p className="font-semibold text-gray-900">
+                                {existingEnquiry.education || "Not provided"}
                             </p>
                         </div>
 
@@ -464,7 +482,7 @@ function InterviewEnquiryPage() {
                             <p className="text-xs text-gray-500">
                                 Career Status
                             </p>
-                            <p className="font-bold text-gray-900">
+                            <p className="font-semibold text-gray-900">
                                 {existingEnquiry.career_status || "Not provided"}
                             </p>
                         </div>
@@ -473,7 +491,7 @@ function InterviewEnquiryPage() {
                             <p className="text-xs text-gray-500">
                                 Demo Class Time
                             </p>
-                            <p className="font-bold text-blue-700">
+                            <p className="font-semibold text-blue-700">
                                 {existingEnquiry.demo_class_time || "Not provided"}
                             </p>
                         </div>
@@ -483,7 +501,7 @@ function InterviewEnquiryPage() {
                         <button
                             type="button"
                             onClick={startEditing}
-                            className="w-full rounded-xl border-2 border-blue-600 bg-blue-50 px-4 py-3 font-bold text-blue-700 hover:bg-blue-100"
+                            className="w-full rounded-xl border-2 border-blue-600 bg-blue-50 px-4 py-3 font-bold text-blue-700"
                         >
                             Edit My Information
                         </button>
@@ -491,21 +509,15 @@ function InterviewEnquiryPage() {
                         <button
                             type="button"
                             onClick={() => {
-                                setSubmittedLeadId(
-                                    existingEnquiry.id
-                                );
+                                setSubmittedLeadId(existingEnquiry.id);
                                 setExistingEnquiry(null);
                                 setSubmitted(true);
                             }}
-                            className="w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white hover:bg-blue-700"
+                            className="w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white"
                         >
-                            My Information Is Correct →
+                            My Information Is Correct
                         </button>
                     </div>
-
-                    <p className="mt-6 text-center text-sm font-bold text-gray-500">
-                        English Club
-                    </p>
                 </div>
             </main>
         );
@@ -516,44 +528,25 @@ function InterviewEnquiryPage() {
         return (
             <main
                 className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-fixed"
-                style={{
-                    backgroundImage:
-                        "linear-gradient(rgba(8,25,48,.78),rgba(8,25,48,.78)),url('https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1920&q=85')",
-                }}
+                style={{ backgroundImage: OFFICE_BACKGROUND }}
             >
-                <div className="w-full max-w-lg rounded-3xl bg-white/95 p-7 text-center shadow-2xl backdrop-blur-md sm:p-10">
-                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-4xl text-green-600">
+                <div className="w-full max-w-lg rounded-2xl bg-white p-7 text-center shadow-xl sm:p-9">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl text-green-600">
                         ✓
                     </div>
 
-                    <h1 className="mt-6 text-3xl font-extrabold text-gray-900">
+                    <h1 className="mt-5 text-2xl font-extrabold text-gray-900">
                         Thank You!
                     </h1>
 
-                    <p className="mt-3 text-lg font-semibold text-blue-700">
-                        Your Interview Enquiry Has Been Submitted.
-                    </p>
-
-                    <p className="mt-4 leading-7 text-gray-600">
-                        Our team at English Club will contact you
-                        on your WhatsApp number regarding your
+                    <p className="mt-3 leading-7 text-gray-600">
+                        Your Interview Enquiry has been submitted successfully.
+                        Our team will contact you on WhatsApp regarding your
                         Free Interview Demo Class.
                     </p>
 
-                    <div className="mt-6 rounded-2xl bg-blue-50 p-5 text-left">
-                        <p className="text-sm text-gray-500">
-                            Preferred Demo Time
-                        </p>
-                        <p className="mt-1 text-xl font-extrabold text-blue-700">
-                            {formData.demo_class_time}
-                        </p>
-                    </div>
-
-                    <p className="mt-7 font-extrabold text-gray-900">
-                        English Club
-                    </p>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Interview Practice Program
+                    <p className="mt-5 font-bold text-blue-700">
+                        Preferred Demo Time: {formData.demo_class_time}
                     </p>
                 </div>
             </main>
@@ -562,88 +555,42 @@ function InterviewEnquiryPage() {
 
     return (
         <main
-            className="min-h-screen flex items-center justify-center bg-cover bg-center bg-fixed px-4 py-8 sm:py-12"
-            style={{
-                backgroundImage:
-                    "linear-gradient(rgba(8,25,48,.72),rgba(8,25,48,.72)),url('https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1920&q=85')",
-            }}
+            className="min-h-screen flex items-center justify-center bg-cover bg-center bg-fixed px-4 py-6 sm:py-10"
+            style={{ backgroundImage: OFFICE_BACKGROUND }}
         >
             <div className="w-full max-w-xl">
-
-                {/* BRAND HEADER */}
-                <div className="mb-5 text-center text-white">
-                    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-200">
-                        English Club
-                    </p>
-
-                    <h1 className="mt-2 text-3xl font-extrabold sm:text-4xl">
-                        Interview Practice
-                    </h1>
-
-                    <p className="mt-2 text-sm text-blue-100 sm:text-base">
-                        Prepare Yourself. Build Confidence. Get Hired.
-                    </p>
-                </div>
-
                 <form
                     onSubmit={handleSubmit}
-                    className="overflow-hidden rounded-3xl border border-white/50 bg-white/95 shadow-2xl backdrop-blur-md"
+                    className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl"
                 >
-
-                    {/* FORM INTRO */}
-                    {!started && (
-                        <div className="border-b border-gray-100 px-6 py-7 text-center sm:px-9">
-                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-3xl">
-                                💼
-                            </div>
-
-                            <h2 className="mt-4 text-xl font-extrabold text-gray-900 sm:text-2xl">
-                                Start Your Interview Journey
-                            </h2>
-
-                            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-gray-600">
-                                Fill in a few details to book your
-                                Free Interview Demo Class.
-                            </p>
-                        </div>
-                    )}
-
                     {/* PROGRESS */}
                     {started && (
-                        <div className="border-b border-gray-100 px-5 py-5 sm:px-8">
+                        <div className="border-b border-gray-100 px-5 py-4 sm:px-7">
                             <div className="mb-3 flex items-center justify-between">
-                                <span className="text-sm font-bold text-blue-700">
-                                    Interview Assessment
+                                <span className="text-sm font-semibold text-blue-700">
+                                    Interview Enquiry
                                 </span>
 
                                 <span className="text-sm font-bold text-gray-500">
-                                    {Math.min(questionStep, 4)} / 4
+                                    {Math.min(questionStep, 5)} / 5
                                 </span>
                             </div>
 
                             <div className="h-2 overflow-hidden rounded-full bg-gray-200">
                                 <div
                                     className="h-full rounded-full bg-blue-600 transition-all duration-500"
-                                    style={{
-                                        width: `${progress}%`,
-                                    }}
+                                    style={{ width: `${progress}%` }}
                                 />
                             </div>
-
-                            <p className="mt-3 text-xs text-gray-500">
-                                Just a few more steps to complete your enquiry.
-                            </p>
                         </div>
                     )}
 
-                    <div className="p-5 sm:p-8">
-
+                    <div className="p-5 sm:p-7">
                         {/* BASIC DETAILS */}
                         {!started && (
                             <div className="space-y-5">
-
                                 <div>
-                                    <label className="mb-2 block text-sm font-bold text-gray-800">
+                                    <label className="mb-2 block text-sm font-medium text-gray-800">
                                         Full Name *
                                     </label>
 
@@ -653,19 +600,22 @@ function InterviewEnquiryPage() {
                                         onChange={handleNameChange}
                                         placeholder="Enter your full name"
                                         autoComplete="name"
-                                        className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3.5 text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                                        className={`w-full rounded-lg border px-4 py-3 outline-none focus:ring-2 ${
+                                            formData.full_name && !nameIsValid
+                                                ? "border-red-400 focus:ring-red-100"
+                                                : "border-gray-300 focus:border-blue-500 focus:ring-blue-100"
+                                        }`}
                                     />
 
-                                    {formData.full_name &&
-                                        !nameIsValid && (
-                                            <p className="mt-1 text-xs text-red-600">
-                                                Please enter a valid name.
-                                            </p>
-                                        )}
+                                    {formData.full_name && !nameIsValid && (
+                                        <p className="mt-1 text-sm text-red-600">
+                                            Please enter a valid name.
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div>
-                                    <label className="mb-2 block text-sm font-bold text-gray-800">
+                                    <label className="mb-2 block text-sm font-medium text-gray-800">
                                         WhatsApp Number *
                                     </label>
 
@@ -673,19 +623,22 @@ function InterviewEnquiryPage() {
                                         type="tel"
                                         value={formData.whatsapp_number}
                                         onChange={handlePhoneChange}
-                                        placeholder="Enter 10-digit mobile number"
+                                        placeholder="Enter 10-digit WhatsApp Number"
                                         inputMode="numeric"
                                         autoComplete="tel"
                                         maxLength={10}
-                                        className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3.5 text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                                        className={`w-full rounded-lg border px-4 py-3 outline-none focus:ring-2 ${
+                                            formData.whatsapp_number && !phoneIsValid
+                                                ? "border-red-400 focus:ring-red-100"
+                                                : "border-gray-300 focus:border-blue-500 focus:ring-blue-100"
+                                        }`}
                                     />
 
-                                    {formData.whatsapp_number &&
-                                        !phoneIsValid && (
-                                            <p className="mt-1 text-xs text-red-600">
-                                                Enter a valid 10-digit Indian mobile number.
-                                            </p>
-                                        )}
+                                    {formData.whatsapp_number && !phoneIsValid && (
+                                        <p className="mt-1 text-sm text-red-600">
+                                            Enter a valid 10-digit Indian mobile number.
+                                        </p>
+                                    )}
                                 </div>
 
                                 {errorMessage && (
@@ -696,15 +649,11 @@ function InterviewEnquiryPage() {
 
                                 <button
                                     type="button"
-                                    disabled={
-                                        !basicDetailsValid ||
-                                        checkingDuplicate
-                                    }
+                                    disabled={!basicDetailsValid || checkingDuplicate}
                                     onClick={startForm}
-                                    className={`w-full rounded-xl px-5 py-4 font-extrabold text-white transition ${
-                                        basicDetailsValid &&
-                                        !checkingDuplicate
-                                            ? "bg-blue-600 shadow-lg hover:bg-blue-700"
+                                    className={`w-full rounded-lg px-4 py-3 font-semibold text-white transition ${
+                                        basicDetailsValid && !checkingDuplicate
+                                            ? "bg-blue-600 hover:bg-blue-700"
                                             : "cursor-not-allowed bg-gray-300"
                                     }`}
                                 >
@@ -712,97 +661,80 @@ function InterviewEnquiryPage() {
                                         ? "Checking Your Details..."
                                         : "Continue →"}
                                 </button>
-
-                                <p className="text-center text-xs leading-5 text-gray-500">
-                                    Your information will only be used
-                                    by English Club to contact you
-                                    regarding Interview Practice.
-                                </p>
                             </div>
                         )}
 
                         {/* QUESTIONS */}
                         {started && (
                             <div>
-
-                                {/* BACK BUTTON */}
                                 <button
                                     type="button"
                                     onClick={goBack}
-                                    className="mb-5 text-sm font-bold text-gray-500 transition hover:text-blue-700"
+                                    className="mb-5 text-sm font-semibold text-gray-600 hover:text-blue-600"
                                 >
                                     ← Back
                                 </button>
 
-                                {/* QUESTION OPTIONS */}
-                                {questionStep <= 4 && currentQuestion && (
+                                {questionStep <= 5 && currentQuestion && (
                                     <div>
-                                        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-blue-600">
-                                            Question {currentQuestion.number}
-                                        </p>
-
-                                        <h2 className="mb-6 text-xl font-extrabold leading-snug text-gray-900 sm:text-2xl">
-                                            {currentQuestion.title}
+                                        <h2 className="mb-5 text-lg font-semibold leading-snug text-gray-800 sm:text-xl">
+                                            {currentQuestion.title} *
                                         </h2>
 
-                                        <div className="space-y-3">
-                                            {currentQuestion.options.map(
-                                                (option) => (
-                                                    <button
-                                                        type="button"
-                                                        key={option}
-                                                        onClick={() =>
-                                                            handleOption(
-                                                                currentQuestion.field,
-                                                                option
-                                                            )
-                                                        }
-                                                        className={optionClass(
-                                                            formData[
-                                                                currentQuestion.field
-                                                            ] === option
-                                                        )}
-                                                    >
-                                                        <span className="mr-3 text-blue-600">
-                                                            {formData[
-                                                                currentQuestion.field
-                                                            ] === option
-                                                                ? "◉"
-                                                                : "○"}
-                                                        </span>
-
-                                                        {option}
-                                                    </button>
-                                                )
-                                            )}
+                                        <div className="space-y-2">
+                                            {currentQuestion.options.map((option) => (
+                                                <button
+                                                    type="button"
+                                                    key={option}
+                                                    onClick={() =>
+                                                        handleOption(
+                                                            currentQuestion.field,
+                                                            option
+                                                        )
+                                                    }
+                                                    className={optionClass(
+                                                        formData[currentQuestion.field] === option
+                                                    )}
+                                                >
+                                                    <span className="mr-3 text-blue-600">
+                                                        {formData[currentQuestion.field] === option
+                                                            ? "◉"
+                                                            : "○"}
+                                                    </span>
+                                                    {option}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
 
                                 {/* FINAL SUBMIT */}
-                                {questionStep === 5 && (
+                                {questionStep === 6 && (
                                     <div className="text-center">
-                                        <div className="mb-4 text-5xl">
-                                            🎉
-                                        </div>
-
-                                        <h2 className="text-2xl font-extrabold text-gray-900">
-                                            Almost Done!
+                                        <h2 className="text-xl font-bold text-gray-900">
+                                            All Questions Completed
                                         </h2>
 
-                                        <p className="mt-2 text-sm leading-6 text-gray-600">
-                                            Your details are ready.
-                                            Submit your enquiry to
-                                            arrange your Free Demo Class.
+                                        <p className="mt-2 text-sm text-gray-600">
+                                            Submit your details to arrange your Free Demo Class.
                                         </p>
 
-                                        <div className="mt-6 space-y-3 rounded-2xl bg-blue-50 p-4 text-left">
+                                        <div className="mt-5 space-y-3 rounded-xl bg-blue-50 p-4 text-left">
                                             <div>
                                                 <p className="text-xs text-gray-500">
-                                                    Name
+                                                    Full Name
                                                 </p>
-                                                <p className="font-bold text-gray-900">
+                                                <p className="font-semibold text-gray-900">
                                                     {formatName(formData.full_name)}
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-xs text-gray-500">
+                                                    Education
+                                                </p>
+                                                <p className="font-semibold text-gray-900">
+                                                    {formData.education}
                                                 </p>
                                             </div>
 
@@ -810,7 +742,7 @@ function InterviewEnquiryPage() {
                                                 <p className="text-xs text-gray-500">
                                                     Career Status
                                                 </p>
-                                                <p className="font-bold text-gray-900">
+                                                <p className="font-semibold text-gray-900">
                                                     {formData.career_status}
                                                 </p>
                                             </div>
@@ -819,7 +751,7 @@ function InterviewEnquiryPage() {
                                                 <p className="text-xs text-gray-500">
                                                     Preferred Demo Time
                                                 </p>
-                                                <p className="font-bold text-blue-700">
+                                                <p className="font-semibold text-blue-700">
                                                     {formData.demo_class_time}
                                                 </p>
                                             </div>
@@ -834,26 +766,18 @@ function InterviewEnquiryPage() {
                                         <button
                                             type="submit"
                                             disabled={submitting}
-                                            className="mt-6 w-full rounded-xl bg-blue-600 px-5 py-4 font-extrabold text-white shadow-lg transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             {submitting
                                                 ? "Submitting..."
-                                                : "Submit Interview Enquiry →"}
+                                                : "Submit Enquiry →"}
                                         </button>
                                     </div>
                                 )}
-
-                                <p className="mt-7 text-center text-xs leading-5 text-gray-500">
-                                    Your information is safe with English Club.
-                                </p>
                             </div>
                         )}
                     </div>
                 </form>
-
-                <p className="mt-5 text-center text-xs text-white/80">
-                    © English Club | Interview Practice Program
-                </p>
             </div>
         </main>
     );

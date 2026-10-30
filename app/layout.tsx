@@ -20,9 +20,10 @@ export default function RootLayout({
 
   const isAdmin = pathname.startsWith("/admin");
   const isLanding =
-    pathname === "/english-online" ||
-    pathname === "/test-landing" ||
-    pathname === "/enquiry";
+  pathname === "/english-online" ||
+  pathname === "/test-landing" ||
+  pathname === "/enquiry" ||
+  pathname === "/enquiry/interview";
 
   return (
     <html lang="en">
