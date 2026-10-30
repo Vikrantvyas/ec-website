@@ -31,7 +31,7 @@ const initialForm: FormData = {
 };
 
 const OFFICE_BACKGROUND =
-    "linear-gradient(rgba(8,25,48,.58),rgba(8,25,48,.58)),url('https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1920&q=85')";
+    "linear-gradient(rgba(8,25,48,.58),rgba(8,25,48,.58)),url('https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1920&q=85')";
 
 const DEMO_TIME_SLOTS = Array.from(
     { length: 13 },
@@ -558,12 +558,10 @@ function InterviewEnquiryPage() {
 
                     <p className="mt-3 leading-7 text-gray-600">
                         Your Interview Enquiry has been submitted successfully.
-                        Our team will contact you on WhatsApp regarding your
-                        Free Interview Demo Class.
                     </p>
 
-                    <p className="mt-5 font-bold text-blue-700">
-                        Preferred Demo Time: {formData.demo_class_time}
+                    <p className="mt-3 leading-7 text-gray-600">
+                        Our team will contact you on WhatsApp.
                     </p>
                 </div>
             </main>
