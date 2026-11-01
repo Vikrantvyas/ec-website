@@ -7,7 +7,7 @@ import {
     AlertCircle,
     BarChart3,
     CheckSquare,
-    Eye,
+
     RefreshCw,
     Search,
     Square,
@@ -627,8 +627,8 @@ function CampaignHistoryContent() {
                                         <th className="px-4 py-3">Accepted</th>
                                         <th className="px-4 py-3">Delivered</th>
                                         <th className="px-4 py-3">Read</th>
-                                        <th className="px-4 py-3">Status</th>
-                                        
+                                        <th className="px-4 py-3 text-right">Cost (₹)</th>
+
                                     </tr>
                                 </thead>
 
@@ -671,21 +671,24 @@ function CampaignHistoryContent() {
                                                     />
                                                 </td>
 
-                                              <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-    {formatDate(campaign.created_at)}
-</td>
+                                                <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+                                                    {formatDate(campaign.created_at)}
+                                                </td>
 
-<td className="px-4 py-3">
-    <span className="font-medium text-gray-700">
-        {campaign.template_name || "—"}
-    </span>
-</td>
+                                                <td className="px-4 py-3">
+                                                    <span className="font-medium text-gray-700">
+                                                        {campaign.template_name || "—"}
+                                                    </span>
+                                                </td>
 
-<td className="px-4 py-3">
-    <p className="font-semibold text-gray-900">
-        {campaign.name}
-    </p>
-</td>
+                                                <td className="px-4 py-3">
+                                                    <Link
+                                                        href={`/admin/whatsapp/campaign-analysis/${encodeURIComponent(campaign.id)}`}
+                                                        className="font-semibold text-green-700 hover:text-green-900 hover:underline"
+                                                    >
+                                                        {campaign.name}
+                                                    </Link>
+                                                </td>
 
                                                 <td className="px-4 py-3">
                                                     {Number(campaign.total_recipients ?? 0).toLocaleString("en-IN")}
@@ -706,16 +709,10 @@ function CampaignHistoryContent() {
                                                 <td className="px-4 py-3 font-semibold text-green-600">
                                                     {Number(campaign.read_count ?? 0).toLocaleString("en-IN")}
                                                 </td>
+<td className="px-4 py-3 text-right font-semibold text-gray-800">
+    ₹{Number(campaign.estimated_cost ?? 0).toFixed(2)}
+</td>
 
-                                                <td className="px-4 py-3">
-                                                    <Link
-                                                        href={`/admin/whatsapp/campaign-analysis/${encodeURIComponent(campaign.id)}`}
-                                                        className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-gray-50"
-                                                    >
-                                                        <Eye className="h-3.5 w-3.5" />
-                                                        Analyze
-                                                    </Link>
-                                                </td>
                                             </tr>
                                         ))
                                     )}
