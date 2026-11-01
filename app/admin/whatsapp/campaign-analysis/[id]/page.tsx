@@ -11,7 +11,7 @@ import {
     Eye,
     RefreshCw,
     Send,
-        Users,
+    Users,
     XCircle,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
@@ -19,6 +19,7 @@ import PermissionGuard from "@/app/components/admin/PermissionGuard";
 
 type Campaign = {
     id: string;
+    template_id: string | null;
     name: string;
     status: string;
     total_recipients: number | null;
@@ -31,7 +32,15 @@ type Campaign = {
     started_at: string | null;
     completed_at: string | null;
 };
-
+type TemplateComponent = {
+    type?: string;
+    text?: string;
+    format?: string;
+    buttons?: {
+        type?: string;
+        text?: string;
+    }[];
+};
 type Recipient = {
     id: string;
     campaign_id: string;
@@ -232,6 +241,8 @@ function CampaignDetailsContent() {
     const campaignId = params.id;
 
     const [campaign, setCampaign] = useState<Campaign | null>(null);
+    const [templateName, setTemplateName] = useState("");
+    const [templateComponents, setTemplateComponents] = useState<TemplateComponent[]>([]);
     const [recipients, setRecipients] = useState<RecipientView[]>([]);
     const [contactsById, setContactsById] = useState<
         Record<string, ContactInfo>
@@ -271,7 +282,7 @@ function CampaignDetailsContent() {
             const { data: campaignData, error: campaignError } = await supabase
                 .from("whatsapp_campaigns")
                 .select(
-                    "id,name,status,total_recipients,accepted_count,delivered_count,read_count,failed_count,estimated_cost,created_at,started_at,completed_at"
+                    "id,name,template_id,status,total_recipients,accepted_count,delivered_count,read_count,failed_count,estimated_cost,created_at,started_at,completed_at"
                 )
                 .eq("id", campaignId)
                 .single();
@@ -279,7 +290,27 @@ function CampaignDetailsContent() {
             if (campaignError) throw campaignError;
 
             setCampaign(campaignData as Campaign);
+            setTemplateName("");
+            setTemplateComponents([]);
 
+            if (campaignData.template_id) {
+                const { data: templateData, error: templateError } = await supabase
+                    .from("whatsapp_templates")
+                    .select("template_name,components")
+                    .eq("id", campaignData.template_id)
+                    .maybeSingle();
+
+                if (templateError) throw templateError;
+
+                if (templateData) {
+                    setTemplateName(templateData.template_name ?? "");
+                    setTemplateComponents(
+                        Array.isArray(templateData.components)
+                            ? (templateData.components as TemplateComponent[])
+                            : []
+                    );
+                }
+            }
             const { data: recipientData, error: recipientError } = await supabase
                 .from("whatsapp_campaign_recipients")
                 .select(
@@ -571,7 +602,7 @@ function CampaignDetailsContent() {
                 </div>
             ) : campaign ? (
                 <>
-                    
+
                     <div className="rounded-xl border bg-white p-4 md:p-5">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div>
@@ -589,7 +620,66 @@ function CampaignDetailsContent() {
                             <StatusBadge status={campaign.status} />
                         </div>
                     </div>
+{templateComponents.length > 0 && (
+    <section className="rounded-xl border bg-white p-4 md:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-bold text-gray-900">
+                Message Sent in This Campaign
+            </h2>
 
+            {templateName && (
+                <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                    {templateName}
+                </span>
+            )}
+        </div>
+
+        <div className="max-w-2xl rounded-xl border bg-gray-50 p-4">
+            {templateComponents.map((component, index) => {
+                const type = component.type?.toUpperCase();
+
+                if (type === "BODY") {
+                    return (
+                        <p
+                            key={index}
+                            className="whitespace-pre-wrap break-words text-sm leading-7 text-gray-800"
+                        >
+                            {component.text}
+                        </p>
+                    );
+                }
+
+                if (type === "FOOTER") {
+                    return (
+                        <p
+                            key={index}
+                            className="mt-4 border-t pt-3 text-xs text-gray-500"
+                        >
+                            {component.text}
+                        </p>
+                    );
+                }
+
+                if (type === "BUTTONS" && component.buttons?.length) {
+                    return (
+                        <div key={index} className="mt-4 space-y-2">
+                            {component.buttons.map((button, buttonIndex) => (
+                                <div
+                                    key={buttonIndex}
+                                    className="rounded-lg border bg-white px-3 py-2 text-center text-sm font-medium text-green-700"
+                                >
+                                    {button.text}
+                                </div>
+                            ))}
+                        </div>
+                    );
+                }
+
+                return null;
+            })}
+        </div>
+    </section>
+)}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <MetricCard
                             title="Recipient rows"

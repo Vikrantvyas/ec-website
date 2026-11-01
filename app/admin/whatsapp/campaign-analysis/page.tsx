@@ -21,6 +21,8 @@ import { BotAnalysis } from "./BotAnalysis";
 
 type Campaign = {
     id: string;
+    template_id: string | null;
+    template_name?: string;
     name: string;
     status: string;
     total_recipients: number | null;
@@ -132,7 +134,7 @@ function CampaignHistoryContent() {
             const { data, error: queryError } = await supabase
                 .from("whatsapp_campaigns")
                 .select(
-                    "id,name,status,total_recipients,accepted_count,delivered_count,read_count,failed_count,estimated_cost,created_at,started_at,completed_at"
+                    "id,name,template_id,status,total_recipients,accepted_count,delivered_count,read_count,failed_count,estimated_cost,created_at,started_at,completed_at"
                 )
                 .order("created_at", { ascending: false })
                 .limit(500);
@@ -140,14 +142,42 @@ function CampaignHistoryContent() {
             if (queryError) throw queryError;
 
             const rows = (data ?? []) as Campaign[];
+            const templateIds = Array.from(
+                new Set(
+                    rows
+                        .map((campaign) => campaign.template_id)
+                        .filter((id): id is string => Boolean(id))
+                )
+            );
 
+            const templateNamesById = new Map<string, string>();
+
+            if (templateIds.length > 0) {
+                const { data: templateData, error: templateError } = await supabase
+                    .from("whatsapp_templates")
+                    .select("id,template_name")
+                    .in("id", templateIds);
+
+                if (templateError) throw templateError;
+
+                for (const template of templateData ?? []) {
+                    templateNamesById.set(template.id, template.template_name);
+                }
+            }
+
+            const rowsWithTemplate = rows.map((campaign) => ({
+                ...campaign,
+                template_name: campaign.template_id
+                    ? templateNamesById.get(campaign.template_id) ?? "—"
+                    : "—",
+            }));
             if (rows.length === 0) {
                 setCampaigns([]);
                 setSelectedIds([]);
                 return;
             }
 
-            const campaignIds = rows.map((campaign) => campaign.id);
+            const campaignIds = rowsWithTemplate.map((campaign) => campaign.id);
 
             const recipientRows: CampaignRecipientRow[] = [];
 
@@ -246,7 +276,7 @@ function CampaignHistoryContent() {
                 metricsByCampaign.set(recipient.campaign_id, metrics);
             }
 
-            const updatedRows = rows.map((campaign) => {
+            const updatedRows = rowsWithTemplate.map((campaign) => {
                 const metrics = metricsByCampaign.get(campaign.id);
 
                 if (!metrics || metrics.total === 0) return campaign;
@@ -264,7 +294,7 @@ function CampaignHistoryContent() {
             setCampaigns(updatedRows);
 
             setSelectedIds((current) =>
-                current.filter((id) => rows.some((row) => row.id === id))
+                current.filter((id) => rowsWithTemplate.some((row) => row.id === id))
             );
         } catch (err) {
             setError(
@@ -589,15 +619,16 @@ function CampaignHistoryContent() {
                                             </button>
                                         </th>
 
-                                        <th className="px-4 py-3">Campaign</th>
                                         <th className="px-4 py-3">Created</th>
+                                        <th className="px-4 py-3">Approved Message Name</th>
+                                        <th className="px-4 py-3">Campaign Name</th>
                                         <th className="px-4 py-3">Recipients</th>
                                         <th className="px-4 py-3">Failed</th>
                                         <th className="px-4 py-3">Accepted</th>
                                         <th className="px-4 py-3">Delivered</th>
                                         <th className="px-4 py-3">Read</th>
                                         <th className="px-4 py-3">Status</th>
-                                        <th className="px-4 py-3">Action</th>
+                                        
                                     </tr>
                                 </thead>
 
@@ -640,36 +671,41 @@ function CampaignHistoryContent() {
                                                     />
                                                 </td>
 
-                                                <td className="px-4 py-3">
-                                                    <p className="font-semibold text-gray-900">
-                                                        {campaign.name}
-                                                    </p>
-
-                                                </td>
-
-                                                <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                                                    {formatDate(campaign.created_at)}
-                                                </td>
-
-                                                <td className="px-4 py-3">
-    {Number(campaign.total_recipients ?? 0).toLocaleString("en-IN")}
-</td>
-
-<td className="px-4 py-3 font-semibold text-red-600">
-    {Number(campaign.failed_count ?? 0).toLocaleString("en-IN")}
+                                              <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+    {formatDate(campaign.created_at)}
 </td>
 
 <td className="px-4 py-3">
-    {Number(campaign.accepted_count ?? 0).toLocaleString("en-IN")}
+    <span className="font-medium text-gray-700">
+        {campaign.template_name || "—"}
+    </span>
 </td>
 
 <td className="px-4 py-3">
-    {Number(campaign.delivered_count ?? 0).toLocaleString("en-IN")}
+    <p className="font-semibold text-gray-900">
+        {campaign.name}
+    </p>
 </td>
 
-<td className="px-4 py-3 font-semibold text-green-600">
-    {Number(campaign.read_count ?? 0).toLocaleString("en-IN")}
-</td>
+                                                <td className="px-4 py-3">
+                                                    {Number(campaign.total_recipients ?? 0).toLocaleString("en-IN")}
+                                                </td>
+
+                                                <td className="px-4 py-3 font-semibold text-red-600">
+                                                    {Number(campaign.failed_count ?? 0).toLocaleString("en-IN")}
+                                                </td>
+
+                                                <td className="px-4 py-3">
+                                                    {Number(campaign.accepted_count ?? 0).toLocaleString("en-IN")}
+                                                </td>
+
+                                                <td className="px-4 py-3">
+                                                    {Number(campaign.delivered_count ?? 0).toLocaleString("en-IN")}
+                                                </td>
+
+                                                <td className="px-4 py-3 font-semibold text-green-600">
+                                                    {Number(campaign.read_count ?? 0).toLocaleString("en-IN")}
+                                                </td>
 
                                                 <td className="px-4 py-3">
                                                     <Link
