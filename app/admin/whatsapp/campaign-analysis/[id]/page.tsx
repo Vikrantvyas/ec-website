@@ -11,8 +11,7 @@ import {
     Eye,
     RefreshCw,
     Send,
-    ShieldAlert,
-    Users,
+        Users,
     XCircle,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
@@ -572,18 +571,7 @@ function CampaignDetailsContent() {
                 </div>
             ) : campaign ? (
                 <>
-                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                        <div className="flex items-start gap-2">
-                            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" />
-                            <p>
-                                Delivery status available message logs aur recipient records
-                                se calculate kiya gaya hai. Saved campaign counters purane ho
-                                sakte hain. Replies aur bot sessions ko campaign-attributed
-                                conversion nahi maana gaya hai.
-                            </p>
-                        </div>
-                    </div>
-
+                    
                     <div className="rounded-xl border bg-white p-4 md:p-5">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div>

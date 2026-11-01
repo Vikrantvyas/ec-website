@@ -33,7 +33,49 @@ type Campaign = {
     started_at: string | null;
     completed_at: string | null;
 };
+type CampaignRecipientRow = {
+    campaign_id: string;
+    status: string | null;
+    message_id: string | null;
+};
 
+type CampaignLogRow = {
+    message_id: string | null;
+    status: string | null;
+};
+
+function normalizeCampaignStatus(value: string | null | undefined) {
+    const status = (value ?? "").toLowerCase().trim();
+
+    if (status === "read") return "read";
+    if (status === "delivered") return "delivered";
+    if (status === "failed") return "failed";
+    if (status === "sent") return "sent";
+    if (status === "accepted") return "accepted";
+
+    if (["queued", "sending", "skipped"].includes(status)) {
+        return "pending";
+    }
+
+    return "unknown";
+}
+
+function getCampaignRecipientStatus(
+    recipient: CampaignRecipientRow,
+    logs: CampaignLogRow[]
+) {
+    const statuses = logs
+        .filter((log) => log.status && log.status.toLowerCase() !== "status")
+        .map((log) => normalizeCampaignStatus(log.status));
+
+    if (statuses.includes("read")) return "read";
+    if (statuses.includes("delivered")) return "delivered";
+    if (statuses.includes("failed")) return "failed";
+    if (statuses.includes("sent")) return "sent";
+    if (statuses.includes("accepted")) return "accepted";
+
+    return normalizeCampaignStatus(recipient.status);
+}
 function formatDate(value: string | null | undefined) {
     if (!value) return "—";
 
@@ -99,7 +141,127 @@ function CampaignHistoryContent() {
 
             const rows = (data ?? []) as Campaign[];
 
-            setCampaigns(rows);
+            if (rows.length === 0) {
+                setCampaigns([]);
+                setSelectedIds([]);
+                return;
+            }
+
+            const campaignIds = rows.map((campaign) => campaign.id);
+
+            const recipientRows: CampaignRecipientRow[] = [];
+
+            for (let offset = 0; ; offset += 1000) {
+                const { data: recipientData, error: recipientError } = await supabase
+                    .from("whatsapp_campaign_recipients")
+                    .select("campaign_id,status,message_id")
+                    .in("campaign_id", campaignIds)
+                    .order("created_at", { ascending: true })
+                    .range(offset, offset + 999);
+
+                if (recipientError) throw recipientError;
+
+                const batch = (recipientData ?? []) as CampaignRecipientRow[];
+                recipientRows.push(...batch);
+
+                if (batch.length < 1000) break;
+            }
+
+            const messageIds = Array.from(
+                new Set(
+                    recipientRows
+                        .map((row) => row.message_id)
+                        .filter((id): id is string => Boolean(id))
+                )
+            );
+
+            const logsByMessage = new Map<string, CampaignLogRow[]>();
+
+            for (let i = 0; i < messageIds.length; i += 100) {
+                const batchIds = messageIds.slice(i, i + 100);
+
+                for (let offset = 0; ; offset += 1000) {
+                    const { data: logData, error: logError } = await supabase
+                        .from("whatsapp_message_logs")
+                        .select("message_id,status")
+                        .eq("direction", "outbound")
+                        .in("message_id", batchIds)
+                        .order("event_at", { ascending: false })
+                        .range(offset, offset + 999);
+
+                    if (logError) throw logError;
+
+                    const batch = (logData ?? []) as CampaignLogRow[];
+
+                    for (const log of batch) {
+                        if (!log.message_id) continue;
+
+                        const existing = logsByMessage.get(log.message_id) ?? [];
+                        existing.push(log);
+                        logsByMessage.set(log.message_id, existing);
+                    }
+
+                    if (batch.length < 1000) break;
+                }
+            }
+
+            const metricsByCampaign = new Map<
+                string,
+                {
+                    total: number;
+                    accepted: number;
+                    delivered: number;
+                    read: number;
+                    failed: number;
+                }
+            >();
+
+            for (const recipient of recipientRows) {
+                const relatedLogs = recipient.message_id
+                    ? logsByMessage.get(recipient.message_id) ?? []
+                    : [];
+
+                const status = getCampaignRecipientStatus(recipient, relatedLogs);
+
+                const metrics = metricsByCampaign.get(recipient.campaign_id) ?? {
+                    total: 0,
+                    accepted: 0,
+                    delivered: 0,
+                    read: 0,
+                    failed: 0,
+                };
+
+                metrics.total++;
+
+                if (status === "sent" || status === "accepted") {
+                    metrics.accepted++;
+                } else if (status === "delivered") {
+                    metrics.delivered++;
+                } else if (status === "read") {
+                    metrics.read++;
+                } else if (status === "failed") {
+                    metrics.failed++;
+                }
+
+                metricsByCampaign.set(recipient.campaign_id, metrics);
+            }
+
+            const updatedRows = rows.map((campaign) => {
+                const metrics = metricsByCampaign.get(campaign.id);
+
+                if (!metrics || metrics.total === 0) return campaign;
+
+                return {
+                    ...campaign,
+                    total_recipients: metrics.total,
+                    accepted_count: metrics.accepted,
+                    delivered_count: metrics.delivered,
+                    read_count: metrics.read,
+                    failed_count: metrics.failed,
+                };
+            });
+
+            setCampaigns(updatedRows);
 
             setSelectedIds((current) =>
                 current.filter((id) => rows.some((row) => row.id === id))
@@ -409,7 +571,7 @@ function CampaignHistoryContent() {
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1050px] text-left text-sm">
+                            <table className="w-full min-w-[1150px] text-left text-sm">
                                 <thead className="bg-gray-50 text-xs uppercase text-gray-500">
                                     <tr>
                                         <th className="px-4 py-3">
@@ -430,9 +592,10 @@ function CampaignHistoryContent() {
                                         <th className="px-4 py-3">Campaign</th>
                                         <th className="px-4 py-3">Created</th>
                                         <th className="px-4 py-3">Recipients</th>
-                                        <th className="px-4 py-3">Accepted</th>
-                                        <th className="px-4 py-3">Read</th>
                                         <th className="px-4 py-3">Failed</th>
+                                        <th className="px-4 py-3">Accepted</th>
+                                        <th className="px-4 py-3">Delivered</th>
+                                        <th className="px-4 py-3">Read</th>
                                         <th className="px-4 py-3">Status</th>
                                         <th className="px-4 py-3">Action</th>
                                     </tr>
@@ -442,7 +605,7 @@ function CampaignHistoryContent() {
                                     {loading ? (
                                         <tr>
                                             <td
-                                                colSpan={9}
+                                                colSpan={10}
                                                 className="px-4 py-10 text-center text-gray-500"
                                             >
                                                 Campaigns load ho rahi hain...
@@ -451,7 +614,7 @@ function CampaignHistoryContent() {
                                     ) : filteredCampaigns.length === 0 ? (
                                         <tr>
                                             <td
-                                                colSpan={9}
+                                                colSpan={10}
                                                 className="px-4 py-10 text-center text-gray-500"
                                             >
                                                 Koi campaign nahi mili.
@@ -482,9 +645,6 @@ function CampaignHistoryContent() {
                                                         {campaign.name}
                                                     </p>
 
-                                                    <p className="mt-1 max-w-[240px] truncate text-xs text-gray-400">
-                                                        {campaign.id}
-                                                    </p>
                                                 </td>
 
                                                 <td className="whitespace-nowrap px-4 py-3 text-gray-600">
@@ -492,24 +652,24 @@ function CampaignHistoryContent() {
                                                 </td>
 
                                                 <td className="px-4 py-3">
-                                                    {Number(campaign.total_recipients ?? 0).toLocaleString("en-IN")}
-                                                </td>
+    {Number(campaign.total_recipients ?? 0).toLocaleString("en-IN")}
+</td>
 
-                                                <td className="px-4 py-3">
-                                                    {Number(campaign.accepted_count ?? 0).toLocaleString("en-IN")}
-                                                </td>
+<td className="px-4 py-3 font-semibold text-red-600">
+    {Number(campaign.failed_count ?? 0).toLocaleString("en-IN")}
+</td>
 
-                                                <td className="px-4 py-3">
-                                                    {Number(campaign.read_count ?? 0).toLocaleString("en-IN")}
-                                                </td>
+<td className="px-4 py-3">
+    {Number(campaign.accepted_count ?? 0).toLocaleString("en-IN")}
+</td>
 
-                                                <td className="px-4 py-3">
-                                                    {Number(campaign.failed_count ?? 0).toLocaleString("en-IN")}
-                                                </td>
+<td className="px-4 py-3">
+    {Number(campaign.delivered_count ?? 0).toLocaleString("en-IN")}
+</td>
 
-                                                <td className="px-4 py-3">
-                                                    <StatusBadge status={campaign.status} />
-                                                </td>
+<td className="px-4 py-3 font-semibold text-green-600">
+    {Number(campaign.read_count ?? 0).toLocaleString("en-IN")}
+</td>
 
                                                 <td className="px-4 py-3">
                                                     <Link
