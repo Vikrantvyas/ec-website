@@ -1,0 +1,63 @@
+1882352 | Fri Oct 30 17:00:43 2026 | Add Meta Reports bulk delete functionality
+M	app/components/admin/meta/MetaReportTable.tsx
+M	app/enquiry/interview/page.tsx
+
+4eae164 | Fri Oct 30 10:04:21 2026 | update interview enquiry landing page
+M	app/enquiry/interview/page.tsx
+
+c34eea1 | Fri Oct 30 09:33:51 2026 | update interview enquiry landing page
+M	app/enquiry/interview/page.tsx
+
+75f0220 | Fri Oct 30 09:18:09 2026 | hide website navigation on interview landing page
+M	app/enquiry/interview/page.tsx
+M	app/layout.tsx
+
+b9d1187 | Fri Oct 30 09:04:45 2026 | add interview enquiry page
+A	app/enquiry/interview/page.tsx
+
+4de720c | Wed Oct 28 20:00:19 2026 | Add URL button support to WhatsApp bot builder and inbox
+M	app/admin/whatsapp/inbox/page.tsx
+
+e7b1ff2 | Wed Oct 28 19:03:25 2026 | Add URL button configuration to bot builder
+M	app/admin/whatsapp/bots/page.tsx
+
+bd6704d | Wed Oct 28 17:21:12 2026 | Fix inbox right-click status update popup
+M	app/admin/whatsapp/InboxRightClick.tsx
+
+0934bac | Wed Oct 28 10:54:18 2026 | Fix WhatsApp inbox label filters and bulk selection
+M	app/admin/whatsapp/InboxBulkActions.tsx
+M	app/admin/whatsapp/InboxFilters.tsx
+
+394cf7f | Wed Oct 28 09:46:09 2026 | Fix WhatsApp inbox header and filter popup layout
+M	app/admin/whatsapp/InboxBulkActions.tsx
+M	app/admin/whatsapp/inbox/page.tsx
+
+0a30c0e | Wed Oct 28 09:33:59 2026 | Add shadow to WhatsApp chat header
+M	app/admin/whatsapp/InboxBulkActions.tsx
+M	app/admin/whatsapp/inbox/page.tsx
+
+7718338 | Wed Oct 28 09:18:17 2026 | Improve WhatsApp inbox chat list header
+M	app/admin/whatsapp/InboxBulkActions.tsx
+
+88d6769 | Wed Oct 28 08:52:02 2026 | Add smart message search to WhatsApp inbox filters
+M	app/admin/whatsapp/InboxBulkActions.tsx
+M	app/admin/whatsapp/InboxFilters.tsx
+
+990e41e | Wed Oct 28 08:01:55 2026 | Fix inbox filters TypeScript setter type
+M	app/admin/whatsapp/InboxFilters.tsx
+
+cb6239a | Wed Oct 28 07:57:16 2026 | Update WhatsApp inbox filters and bulk actions
+M	app/admin/whatsapp/InboxBulkActions.tsx
+A	app/admin/whatsapp/InboxFilters.tsx
+
+d22d39c | Tue Oct 27 19:39:31 2026 | Add demo slot date and time filter in WhatsApp inbox
+M	app/admin/demo-planner/page.tsx
+M	app/admin/whatsapp/InboxBulkActions.tsx
+
+76fccce | Tue Oct 27 18:31:54 2026 | Sort demo students and add English level display
+M	app/admin/demo-planner/page.tsx
+M	app/admin/whatsapp/InboxBulkActions.tsx
+M	app/admin/whatsapp/InboxRightClick.tsx
+
+f1d4d7d | Tue Oct 27 09:16:40 2026 | Fix bulk messaging log issue and add WhatsApp recipient exclusion
+M	app/admin/whatsapp/page.tsx

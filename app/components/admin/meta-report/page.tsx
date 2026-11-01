@@ -5,6 +5,7 @@ import MetaReportFilters from "@/app/components/admin/meta/MetaReportFilters";
 import MetaReportCharts from "@/app/components/admin/meta/MetaReportCharts";
 import MetaReportInsights from "@/app/components/admin/meta/MetaReportInsights";
 import MetaReportTable from "@/app/components/admin/meta/MetaReportTable";
+
 type MetaLead = {
     id: string;
     meta_lead_id: string | null;
@@ -33,6 +34,7 @@ type MetaLead = {
     demo_attended: boolean | null;
     class_joined: boolean | null;
 };
+
 type Option = {
     value: string;
     label: string;
@@ -68,7 +70,9 @@ const uniqueOptions = (
             label: value,
         }));
 };
+
 export default function MetaReportPage() {
+
     const [leads, setLeads] = useState<MetaLead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -121,6 +125,7 @@ export default function MetaReportPage() {
             return;
         }
         setLeads((data || []) as MetaLead[]);
+        
         setLoading(false);
     }
     const campaigns = useMemo(
@@ -197,31 +202,31 @@ export default function MetaReportPage() {
             }));
     }, [leads]);
     const englishLevels = useMemo(() => {
-    const values = Array.from(
-        new Set(
-            leads
-                .map((lead) => lead.english_level)
-                .filter(
-                    (value): value is string =>
-                        typeof value === "string" && value.trim() !== ""
-                )
-                .map((value) => normalizeMetaValue(value))
-                .filter(Boolean)
-        )
-    );
+        const values = Array.from(
+            new Set(
+                leads
+                    .map((lead) => lead.english_level)
+                    .filter(
+                        (value): value is string =>
+                            typeof value === "string" && value.trim() !== ""
+                    )
+                    .map((value) => normalizeMetaValue(value))
+                    .filter(Boolean)
+            )
+        );
 
-    const englishLevelLabels: Record<string, string> = {
-    need_advanced_batch: "Need Advanced Batch",
-    need_english_to_english_batch: "Need English to English Batch",
-};
+        const englishLevelLabels: Record<string, string> = {
+            need_advanced_batch: "Need Advanced Batch",
+            need_english_to_english_batch: "Need English to English Batch",
+        };
 
-    return values
-        .sort((a, b) => a.localeCompare(b, "hi"))
-        .map((value) => ({
-            value,
-            label: englishLevelLabels[value] || value,
-        }));
-}, [leads]);
+        return values
+            .sort((a, b) => a.localeCompare(b, "hi"))
+            .map((value) => ({
+                value,
+                label: englishLevelLabels[value] || value,
+            }));
+    }, [leads]);
     const demoTimes = useMemo(
         () => uniqueOptions(leads, "demo_class_time"),
         [leads]
@@ -403,6 +408,8 @@ export default function MetaReportPage() {
         communityClicked,
         search,
     ]);
+    
+                
     const todayCount = useMemo(() => {
         const today = new Date();
         return filteredLeads.filter((lead) => {
@@ -577,6 +584,7 @@ export default function MetaReportPage() {
                     onChange={handleFilterChange}
                     onReset={resetFilters}
                 />
+                
                 <MetaReportCharts leads={filteredLeads} />
                 <MetaReportInsights leads={filteredLeads} />
                 <MetaReportTable
