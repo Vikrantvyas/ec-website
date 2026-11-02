@@ -265,10 +265,12 @@ function CampaignHistoryContent() {
 
                 if (status === "sent" || status === "accepted") {
                     metrics.accepted++;
-                } else if (status === "delivered") {
+                } else if (status === "delivered" || status === "read") {
                     metrics.delivered++;
-                } else if (status === "read") {
-                    metrics.read++;
+
+                    if (status === "read") {
+                        metrics.read++;
+                    }
                 } else if (status === "failed") {
                     metrics.failed++;
                 }
@@ -709,9 +711,9 @@ function CampaignHistoryContent() {
                                                 <td className="px-4 py-3 font-semibold text-green-600">
                                                     {Number(campaign.read_count ?? 0).toLocaleString("en-IN")}
                                                 </td>
-<td className="px-4 py-3 text-right font-semibold text-gray-800">
-    ₹{Number(campaign.estimated_cost ?? 0).toFixed(2)}
-</td>
+                                                <td className="px-4 py-3 text-right font-semibold text-gray-800">
+                                                    ₹{Number(campaign.estimated_cost ?? 0).toFixed(2)}
+                                                </td>
 
                                             </tr>
                                         ))
