@@ -555,14 +555,19 @@ export default function WhatsAppBotsPage() {
             }
         }
 
-        if (
-            (startMode === "automatic" || startMode === "both") &&
-            !triggerKeyword.trim()
+              if (
+            startMode === "automatic" ||
+            (
+                startMode === "both" &&
+                !selectedTemplateId
+            )
         ) {
-            setError(
-                "Automatic Start के लिए अभी Trigger Keyword भरें।"
-            );
-            return;
+            if (!triggerKeyword.trim()) {
+                setError(
+                    "Automatic Start के लिए Trigger Keyword भरें।"
+                );
+                return;
+            }
         }
 
         setSaving(true);
@@ -1327,7 +1332,7 @@ export default function WhatsAppBotsPage() {
                                                                 <option value="text">Normal Text</option>
                                                                 <option value="buttons">Reply Buttons (max 3)</option>
                                                                 <option value="list">List Message (max 10)</option>
-                                                                
+
                                                             </select>
                                                         </label>
 
@@ -1712,7 +1717,7 @@ export default function WhatsAppBotsPage() {
                                                             })}
                                                         </div>
                                                     )}
-                                                                                                        {node.type === "url_button" && (
+                                                    {node.type === "url_button" && (
                                                         <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
                                                             <p className="mb-2 text-xs font-semibold text-slate-600">
                                                                 URL BUTTON PREVIEW
