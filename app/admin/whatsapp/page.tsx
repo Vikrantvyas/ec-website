@@ -78,7 +78,7 @@ export default function WhatsAppBulkPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [templateId, setTemplateId] = useState("");
-  const [headerImageUrl, setHeaderImageUrl] = useState("");
+
   const [campaignName, setCampaignName] = useState("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -164,7 +164,7 @@ export default function WhatsAppBulkPage() {
   const selectedTemplate = templates.find(
     (item) => item.id === templateId
   );
-  const templateHasImageHeader = Array.isArray(selectedTemplate?.components) && selectedTemplate.components.some((item: any) => item?.type?.toUpperCase() === "HEADER" && item?.format?.toUpperCase() === "IMAGE");
+
   const filteredContacts = useMemo(() => {
     const term = search.trim().toLowerCase();
     return contacts.filter((contact) => {
@@ -241,10 +241,7 @@ export default function WhatsAppBulkPage() {
       setError("Selected template Active nahi hai.");
       return;
     }
-    if (templateHasImageHeader && !/^https:\/\//i.test(headerImageUrl.trim())) {
-      setError("Image Header wale template ke liye public HTTPS image URL dena zaroori hai.");
-      return;
-    }
+
     const recipients = Array.from(
       new Set([
         ...selectedContacts.map((contact) => contact.phone),
@@ -300,9 +297,7 @@ export default function WhatsAppBulkPage() {
               template_id: selectedTemplate.id,
               template_name: selectedTemplate.template_name,
               language_code: selectedTemplate.language_code,
-              header_image_url: templateHasImageHeader
-                ? headerImageUrl.trim()
-                : null,
+
             },
           });
 
@@ -355,9 +350,31 @@ export default function WhatsAppBulkPage() {
     }
 
   }
+  const templateComponents = Array.isArray(selectedTemplate?.components)
+    ? (selectedTemplate.components as any[])
+    : [];
+
+  const headerComponent = templateComponents.find(
+    (item) => item?.type?.toUpperCase() === "HEADER"
+  );
+
   const bodyText = selectedTemplate
     ? getTemplateBody(selectedTemplate.components)
     : "";
+
+  const footerComponent = templateComponents.find(
+    (item) => item?.type?.toUpperCase() === "FOOTER"
+  );
+
+  const buttonsComponent = templateComponents.find(
+    (item) => item?.type?.toUpperCase() === "BUTTONS"
+  );
+
+  const headerImageUrl =
+    headerComponent?.format?.toUpperCase() === "IMAGE"
+      ? headerComponent?.example?.header_handle?.[0]
+      : "";
+
   const templateIsActive =
     selectedTemplate?.status?.toLowerCase() === "active";
   return (
@@ -423,228 +440,157 @@ export default function WhatsAppBulkPage() {
           value={`₹${estimatedCost.toFixed(2)}`}
         />
       </div>
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)\_minmax(320px,0.8fr)]">
-        <section className="min-w-0 rounded-xl border bg-white">
-          <div className="border-b p-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Paste Mobile Numbers
-            </h2>
-            <textarea
-              value={pastedNumbers}
-              onChange={(event) => setPastedNumbers(event.target.value)}
-              placeholder={"9876543210\n919876543210"}
-              rows={5}
-              className="mt-3 w-full rounded-lg border px-3 py-2 text-sm"
-            />
-            <p className="mt-2 text-sm text-gray-600">
-              Unique valid numbers: {pastedRecipients.length}
-            </p>
-          </div>
-          <div className="border-b bg-amber-50 p-4">
-            <h2 className="font-semibold text-gray-900">
-              Exclude Mobile Numbers
-            </h2>
-            <p className="mt-1 text-sm text-gray-600">
-              जिन नंबरों को message नहीं भेजना है, उन्हें यहाँ paste करें।
-            </p>
-            <textarea
-              value={excludedNumbers}
-              onChange={(event) => setExcludedNumbers(event.target.value)}
-              placeholder={"919876543210\n919123456789"}
-              rows={4}
-              className="mt-3 w-full rounded-lg border bg-white px-3 py-2 text-sm"
-            />
-            <p className="mt-2 text-sm font-medium text-amber-800">
-              Excluded numbers: {excludedRecipients.size}
-            </p>
-          </div>
-          <div className="border-b p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
-                1. Select Contacts
-              </h2>
-              <span className="text-xs text-gray-500">
-                Sirf source se filter karke bheje gaye contacts yahan dikhte hain.
-              </span>
-            </div>
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Name, mobile ya course search karein..."
-                  className="w-full rounded-lg border py-2.5 pl-9 pr-3 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
+        <div className="min-w-0 space-y-4">
+          <section className="rounded-xl border bg-white">
+            <div className="grid grid-cols-1 gap-3 border-b p-4 md:grid-cols-2">
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Paste Mobile Numbers
+                </h2>
+                <textarea
+                  value={pastedNumbers}
+                  onChange={(event) => setPastedNumbers(event.target.value)}
+                  placeholder={"9876543210\n919876543210"}
+                  rows={4}
+                  className="mt-3 w-full rounded-lg border px-3 py-2 text-sm"
                 />
+                <p className="mt-2 text-sm text-gray-600">
+                  Unique valid numbers: {pastedRecipients.length}
+                </p>
               </div>
-              <label className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
-                <Filter className="h-4 w-4 text-gray-500" />
-                <input
-                  type="checkbox"
-                  checked={showSelectedOnly}
-                  onChange={(event) =>
-                    setShowSelectedOnly(event.target.checked)
-                  }
-                  className="accent-green-600"
+
+              <div className="min-w-0 rounded-lg bg-amber-50 p-3">
+                <h2 className="font-semibold text-gray-900">
+                  Exclude Mobile Numbers
+                </h2>
+
+                <textarea
+                  value={excludedNumbers}
+                  onChange={(event) => setExcludedNumbers(event.target.value)}
+                  placeholder={"919876543210\n919123456789"}
+                  rows={4}
+                  className="mt-3 w-full rounded-lg border bg-white px-3 py-2 text-sm"
                 />
-                Selected only
-              </label>
+                <p className="mt-2 text-sm font-medium text-amber-800">
+                  Excluded numbers: {excludedRecipients.size}
+                </p>
+              </div>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-sm text-gray-600">
-                Source: {contacts.length > 0 ? "Filtered Meta Report contacts" : "No source selected"}
-              </span>
-              <button
-                onClick={toggleVisibleContacts}
-                disabled={filteredContacts.length === 0}
-                className="ml-auto rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
-              >
-                Select / deselect visible
-              </button>
+
+            <div className="border-b p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  1. Select Contacts
+                </h2>
+                <span className="text-xs text-gray-500">
+                  Sirf source se filter karke bheje gaye contacts yahan dikhte hain.
+                </span>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Name, mobile ya course search karein..."
+                    className="w-full rounded-lg border py-2.5 pl-9 pr-3 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
+                  />
+                </div>
+                <label className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                  <Filter className="h-4 w-4 text-gray-500" />
+                  <input
+                    type="checkbox"
+                    checked={showSelectedOnly}
+                    onChange={(event) =>
+                      setShowSelectedOnly(event.target.checked)
+                    }
+                    className="accent-green-600"
+                  />
+                  Selected only
+                </label>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  Source: {contacts.length > 0 ? "Filtered Meta Report contacts" : "No source selected"}
+                </span>
+                <button
+                  onClick={toggleVisibleContacts}
+                  disabled={filteredContacts.length === 0}
+                  className="ml-auto rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Select / deselect visible
+                </button>
+              </div>
             </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[650px] text-left text-sm">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-500">
-                <tr>
-                  <th className="w-10 px-4 py-3">Select</th>
-                  <th className="px-4 py-3">Contact</th>
-                  <th className="px-4 py-3">Mobile</th>
-                  <th className="px-4 py-3">Course / Info</th>
-                  <th className="px-4 py-3">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {loading ? (
+            <div className="max-h-[420px] overflow-auto">
+              <table className="w-full min-w-[650px] text-left text-sm">
+                <thead className="bg-gray-50 text-xs uppercase text-gray-500">
                   <tr>
-                    <td colSpan={5} className="px-4 py-12 text-center text-gray-500">
-                      Contacts load ho rahe hain...
-                    </td>
+                    <th className="w-10 px-4 py-3">Select</th>
+                    <th className="px-4 py-3">Contact</th>
+                    <th className="px-4 py-3">Mobile</th>
+                    <th className="px-4 py-3">Course / Info</th>
+                    <th className="px-4 py-3">Date</th>
                   </tr>
-                ) : filteredContacts.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-12 text-center text-gray-500">
-                      Koi contact nahi mila.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredContacts.map((contact) => (
-                    <tr
-                      key={`${contact.source}-${contact.id}`}
-                      className={`hover:bg-gray-50 ${selectedIds.includes(contact.id) ? "bg-green-50/60" : ""
-                        }`}
-                    >
-                      <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(contact.id)}
-                          onChange={() => toggleContact(contact.id)}
-                          className="h-4 w-4 accent-green-600"
-                          aria-label={`Select ${contact.name}`}
-                        />
-                      </td>
-                      <td className="px-4 py-3 font-medium text-gray-900">
-                        {contact.name}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-gray-700">
-                        +{contact.phone}
-                      </td>
-                      <td className="max-w-[180px] truncate px-4 py-3 text-gray-600">
-                        {contact.course}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-gray-500">
-                        {formatDate(contact.date)}
+                </thead>
+                <tbody className="divide-y">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-12 text-center text-gray-500">
+                        Contacts load ho rahe hain...
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex flex-col gap-2 border-t p-4 text-xs text-gray-500 sm:flex-row sm:items-center sm:justify-between">
-            <span>
-              Showing {filteredContacts.length} contacts · Loaded {contacts.length}
-            </span>
-            <span>
-              Same normalized mobile number is shown once in this source list.
-            </span>
-          </div>
-        </section>
-        <div className="space-y-6">
-          <section className="rounded-xl border bg-white p-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              2. Choose Template
-            </h2>
-            <label className="mt-4 block text-sm font-medium text-gray-700">
-              WhatsApp template
-            </label>
-            <select
-              value={templateId}
-              onChange={(event) => setTemplateId(event.target.value)}
-              disabled={templateLoading}
-              className="mt-2 w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none focus:border-green-600"
-            >
-              <option value="">Select a template</option>
-              {templates.map((template) => (
-                <option key={template.id} value={template.id}>
-                  {template.template_name} · {template.language_code} ·{" "}
-                  {template.status}
-                </option>
-              ))}
-            </select>
-            {templateHasImageHeader && (
-              <div className="mt-4">
-                <label htmlFor="template-header-image" className="block text-sm font-medium text-gray-700">Template Header Image URL <span className="text-red-600">*</span></label>
-                <input id="template-header-image" type="url" value={headerImageUrl} onChange={(event) => setHeaderImageUrl(event.target.value)} placeholder="https://example.com/image.jpg" className="mt-2 w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-green-600" />
-                <p className="mt-1 text-xs text-gray-500">Public HTTPS image URL dein. Test se pehle browser mein URL kholkar check karein.</p>
-              </div>
-            )}
-            {selectedTemplate && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                  {selectedTemplate.category}
-                </span>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${templateIsActive
-                    ? "bg-green-100 text-green-800"
-                    : "bg-amber-100 text-amber-800"
-                    }`}
-                >
-                  {selectedTemplate.status}
-                </span>
-              </div>
-            )}
-            <div className="mt-5">
-              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Eye className="h-4 w-4" />
-                Message Preview
-              </div>
-              <div className="min-h-32 rounded-xl bg-[#e8f5e9] p-4">
-                {selectedTemplate ? (
-                  <div className="max-w-full rounded-xl border border-green-100 bg-white p-3 shadow-sm">
-                    <p className="mb-2 text-xs font-semibold text-green-700">
-                      {selectedTemplate.template_name}
-                    </p>
-                    <p className="whitespace-pre-wrap break-words text-sm text-gray-800">
-                      {bodyText ||
-                        "Template body available nahi hai. Components data check karein."}
-                    </p>
-                    <p className="mt-3 text-right text-[10px] text-gray-400">
-                      Template preview
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    Preview ke liye template select karein.
-                  </p>
-                )}
-              </div>
-              <p className="mt-2 text-xs text-gray-500">
-                Variables ka final preview actual send integration mein
-                recipient-specific values ke saath banega.
-              </p>
+                  ) : filteredContacts.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-12 text-center text-gray-500">
+                        Koi contact nahi mila.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredContacts.map((contact) => (
+                      <tr
+                        key={`${contact.source}-${contact.id}`}
+                        className={`hover:bg-gray-50 ${selectedIds.includes(contact.id) ? "bg-green-50/60" : ""
+                          }`}
+                      >
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(contact.id)}
+                            onChange={() => toggleContact(contact.id)}
+                            className="h-4 w-4 accent-green-600"
+                            aria-label={`Select ${contact.name}`}
+                          />
+                        </td>
+                        <td className="px-4 py-3 font-medium text-gray-900">
+                          {contact.name}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-gray-700">
+                          +{contact.phone}
+                        </td>
+                        <td className="max-w-[180px] truncate px-4 py-3 text-gray-600">
+                          {contact.course}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-gray-500">
+                          {formatDate(contact.date)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex flex-col gap-2 border-t p-4 text-xs text-gray-500 sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                Showing {filteredContacts.length} contacts · Loaded {contacts.length}
+              </span>
+              <span>
+                Same normalized mobile number is shown once in this source list.
+              </span>
             </div>
           </section>
+
           <section className="rounded-xl border bg-white p-4">
             <h2 className="text-lg font-semibold text-gray-900">
               3. Campaign Summary
@@ -666,16 +612,16 @@ export default function WhatsAppBulkPage() {
               </div>
               <SummaryRow label="Source" value={contacts.length > 0 ? "Filtered Meta Report contacts" : "No source selected"} />
               <SummaryRow
-  label="Selected recipients"
-  value={Array.from(
-    new Set([
-      ...selectedContacts.map((contact) => contact.phone),
-      ...pastedRecipients,
-    ]),
-  )
-    .filter((phone) => !excludedRecipients.has(phone))
-    .length.toLocaleString("en-IN")}
-/>
+                label="Selected recipients"
+                value={Array.from(
+                  new Set([
+                    ...selectedContacts.map((contact) => contact.phone),
+                    ...pastedRecipients,
+                  ]),
+                )
+                  .filter((phone) => !excludedRecipients.has(phone))
+                  .length.toLocaleString("en-IN")}
+              />
               <SummaryRow
                 label="Template"
                 value={selectedTemplate?.template_name || "Not selected"}
@@ -709,6 +655,122 @@ export default function WhatsAppBulkPage() {
               Clicking this button will send the selected template to all valid recipients.
             </p>
           </section>
+
+        </div>
+        <div className="space-y-4">
+          <section className="rounded-xl border bg-white p-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              2. Choose Template
+            </h2>
+            <label className="mt-4 block text-sm font-medium text-gray-700">
+              WhatsApp template
+            </label>
+            <select
+              value={templateId}
+              onChange={(event) => setTemplateId(event.target.value)}
+              disabled={templateLoading}
+              className="mt-2 w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none focus:border-green-600"
+            >
+              <option value="">Select a template</option>
+              {templates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.template_name} · {template.language_code} ·{" "}
+                  {template.status}
+                </option>
+              ))}
+            </select>
+
+            {selectedTemplate && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                  {selectedTemplate.category}
+                </span>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${templateIsActive
+                    ? "bg-green-100 text-green-800"
+                    : "bg-amber-100 text-amber-800"
+                    }`}
+                >
+                  {selectedTemplate.status}
+                </span>
+              </div>
+            )}
+            <div className="mt-5">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Eye className="h-4 w-4" />
+                WhatsApp Message Preview
+              </div>
+
+              <div className="rounded-xl border bg-[#e5ddd5] p-3 sm:p-4">
+                {selectedTemplate ? (
+                  <div className="mx-auto max-w-[380px] overflow-hidden rounded-xl bg-white shadow-sm">
+                    {/* Header */}
+                    {headerComponent && (
+                      <div>
+                        {headerImageUrl ? (
+                          <img
+                            src={headerImageUrl}
+                            alt="Template header"
+                            className="max-h-[220px] w-full object-cover"
+                          />
+                        ) : headerComponent.format?.toUpperCase() === "TEXT" ? (
+                          <div className="px-3 pt-3 text-sm font-semibold text-gray-900">
+                            {headerComponent.text}
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
+
+                    {/* Body */}
+                    <div className="px-3 py-3">
+                      <p className="whitespace-pre-wrap break-words text-sm leading-6 text-gray-800">
+                        {bodyText ||
+                          "Template body available nahi hai. Components data check karein."}
+                      </p>
+
+                      {/* Footer */}
+                      {footerComponent?.text && (
+                        <p className="mt-2 whitespace-pre-wrap text-xs text-gray-500">
+                          {footerComponent.text}
+                        </p>
+                      )}
+
+                      <p className="mt-2 text-right text-[10px] text-gray-400">
+                        10:30 AM
+                      </p>
+                    </div>
+
+                    {/* Buttons */}
+                    {Array.isArray(buttonsComponent?.buttons) &&
+                      buttonsComponent.buttons.length > 0 && (
+                        <div className="border-t border-gray-100">
+                          {buttonsComponent.buttons.map((button: any, index: number) => (
+                            <div
+                              key={`${button.text || "button"}-${index}`}
+                              className="border-b border-gray-100 px-3 py-2.5 text-center text-sm font-medium text-blue-600 last:border-b-0"
+                            >
+                              {button.type?.toUpperCase() === "URL" && "↗ "}
+                              {button.type?.toUpperCase() === "PHONE_NUMBER" && "☎ "}
+                              {button.text}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                ) : (
+                  <p className="py-8 text-center text-sm text-gray-500">
+                    Preview ke liye template select karein.
+                  </p>
+                )}
+              </div>
+
+              <p className="mt-2 text-xs text-gray-500">
+                Variables ka final preview actual sending ke samay recipient-specific
+                values ke saath banega.
+              </p>
+            </div>
+          </section>
+          
         </div>
       </div>
     </div>
