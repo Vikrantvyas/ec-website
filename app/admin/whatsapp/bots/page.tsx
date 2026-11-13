@@ -555,7 +555,7 @@ export default function WhatsAppBotsPage() {
             }
         }
 
-              if (
+        if (
             startMode === "automatic" ||
             (
                 startMode === "both" &&
@@ -1598,34 +1598,48 @@ export default function WhatsAppBotsPage() {
                                                     </div>
 
                                                     {node.options.map((option) => (
+
                                                         <div
                                                             key={option.id}
-                                                            className="grid gap-2 rounded-xl bg-slate-50 p-3 md:grid-cols-[1fr_1fr_1.5fr_auto]"
+                                                            className="grid grid-cols-1 items-start gap-2 rounded-xl bg-slate-50 p-3 md:grid-cols-[auto_1fr_1fr_1.5fr]"
                                                         >
-                                                            <input
-                                                                className={field}
-                                                                value={option.title}
-                                                                onChange={(event) =>
-                                                                    updateOption(node.id, option.id, {
-                                                                        title: event.target.value,
-                                                                    })
-                                                                }
-                                                                placeholder={
-                                                                    node.type === "list"
-                                                                        ? "List title (max 24 characters)"
-                                                                        : "Button title (max 20 characters)"
-                                                                }
-                                                                maxLength={node.type === "list" ? 24 : 20}
-                                                            />
-                                                            <span className="text-xs text-slate-500">
-                                                                {option.title.length}/{node.type === "list" ? 24 : 20}
-                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+                                                                onClick={() => deleteOption(node.id, option.id)}
+                                                                title="Remove Option"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+
+                                                            <div className="min-w-0">
+                                                                <input
+                                                                    className={field}
+                                                                    value={option.title}
+                                                                    onChange={(event) =>
+                                                                        updateOption(node.id, option.id, {
+                                                                            title: event.target.value,
+                                                                        })
+                                                                    }
+                                                                    placeholder={
+                                                                        node.type === "list"
+                                                                            ? "List title (max 24 characters)"
+                                                                            : "Button title (max 20 characters)"
+                                                                    }
+                                                                    maxLength={node.type === "list" ? 24 : 20}
+                                                                />
+                                                                <p className="mt-1 text-xs text-slate-500">
+                                                                    {option.title.length}/{node.type === "list" ? 24 : 20}
+                                                                </p>
+                                                            </div>
+
                                                             <input
                                                                 className={field}
                                                                 value={option.id}
                                                                 readOnly
                                                                 title="Reply ID"
                                                             />
+
                                                             <select
                                                                 className={field}
                                                                 value={option.nextNodeId}
@@ -1639,149 +1653,140 @@ export default function WhatsAppBotsPage() {
                                                                 {flow.nodes
                                                                     .filter((target) => target.id !== node.id)
                                                                     .map((target) => (
-                                                                        <option
-                                                                            key={target.id}
-                                                                            value={target.id}
-                                                                        >
+                                                                        <option key={target.id} value={target.id}>
                                                                             {target.question.trim()
                                                                                 ? target.question.slice(0, 55)
                                                                                 : `Question ${flow.nodes.indexOf(target) + 1}`}
                                                                         </option>
                                                                     ))}
                                                             </select>
-                                                            <button
-                                                                className="rounded-lg p-2 text-red-500 hover:bg-red-50"
-                                                                onClick={() =>
-                                                                    deleteOption(node.id, option.id)
-                                                                }
-                                                                title="Remove Option"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
 
-                                    <button
-                                        className={`${secondary} w-full border-dashed py-3`}
-                                        onClick={addNode}
-                                    >
-                                        <Plus size={17} /> Add Next Question
-                                    </button>
+                                                        
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            ) : (
-                                <div className="overflow-x-auto bg-slate-50 p-5">
-                                    <div className="mx-auto flex min-w-[300px] max-w-2xl flex-col items-center gap-3">
-                                        {flow.nodes.map((node, index) => (
-                                            <div key={node.id} className="w-full">
-                                                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                                                    <div className="mb-2 flex items-center justify-between gap-2">
-                                                        <span className="flex items-center gap-2 text-xs font-semibold text-emerald-700">
-                                                            <MessageSquare size={15} />
-                                                            QUESTION {index + 1}
-                                                        </span>
-                                                        <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600">
-                                                            {node.type}
-                                                        </span>
-                                                    </div>
-                                                    <p className="font-semibold text-slate-900">
-                                                        {node.question || "Question text यहाँ लिखें"}
-                                                    </p>
+                            ))}
 
-                                                    {(node.type === "buttons" || node.type === "list") && (
-                                                        <div className="mt-3 flex flex-wrap gap-2">
-                                                            {node.options.map((option) => {
-                                                                const target = flow.nodes.find(
-                                                                    (item) => item.id === option.nextNodeId
-                                                                );
-
-                                                                return (
-                                                                    <div
-                                                                        key={option.id}
-                                                                        className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800"
-                                                                    >
-                                                                        <span className="font-semibold">
-                                                                            {option.title}
-                                                                        </span>
-                                                                        <span className="mt-1 block text-emerald-700">
-                                                                            →{" "}
-                                                                            {target
-                                                                                ? target.question || "Next Question"
-                                                                                : "End"}
-                                                                        </span>
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    )}
-                                                    {node.type === "url_button" && (
-                                                        <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
-                                                            <p className="mb-2 text-xs font-semibold text-slate-600">
-                                                                URL BUTTON PREVIEW
-                                                            </p>
-
-                                                            <div className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700">
-                                                                <span>
-                                                                    {node.urlButtonText || "Visit Website"}
-                                                                </span>
-                                                                <span aria-hidden="true">↗</span>
-                                                            </div>
-
-                                                            <p className="mt-2 break-all text-xs text-slate-600">
-                                                                {node.urlButtonUrl || "https://example.com/"}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {index < flow.nodes.length - 1 && (
-                                                    <div className="flex justify-center py-2 text-slate-400">
-                                                        <ArrowDown size={20} />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                                            <GitBranch size={15} />
-                                            Connections बदलने के लिए Form Builder का उपयोग करें।
-                                        </div>
+                            <button
+                                className={`${secondary} w-full border-dashed py-3`}
+                                onClick={addNode}
+                            >
+                                <Plus size={17} /> Add Next Question
+                            </button>
+                    </div>
+                ) : (
+                <div className="overflow-x-auto bg-slate-50 p-5">
+                    <div className="mx-auto flex min-w-[300px] max-w-2xl flex-col items-center gap-3">
+                        {flow.nodes.map((node, index) => (
+                            <div key={node.id} className="w-full">
+                                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                    <div className="mb-2 flex items-center justify-between gap-2">
+                                        <span className="flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                                            <MessageSquare size={15} />
+                                            QUESTION {index + 1}
+                                        </span>
+                                        <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                                            {node.type}
+                                        </span>
                                     </div>
+                                    <p className="font-semibold text-slate-900">
+                                        {node.question || "Question text यहाँ लिखें"}
+                                    </p>
+
+                                    {(node.type === "buttons" || node.type === "list") && (
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            {node.options.map((option) => {
+                                                const target = flow.nodes.find(
+                                                    (item) => item.id === option.nextNodeId
+                                                );
+
+                                                return (
+                                                    <div
+                                                        key={option.id}
+                                                        className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800"
+                                                    >
+                                                        <span className="font-semibold">
+                                                            {option.title}
+                                                        </span>
+                                                        <span className="mt-1 block text-emerald-700">
+                                                            →{" "}
+                                                            {target
+                                                                ? target.question || "Next Question"
+                                                                : "End"}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    {node.type === "url_button" && (
+                                        <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
+                                            <p className="mb-2 text-xs font-semibold text-slate-600">
+                                                URL BUTTON PREVIEW
+                                            </p>
+
+                                            <div className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700">
+                                                <span>
+                                                    {node.urlButtonText || "Visit Website"}
+                                                </span>
+                                                <span aria-hidden="true">↗</span>
+                                            </div>
+
+                                            <p className="mt-2 break-all text-xs text-slate-600">
+                                                {node.urlButtonUrl || "https://example.com/"}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </section>
 
-                        {notice && (
-                            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-                                {notice}
-                            </div>
-                        )}
-
-                        <div className="sticky bottom-3 flex flex-wrap justify-end gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
-                            <button
-                                className={secondary}
-                                onClick={() => setView("templates")}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                className={primary}
-                                disabled={saving}
-                                onClick={() => void saveBot()}
-                            >
-                                {saving ? (
-                                    <LoaderCircle className="animate-spin" size={17} />
-                                ) : (
-                                    <Check size={17} />
+                                {index < flow.nodes.length - 1 && (
+                                    <div className="flex justify-center py-2 text-slate-400">
+                                        <ArrowDown size={20} />
+                                    </div>
                                 )}
-                                {saving ? "Saving..." : "Save Bot Template"}
-                            </button>
+                            </div>
+                        ))}
+                        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                            <GitBranch size={15} />
+                            Connections बदलने के लिए Form Builder का उपयोग करें।
                         </div>
                     </div>
-                )}
+                </div>
+                            )}
+            </section>
+
+            {notice && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+                    {notice}
+                </div>
+            )}
+
+            <div className="sticky bottom-3 flex flex-wrap justify-end gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+                <button
+                    className={secondary}
+                    onClick={() => setView("templates")}
+                >
+                    Cancel
+                </button>
+                <button
+                    className={primary}
+                    disabled={saving}
+                    onClick={() => void saveBot()}
+                >
+                    {saving ? (
+                        <LoaderCircle className="animate-spin" size={17} />
+                    ) : (
+                        <Check size={17} />
+                    )}
+                    {saving ? "Saving..." : "Save Bot Template"}
+                </button>
             </div>
         </div>
+    )
+}
+            </div >
+        </div >
     );
 }

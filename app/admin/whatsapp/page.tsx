@@ -387,10 +387,7 @@ export default function WhatsAppBulkPage() {
               WhatsApp Bulk Messaging
             </h1>
           </div>
-          <p className="mt-1 text-sm text-gray-500">
-            Contacts select karein, template preview dekhein aur campaign
-            prepare karein.
-          </p>
+         
         </div>
         <button
           onClick={() => {
