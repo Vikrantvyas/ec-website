@@ -1,505 +1,741 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
+
 export default function LeadTable({
-leads,
-receipts,
-setLeadCount
-}:{
-leads:any[],
-receipts:any[],
-setLeadCount?:(n:number)=>void
-}){
+  leads,
+  receipts,
+  setLeadCount
+}: {
+  leads: any[];
+  receipts: any[];
+  setLeadCount?: (n: number) => void;
+}) {
 
-const [search,setSearch] = useState("");
-const [showColumns,setShowColumns] = useState(false);
+  const [search, setSearch] = useState("");
+  const [showColumns, setShowColumns] = useState(false);
 
-const [sortField,setSortField] = useState("created_at");
-const [sortOrder,setSortOrder] = useState("desc");
+  const [sortField, setSortField] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState("desc");
 
-const [page,setPage] = useState(1);
-const pageSize = 50;
+  const [page, setPage] = useState(1);
+  const pageSize = 50;
 
-const [columns,setColumns] = useState({
-branch:true,
-date:true,
-name:true,
-mobile:true,
-department:true,
-course:true,
-receipt:true,
-actions:true
-});
+  // WhatsApp Selection
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const lastSelectedIndexRef = useRef<number | null>(null);
 
-const [filters,setFilters] = useState({
-department:"",
-course:"",
-branch:""
-});
-const [branchList,setBranchList] = useState<any[]>([]);
-/* RESET PAGE */
+  const [columns, setColumns] = useState({
+    branch: true,
+    date: true,
+    name: true,
+    mobile: true,
+    department: true,
+    course: true,
+    receipt: true,
+    actions: true
+  });
 
-useEffect(()=>{
-setPage(1);
-},[search,filters]);
-useEffect(()=>{
+  const [filters, setFilters] = useState({
+    department: "",
+    course: "",
+    branch: ""
+  });
 
-const loadBranches = async ()=>{
+  const [branchList, setBranchList] = useState<any[]>([]);
 
-const { data } = await supabase
-.from("branches")
-.select("id,name")
-.eq("status","Active");
+  /* RESET PAGE */
 
-if(data){
-setBranchList(data);
-}
+  useEffect(() => {
+    setPage(1);
+  }, [search, filters]);
 
-};
+  /* LOAD BRANCHES */
 
-loadBranches();
+  useEffect(() => {
 
-},[]);
-/* RECEIPT MAP */
+    const loadBranches = async () => {
 
-const receiptMap:any = {};
+      const { data } = await supabase
+        .from("branches")
+        .select("id,name")
+        .eq("status", "Active");
 
-receipts?.forEach((r:any)=>{
+      if (data) {
+        setBranchList(data);
+      }
 
-const name = r.student_name?.trim().toLowerCase();
+    };
 
-if(!receiptMap[name]){
-receiptMap[name] = 0;
-}
+    loadBranches();
 
-receiptMap[name] += Number(r.amount || 0);
+  }, []);
 
-});
+  /* RECEIPT MAP */
 
-/* UNIQUE LEADS */
+  const receiptMap: any = {};
 
-const uniqueLeads = Array.from(
-new Map(leads.map((l)=>[l.id,l])).values()
-);
+  receipts?.forEach((r: any) => {
 
-/* SEARCH */
+    const name = r.student_name?.trim().toLowerCase();
 
-let filtered = uniqueLeads.filter((lead)=>{
+    if (!receiptMap[name]) {
+      receiptMap[name] = 0;
+    }
 
-const name = lead.student_name?.toLowerCase() || "";
-const mobile = lead.mobile_number || "";
+    receiptMap[name] += Number(r.amount || 0);
 
-return(
-name.includes(search.toLowerCase()) ||
-mobile.includes(search)
-);
+  });
 
-});
+  /* UNIQUE LEADS */
 
-/* FILTERS */
+  const uniqueLeads = Array.from(
+    new Map(leads.map((l) => [l.id, l])).values()
+  );
 
-if(filters.department){
-filtered = filtered.filter(l=>l.department === filters.department);
-}
+  /* SEARCH */
 
-if(filters.course){
-filtered = filtered.filter(l=>l.course === filters.course);
-}
+  let filtered = uniqueLeads.filter((lead) => {
 
-if(filters.branch){
-filtered = filtered.filter(l=>l.branch_id === filters.branch);
-}
+    const name = lead.student_name?.toLowerCase() || "";
+    const mobile = lead.mobile_number || "";
 
-/* SORT */
+    return (
+      name.includes(search.toLowerCase()) ||
+      mobile.includes(search)
+    );
 
-filtered = filtered.sort((a,b)=>{
+  });
 
-let v1 = a[sortField];
-let v2 = b[sortField];
+  /* FILTERS */
 
-if(sortField === "created_at"){
-v1 = new Date(v1).getTime();
-v2 = new Date(v2).getTime();
-}
+  if (filters.department) {
+    filtered = filtered.filter(
+      l => l.department === filters.department
+    );
+  }
 
-if(v1 < v2) return sortOrder === "asc" ? -1 : 1;
-if(v1 > v2) return sortOrder === "asc" ? 1 : -1;
-return 0;
+  if (filters.course) {
+    filtered = filtered.filter(
+      l => l.course === filters.course
+    );
+  }
 
-});
+  if (filters.branch) {
+    filtered = filtered.filter(
+      l => l.branch_id === filters.branch
+    );
+  }
 
-/* UPDATE COUNT */
+  /* SORT */
 
-useEffect(()=>{
-setLeadCount?.(filtered.length);
-},[search,filters,sortField,sortOrder,leads]);
+  filtered = filtered.sort((a, b) => {
 
-/* PAGINATION */
+    let v1 = a[sortField];
+    let v2 = b[sortField];
 
-const totalPages = Math.ceil(filtered.length / pageSize);
+    if (sortField === "created_at") {
+      v1 = new Date(v1).getTime();
+      v2 = new Date(v2).getTime();
+    }
 
-const paginated = filtered.slice(
-(page-1)*pageSize,
-page*pageSize
-);
+    if (v1 < v2) return sortOrder === "asc" ? -1 : 1;
+    if (v1 > v2) return sortOrder === "asc" ? 1 : -1;
 
-/* SORT */
+    return 0;
 
-const toggleSort = (field:string)=>{
+  });
 
-if(sortField === field){
-setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-}else{
-setSortField(field);
-setSortOrder("asc");
-}
+  /* UPDATE COUNT */
 
-};
+  useEffect(() => {
+    setLeadCount?.(filtered.length);
+  }, [search, filters, sortField, sortOrder, leads]);
 
-const arrow = (field:string)=>{
-if(sortField !== field) return "";
-return sortOrder === "asc" ? " ▲" : " ▼";
-};
+  /* PAGINATION */
 
-/* ACTIONS */
+  const totalPages = Math.ceil(filtered.length / pageSize);
 
-const handleEdit = (lead:any)=>{
-alert("Edit Lead: "+lead.student_name);
-};
+  const paginated = filtered.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
 
-const handleDelete = (lead:any)=>{
-if(confirm("Delete lead?")){
-alert("Lead deleted: "+lead.student_name);
-}
-};
+  /* SORT */
 
-return(
+  const toggleSort = (field: string) => {
 
-<div className="w-full space-y-3">
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
 
-{/* HEADER */}
+  };
 
-<div className="flex justify-between items-center">
+  const arrow = (field: string) => {
+    if (sortField !== field) return "";
+    return sortOrder === "asc" ? " ▲" : " ▼";
+  };
 
-<h1 className="text-lg font-semibold text-gray-800">
-Leads <span className="text-gray-400">({filtered.length})</span>
-</h1>
+  /* WHATSAPP PHONE VALIDATION */
 
-<div className="flex gap-3 items-center relative">
+  const normalizeWhatsAppPhone = (value: string) => {
 
-<input
-type="text"
-placeholder="Search name or mobile..."
-value={search}
-onChange={(e)=>setSearch(e.target.value)}
-className="px-3 py-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-/>
+    let digits = String(value || "").replace(/\D/g, "");
 
-<button
-onClick={()=>setShowColumns(!showColumns)}
-className="px-3 py-1.5 border rounded-md text-sm bg-gray-50 hover:bg-gray-100"
->
-Columns
-</button>
+    if (digits.length === 10) {
+      digits = `91${digits}`;
+    }
 
-{showColumns && (
+    if (digits.length !== 12 || !digits.startsWith("91")) {
+      return "";
+    }
 
-<div className="absolute right-0 top-9 bg-white border shadow-lg rounded-md p-3 z-20 text-sm">
+    const mobile = digits.slice(2);
 
-{Object.keys(columns).map((c)=>{
+    if (!/^[6-9]\d{9}$/.test(mobile)) {
+      return "";
+    }
 
-const key = c as keyof typeof columns;
+    return digits;
 
-return(
+  };
 
-<label key={c} className="flex gap-2 py-1">
+  /* LEAD SELECTION */
 
-<input
-type="checkbox"
-checked={columns[key]}
-onChange={()=>setColumns({
-...columns,
-[key]:!columns[key]
-})}
-/>
+  const handleLeadSelection = (
+    leadId: string,
+    index: number,
+    event: ReactMouseEvent<HTMLInputElement>
+  ) => {
 
-{c}
+    const lastIndex = lastSelectedIndexRef.current;
 
-</label>
+    if (event.shiftKey && lastIndex !== null) {
 
-);
+      const start = Math.min(lastIndex, index);
+      const end = Math.max(lastIndex, index);
 
-})}
+      const rangeIds = paginated
+        .slice(start, end + 1)
+        .map((lead) => lead.id);
 
-</div>
+      setSelectedIds((current) =>
+        Array.from(new Set([...current, ...rangeIds]))
+      );
 
-)}
+      lastSelectedIndexRef.current = index;
 
-</div>
+      return;
+    }
 
-</div>
+    setSelectedIds((current) =>
+      current.includes(leadId)
+        ? current.filter((id) => id !== leadId)
+        : [...current, leadId]
+    );
 
-{/* TABLE */}
+    lastSelectedIndexRef.current = index;
 
-<div className="overflow-auto max-h-[72vh]">
+  };
 
-<table className="w-full text-sm">
 
-<thead className="sticky top-0 bg-white shadow-sm text-gray-500">
 
-<tr>
+  /* SELECT / DESELECT ALL FILTERED LEADS */
 
-{columns.branch && (
+  const allFilteredLeadsSelected =
+    filtered.length > 0 &&
+    filtered.every((lead) => selectedIds.includes(lead.id));
 
-<th className="px-4 py-3 text-left text-xs font-semibold">
+  const handleSelectAll = (checked: boolean) => {
+    const filteredIds = filtered.map((lead) => lead.id);
 
-<div className="flex flex-col gap-1">
+    if (checked) {
+      setSelectedIds((current) =>
+        Array.from(new Set([...current, ...filteredIds]))
+      );
+    } else {
+      setSelectedIds((current) =>
+        current.filter((id) => !filteredIds.includes(id))
+      );
 
-<span>Branch</span>
+      lastSelectedIndexRef.current = null;
+    }
+  };
 
-<select
-className="text-xs border rounded"
-value={filters.branch}
-onChange={(e)=>setFilters({...filters,branch:e.target.value})}
->
-<option value="">All</option>
-{branchList.map((b:any)=>(
-<option key={b.id} value={b.id}>{b.name}</option>
-))}
-</select>
 
-</div>
+  /* SEND SELECTED LEADS TO WHATSAPP */
 
-</th>
+  const handleSendSelectedLeads = () => {
 
-)}
+    if (selectedIds.length === 0) {
+      alert("Pehle kam se kam ek Lead select karein.");
+      return;
+    }
 
-{columns.date && (
+    const selectedLeads = uniqueLeads
+      .filter((lead) => selectedIds.includes(lead.id))
+      .map((lead) => ({
+        id: lead.id,
+        name: lead.student_name || "Name not available",
+        phone: String(lead.mobile_number || ""),
+        source: "leads" as const
+      }))
+      
 
-<th
-onClick={()=>toggleSort("created_at")}
-className="px-4 py-3 text-left text-xs font-semibold cursor-pointer"
->
-Enq_Date{arrow("created_at")}
-</th>
+    if (selectedLeads.length === 0) {
+      alert("Selected Leads mein valid WhatsApp number nahi mila.");
+      return;
+    }
 
-)}
+    try {
 
-{columns.name && (
+      sessionStorage.setItem(
+        "ec_lead_list_selected_leads",
+        JSON.stringify(selectedLeads)
+      );
 
-<th
-onClick={()=>toggleSort("student_name")}
-className="px-4 py-3 text-left text-xs font-semibold cursor-pointer"
->
-Name{arrow("student_name")}
-</th>
+      window.location.href =
+        "/admin/whatsapp?source=leads&from=lead-list";
 
-)}
+    } catch {
 
-{columns.mobile && (
-<th className="px-4 py-3 text-left text-xs font-semibold">
-Mobile
-</th>
-)}
+      alert("Selected Leads save nahi ho sake. Dobara try karein.");
 
-{columns.department && (
+    }
 
-<th className="px-4 py-3 text-left text-xs font-semibold">
+  };
 
-<div className="flex flex-col gap-1">
+  /* ACTIONS */
 
-<span onClick={()=>toggleSort("department")} className="cursor-pointer">
-Department{arrow("department")}
-</span>
+  const handleEdit = (lead: any) => {
+    alert("Edit Lead: " + lead.student_name);
+  };
 
-<select
-className="text-xs border rounded"
-value={filters.department}
-onChange={(e)=>setFilters({...filters,department:e.target.value})}
->
-<option value="">All</option>
-{[...new Set(uniqueLeads.map(l=>l.department))].map((d:any)=>(
-<option key={d}>{d}</option>
-))}
-</select>
+  const handleDelete = (lead: any) => {
+    if (confirm("Delete lead?")) {
+      alert("Lead deleted: " + lead.student_name);
+    }
+  };
 
-</div>
+  return (
 
-</th>
+    <div className="w-full space-y-3">
 
-)}
+      {/* HEADER */}
 
-{columns.course && (
+      <div className="flex flex-wrap justify-between items-center gap-3">
 
-<th className="px-4 py-3 text-left text-xs font-semibold">
+        <h1 className="text-lg font-semibold text-gray-800">
+          Leads <span className="text-gray-400">({filtered.length})</span>
+        </h1>
 
-<div className="flex flex-col gap-1">
+        <div className="flex flex-wrap gap-2 items-center relative">
 
-<span onClick={()=>toggleSort("course")} className="cursor-pointer">
-Course{arrow("course")}
-</span>
+          <span className="text-xs text-gray-600">
+            Selected: {selectedIds.length}
+          </span>
 
-<select
-className="text-xs border rounded"
-value={filters.course}
-onChange={(e)=>setFilters({...filters,course:e.target.value})}
->
-<option value="">All</option>
-{[...new Set(uniqueLeads.map(l=>l.course))].map((d:any)=>(
-<option key={d}>{d}</option>
-))}
-</select>
+          <button
+            onClick={handleSendSelectedLeads}
+            disabled={selectedIds.length === 0}
+            className="px-3 py-1.5 rounded-md text-sm bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Send Msg ({selectedIds.length})
+          </button>
 
-</div>
+          <input
+            type="text"
+            placeholder="Search name or mobile..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="px-3 py-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
 
-</th>
+          <button
+            onClick={() => setShowColumns(!showColumns)}
+            className="px-3 py-1.5 border rounded-md text-sm bg-gray-50 hover:bg-gray-100"
+          >
+            Columns
+          </button>
 
-)}
+          {showColumns && (
 
-{columns.receipt && (
-<th className="px-4 py-3 text-left text-xs font-semibold">
-Receipt
-</th>
-)}
+            <div className="absolute right-0 top-9 bg-white border shadow-lg rounded-md p-3 z-20 text-sm">
 
-{columns.actions && (
-<th className="px-4 py-3 text-left text-xs font-semibold">
-Actions
-</th>
-)}
+              {Object.keys(columns).map((c) => {
 
-</tr>
+                const key = c as keyof typeof columns;
 
-</thead>
+                return (
 
-<tbody>
+                  <label key={c} className="flex gap-2 py-1">
 
-{paginated.map((lead)=>{
+                    <input
+                      type="checkbox"
+                      checked={columns[key]}
+                      onChange={() => setColumns({
+                        ...columns,
+                        [key]: !columns[key]
+                      })}
+                    />
 
-const name = lead.student_name?.trim().toLowerCase();
-const amount = receiptMap[name] || 0;
+                    {c}
 
-return(
+                  </label>
 
-<tr
-key={lead.id}
-className="
-group
-hover:bg-blue-100
-odd:bg-white
-even:bg-gray-100
-transition
-cursor-pointer
-"
->
+                );
 
-{columns.branch && (
-<td className="px-4 py-3.5">
-{
-  branchList.find((b:any)=>b.id === lead.branch_id)?.name || "-"
-}
-</td>
-)}
+              })}
 
-{columns.date && (
-<td className="px-4 py-3.5">
-{lead.enquiry_date}
-</td>
-)}
+            </div>
 
-{columns.name && (
-<td className="px-4 py-3.5 font-semibold text-gray-800">
-{lead.student_name}
-</td>
-)}
+          )}
 
-{columns.mobile && (
-<td className="px-4 py-3.5">
-<a href={`tel:${lead.mobile_number}`} className="text-blue-600 hover:underline">
-{lead.mobile_number}
-</a>
-</td>
-)}
+        </div>
 
-{columns.department && (
-<td className="px-4 py-3.5">
-{lead.department}
-</td>
-)}
+      </div>
 
-{columns.course && (
-<td className="px-4 py-3.5">
-{lead.course}
-</td>
-)}
+      {/* TABLE */}
 
-{columns.receipt && (
-<td className="px-4 py-3.5 text-green-600 font-semibold">
-{Number(amount).toFixed(2)}
-</td>
-)}
+      <div className="overflow-auto max-h-[72vh]">
 
-{columns.actions && (
-<td className="px-4 py-3.5">
+        <table className="w-full text-sm">
 
-<div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
+          <thead className="sticky top-0 bg-white shadow-sm text-gray-500">
 
-<button
-onClick={()=>handleEdit(lead)}
-className="text-blue-600 hover:text-blue-800"
->
-✏️
-</button>
+            <tr>
 
-<button
-onClick={()=>handleDelete(lead)}
-className="text-red-600 hover:text-red-800"
->
-🗑
-</button>
+              <th className="px-3 py-3 text-left">
+                <input
+                  type="checkbox"
+                  checked={allFilteredLeadsSelected}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  aria-label="Select all filtered leads"
+                  className="h-4 w-4"
+                />
+              </th>
 
-</div>
+              {columns.branch && (
 
-</td>
-)}
+                <th className="px-4 py-3 text-left text-xs font-semibold">
 
-</tr>
+                  <div className="flex flex-col gap-1">
 
-);
+                    <span>Branch</span>
 
-})}
+                    <select
+                      className="text-xs border rounded"
+                      value={filters.branch}
+                      onChange={(e) => setFilters({
+                        ...filters,
+                        branch: e.target.value
+                      })}
+                    >
+                      <option value="">All</option>
+                      {branchList.map((b: any) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
 
-</tbody>
+                  </div>
 
-</table>
+                </th>
 
-</div>
+              )}
 
-{/* PAGINATION */}
+              {columns.date && (
 
-<div className="flex gap-3 text-sm text-gray-600">
+                <th
+                  onClick={() => toggleSort("created_at")}
+                  className="px-4 py-3 text-left text-xs font-semibold cursor-pointer"
+                >
+                  Enq_Date{arrow("created_at")}
+                </th>
 
-{page > 1 && (
-<a className="cursor-pointer text-blue-600" onClick={()=>setPage(page-1)}>
-Prev
-</a>
-)}
+              )}
 
-<span>
-Page {page} / {totalPages}
-</span>
+              {columns.name && (
 
-{page < totalPages && (
-<a className="cursor-pointer text-blue-600" onClick={()=>setPage(page+1)}>
-Next
-</a>
-)}
+                <th
+                  onClick={() => toggleSort("student_name")}
+                  className="px-4 py-3 text-left text-xs font-semibold cursor-pointer"
+                >
+                  Name{arrow("student_name")}
+                </th>
 
-</div>
+              )}
 
-</div>
+              {columns.mobile && (
 
-);
+                <th className="px-4 py-3 text-left text-xs font-semibold">
+                  Mobile
+                </th>
+
+              )}
+
+              {columns.department && (
+
+                <th className="px-4 py-3 text-left text-xs font-semibold">
+
+                  <div className="flex flex-col gap-1">
+
+                    <span
+                      onClick={() => toggleSort("department")}
+                      className="cursor-pointer"
+                    >
+                      Department{arrow("department")}
+                    </span>
+
+                    <select
+                      className="text-xs border rounded"
+                      value={filters.department}
+                      onChange={(e) => setFilters({
+                        ...filters,
+                        department: e.target.value
+                      })}
+                    >
+                      <option value="">All</option>
+                      {[...new Set(uniqueLeads.map(l => l.department))].map((d: any) => (
+                        <option key={d}>{d}</option>
+                      ))}
+                    </select>
+
+                  </div>
+
+                </th>
+
+              )}
+
+              {columns.course && (
+
+                <th className="px-4 py-3 text-left text-xs font-semibold">
+
+                  <div className="flex flex-col gap-1">
+
+                    <span
+                      onClick={() => toggleSort("course")}
+                      className="cursor-pointer"
+                    >
+                      Course{arrow("course")}
+                    </span>
+
+                    <select
+                      className="text-xs border rounded"
+                      value={filters.course}
+                      onChange={(e) => setFilters({
+                        ...filters,
+                        course: e.target.value
+                      })}
+                    >
+                      <option value="">All</option>
+                      {[...new Set(uniqueLeads.map(l => l.course))].map((d: any) => (
+                        <option key={d}>{d}</option>
+                      ))}
+                    </select>
+
+                  </div>
+
+                </th>
+
+              )}
+
+              {columns.receipt && (
+
+                <th className="px-4 py-3 text-left text-xs font-semibold">
+                  Receipt
+                </th>
+
+              )}
+
+              {columns.actions && (
+
+                <th className="px-4 py-3 text-left text-xs font-semibold">
+                  Actions
+                </th>
+
+              )}
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {paginated.map((lead, index) => {
+
+              const name = lead.student_name?.trim().toLowerCase();
+              const amount = receiptMap[name] || 0;
+
+              return (
+
+                <tr
+                  key={lead.id}
+                  className={`
+                    group
+                    ${selectedIds.includes(lead.id)
+                      ? "bg-blue-50 hover:bg-blue-100"
+                      : "hover:bg-blue-100 odd:bg-white even:bg-gray-100"
+                    }
+                    transition
+                  `}
+                >
+
+                  <td className="px-3 py-3.5">
+
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(lead.id)}
+                      onClick={(event) => {
+                        handleLeadSelection(lead.id, index, event);
+                      }}
+                      onChange={() => undefined}
+                      aria-label={`Select ${lead.student_name || "lead"}`}
+                      className="h-4 w-4"
+                    />
+
+                  </td>
+
+                  {columns.branch && (
+
+                    <td className="px-4 py-3.5">
+                      {
+                        branchList.find((b: any) => b.id === lead.branch_id)?.name || "-"
+                      }
+                    </td>
+
+                  )}
+
+                  {columns.date && (
+
+                    <td className="px-4 py-3.5">
+                      {lead.enquiry_date}
+                    </td>
+
+                  )}
+
+                  {columns.name && (
+
+                    <td className="px-4 py-3.5 font-semibold text-gray-800">
+                      {lead.student_name}
+                    </td>
+
+                  )}
+
+                  {columns.mobile && (
+
+                    <td className="px-4 py-3.5">
+
+                      <a
+                        href={`tel:${lead.mobile_number}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {lead.mobile_number}
+                      </a>
+
+                    </td>
+
+                  )}
+
+                  {columns.department && (
+
+                    <td className="px-4 py-3.5">
+                      {lead.department}
+                    </td>
+
+                  )}
+
+                  {columns.course && (
+
+                    <td className="px-4 py-3.5">
+                      {lead.course}
+                    </td>
+
+                  )}
+
+                  {columns.receipt && (
+
+                    <td className="px-4 py-3.5 text-green-600 font-semibold">
+                      {Number(amount).toFixed(2)}
+                    </td>
+
+                  )}
+
+                  {columns.actions && (
+
+                    <td className="px-4 py-3.5">
+
+                      <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition">
+
+                        <button
+                          onClick={() => handleEdit(lead)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          ✏️
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(lead)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          🗑
+                        </button>
+
+                      </div>
+
+                    </td>
+
+                  )}
+
+                </tr>
+
+              );
+
+            })}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      {/* PAGINATION */}
+
+      <div className="flex gap-3 text-sm text-gray-600">
+
+        {page > 1 && (
+          <a
+            className="cursor-pointer text-blue-600"
+            onClick={() => setPage(page - 1)}
+          >
+            Prev
+          </a>
+        )}
+
+        <span>
+          Page {page} / {totalPages}
+        </span>
+
+        {page < totalPages && (
+          <a
+            className="cursor-pointer text-blue-600"
+            onClick={() => setPage(page + 1)}
+          >
+            Next
+          </a>
+        )}
+
+      </div>
+
+    </div>
+
+  );
 
 }

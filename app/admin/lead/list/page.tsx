@@ -30,8 +30,9 @@ while(!finished){
 const { data,error } = await supabase
 .from("leads")
 .select("*")
-.order("created_at",{ascending:false})
-.range(from,to);
+.order("created_at", { ascending: false })
+.order("id", { ascending: true })
+.range(from, to);
 
 if(error){
 console.log(error);

@@ -58,6 +58,9 @@ function normalizePhone(value: string) {
   }
   return digits;
 }
+function getPhoneDigits(value: string) {
+  return String(value || "").replace(/\D/g, "");
+}
 function getTemplateBody(components: unknown): string {
   if (!Array.isArray(components)) return "";
   const body = components.find(
@@ -126,35 +129,106 @@ export default function WhatsAppBulkPage() {
       setTemplateLoading(false);
     }
   }, []);
+
   useEffect(() => {
     try {
-      const saved = sessionStorage.getItem("ec_meta_report_selected_leads");
+      const leadKey = "ec_lead_list_selected_leads";
+      const metaKey = "ec_meta_report_selected_leads";
+
+      const leadSaved = sessionStorage.getItem(leadKey);
+      const metaSaved = sessionStorage.getItem(metaKey);
+
+      const saved = leadSaved || metaSaved;
       if (!saved) return;
+
+      const importedSource: Source = leadSaved ? "leads" : "meta_leads";
+
       const parsed: unknown = JSON.parse(saved);
       if (!Array.isArray(parsed)) return;
+      const rawItems = parsed.filter(
+        (item: any) =>
+          item &&
+          typeof item.id === "string" &&
+          typeof item.phone === "string"
+      );
+
+      const phoneStats = {
+        totalRecords: parsed.length,
+        validRecords: rawItems.length,
+        tenDigitNumbers: 0,
+        twelveDigitNumbers: 0,
+        otherLengthNumbers: 0,
+        validIndianMobiles: 0,
+        rejectedNumbers: 0,
+      };
+      const lengthBreakdown: Record<string, number> = {};
+      rawItems.forEach((item: any) => {
+        const digits = getPhoneDigits(item.phone);
+        const key = `${digits.length} digits | starts with ${digits.slice(0, 3) || "blank"}`;
+        lengthBreakdown[key] = (lengthBreakdown[key] || 0) + 1;
+        if (digits.length === 10) {
+          phoneStats.tenDigitNumbers++;
+        } else if (digits.length === 12 && digits.startsWith("91")) {
+          phoneStats.twelveDigitNumbers++;
+        } else {
+          phoneStats.otherLengthNumbers++;
+        }
+
+        if (normalizePhone(item.phone)) {
+          phoneStats.validIndianMobiles++;
+        } else {
+          phoneStats.rejectedNumbers++;
+        }
+      });
+
+      console.table(phoneStats);
+      console.table(lengthBreakdown);
       const imported: Contact[] = parsed
-        .filter((item: any) => item && typeof item.id === "string" && typeof item.phone === "string")
+        .filter(
+          (item: any) =>
+            item &&
+            typeof item.id === "string" &&
+            typeof item.phone === "string"
+        )
         .map((item: any) => ({
           id: item.id,
-          name: typeof item.name === "string" && item.name ? item.name : "Name not available",
+          name:
+            typeof item.name === "string" && item.name
+              ? item.name
+              : "Name not available",
           phone: normalizePhone(item.phone),
-          course: "—",
-          date: "",
-          source: "meta_leads" as const,
+          course:
+            typeof item.course === "string" && item.course
+              ? item.course
+              : "—",
+          date:
+            typeof item.date === "string"
+              ? item.date
+              : "",
+          source: importedSource,
         }))
         .filter((item) => item.phone.length >= 10);
+
       if (imported.length) {
         setImportedMetaContacts(imported);
         setContacts(imported);
         setSelectedIds(imported.map((item) => item.id));
-        setSource("meta_leads");
-        setSuccess(`${imported.length} Meta Ads lead(s) report se select kiye gaye.`);
+        setSource(importedSource);
+
+        setSuccess(
+          importedSource === "leads"
+            ? `${imported.length} CRM Lead List contact(s) import hue.`
+            : `${imported.length} Meta Ads lead(s) report se select kiye gaye.`
+        );
       }
-      sessionStorage.removeItem("ec_meta_report_selected_leads");
+
+      sessionStorage.removeItem(leadKey);
+      sessionStorage.removeItem(metaKey);
     } catch {
-      setError("Meta Report se aayi selection read nahi ho saki.");
+      setError("Selected contacts read nahi ho sake.");
     }
   }, []);
+
   useEffect(() => {
     void loadContacts();
   }, [loadContacts]);
@@ -387,7 +461,7 @@ export default function WhatsAppBulkPage() {
               WhatsApp Bulk Messaging
             </h1>
           </div>
-         
+
         </div>
         <button
           onClick={() => {
@@ -509,7 +583,7 @@ export default function WhatsAppBulkPage() {
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="text-sm text-gray-600">
-                  Source: {contacts.length > 0 ? "Filtered Meta Report contacts" : "No source selected"}
+                  Source: {contacts.length > 0 ? (source === "leads" ? "CRM Lead List contacts" : "Meta Report contacts") : "No source selected"}
                 </span>
                 <button
                   onClick={toggleVisibleContacts}
@@ -607,7 +681,7 @@ export default function WhatsAppBulkPage() {
                   required
                 />
               </div>
-              <SummaryRow label="Source" value={contacts.length > 0 ? "Filtered Meta Report contacts" : "No source selected"} />
+              <SummaryRow label="Source" value={contacts.length > 0 ? (source === "leads" ? "CRM Lead List contacts" : "Meta Report contacts") : "No source selected"} />
               <SummaryRow
                 label="Selected recipients"
                 value={Array.from(
@@ -767,7 +841,7 @@ export default function WhatsAppBulkPage() {
               </p>
             </div>
           </section>
-          
+
         </div>
       </div>
     </div>
