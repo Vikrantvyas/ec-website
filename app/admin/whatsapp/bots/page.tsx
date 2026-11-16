@@ -692,20 +692,31 @@ export default function WhatsAppBotsPage() {
             <div className="mx-auto max-w-7xl space-y-6">
                 <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
-                        <div className="mb-2 flex items-center gap-2 text-sm font-medium text-emerald-700">
-                            <Bot size={18} />
-                            WhatsApp Automation
-                        </div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
                             Bot Manager
+                            {view === "templates" && (
+                                <span className="ml-2 text-lg font-semibold text-slate-500">
+                                    ({bots.length})
+                                </span>
+                            )}
                         </h1>
-                        <p className="mt-1 text-sm text-slate-500">
-                            अपने Bots बनाएँ, Templates में Save करें और उनके Flows manage करें।
-                        </p>
                     </div>
 
                     {view === "templates" ? (
                         <div className="flex flex-wrap items-center gap-2">
+                            <div className="relative w-full sm:w-56">
+                                <Search
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                                    size={17}
+                                />
+                                <input
+                                    className={`${field} pl-9`}
+                                    placeholder="Search bots..."
+                                    value={search}
+                                    onChange={(event) => setSearch(event.target.value)}
+                                />
+                            </div>
+
                             <Link
                                 href="/admin/whatsapp/bots/settings"
                                 className={secondary}
@@ -746,77 +757,10 @@ export default function WhatsAppBotsPage() {
 
                 {view === "templates" ? (
                     <>
-                        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            {[
-                                {
-                                    label: "Total Bots",
-                                    value: bots.length,
-                                    icon: Bot,
-                                    color: "text-violet-600 bg-violet-50",
-                                },
-                                {
-                                    label: "Active Bots",
-                                    value: activeCount,
-                                    icon: Activity,
-                                    color: "text-emerald-600 bg-emerald-50",
-                                },
-                                {
-                                    label: "Drafts",
-                                    value: draftCount,
-                                    icon: Pencil,
-                                    color: "text-blue-600 bg-blue-50",
-                                },
-                                {
-                                    label: "Start Modes",
-                                    value: "2",
-                                    icon: Zap,
-                                    color: "text-amber-600 bg-amber-50",
-                                },
-                            ].map((item) => {
-                                const Icon = item.icon;
 
-                                return (
-                                    <div key={item.label} className={`${card} p-5`}>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm text-slate-500">
-                                                {item.label}
-                                            </span>
-                                            <span className={`rounded-xl p-2 ${item.color}`}>
-                                                <Icon size={20} />
-                                            </span>
-                                        </div>
-                                        <div className="mt-3 text-3xl font-bold text-slate-900">
-                                            {item.value}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </section>
 
                         <section className={`${card} overflow-hidden`}>
-                            <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <h2 className="font-semibold text-slate-900">
-                                        Your Bot Templates
-                                    </h2>
-                                    <p className="mt-1 text-xs text-slate-500">
-                                        Save करें और किसी भी Chat में उपयोग करने के लिए तैयार रखें।
-                                    </p>
-                                </div>
-
-                                <div className="relative w-full sm:max-w-xs">
-                                    <Search
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                                        size={17}
-                                    />
-                                    <input
-                                        className={`${field} pl-9`}
-                                        placeholder="Search bots..."
-                                        value={search}
-                                        onChange={(event) => setSearch(event.target.value)}
-                                    />
-                                </div>
-                            </div>
+                            
 
                             {loading ? (
                                 <div className="flex items-center justify-center gap-2 p-12 text-sm text-slate-500">
@@ -839,94 +783,119 @@ export default function WhatsAppBotsPage() {
                                     </button>
                                 </div>
                             ) : (
-                                <div className="divide-y divide-slate-100">
-                                    {filteredBots.map((bot) => (
-                                        <div
-                                            key={bot.id}
-                                            className="flex flex-col gap-4 p-4 transition hover:bg-slate-50/70 md:flex-row md:items-center"
-                                        >
-                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                                                <Bot size={24} />
-                                            </div>
 
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <h3 className="font-semibold text-slate-900">
-                                                        {bot.name}
-                                                    </h3>
-                                                    <StatusBadge status={bot.status} />
-                                                </div>
-                                                <p className="mt-1 text-sm text-slate-500">
-                                                    {bot.description || "No description"}
-                                                </p>
-                                                <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
-                                                    <span className="rounded-lg bg-slate-100 px-2 py-1">
+                                <div className="overflow-x-auto">
+                                    <div className="min-w-[950px] divide-y divide-slate-100">
+                                        {filteredBots.map((bot) => {
+                                            const isApprovedBot = Boolean(bot.source_template_id);
+
+                                            return (
+                                                <div
+                                                    key={bot.id}
+                                                    className="grid grid-cols-[minmax(150px,1.2fr)_minmax(180px,1.5fr)_90px_140px_85px_auto] items-center gap-3 px-4 py-2.5 transition hover:bg-slate-50/70"
+                                                >
+                                                    {/* Bot Name */}
+                                                    <div className="flex min-w-0 items-center gap-2">
+                                                        <div
+                                                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${isApprovedBot
+                                                                ? "bg-violet-100 text-violet-700"
+                                                                : "bg-emerald-100 text-emerald-700"
+                                                                }`}
+                                                            title={
+                                                                isApprovedBot
+                                                                    ? "Approved Template Bot"
+                                                                    : "Normal Bot"
+                                                            }
+                                                        >
+                                                            <Bot size={20} />
+                                                        </div>
+
+                                                        <h3
+                                                            className="truncate text-sm font-semibold text-slate-900"
+                                                            title={bot.name}
+                                                        >
+                                                            {bot.name}
+                                                        </h3>
+                                                    </div>
+
+                                                    {/* Description */}
+                                                    <p
+                                                        className="truncate text-xs text-slate-500"
+                                                        title={bot.description || "No description"}
+                                                    >
+                                                        {bot.description || "No description"}
+                                                    </p>
+
+                                                    {/* Questions */}
+                                                    <span className="text-xs font-medium text-slate-600">
                                                         {bot.flow.nodes.length} Questions
                                                     </span>
-                                                    <span className="rounded-lg bg-slate-100 px-2 py-1">
-                                                        Start: {bot.start_mode}
-                                                    </span>
-                                                    {bot.trigger_keyword && (
-                                                        <span className="rounded-lg bg-slate-100 px-2 py-1">
-                                                            Trigger: {bot.trigger_keyword}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
 
-                                            <div className="flex flex-wrap gap-2">
-                                                <button
-                                                    className={secondary}
-                                                    title="Edit"
-                                                    onClick={() => editBot(bot)}
-                                                >
-                                                    <Pencil size={16} /> Edit
-                                                </button>
-                                                <button
-                                                    className={secondary}
-                                                    title="Duplicate"
-                                                    onClick={() => void duplicateBot(bot)}
-                                                >
-                                                    <Copy size={16} />
-                                                </button>
-                                                <button
-                                                    className={secondary}
-                                                    title={bot.status === "active" ? "Pause" : "Activate"}
-                                                    onClick={() => void changeStatus(bot)}
-                                                >
-                                                    {bot.status === "active" ? (
-                                                        <CirclePause size={16} />
-                                                    ) : (
-                                                        <Check size={16} />
-                                                    )}
-                                                </button>
-                                                <button
-                                                    className="inline-flex items-center justify-center rounded-xl border border-red-100 p-2.5 text-red-600 hover:bg-red-50"
-                                                    title="Delete"
-                                                    onClick={() => void deleteBot(bot)}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                                    {/* Bot Type */}
+                                                    <span
+                                                        className={`inline-flex w-fit items-center rounded-lg px-2 py-1 text-xs font-semibold ${isApprovedBot
+                                                            ? "bg-violet-100 text-violet-700"
+                                                            : "bg-emerald-100 text-emerald-700"
+                                                            }`}
+                                                    >
+                                                        {isApprovedBot ? "Approved Bot" : "Normal Bot"}
+                                                    </span>
+
+                                                    {/* Status */}
+                                                    <StatusBadge status={bot.status} />
+
+                                                    {/* Actions */}
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        <button
+                                                            className={secondary}
+                                                            title="Edit"
+                                                            onClick={() => editBot(bot)}
+                                                        >
+                                                            <Pencil size={15} />
+                                                        </button>
+
+                                                        <button
+                                                            className={secondary}
+                                                            title="Duplicate"
+                                                            onClick={() => void duplicateBot(bot)}
+                                                        >
+                                                            <Copy size={15} />
+                                                        </button>
+
+                                                        <button
+                                                            className={secondary}
+                                                            title={
+                                                                bot.status === "active"
+                                                                    ? "Pause"
+                                                                    : "Activate"
+                                                            }
+                                                            onClick={() => void changeStatus(bot)}
+                                                        >
+                                                            {bot.status === "active" ? (
+                                                                <CirclePause size={15} />
+                                                            ) : (
+                                                                <Check size={15} />
+                                                            )}
+                                                        </button>
+
+                                                        <button
+                                                            className="inline-flex items-center justify-center rounded-xl border border-red-100 p-2.5 text-red-600 hover:bg-red-50"
+                                                            title="Delete"
+                                                            onClick={() => void deleteBot(bot)}
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
+
                             )}
                         </section>
 
-                        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
-                            <div className="flex items-start gap-3">
-                                <Settings2 size={20} className="mt-0.5 shrink-0" />
-                                <div>
-                                    <p className="font-semibold">अगला Integration Step</p>
-                                    <p className="mt-1 text-blue-800">
-                                        Templates और Flows यहाँ Save होंगे। Inbox से Bot Start,
-                                        Automatic Triggers और WhatsApp पर प्रश्न भेजने के लिए
-                                        अगला चरण Bot Engine तथा Webhook integration है।
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+
                     </>
                 ) : (
                     <div className="space-y-5">
@@ -1662,130 +1631,130 @@ export default function WhatsAppBotsPage() {
                                                             </select>
                                                         </div>
 
-                                                        
-                                            ))}
+
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                    ))}
+
+                                    <button
+                                        className={`${secondary} w-full border-dashed py-3`}
+                                        onClick={addNode}
+                                    >
+                                        <Plus size={17} /> Add Next Question
+                                    </button>
                                 </div>
-                            ))}
-
-                            <button
-                                className={`${secondary} w-full border-dashed py-3`}
-                                onClick={addNode}
-                            >
-                                <Plus size={17} /> Add Next Question
-                            </button>
-                    </div>
-                ) : (
-                <div className="overflow-x-auto bg-slate-50 p-5">
-                    <div className="mx-auto flex min-w-[300px] max-w-2xl flex-col items-center gap-3">
-                        {flow.nodes.map((node, index) => (
-                            <div key={node.id} className="w-full">
-                                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                                    <div className="mb-2 flex items-center justify-between gap-2">
-                                        <span className="flex items-center gap-2 text-xs font-semibold text-emerald-700">
-                                            <MessageSquare size={15} />
-                                            QUESTION {index + 1}
-                                        </span>
-                                        <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600">
-                                            {node.type}
-                                        </span>
-                                    </div>
-                                    <p className="font-semibold text-slate-900">
-                                        {node.question || "Question text यहाँ लिखें"}
-                                    </p>
-
-                                    {(node.type === "buttons" || node.type === "list") && (
-                                        <div className="mt-3 flex flex-wrap gap-2">
-                                            {node.options.map((option) => {
-                                                const target = flow.nodes.find(
-                                                    (item) => item.id === option.nextNodeId
-                                                );
-
-                                                return (
-                                                    <div
-                                                        key={option.id}
-                                                        className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800"
-                                                    >
-                                                        <span className="font-semibold">
-                                                            {option.title}
+                            ) : (
+                                <div className="overflow-x-auto bg-slate-50 p-5">
+                                    <div className="mx-auto flex min-w-[300px] max-w-2xl flex-col items-center gap-3">
+                                        {flow.nodes.map((node, index) => (
+                                            <div key={node.id} className="w-full">
+                                                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                                                    <div className="mb-2 flex items-center justify-between gap-2">
+                                                        <span className="flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                                                            <MessageSquare size={15} />
+                                                            QUESTION {index + 1}
                                                         </span>
-                                                        <span className="mt-1 block text-emerald-700">
-                                                            →{" "}
-                                                            {target
-                                                                ? target.question || "Next Question"
-                                                                : "End"}
+                                                        <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                                                            {node.type}
                                                         </span>
                                                     </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                    {node.type === "url_button" && (
-                                        <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
-                                            <p className="mb-2 text-xs font-semibold text-slate-600">
-                                                URL BUTTON PREVIEW
-                                            </p>
+                                                    <p className="font-semibold text-slate-900">
+                                                        {node.question || "Question text यहाँ लिखें"}
+                                                    </p>
 
-                                            <div className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700">
-                                                <span>
-                                                    {node.urlButtonText || "Visit Website"}
-                                                </span>
-                                                <span aria-hidden="true">↗</span>
+                                                    {(node.type === "buttons" || node.type === "list") && (
+                                                        <div className="mt-3 flex flex-wrap gap-2">
+                                                            {node.options.map((option) => {
+                                                                const target = flow.nodes.find(
+                                                                    (item) => item.id === option.nextNodeId
+                                                                );
+
+                                                                return (
+                                                                    <div
+                                                                        key={option.id}
+                                                                        className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800"
+                                                                    >
+                                                                        <span className="font-semibold">
+                                                                            {option.title}
+                                                                        </span>
+                                                                        <span className="mt-1 block text-emerald-700">
+                                                                            →{" "}
+                                                                            {target
+                                                                                ? target.question || "Next Question"
+                                                                                : "End"}
+                                                                        </span>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                    {node.type === "url_button" && (
+                                                        <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
+                                                            <p className="mb-2 text-xs font-semibold text-slate-600">
+                                                                URL BUTTON PREVIEW
+                                                            </p>
+
+                                                            <div className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700">
+                                                                <span>
+                                                                    {node.urlButtonText || "Visit Website"}
+                                                                </span>
+                                                                <span aria-hidden="true">↗</span>
+                                                            </div>
+
+                                                            <p className="mt-2 break-all text-xs text-slate-600">
+                                                                {node.urlButtonUrl || "https://example.com/"}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {index < flow.nodes.length - 1 && (
+                                                    <div className="flex justify-center py-2 text-slate-400">
+                                                        <ArrowDown size={20} />
+                                                    </div>
+                                                )}
                                             </div>
-
-                                            <p className="mt-2 break-all text-xs text-slate-600">
-                                                {node.urlButtonUrl || "https://example.com/"}
-                                            </p>
+                                        ))}
+                                        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                                            <GitBranch size={15} />
+                                            Connections बदलने के लिए Form Builder का उपयोग करें।
                                         </div>
-                                    )}
-                                </div>
-
-                                {index < flow.nodes.length - 1 && (
-                                    <div className="flex justify-center py-2 text-slate-400">
-                                        <ArrowDown size={20} />
                                     </div>
-                                )}
+                                </div>
+                            )}
+                        </section>
+
+                        {notice && (
+                            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+                                {notice}
                             </div>
-                        ))}
-                        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                            <GitBranch size={15} />
-                            Connections बदलने के लिए Form Builder का उपयोग करें।
+                        )}
+
+                        <div className="sticky bottom-3 flex flex-wrap justify-end gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+                            <button
+                                className={secondary}
+                                onClick={() => setView("templates")}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className={primary}
+                                disabled={saving}
+                                onClick={() => void saveBot()}
+                            >
+                                {saving ? (
+                                    <LoaderCircle className="animate-spin" size={17} />
+                                ) : (
+                                    <Check size={17} />
+                                )}
+                                {saving ? "Saving..." : "Save Bot Template"}
+                            </button>
                         </div>
                     </div>
-                </div>
-                            )}
-            </section>
-
-            {notice && (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-                    {notice}
-                </div>
-            )}
-
-            <div className="sticky bottom-3 flex flex-wrap justify-end gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
-                <button
-                    className={secondary}
-                    onClick={() => setView("templates")}
-                >
-                    Cancel
-                </button>
-                <button
-                    className={primary}
-                    disabled={saving}
-                    onClick={() => void saveBot()}
-                >
-                    {saving ? (
-                        <LoaderCircle className="animate-spin" size={17} />
-                    ) : (
-                        <Check size={17} />
-                    )}
-                    {saving ? "Saving..." : "Save Bot Template"}
-                </button>
-            </div>
-        </div>
-    )
-}
+                )
+                }
             </div >
         </div >
     );
