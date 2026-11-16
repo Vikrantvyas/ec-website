@@ -4,7 +4,35 @@
 import { useState, useEffect, useRef } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
+function getDepartmentGroup(value: any): string {
+  let departments: string[] = [];
 
+  if (Array.isArray(value)) {
+    departments = value.map(String);
+  } else if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      departments = Array.isArray(parsed)
+        ? parsed.map(String)
+        : [value];
+    } catch {
+      departments = [value];
+    }
+  }
+
+  const normalized = departments.map((item) =>
+    item.trim().toLowerCase()
+  );
+
+  const hasEnglish = normalized.includes("english");
+  const hasComputer = normalized.includes("computer");
+
+  if (hasEnglish && hasComputer) return "Both";
+  if (hasEnglish) return "English";
+  if (hasComputer) return "Computer";
+
+  return "Blank";
+}
 export default function LeadTable({
   leads,
   receipts,
@@ -16,6 +44,8 @@ export default function LeadTable({
 }) {
 
   const [search, setSearch] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [showColumns, setShowColumns] = useState(false);
 
   const [sortField, setSortField] = useState("created_at");
@@ -51,7 +81,7 @@ export default function LeadTable({
 
   useEffect(() => {
     setPage(1);
-  }, [search, filters]);
+  }, [search, filters, fromDate, toDate]);
 
   /* LOAD BRANCHES */
 
@@ -111,10 +141,21 @@ export default function LeadTable({
   });
 
   /* FILTERS */
+  /* DATE RANGE FILTER */
 
+  if (fromDate || toDate) {
+    filtered = filtered.filter((lead) => {
+      const enquiryDate = lead.enquiry_date || "";
+
+      return (
+        (!fromDate || enquiryDate >= fromDate) &&
+        (!toDate || enquiryDate <= toDate)
+      );
+    });
+  }
   if (filters.department) {
     filtered = filtered.filter(
-      l => l.department === filters.department
+      l => getDepartmentGroup(l.department) === filters.department
     );
   }
 
@@ -153,7 +194,7 @@ export default function LeadTable({
 
   useEffect(() => {
     setLeadCount?.(filtered.length);
-  }, [search, filters, sortField, sortOrder, leads]);
+  }, [search, filters, sortField, sortOrder, leads, fromDate, toDate]);
 
   /* PAGINATION */
 
@@ -286,7 +327,7 @@ export default function LeadTable({
         phone: String(lead.mobile_number || ""),
         source: "leads" as const
       }))
-      
+
 
     if (selectedLeads.length === 0) {
       alert("Selected Leads mein valid WhatsApp number nahi mila.");
@@ -336,7 +377,34 @@ export default function LeadTable({
         </h1>
 
         <div className="flex flex-wrap gap-2 items-center relative">
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            title="From Date"
+            className="px-2 py-1.5 border rounded-md text-sm"
+          />
 
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            title="To Date"
+            min={fromDate || undefined}
+            className="px-2 py-1.5 border rounded-md text-sm"
+          />
+
+          {(fromDate || toDate) && (
+            <button
+              onClick={() => {
+                setFromDate("");
+                setToDate("");
+              }}
+              className="px-2 py-1.5 border rounded-md text-sm text-red-600"
+            >
+              Clear
+            </button>
+          )}
           <span className="text-xs text-gray-600">
             Selected: {selectedIds.length}
           </span>
@@ -455,7 +523,7 @@ export default function LeadTable({
 
                 <th
                   onClick={() => toggleSort("created_at")}
-                  className="px-4 py-3 text-left text-xs font-semibold cursor-pointer"
+                  className="px-4 py-3 text-left text-xs font-semibold cursor-pointer whitespace-nowrap"
                 >
                   Enq_Date{arrow("created_at")}
                 </th>
@@ -466,7 +534,7 @@ export default function LeadTable({
 
                 <th
                   onClick={() => toggleSort("student_name")}
-                  className="px-4 py-3 text-left text-xs font-semibold cursor-pointer"
+                  className="px-4 py-3 text-left text-xs font-semibold cursor-pointer whitespace-nowrap"
                 >
                   Name{arrow("student_name")}
                 </th>
@@ -503,9 +571,10 @@ export default function LeadTable({
                       })}
                     >
                       <option value="">All</option>
-                      {[...new Set(uniqueLeads.map(l => l.department))].map((d: any) => (
-                        <option key={d}>{d}</option>
-                      ))}
+                      <option value="English">English</option>
+                      <option value="Computer">Computer</option>
+                      <option value="Both">Both (English + Computer)</option>
+                      <option value="Blank">Blank</option>
                     </select>
 
                   </div>
@@ -516,7 +585,7 @@ export default function LeadTable({
 
               {columns.course && (
 
-                <th className="px-4 py-3 text-left text-xs font-semibold">
+                <th className="px-4 py-3 text-left text-xs font-semibold w-[180px] min-w-[180px] max-w-[180px]">
 
                   <div className="flex flex-col gap-1">
 
@@ -615,7 +684,7 @@ export default function LeadTable({
 
                   {columns.date && (
 
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 whitespace-nowrap">
                       {lead.enquiry_date}
                     </td>
 
@@ -623,7 +692,7 @@ export default function LeadTable({
 
                   {columns.name && (
 
-                    <td className="px-4 py-3.5 font-semibold text-gray-800">
+                    <td className="px-4 py-3.5 font-semibold text-gray-800 whitespace-nowrap">
                       {lead.student_name}
                     </td>
 
@@ -646,15 +715,19 @@ export default function LeadTable({
 
                   {columns.department && (
 
-                    <td className="px-4 py-3.5">
-                      {lead.department}
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      {getDepartmentGroup(lead.department) === "Both"
+                        ? "Both (English + Computer)"
+                        : getDepartmentGroup(lead.department) === "Blank"
+                          ? ""
+                          : getDepartmentGroup(lead.department)}
                     </td>
 
                   )}
 
                   {columns.course && (
 
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 w-[180px] min-w-[180px] max-w-[180px] whitespace-normal break-words">
                       {lead.course}
                     </td>
 
