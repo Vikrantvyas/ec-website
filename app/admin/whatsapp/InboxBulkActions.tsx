@@ -134,7 +134,7 @@ export default function InboxBulkActions({
     selectedPhone,
     onRefreshInbox,
 }: Props) {
-
+    const [chatSearch, setChatSearch] = useState("");
     const [smartSearch, setSmartSearch] = useState<InboxSmartSearch>({
 
         text: "",
@@ -530,6 +530,18 @@ export default function InboxBulkActions({
             smartSearch.toDate.length > 0;
 
         return windowOpenConversations.filter((conversation) => {
+
+            const chatSearchText = chatSearch.trim().toLowerCase();
+            const chatSearchNumber = normalizePhone(chatSearchText);
+
+            if (
+                chatSearchText &&
+                !conversation.name.toLowerCase().includes(chatSearchText) &&
+                (!chatSearchNumber ||
+                    !normalizePhone(conversation.phone).includes(chatSearchNumber))
+            ) {
+                return false;
+            }
             const phoneKey = normalizePhone(conversation.phone);
             const labelStatus =
                 leadLabelStatus[normalizeEnquiryPhone(conversation.phone)];
@@ -673,6 +685,7 @@ export default function InboxBulkActions({
     }, [
         openTextOnly,
         smartSearch,
+        chatSearch,
         labelFilters,
         filteredConversations,
     ]);
@@ -783,10 +796,7 @@ export default function InboxBulkActions({
             return;
         }
 
-        if (phones.length > 100) {
-            setError("Ek baar mein maximum 100 contacts select karein.");
-            return;
-        }
+        
 
         if (actionMode === "text" && !bulkText.trim()) {
             setError("Normal Text message likhein.");
@@ -1310,7 +1320,15 @@ export default function InboxBulkActions({
                 )}
 
             </div>
-
+            <div className="shrink-0 bg-white px-3 pb-2">
+                <input
+                    type="text"
+                    value={chatSearch}
+                    onChange={(e) => setChatSearch(e.target.value)}
+                    placeholder="Search name or mobile number..."
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#008069]"
+                />
+            </div>
             <div className="min-h-0 flex-1 overflow-y-auto">
 
                 <div className="sticky top-0 z-20 -mt-3 mb-2 flex items-center justify-between gap-2 bg-white px-3 py-1.5 text-xs text-gray-500 shadow-md">
