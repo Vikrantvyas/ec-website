@@ -46,6 +46,7 @@ export default function LeadTable({
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [excludeEnquiryDate, setExcludeEnquiryDate] = useState(false);
   const [showColumns, setShowColumns] = useState(false);
 
   const [sortField, setSortField] = useState("created_at");
@@ -53,7 +54,8 @@ export default function LeadTable({
 
   const [page, setPage] = useState(1);
   const pageSize = 50;
-
+  const [fromPage, setFromPage] = useState("1");
+  const [toPage, setToPage] = useState("1");
   // WhatsApp Selection
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const lastSelectedIndexRef = useRef<number | null>(null);
@@ -147,12 +149,18 @@ export default function LeadTable({
     filtered = filtered.filter((lead) => {
       const enquiryDate = lead.enquiry_date || "";
 
-      return (
+      const isInDateRange =
+        enquiryDate &&
         (!fromDate || enquiryDate >= fromDate) &&
-        (!toDate || enquiryDate <= toDate)
-      );
+        (!toDate || enquiryDate <= toDate);
+
+      return excludeEnquiryDate
+        ? !isInDateRange
+        : Boolean(isInDateRange);
     });
   }
+  // EXCLUDE LEADS WITH ENQUIRY DATE
+
   if (filters.department) {
     filtered = filtered.filter(
       l => getDepartmentGroup(l.department) === filters.department
@@ -308,7 +316,30 @@ export default function LeadTable({
       lastSelectedIndexRef.current = null;
     }
   };
+  /* SELECT CONTACTS BY PAGE RANGE */
 
+  const handleSelectPageRange = () => {
+    const start = Math.max(1, Number(fromPage) || 1);
+    const end = Math.min(totalPages, Number(toPage) || 1);
+
+    if (start > totalPages || start > end) {
+      alert(`Please select a valid page range (1-${totalPages}).`);
+      return;
+    }
+
+    const startIndex = (start - 1) * pageSize;
+    const endIndex = Math.min(end * pageSize, filtered.length);
+
+    const rangeIds = filtered
+      .slice(startIndex, endIndex)
+      .map((lead) => lead.id);
+
+    setSelectedIds((current) =>
+      Array.from(new Set([...current, ...rangeIds]))
+    );
+
+    alert(`${rangeIds.length} contacts selected.`);
+  };
 
   /* SEND SELECTED LEADS TO WHATSAPP */
 
@@ -377,6 +408,18 @@ export default function LeadTable({
         </h1>
 
         <div className="flex flex-wrap gap-2 items-center relative">
+          <label className="flex items-center gap-1.5 text-sm text-gray-700 whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={excludeEnquiryDate}
+              onChange={(e) => {
+                setExcludeEnquiryDate(e.target.checked);
+                setSelectedIds([]);
+              }}
+              className="h-4 w-4"
+            />
+            Exclude Date Filled
+          </label>
           <input
             type="date"
             value={fromDate}
@@ -471,7 +514,7 @@ export default function LeadTable({
 
       {/* TABLE */}
 
-      <div className="overflow-auto max-h-[72vh]">
+      <div className="overflow-auto max-h-[76vh]">
 
         <table className="w-full text-sm">
 
@@ -495,7 +538,7 @@ export default function LeadTable({
 
                   <div className="flex flex-col gap-1">
 
-                    <span>Branch</span>
+                    
 
                     <select
                       className="text-xs border rounded"
@@ -505,7 +548,7 @@ export default function LeadTable({
                         branch: e.target.value
                       })}
                     >
-                      <option value="">All</option>
+                      <option value="">Branch</option>
                       {branchList.map((b: any) => (
                         <option key={b.id} value={b.id}>
                           {b.name}
@@ -555,12 +598,7 @@ export default function LeadTable({
 
                   <div className="flex flex-col gap-1">
 
-                    <span
-                      onClick={() => toggleSort("department")}
-                      className="cursor-pointer"
-                    >
-                      Department{arrow("department")}
-                    </span>
+                    
 
                     <select
                       className="text-xs border rounded"
@@ -570,7 +608,7 @@ export default function LeadTable({
                         department: e.target.value
                       })}
                     >
-                      <option value="">All</option>
+                      <option value="">Department</option>
                       <option value="English">English</option>
                       <option value="Computer">Computer</option>
                       <option value="Both">Both (English + Computer)</option>
@@ -589,12 +627,7 @@ export default function LeadTable({
 
                   <div className="flex flex-col gap-1">
 
-                    <span
-                      onClick={() => toggleSort("course")}
-                      className="cursor-pointer"
-                    >
-                      Course{arrow("course")}
-                    </span>
+                  
 
                     <select
                       className="text-xs border rounded"
@@ -604,7 +637,7 @@ export default function LeadTable({
                         course: e.target.value
                       })}
                     >
-                      <option value="">All</option>
+                      <option value="">Course</option>
                       {[...new Set(uniqueLeads.map(l => l.course))].map((d: any) => (
                         <option key={d}>{d}</option>
                       ))}
@@ -781,7 +814,7 @@ export default function LeadTable({
 
       {/* PAGINATION */}
 
-      <div className="flex gap-3 text-sm text-gray-600">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mt-2">
 
         {page > 1 && (
           <a
@@ -805,6 +838,40 @@ export default function LeadTable({
           </a>
         )}
 
+        <div className="flex items-center gap-2 ml-1">
+
+          <span>Select Pages:</span>
+
+          <input
+            type="number"
+            min="1"
+            max={totalPages}
+            value={fromPage}
+            onChange={(e) => setFromPage(e.target.value)}
+            className="w-14 h-7 border rounded px-2 text-sm"
+            placeholder="From"
+          />
+
+          <span>To</span>
+
+          <input
+            type="number"
+            min="1"
+            max={totalPages}
+            value={toPage}
+            onChange={(e) => setToPage(e.target.value)}
+            className="w-14 h-7 border rounded px-2 text-sm"
+            placeholder="To"
+          />
+
+          <button
+            onClick={handleSelectPageRange}
+            className="h-7 px-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700"
+          >
+            Select Pages
+          </button>
+
+        </div>
       </div>
 
     </div>
