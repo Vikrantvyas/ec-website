@@ -12,7 +12,6 @@ import {
     GitBranch,
     LoaderCircle,
     MessageSquare,
-    Pencil,
     Plus,
     Search,
     Settings2,
@@ -760,7 +759,7 @@ export default function WhatsAppBotsPage() {
 
 
                         <section className={`${card} overflow-hidden`}>
-                            
+
 
                             {loading ? (
                                 <div className="flex items-center justify-center gap-2 p-12 text-sm text-slate-500">
@@ -792,7 +791,8 @@ export default function WhatsAppBotsPage() {
                                             return (
                                                 <div
                                                     key={bot.id}
-                                                    className="grid grid-cols-[minmax(150px,1.2fr)_minmax(180px,1.5fr)_90px_140px_85px_auto] items-center gap-3 px-4 py-2.5 transition hover:bg-slate-50/70"
+                                                    className="grid grid-cols-[minmax(150px,1.2fr)_minmax(180px,1.5fr)_minmax(180px,1.2fr)_auto] items-center gap-3 px-4 py-3 transition hover:bg-emerald-50/70 cursor-pointer"
+                                                    onClick={() => editBot(bot)}
                                                 >
                                                     {/* Bot Name */}
                                                     <div className="flex min-w-0 items-center gap-2">
@@ -826,50 +826,45 @@ export default function WhatsAppBotsPage() {
                                                         {bot.description || "No description"}
                                                     </p>
 
-                                                    {/* Questions */}
-                                                    <span className="text-xs font-medium text-slate-600">
-                                                        {bot.flow.nodes.length} Questions
-                                                    </span>
+                                                    {/* Trigger Keyword */}
+                                                    <div className="min-w-0">
+                                                       
+                                                        {bot.trigger_keyword?.trim() ? (
+                                                            <span
+                                                                className="inline-flex max-w-full truncate rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700"
+                                                                title={bot.trigger_keyword}
+                                                            >
+                                                                <Zap size={13} className="mr-1 shrink-0" />
+                                                                {bot.trigger_keyword}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-xs text-slate-400">—</span>
+                                                        )}
+                                                    </div>
 
-                                                    {/* Bot Type */}
-                                                    <span
-                                                        className={`inline-flex w-fit items-center rounded-lg px-2 py-1 text-xs font-semibold ${isApprovedBot
-                                                            ? "bg-violet-100 text-violet-700"
-                                                            : "bg-emerald-100 text-emerald-700"
-                                                            }`}
-                                                    >
-                                                        {isApprovedBot ? "Approved Bot" : "Normal Bot"}
-                                                    </span>
-
-                                                    {/* Status */}
-                                                    <StatusBadge status={bot.status} />
-
+                                                    {/* Actions */}
                                                     {/* Actions */}
                                                     <div className="flex items-center justify-end gap-1.5">
                                                         <button
-                                                            className={secondary}
-                                                            title="Edit"
-                                                            onClick={() => editBot(bot)}
-                                                        >
-                                                            <Pencil size={15} />
-                                                        </button>
-
-                                                        <button
+                                                            type="button"
                                                             className={secondary}
                                                             title="Duplicate"
-                                                            onClick={() => void duplicateBot(bot)}
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                void duplicateBot(bot);
+                                                            }}
                                                         >
                                                             <Copy size={15} />
                                                         </button>
 
                                                         <button
+                                                            type="button"
                                                             className={secondary}
-                                                            title={
-                                                                bot.status === "active"
-                                                                    ? "Pause"
-                                                                    : "Activate"
-                                                            }
-                                                            onClick={() => void changeStatus(bot)}
+                                                            title={bot.status === "active" ? "Pause" : "Activate"}
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                void changeStatus(bot);
+                                                            }}
                                                         >
                                                             {bot.status === "active" ? (
                                                                 <CirclePause size={15} />
@@ -879,9 +874,13 @@ export default function WhatsAppBotsPage() {
                                                         </button>
 
                                                         <button
+                                                            type="button"
                                                             className="inline-flex items-center justify-center rounded-xl border border-red-100 p-2.5 text-red-600 hover:bg-red-50"
                                                             title="Delete"
-                                                            onClick={() => void deleteBot(bot)}
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                void deleteBot(bot);
+                                                            }}
                                                         >
                                                             <Trash2 size={15} />
                                                         </button>
