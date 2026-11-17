@@ -49,7 +49,7 @@ export default function LeadTable({
   const [excludeEnquiryDate, setExcludeEnquiryDate] = useState(false);
   const [showColumns, setShowColumns] = useState(false);
 
-  const [sortField, setSortField] = useState("created_at");
+ const [sortField, setSortField] = useState("enquiry_date");
   const [sortOrder, setSortOrder] = useState("desc");
 
   const [page, setPage] = useState(1);
@@ -186,7 +186,7 @@ export default function LeadTable({
     let v1 = a[sortField];
     let v2 = b[sortField];
 
-    if (sortField === "created_at") {
+    if (sortField === "created_at" || sortField === "enquiry_date") {
       v1 = new Date(v1).getTime();
       v2 = new Date(v2).getTime();
     }
@@ -565,10 +565,10 @@ export default function LeadTable({
               {columns.date && (
 
                 <th
-                  onClick={() => toggleSort("created_at")}
+                  onClick={() => toggleSort("enquiry_date")}
                   className="px-4 py-3 text-left text-xs font-semibold cursor-pointer whitespace-nowrap"
                 >
-                  Enq_Date{arrow("created_at")}
+                  Enq_Date{arrow("enquiry_date")}
                 </th>
 
               )}
@@ -718,7 +718,13 @@ export default function LeadTable({
                   {columns.date && (
 
                     <td className="px-4 py-3.5 whitespace-nowrap">
-                      {lead.enquiry_date}
+                      {lead.enquiry_date
+  ? new Date(lead.enquiry_date + "T00:00:00").toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "2-digit",
+    }).replace(",", "")
+  : ""}
                     </td>
 
                   )}
