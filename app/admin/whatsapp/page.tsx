@@ -32,6 +32,21 @@ type Template = {
   status: string;
   components: unknown;
 };
+type CampaignProgress = {
+  id: string;
+  name: string;
+  status: string;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  total_recipients: number;
+  accepted_count: number;
+  delivered_count: number;
+  read_count: number;
+  failed_count: number;
+  queued_count: number;
+  sending_count: number;
+};
 // Approximate estimates including GST; verify current Meta rates
 // before launching a real campaign.
 const ESTIMATED_RATES: Record<string, number> = {
@@ -75,6 +90,22 @@ function formatDate(value: string) {
   if (Number.isNaN(date.getTime())) return "—";
   return date.toLocaleDateString("en-IN");
 }
+function formatDuration(seconds: number) {
+  const totalSeconds = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  if (minutes > 0) {
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+
+  return `${remainingSeconds}s`;
+}
 export default function WhatsAppBulkPage() {
   const [source, setSource] = useState<Source>("meta_leads");
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -92,6 +123,11 @@ export default function WhatsAppBulkPage() {
   const [pastedNumbers, setPastedNumbers] = useState("");
   const [excludedNumbers, setExcludedNumbers] = useState("");
   const [importedMetaContacts, setImportedMetaContacts] = useState<Contact[]>([]);
+  const [activeCampaignId, setActiveCampaignId] = useState("");
+  const [campaignProgress, setCampaignProgress] =
+    useState<CampaignProgress | null>(null);
+  const [progressLoading, setProgressLoading] = useState(false);
+  const [progressClosed, setProgressClosed] = useState(false);
   const loadContacts = useCallback(() => {
     setContacts(importedMetaContacts);
     setSelectedIds((current) => {
@@ -235,6 +271,91 @@ export default function WhatsAppBulkPage() {
   useEffect(() => {
     void loadTemplates();
   }, [loadTemplates]);
+
+  // Restore active campaign after page refresh
+  useEffect(() => {
+    const savedCampaignId = sessionStorage.getItem(
+      "ec_whatsapp_active_campaign_id"
+    );
+
+    if (savedCampaignId) {
+      setActiveCampaignId(savedCampaignId);
+    }
+  }, []);
+
+  // Fetch campaign progress every 5 seconds
+  useEffect(() => {
+    if (!activeCampaignId || campaignProgress?.status === "completed") return;
+    let isActive = true;
+    let isFetching = false;
+
+    const fetchProgress = async () => {
+      if (isFetching) return;
+
+      isFetching = true;
+
+      try {
+        setProgressLoading(true);
+
+        const { data: campaign, error: campaignError } = await supabase
+          .from("whatsapp_campaigns")
+          .select(
+            "id, name, status, created_at, started_at, completed_at, total_recipients, accepted_count, delivered_count, read_count, failed_count"
+          )
+          .eq("id", activeCampaignId)
+          .maybeSingle();
+
+        if (campaignError) throw campaignError;
+        if (!campaign) throw new Error("Campaign record nahi mili.");
+
+        const [queuedResult, sendingResult] = await Promise.all([
+          supabase
+            .from("whatsapp_campaign_recipients")
+            .select("id", { count: "exact", head: true })
+            .eq("campaign_id", activeCampaignId)
+            .eq("status", "queued"),
+
+          supabase
+            .from("whatsapp_campaign_recipients")
+            .select("id", { count: "exact", head: true })
+            .eq("campaign_id", activeCampaignId)
+            .eq("status", "sending"),
+        ]);
+
+        if (queuedResult.error) throw queuedResult.error;
+        if (sendingResult.error) throw sendingResult.error;
+
+        if (!isActive) return;
+
+        setCampaignProgress({
+          ...campaign,
+          queued_count: queuedResult.count ?? 0,
+          sending_count: sendingResult.count ?? 0,
+        });
+      } catch (err: any) {
+        if (isActive) {
+          console.error("Campaign progress error:", err.message);
+        }
+      } finally {
+        isFetching = false;
+
+        if (isActive) {
+          setProgressLoading(false);
+        }
+      }
+    };
+
+    void fetchProgress();
+
+    const interval = window.setInterval(() => {
+      void fetchProgress();
+    }, 5000);
+
+    return () => {
+      isActive = false;
+      window.clearInterval(interval);
+    };
+  }, [activeCampaignId, campaignProgress?.status]);
   const selectedTemplate = templates.find(
     (item) => item.id === templateId
   );
@@ -338,90 +459,52 @@ export default function WhatsAppBulkPage() {
 
     setLoading(true);
 
-    const BATCH_SIZE = 100;
-    let total = 0;
-    let accepted = 0;
-    let failed = 0;
-    let skipped = 0;
-    let completedBatches = 0;
-
-    const totalBatches = Math.ceil(recipients.length / BATCH_SIZE);
 
     try {
-      for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-        const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
-        const batch = recipients.slice(i, i + BATCH_SIZE);
-        const batchRecipients = structuredRecipients.slice(
-          i,
-          i + BATCH_SIZE,
-        );
+      setSuccess("Campaign queue mein add ho rahi hai...");
 
-        setSuccess(
-          `Sending batch ${batchNumber}/${totalBatches}... ` +
-          `Accepted: ${accepted}, Failed: ${failed}, Skipped: ${skipped}`,
-        );
-        setError("");
+      const { data, error: invokeError } =
+        await supabase.functions.invoke("whatsapp-bulk-send", {
+          body: {
+            to: recipients,
+            recipients: structuredRecipients,
+            campaign_name: campaignName.trim(),
+            template_id: selectedTemplate.id,
+            template_name: selectedTemplate.template_name,
+            language_code: selectedTemplate.language_code,
+          },
+        });
 
-        const { data, error: invokeError } =
-          await supabase.functions.invoke("whatsapp-bulk-send", {
-            body: {
-              to: batch,
-              recipients: batchRecipients,
-              campaign_name: campaignName.trim(),
-              template_id: selectedTemplate.id,
-              template_name: selectedTemplate.template_name,
-              language_code: selectedTemplate.language_code,
+      if (invokeError) {
+        const details = await (invokeError as any).context?.json?.()
+          .catch(() => null);
 
-            },
-          });
-
-        if (invokeError) {
-          const details = await (invokeError as any).context?.json?.()
-            .catch(() => null);
-
-          throw new Error(
-            `Batch ${batchNumber}/${totalBatches} request failed: ` +
-            `${details?.error || details?.message || invokeError.message}. ` +
-            `Earlier batches may already have sent messages. Check logs before retrying.`,
-          );
-        }
-
-        if (!data || data.error) {
-          throw new Error(
-            `Batch ${batchNumber}/${totalBatches}: ` +
-            `${data?.error || "No response received"}. ` +
-            `Earlier batches may already have sent messages.`,
-          );
-        }
-
-        total += Number(data.total ?? batch.length);
-        accepted += Number(data.accepted ?? 0);
-        failed += Number(data.failed ?? 0);
-        skipped += Number(data.skipped ?? 0);
-        completedBatches++;
-
-        setSuccess(
-          `Progress: ${completedBatches}/${totalBatches} batches | ` +
-          `Total: ${total} | Meta accepted: ${accepted} | ` +
-          `Failed: ${failed} | Skipped: ${skipped}`,
+        throw new Error(
+          details?.error || details?.message || invokeError.message
         );
       }
 
+      if (!data?.success || !data?.campaign_id) {
+        throw new Error(data?.error || "Campaign queue create nahi hui.");
+      }
+      setActiveCampaignId(data.campaign_id);
+      sessionStorage.setItem("ec_whatsapp_active_campaign_id", data.campaign_id);
+      setCampaignProgress(null);
+      setProgressClosed(false);
       setSuccess(
-        `Campaign processing complete | Batches: ${completedBatches}/${totalBatches} | ` +
-        `Total: ${total} | Meta accepted: ${accepted} | ` +
-        `Failed: ${failed} | Skipped: ${skipped}`,
+        `Campaign queue mein successfully add ho gayi. ` +
+        `Campaign ID: ${data.campaign_id} | ` +
+        `Total recipients: ${data.queued ?? data.total ?? recipients.length}`
       );
+
     } catch (err: unknown) {
       setError(
-        `${err instanceof Error ? err.message : "Sending failed."} ` +
-        `Progress before the error: ${completedBatches}/${totalBatches} batches | ` +
-        `Total: ${total} | Accepted: ${accepted} | ` +
-        `Failed: ${failed} | Skipped: ${skipped}.`,
+        err instanceof Error ? err.message : "Campaign creation failed."
       );
     } finally {
       setLoading(false);
     }
+
 
   }
   const templateComponents = Array.isArray(selectedTemplate?.components)
@@ -451,6 +534,44 @@ export default function WhatsAppBulkPage() {
 
   const templateIsActive =
     selectedTemplate?.status?.toLowerCase() === "active";
+  const campaignStartTime = campaignProgress
+    ? new Date(
+      campaignProgress.started_at || campaignProgress.created_at
+    ).getTime()
+    : 0;
+
+  const campaignEndTime =
+    campaignProgress?.status === "completed" && campaignProgress.completed_at
+      ? new Date(campaignProgress.completed_at).getTime()
+      : Date.now();
+
+  const elapsedSeconds =
+    campaignStartTime > 0
+      ? Math.max(0, Math.floor((campaignEndTime - campaignStartTime) / 1000))
+      : 0;
+
+  const processedCount = campaignProgress
+    ? Math.max(
+      0,
+      campaignProgress.total_recipients -
+      campaignProgress.queued_count -
+      campaignProgress.sending_count
+    )
+    : 0;
+
+  const remainingCount = campaignProgress
+    ? campaignProgress.queued_count + campaignProgress.sending_count
+    : 0;
+
+  const estimatedRemainingSeconds =
+    processedCount > 0 && elapsedSeconds > 0
+      ? Math.ceil((elapsedSeconds / processedCount) * remainingCount)
+      : null;
+
+  const expectedCompletion =
+    estimatedRemainingSeconds !== null
+      ? new Date(Date.now() + estimatedRemainingSeconds * 1000)
+      : null;
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -489,6 +610,168 @@ export default function WhatsAppBulkPage() {
           {success}
         </div>
       )}
+
+      {/* Campaign Live Progress */}
+      {campaignProgress && !progressClosed && (
+        <section className="rounded-xl border bg-white p-4 md:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Campaign Live Progress
+              </h2>
+              <p className="mt-1 text-sm text-gray-600">
+                {campaignProgress.name}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold capitalize text-green-800">
+                {campaignProgress.status}
+              </span>
+
+              {campaignProgress.status === "completed" && (
+                <button
+                  type="button"
+                  onClick={() => setProgressClosed(true)}
+                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  title="Close campaign progress"
+                >
+                  × Close
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <div className="mb-2 flex justify-between text-sm">
+              <span className="font-medium text-gray-700">
+                Processing Progress
+              </span>
+              <span className="font-semibold text-gray-900">
+                {campaignProgress.total_recipients > 0
+                  ? Math.round(
+                    ((campaignProgress.accepted_count +
+                      campaignProgress.failed_count) /
+                      campaignProgress.total_recipients) *
+                    100
+                  )
+                  : 0}
+                %
+              </span>
+            </div>
+
+            <div className="h-3 overflow-hidden rounded-full bg-gray-100">
+              <div
+                className="h-full rounded-full bg-green-600 transition-all duration-500"
+                style={{
+                  width: `${campaignProgress.total_recipients > 0
+                    ? Math.min(
+                      100,
+                      ((campaignProgress.accepted_count +
+                        campaignProgress.failed_count) /
+                        campaignProgress.total_recipients) *
+                      100
+                    )
+                    : 0
+                    }%`,
+                }}
+              />
+            </div>
+          </div>
+          {/* Campaign Time Estimates */}
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border bg-blue-50 p-3">
+              <p className="text-xs text-gray-600">Elapsed Time</p>
+              <p className="mt-1 text-lg font-bold text-blue-800">
+                {formatDuration(elapsedSeconds)}
+              </p>
+            </div>
+
+            <div className="rounded-lg border bg-amber-50 p-3">
+              <p className="text-xs text-gray-600">
+                Estimated Time Remaining
+              </p>
+              <p className="mt-1 text-lg font-bold text-amber-800">
+                {campaignProgress.status === "completed"
+                  ? "Completed"
+                  : estimatedRemainingSeconds !== null
+                    ? formatDuration(estimatedRemainingSeconds)
+                    : "Calculating..."}
+              </p>
+            </div>
+
+            <div className="rounded-lg border bg-green-50 p-3">
+              <p className="text-xs text-gray-600">Expected Completion</p>
+              <p className="mt-1 text-lg font-bold text-green-800">
+                {campaignProgress.status === "completed"
+                  ? "Completed"
+                  : expectedCompletion
+                    ? expectedCompletion.toLocaleTimeString("en-IN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                    : "Calculating..."}
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+            {[
+              {
+                label: "Total",
+                value: campaignProgress.total_recipients,
+                color: "text-gray-900",
+              },
+              {
+                label: "Queued",
+                value: campaignProgress.queued_count,
+                color: "text-gray-700",
+              },
+              {
+                label: "Sending",
+                value: campaignProgress.sending_count,
+                color: "text-blue-700",
+              },
+              {
+                label: "Accepted",
+                value: campaignProgress.accepted_count,
+                color: "text-indigo-700",
+              },
+              {
+                label: "Delivered",
+                value: campaignProgress.delivered_count,
+                color: "text-green-700",
+              },
+              {
+                label: "Read",
+                value: campaignProgress.read_count,
+                color: "text-purple-700",
+              },
+              {
+                label: "Failed",
+                value: campaignProgress.failed_count,
+                color: "text-red-700",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-lg border bg-gray-50 p-3"
+              >
+                <p className="text-xs text-gray-500">{item.label}</p>
+                <p className={`mt-1 text-xl font-bold ${item.color}`}>
+                  {item.value.toLocaleString("en-IN")}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {progressLoading && (
+            <p className="mt-3 text-xs text-gray-500">
+              Progress updating...
+            </p>
+          )}
+        </section>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={<Users className="h-5 w-5" />}
