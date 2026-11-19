@@ -524,36 +524,36 @@ export default function WhatsAppInboxPage() {
                     .order("received_at", { ascending: false })
                     .limit(1000),
 
-               (async () => {
-    const pageSize = 1000;
-    const allLogs: MessageLog[] = [];
+                (async () => {
+                    const pageSize = 1000;
+                    const allLogs: MessageLog[] = [];
 
-    for (let from = 0; ; from += pageSize) {
-        const { data, error } = await supabase
-            .from("whatsapp_message_logs")
-            .select(
-                "id,contact_id,recipient_id,direction,message_id,message_type,message_text,status,error_message,event_at"
-            )
-            .order("event_at", { ascending: false })
-            .range(from, from + pageSize - 1);
+                    for (let from = 0; ; from += pageSize) {
+                        const { data, error } = await supabase
+                            .from("whatsapp_message_logs")
+                            .select(
+                                "id,contact_id,recipient_id,direction,message_id,message_type,message_text,status,error_message,event_at"
+                            )
+                            .order("event_at", { ascending: false })
+                            .range(from, from + pageSize - 1);
 
-        if (error) {
-            return { data: null, error };
-        }
+                        if (error) {
+                            return { data: null, error };
+                        }
 
-        const page = (data ?? []) as MessageLog[];
-        allLogs.push(...page);
+                        const page = (data ?? []) as MessageLog[];
+                        allLogs.push(...page);
 
-        if (page.length < pageSize) {
-            break;
-        }
-    }
+                        if (page.length < pageSize) {
+                            break;
+                        }
+                    }
 
-    return {
-        data: allLogs,
-        error: null,
-    };
-})(),
+                    return {
+                        data: allLogs,
+                        error: null,
+                    };
+                })(),
 
                 supabase
                     .from("whatsapp_bot_sessions")
@@ -796,12 +796,10 @@ export default function WhatsAppInboxPage() {
                 }
             });
 
-        // Fallback refresh in case the realtime connection is interrupted.
-        const fallbackInterval = setInterval(() => {
-            if (active) void loadInbox(false);
-
-
-        }, 2000);
+     // Fallback refresh in case the realtime connection is interrupted.
+const fallbackInterval = setInterval(() => {
+    if (active) void loadInbox(false);
+}, 30000);
 
 
 

@@ -135,6 +135,7 @@ export default function InboxBulkActions({
     onRefreshInbox,
 }: Props) {
     const [chatSearch, setChatSearch] = useState("");
+    const [visibleChatCount, setVisibleChatCount] = useState(50);
     const [smartSearch, setSmartSearch] = useState<InboxSmartSearch>({
 
         text: "",
@@ -323,7 +324,7 @@ export default function InboxBulkActions({
     const [openTextOnly, setOpenTextOnly] = useState(false);
     const [openTextLoading, setOpenTextLoading] = useState(false);
     const [showOnlyReplied, setShowOnlyReplied] = useState(false);
-    
+
     const [latestInboundByPhone, setLatestInboundByPhone] = useState<
         Record<string, number>
     >({});
@@ -678,6 +679,21 @@ export default function InboxBulkActions({
         inbound,
         logs,
         contacts,
+    ]);
+    const displayedConversations = useMemo(
+        () => filteredConversations.slice(0, visibleChatCount),
+        [filteredConversations, visibleChatCount]
+    );
+
+    useEffect(() => {
+        setVisibleChatCount(50);
+    }, [
+        chatSearch,
+        smartSearch,
+        labelFilters,
+        openTextOnly,
+        showOnlyReplied,
+        slotFilterPhones,
     ]);
     useEffect(() => {
         // Only Replied sirf display filter hai, auto-selection nahi.
@@ -1438,7 +1454,7 @@ export default function InboxBulkActions({
                         No conversations found
                     </p>
                 ) : (
-                    filteredConversations.map((conversation) => {
+                    displayedConversations.map((conversation) => {
                         const phoneKey = normalizePhone(conversation.phone);
                         const checked = selectedPhones.some(
                             (phone) => normalizePhone(phone) === phoneKey
@@ -1619,7 +1635,19 @@ export default function InboxBulkActions({
                             </div>
 
                         );
-                    })
+                                      })
+                )}
+
+                {displayedConversations.length < filteredConversations.length && (
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setVisibleChatCount((current) => current + 50)
+                        }
+                        className="w-full border-t border-gray-200 py-3 text-sm font-semibold text-[#008069] hover:bg-gray-50"
+                    >
+                        Load 50 More Chats
+                    </button>
                 )}
             </div>
         </div >
