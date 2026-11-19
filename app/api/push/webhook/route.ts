@@ -178,8 +178,9 @@ export async function POST(request: NextRequest) {
         });
 
         const { data: subscriptions, error: dbError } = await supabase
-            .from("push_subscriptions")
-            .select("id, subscription");
+    .from("push_subscriptions")
+    .select("id, subscription")
+    .eq("source", "live");
 
         if (dbError) {
             console.error("Push subscription lookup failed:", dbError.message);
