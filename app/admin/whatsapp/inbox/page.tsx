@@ -332,33 +332,20 @@ export default function WhatsAppInboxPage() {
 
 
 
-    async function enableInboxNotifications() {
+
+    async function enableInboxNotifications(sendTestNotification = true) {
         try {
             setError("");
             setNotice("");
 
             if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-                setError("Is browser mein Web Push supported nahi hai.");
+                if (sendTestNotification) setError("Is browser mein Web Push supported nahi hai.");
                 return;
             }
 
-            if (!("Notification" in window)) {
-                setError("Is browser mein notifications supported nahi hain.");
+            if (!("Notification" in window) || Notification.permission !== "granted") {
+                if (sendTestNotification) setError("Browser notification permission granted nahi hai.");
                 return;
-            }
-
-            if (Notification.permission === "denied") {
-                setError("Browser settings mein notifications allow karein.");
-                return;
-            }
-
-            if (Notification.permission === "default") {
-                const permission = await Notification.requestPermission();
-
-                if (permission !== "granted") {
-                    setError("Notification permission nahi mili.");
-                    return;
-                }
             }
 
             const { data: sessionData, error: sessionError } =
@@ -367,14 +354,14 @@ export default function WhatsAppInboxPage() {
             const accessToken = sessionData.session?.access_token;
 
             if (sessionError || !accessToken) {
-                setError("Login session nahi mila. Dobara login karein.");
+                if (sendTestNotification) setError("Login session nahi mila. Dobara login karein.");
                 return;
             }
 
             const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
             if (!vapidPublicKey) {
-                setError("VAPID public key .env.local mein nahi mili.");
+                if (sendTestNotification) setError("VAPID public key .env.local mein nahi mili.");
                 return;
             }
 
@@ -418,20 +405,15 @@ export default function WhatsAppInboxPage() {
             const saveResult = await saveResponse.json();
 
             if (!saveResponse.ok || !saveResult.success) {
-                setError(saveResult.message || "Push subscription save nahi hui.");
-                return;
+                throw new Error(saveResult.message || "Push subscription save nahi hui.");
             }
-
-
-            const audio = audioContextRef.current;
-
-            if (audio && audio.state === "suspended") {
-                await audio.resume();
-            }
-
 
             setNotificationsEnabled(true);
-            setNotice("Subscription save ho gayi. Test notification bhej rahe hain...");
+
+            // Automatic sync mein test notification nahi bhejni.
+            if (!sendTestNotification) {
+                return;
+            }
 
             const testResponse = await fetch("/api/push/test", {
                 method: "POST",
@@ -443,22 +425,51 @@ export default function WhatsAppInboxPage() {
             const testResult = await testResponse.json();
 
             if (!testResponse.ok || !testResult.success) {
-                setError(
+                throw new Error(
                     "Subscription save ho gayi, lekin test notification fail hui: " +
                     (testResult.message || "Unknown error")
                 );
-                return;
             }
 
             setNotice("Test push notification bhej di gayi. Browser/Android par check karein.");
         } catch (err) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : "Push notifications enable nahi ho sake."
-            );
+            console.error("Inbox push subscription sync failed:", err);
+
+            if (sendTestNotification) {
+                setError(
+                    err instanceof Error
+                        ? err.message
+                        : "Push notifications enable nahi ho sake."
+                );
+            }
         }
     }
+
+    // Production website par granted permission ki subscription automatically sync karein.
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const hostname = window.location.hostname;
+
+        if (
+            hostname !== "ecindore.com" &&
+            hostname !== "www.ecindore.com"
+        ) {
+            return;
+        }
+
+        if (
+            !("Notification" in window) ||
+            Notification.permission !== "granted"
+        ) {
+            return;
+        }
+
+        void enableInboxNotifications(false);
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const selectedBotActive = activeBotPhones.includes(
         normalizePhone(selectedPhone)
     );
@@ -1323,8 +1334,8 @@ export default function WhatsAppInboxPage() {
                     {selectedPhone ? (
                         <>
                             {/* Chat contact header */}
-                            
-<header className="relative z-0 flex shrink-0 items-center gap-2 border-b border-gray-200 bg-white px-3 py-1.5 shadow-md sm:px-4">
+
+                            <header className="relative z-0 flex shrink-0 items-center gap-2 border-b border-gray-200 bg-white px-3 py-1.5 shadow-md sm:px-4">
 
                                 <button
                                     type="button"
@@ -1517,7 +1528,7 @@ export default function WhatsAppInboxPage() {
                                                 loggedMessage += "\n" + options
                                                     .map((option: { title: string }) => `• ${option.title}`)
                                                     .join("\n");
-                                                                                        } else if (firstNode.type === "url_button") {
+                                            } else if (firstNode.type === "url_button") {
                                                 const buttonText = String(
                                                     firstNode.urlButtonText ?? ""
                                                 ).trim();
