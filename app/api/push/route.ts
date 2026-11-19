@@ -86,13 +86,29 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (existing) {
-            return NextResponse.json({
-                success: true,
-                message: "Push subscription already saved.",
-                userId: data.user.id,
-            });
-        }
+       if (existing) {
+    const { error: updateError } = await supabase
+        .from("push_subscriptions")
+        .update({
+            user_id: data.user.id,
+            source,
+            subscription,
+        })
+        .eq("id", existing.id);
+
+    if (updateError) {
+        return NextResponse.json(
+            { success: false, message: updateError.message },
+            { status: 500 }
+        );
+    }
+
+    return NextResponse.json({
+        success: true,
+        message: "Push subscription updated successfully.",
+        userId: data.user.id,
+    });
+}
 
         const { error: insertError } = await supabase
             .from("push_subscriptions")
