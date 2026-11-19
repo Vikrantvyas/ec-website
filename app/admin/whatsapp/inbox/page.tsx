@@ -485,10 +485,36 @@ export default function WhatsAppInboxPage() {
                 botSessionsResult,
                 formSubmittedResult,
             ] = await Promise.all([
-                supabase
-                    .from("whatsapp_contacts")
-                    .select("id,name,phone_number,consent_status")
-                    .order("updated_at", { ascending: false }),
+               (async () => {
+    const pageSize = 1000;
+    const allContacts: Contact[] = [];
+
+    for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+            .from("whatsapp_contacts")
+            .select("id,name,phone_number,consent_status")
+            .order("updated_at", { ascending: false })
+            .order("id", { ascending: false })
+            .range(from, from + pageSize - 1);
+
+        if (error) {
+            throw error;
+        }
+
+        const page = (data ?? []) as Contact[];
+
+        allContacts.push(...page);
+
+        if (page.length < pageSize) {
+            break;
+        }
+    }
+
+    return {
+        data: allContacts,
+        error: null,
+    };
+})(),
 
                 supabase
                     .from("whatsapp_inbound_messages")
@@ -995,6 +1021,53 @@ export default function WhatsAppInboxPage() {
             (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime(),
         );
     }, [inbound, logs, selectedPhone, selectedContact]);
+
+    
+    // TEMPORARY DEBUG: WhatsApp Outbound Messages
+    useEffect(() => {
+        const phone = normalizePhone(selectedPhone);
+
+        const matchingContacts = contacts.filter(
+            (contact) =>
+                normalizePhone(contact.phone_number) === phone
+        );
+
+        const outboundLogs = logs.filter(
+            (message) => message.direction === "outbound"
+        );
+
+        console.group("WHATSAPP CONTACT MATCH DEBUG");
+
+        console.log("selectedPhone:", selectedPhone);
+        console.log("normalizedPhone:", phone);
+        console.log("selectedContact:", selectedContact);
+        console.log("selectedContactId:", selectedContact?.id);
+
+        console.log("contactsCount:", contacts.length);
+        console.log("matchingContacts:", matchingContacts);
+
+        console.log("totalLogs:", logs.length);
+        console.log("totalOutboundLogs:", outboundLogs.length);
+
+        console.log(
+            "outboundLogsContactIds:",
+            [...new Set(outboundLogs.map((message) => message.contact_id))]
+        );
+
+        console.log(
+            "outboundLogsForMatchingContacts:",
+            outboundLogs.filter((message) =>
+                matchingContacts.some(
+                    (contact) => contact.id === message.contact_id
+                )
+            )
+        );
+
+        console.groupEnd();
+
+    }, [selectedPhone, selectedContact?.id, contacts, logs]);
+
+
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const shouldAutoScrollRef = useRef(true);
     const previousSelectedPhoneRef = useRef("");
