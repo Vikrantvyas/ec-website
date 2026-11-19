@@ -322,6 +322,8 @@ export default function InboxBulkActions({
     const [showBulkActions, setShowBulkActions] = useState(false);
     const [openTextOnly, setOpenTextOnly] = useState(false);
     const [openTextLoading, setOpenTextLoading] = useState(false);
+    const [showOnlyReplied, setShowOnlyReplied] = useState(false);
+    
     const [latestInboundByPhone, setLatestInboundByPhone] = useState<
         Record<string, number>
     >({});
@@ -500,12 +502,22 @@ export default function InboxBulkActions({
                     )
                 );
 
-        if (!openTextOnly) return slotConversations;
+        const repliedConversations = showOnlyReplied
+            ? slotConversations.filter((conversation) =>
+                inbound.some(
+                    (message) =>
+                        normalizePhone(message.phone_number) ===
+                        normalizePhone(conversation.phone)
+                )
+            )
+            : slotConversations;
+
+        if (!openTextOnly) return repliedConversations;
 
         const now = Date.now();
         const windowMs = 24 * 60 * 60 * 1000;
 
-        return slotConversations.filter((conversation) => {
+        return repliedConversations.filter((conversation) => {
             const phoneKey = normalizePhone(conversation.phone);
             const latestInboundAt = latestInboundByPhone[phoneKey];
 
@@ -517,6 +529,8 @@ export default function InboxBulkActions({
         });
     }, [
         slotFilterPhones,
+        showOnlyReplied,
+        inbound,
         openTextOnly,
         visibleConversations,
         latestInboundByPhone,
@@ -666,6 +680,9 @@ export default function InboxBulkActions({
         contacts,
     ]);
     useEffect(() => {
+        // Only Replied sirf display filter hai, auto-selection nahi.
+        if (showOnlyReplied) return;
+
         const hasSmartCriteria =
             smartSearch.text.trim().length > 0 ||
             smartSearch.fromDate.length > 0 ||
@@ -676,8 +693,11 @@ export default function InboxBulkActions({
             labelFilters.demoAttended !== "all" ||
             labelFilters.classJoined !== "all";
 
-        // Active filters ke matching chats auto-select karein.
-        if (!openTextOnly && !hasSmartCriteria && !hasLabelCriteria) return;
+        if (
+            !openTextOnly &&
+            !hasSmartCriteria &&
+            !hasLabelCriteria
+        ) return;
 
         setSelectedPhones(
             filteredConversations.map((conversation) => conversation.phone)
@@ -688,6 +708,7 @@ export default function InboxBulkActions({
         chatSearch,
         labelFilters,
         filteredConversations,
+        showOnlyReplied,
     ]);
     const selectedBot = botTemplates.find((bot) => bot.id === selectedBotId);
     async function loadOpenTextContacts() {
@@ -796,7 +817,7 @@ export default function InboxBulkActions({
             return;
         }
 
-        
+
 
         if (actionMode === "text" && !bulkText.trim()) {
             setError("Normal Text message likhein.");
@@ -1356,6 +1377,7 @@ export default function InboxBulkActions({
                                 setDraftSlotKeys([]);
                                 setShowDemoSlots(false);
                                 setOpenTextOnly(false);
+                                setShowOnlyReplied(false);
                                 setSlotFilterPhones(null);
                                 setSelectedPhones([]);
                             }}
@@ -1363,7 +1385,17 @@ export default function InboxBulkActions({
                         >
                             All
                         </button>
-
+                        <label className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs font-medium text-gray-700">
+                            <input
+                                type="checkbox"
+                                checked={showOnlyReplied}
+                                onChange={(event) => {
+                                    setShowOnlyReplied(event.target.checked);
+                                }}
+                                className="size-3.5 accent-[#008069]"
+                            />
+                            Only Replied
+                        </label>
                         <InboxFilters
 
                             demoSchedules={demoSchedules}
