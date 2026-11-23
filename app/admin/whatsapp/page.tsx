@@ -32,6 +32,11 @@ type Template = {
   status: string;
   components: unknown;
 };
+
+type CampaignRole = {
+  role_id: string;
+  role_name: string;
+};
 type CampaignProgress = {
   id: string;
   name: string;
@@ -110,6 +115,10 @@ export default function WhatsAppBulkPage() {
   const [source, setSource] = useState<Source>("meta_leads");
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<CampaignRole[]>([]);
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [templateId, setTemplateId] = useState("");
 
@@ -165,7 +174,23 @@ export default function WhatsAppBulkPage() {
       setTemplateLoading(false);
     }
   }, []);
+  const loadRoles = useCallback(async () => {
+    setRolesLoading(true);
 
+    try {
+      const { data, error: queryError } = await supabase.rpc(
+        "get_whatsapp_available_roles"
+      );
+
+      if (queryError) throw queryError;
+
+      setAvailableRoles((data ?? []) as CampaignRole[]);
+    } catch (err: any) {
+      setError(err?.message || "Roles load nahi ho sake.");
+    } finally {
+      setRolesLoading(false);
+    }
+  }, []);
   useEffect(() => {
     try {
       const leadKey = "ec_lead_list_selected_leads";
@@ -271,7 +296,9 @@ export default function WhatsAppBulkPage() {
   useEffect(() => {
     void loadTemplates();
   }, [loadTemplates]);
-
+  useEffect(() => {
+    void loadRoles();
+  }, [loadRoles]);
   // Restore active campaign after page refresh
   useEffect(() => {
     const savedCampaignId = sessionStorage.getItem(
@@ -424,6 +451,15 @@ export default function WhatsAppBulkPage() {
   async function handleCreateCampaign() {
     setSuccess("");
     setError("");
+    if (selectedRoleIds.length === 0) {
+      setError("Campaign ke liye kam se kam ek Role select karein.");
+      return;
+    }
+
+    if (rolesLoading || availableRoles.length === 0) {
+      setError("Roles abhi load nahi hue. Refresh karke dobara try karein.");
+      return;
+    }
     if (!campaignName.trim()) {
       setError("Campaign Name bharna zaroori hai.");
       return;
@@ -470,6 +506,7 @@ export default function WhatsAppBulkPage() {
             recipients: structuredRecipients,
             campaign_name: campaignName.trim(),
             template_id: selectedTemplate.id,
+            role_ids: selectedRoleIds,
             template_name: selectedTemplate.template_name,
             language_code: selectedTemplate.language_code,
           },
@@ -965,6 +1002,56 @@ export default function WhatsAppBulkPage() {
                 />
               </div>
               <SummaryRow label="Source" value={contacts.length > 0 ? (source === "leads" ? "CRM Lead List contacts" : "Meta Report contacts") : "No source selected"} />
+              <div className="relative">
+                <label className="mb-1 block font-medium text-gray-700">
+                  Assign Roles <span className="text-red-600">*</span>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => setShowRoleDropdown((current) => !current)}
+                  disabled={rolesLoading || availableRoles.length === 0}
+                  className="flex w-full items-center justify-between rounded-lg border bg-white px-3 py-2.5 text-left hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <span>
+                    {rolesLoading
+                      ? "Loading Roles..."
+                      : selectedRoleIds.length > 0
+                        ? `${selectedRoleIds.length} Role(s) Selected`
+                        : "Select Roles"}
+                  </span>
+                  <span>{showRoleDropdown ? "▲" : "▼"}</span>
+                </button>
+
+                {showRoleDropdown && (
+                  <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border bg-white p-2 shadow-lg">
+                    {availableRoles.map((role) => (
+                      <label
+                        key={role.role_id}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm hover:bg-gray-50"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedRoleIds.includes(role.role_id)}
+                          onChange={(event) => {
+                            setSelectedRoleIds((current) =>
+                              event.target.checked
+                                ? [...current, role.role_id]
+                                : current.filter((id) => id !== role.role_id)
+                            );
+                          }}
+                          className="h-4 w-4 accent-green-600"
+                        />
+                        {role.role_name}
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                <p className="mt-1 text-xs text-gray-500">
+                  Selected Roles ke employees ko is Campaign ke chats ka access milega.
+                </p>
+              </div>
               <SummaryRow
                 label="Selected recipients"
                 value={Array.from(

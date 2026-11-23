@@ -256,6 +256,7 @@ export default function WhatsAppInboxPage() {
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const previousInboundIdsRef = useRef<Set<string>>(new Set());
     const inboxInitializedRef = useRef(false);
+    const loadInboxInFlightRef = useRef(false);
     const audioContextRef = useRef<AudioContext | null>(null);
 
     useEffect(() => {
@@ -474,6 +475,10 @@ export default function WhatsAppInboxPage() {
         normalizePhone(selectedPhone)
     );
     const loadInbox = useCallback(async (showLoader = false) => {
+        if (loadInboxInFlightRef.current) return;
+
+        loadInboxInFlightRef.current = true;
+
         if (showLoader) setLoading(true);
 
         try {
@@ -741,6 +746,8 @@ export default function WhatsAppInboxPage() {
                 err instanceof Error ? err.message : "Inbox load failed.",
             );
         } finally {
+            loadInboxInFlightRef.current = false;
+
             if (showLoader) setLoading(false);
         }
     }, []);
@@ -790,16 +797,12 @@ export default function WhatsAppInboxPage() {
                 if (!active) return;
 
                 setRealtimeConnected(status === "SUBSCRIBED");
-
-                if (status === "SUBSCRIBED") {
-                    void loadInbox(false);
-                }
             });
 
-     // Fallback refresh in case the realtime connection is interrupted.
-const fallbackInterval = setInterval(() => {
-    if (active) void loadInbox(false);
-}, 30000);
+        // Fallback refresh in case the realtime connection is interrupted.
+        const fallbackInterval = setInterval(() => {
+            if (active) void loadInbox(false);
+        }, 30000);
 
 
 
@@ -1402,20 +1405,55 @@ const fallbackInterval = setInterval(() => {
                         } w-full shrink-0 flex-col border-r border-gray-200 sm:w-[300px] md:w-[330px] lg:w-[360px] xl:w-[390px]`}
                 >
 
-                    <InboxBulkActions
-                        conversations={conversations}
-                        selectedPhone={selectedPhone}
-                        formSubmittedPhones={formSubmittedPhones}
-                        contacts={contacts}
-                        inbound={inbound}
-                        logs={logs}
-                        botTemplates={botTemplates}
-                        selectedBotId={selectedBotId}
-                        onSelectedBotIdChange={setSelectedBotId}
-                        activeBotPhones={activeBotPhones}
-                        onOpenConversation={openConversation}
-                        onRefreshInbox={loadInbox}
-                    />
+                    {loading ? (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-5">
+        <div className="relative flex size-16 items-center justify-center">
+            <div className="absolute inset-0 animate-ping rounded-full bg-green-100 opacity-60" />
+            <div className="relative flex size-14 items-center justify-center rounded-full bg-green-50">
+                <LoaderCircle
+                    size={30}
+                    className="animate-spin text-[#008069]"
+                />
+            </div>
+        </div>
+
+        <div className="text-center">
+            <p className="text-sm font-semibold text-gray-700">
+                Chats load ho rahi hain...
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+                Please wait, Inbox taiyar ho raha hai.
+            </p>
+        </div>
+
+        <div className="w-full max-w-[220px] space-y-3 pt-2">
+            {[1, 2, 3, 4].map((item) => (
+                <div key={item} className="flex animate-pulse items-center gap-3">
+                    <div className="size-10 shrink-0 rounded-full bg-gray-200" />
+                    <div className="flex-1 space-y-2">
+                        <div className="h-3 w-2/3 rounded bg-gray-200" />
+                        <div className="h-2.5 w-full rounded bg-gray-100" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    </div>
+) : (
+    <InboxBulkActions
+        conversations={conversations}
+        selectedPhone={selectedPhone}
+        formSubmittedPhones={formSubmittedPhones}
+        contacts={contacts}
+        inbound={inbound}
+        logs={logs}
+        botTemplates={botTemplates}
+        selectedBotId={selectedBotId}
+        onSelectedBotIdChange={setSelectedBotId}
+        activeBotPhones={activeBotPhones}
+        onOpenConversation={openConversation}
+        onRefreshInbox={loadInbox}
+    />
+)}
 
 
                 </aside>
