@@ -18,7 +18,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
 
   const pathname = usePathname();
   const router = useRouter();
-  const { setPermissions, permissions, setBranchId } = usePermissions();
+  const { setPermissions, permissions, setBranchId, setRole } = usePermissions();
 
   const [loading, setLoading] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -74,6 +74,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
 
             if (roleData?.name) {
               setRoleName(roleData.name);
+              setRole(roleData.name);
             }
 
           }
@@ -105,9 +106,14 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
 
   if (isPublicPage) return <>{children}</>;
 
-  const filteredMenu = adminMenu.filter((item) =>
-    permissions.includes(item.name)
-  );
+  const isSuperAdmin =
+  roleName.trim().toLowerCase() === "super admin";
+
+const filteredMenu = isSuperAdmin
+  ? adminMenu
+  : adminMenu.filter((item) =>
+      permissions.includes(item.name)
+    );
 
   const currentPathName =
     pathname.split("/")[2]?.charAt(0).toUpperCase() +
@@ -130,9 +136,8 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
             <Link key={item.href} href={item.href} className="group relative">
 
               <div
-                className={`p-2 rounded-md transition ${
-                  isActive ? "bg-[#163d7a]" : "hover:bg-[#163d7a]"
-                }`}
+                className={`p-2 rounded-md transition ${isActive ? "bg-[#163d7a]" : "hover:bg-[#163d7a]"
+                  }`}
               >
                 <Icon size={18} className="text-white" />
               </div>

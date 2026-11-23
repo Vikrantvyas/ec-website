@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useRouter } from "next/navigation";
+import { usePermissions } from "@/lib/permissionsContext";
 
 import {
   UserPlus,
@@ -26,10 +28,10 @@ import {
   Clock,
 } from "lucide-react";
 
-
 export default function AdminDashboard() {
 
   const router = useRouter();
+  const { permissions, role } = usePermissions();
 
   const menu = [
     { name: "Lead", href: "/admin/lead", icon: UserRoundPlus },
@@ -48,12 +50,15 @@ export default function AdminDashboard() {
 
     { name: "Receipt", href: "/admin/receipt", icon: ReceiptText },
 
-    // ✅ NEW ADDED
+    // English and User
     { name: "English", href: "/admin/english", icon: BookOpen },
     { name: "User", href: "/admin/users", icon: User },
+
     { name: "Reports", href: "/admin/reports", icon: FileBarChart },
     { name: "Meta Report", href: "/admin/meta-report", icon: BarChart3 },
     { name: "Demo Planner", href: "/admin/demo-planner", icon: Clock },
+
+    // WhatsApp
     { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageCircle },
     { name: "Inbox", href: "/admin/whatsapp/inbox", icon: Inbox },
     { name: "Bots", href: "/admin/whatsapp/bots", icon: Bot },
@@ -61,14 +66,19 @@ export default function AdminDashboard() {
     { name: "Campaign Report", href: "/admin/whatsapp/campaign-analysis", icon: FileBarChart },
     { name: "Opt-out Phrases", href: "/admin/whatsapp/opt-out-phrases", icon: ShieldCheck },
 
-    // ✅ META REPORT
-
-
+    // Masters and Settings
     { name: "Masters", href: "/admin/masters", icon: Database },
 
     { name: "Roles", href: "/admin/roles", icon: ShieldCheck },
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
+
+  const isSuperAdmin =
+    role?.trim().toLowerCase() === "super admin";
+
+  const visibleMenu = isSuperAdmin
+    ? menu
+    : menu.filter((item) => permissions.includes(item.name));
 
   return (
 
@@ -76,7 +86,7 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
 
-        {menu.map((item, index) => {
+        {visibleMenu.map((item, index) => {
 
           const Icon = item.icon;
 
@@ -88,14 +98,12 @@ export default function AdminDashboard() {
               className="cursor-pointer bg-white rounded-xl shadow hover:shadow-md transition p-4 flex flex-col items-center justify-center text-center"
             >
 
-
               <Icon
                 className={`w-8 h-8 mb-2 ${["WhatsApp", "Inbox", "Bots", "Templates", "Campaign Report", "Opt-out Phrases"].includes(item.name)
                   ? "text-green-600"
                   : "text-blue-600"
                   }`}
               />
-
 
               <div className="text-sm font-medium">
                 {item.name}

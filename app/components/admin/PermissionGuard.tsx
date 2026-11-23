@@ -1,3 +1,4 @@
+
 "use client";
 
 import { ReactNode } from "react";
@@ -9,10 +10,12 @@ type Props = {
 };
 
 export default function PermissionGuard({ page, children }: Props) {
+  const { permissions, role } = usePermissions();
 
-  const { permissions } = usePermissions();
+  const isSuperAdmin =
+    role?.trim().toLowerCase() === "super admin";
 
-  if (!permissions.includes(page)) {
+  if (!isSuperAdmin && !permissions.includes(page)) {
     return (
       <div className="p-6 text-center text-red-600 font-medium">
         Access Denied

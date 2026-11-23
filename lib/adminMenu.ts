@@ -21,6 +21,9 @@ import {
   Bot,
   FileText,
   BarChart3,
+  BookOpen,
+  User,
+  Clock,
 } from "lucide-react";
 
 export const adminMenu = [
@@ -28,34 +31,32 @@ export const adminMenu = [
 
   { name: "Lead", href: "/admin/lead", icon: UserRoundPlus },
   { name: "Lead List", href: "/admin/lead/list", icon: List },
-
   { name: "Admission", href: "/admin/admission", icon: GraduationCap },
   { name: "Enquiry", href: "/admin/enquiry", icon: UserPlus },
   { name: "Calling", href: "/admin/calling", icon: PhoneCall },
-
   { name: "Batches", href: "/admin/batches", icon: Layers },
-
   { name: "Students", href: "/admin/students", icon: Users },
   { name: "Attendance", href: "/admin/attendance", icon: CalendarCheck },
-
-  { name: "New Attendance", href: "/admin/attendance2", icon: ClipboardList },
-
-  { name: "Fees", href: "/admin/fees", icon: CreditCard },
   { name: "Receipt", href: "/admin/receipt", icon: ReceiptText },
 
+  { name: "English", href: "/admin/english", icon: BookOpen },
+  { name: "User", href: "/admin/users", icon: User },
   { name: "Reports", href: "/admin/reports", icon: FileBarChart },
+  { name: "Meta Report", href: "/admin/meta-report", icon: BarChart3 },
+  { name: "Demo Planner", href: "/admin/demo-planner", icon: Clock },
+
+  { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageCircle },
+  { name: "Inbox", href: "/admin/whatsapp/inbox", icon: Inbox },
+  { name: "Bots", href: "/admin/whatsapp/bots", icon: Bot },
+  { name: "Templates", href: "/admin/whatsapp/templates", icon: FileText },
+  { name: "Campaign Report", href: "/admin/whatsapp/campaign-analysis", icon: FileBarChart },
+  { name: "Opt-out Phrases", href: "/admin/whatsapp/opt-out-phrases", icon: ShieldCheck },
+
   { name: "Masters", href: "/admin/masters", icon: Database },
   { name: "Roles", href: "/admin/roles", icon: ShieldCheck },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 
-  { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageCircle },
-  
-  { name: "Inbox", href: "/admin/whatsapp/inbox", icon: Inbox },
-  { name: "Bots", href: "/admin/whatsapp/bots", icon: Bot },
-  { name: "Templates", href: "/admin/whatsapp/templates", icon: FileText },
-  {
-    name: "WhatsApp Campaign Analysis",
-    href: "/admin/whatsapp/campaign-analysis",
-    icon: BarChart3,
-  },
+  // Additional pages for Role Permissions
+  { name: "New Attendance", href: "/admin/attendance2", icon: ClipboardList },
+  { name: "Fees", href: "/admin/fees", icon: CreditCard },
 ];

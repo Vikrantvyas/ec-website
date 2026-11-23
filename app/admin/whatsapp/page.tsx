@@ -15,6 +15,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import PermissionGuard from "@/app/components/admin/PermissionGuard";
 type Source = "leads" | "meta_leads";
 type Contact = {
   id: string;
@@ -609,8 +610,9 @@ export default function WhatsAppBulkPage() {
     estimatedRemainingSeconds !== null
       ? new Date(Date.now() + estimatedRemainingSeconds * 1000)
       : null;
-  return (
-    <div className="space-y-6 p-4 md:p-6">
+   return (
+    <PermissionGuard page="WhatsApp">
+      <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -1214,9 +1216,11 @@ export default function WhatsAppBulkPage() {
 
         </div>
       </div>
-    </div>
+          </div>
+    </PermissionGuard>
   );
 }
+
 function StatCard({
   icon,
   label,
@@ -1253,6 +1257,6 @@ function SummaryRow({
       <span className="max-w-[60%] break-words text-right font-medium text-gray-900">
         {value}
       </span>
-    </div>
+             </div>
   );
 }
