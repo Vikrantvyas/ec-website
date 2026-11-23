@@ -130,6 +130,9 @@ export default function WhatsAppBulkPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showSelectedOnly, setShowSelectedOnly] = useState(false);
+  const [contactTab, setContactTab] = useState<
+    "select" | "paste" | "exclude"
+  >("select");
   const [pastedNumbers, setPastedNumbers] = useState("");
   const [excludedNumbers, setExcludedNumbers] = useState("");
   const [importedMetaContacts, setImportedMetaContacts] = useState<Contact[]>([]);
@@ -841,54 +844,86 @@ export default function WhatsAppBulkPage() {
             value={`₹${estimatedCost.toFixed(2)}`}
           />
         </div>
-        <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
-          <div className="min-w-0 space-y-4">
+        <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-3">
+          <div className="contents">
             <section className="rounded-xl border bg-white">
-              <div className="grid grid-cols-1 gap-3 border-b p-4 md:grid-cols-2">
-                <div className="min-w-0">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Paste Mobile Numbers
-                  </h2>
-                  <textarea
-                    value={pastedNumbers}
-                    onChange={(event) => setPastedNumbers(event.target.value)}
-                    placeholder={"9876543210\n919876543210"}
-                    rows={4}
-                    className="mt-3 w-full rounded-lg border px-3 py-2 text-sm"
-                  />
-                  <p className="mt-2 text-sm text-gray-600">
-                    Unique valid numbers: {pastedRecipients.length}
-                  </p>
-                </div>
-
-                <div className="min-w-0 rounded-lg bg-amber-50 p-3">
-                  <h2 className="font-semibold text-gray-900">
-                    Exclude Mobile Numbers
-                  </h2>
-
-                  <textarea
-                    value={excludedNumbers}
-                    onChange={(event) => setExcludedNumbers(event.target.value)}
-                    placeholder={"919876543210\n919123456789"}
-                    rows={4}
-                    className="mt-3 w-full rounded-lg border bg-white px-3 py-2 text-sm"
-                  />
-                  <p className="mt-2 text-sm font-medium text-amber-800">
-                    Excluded numbers: {excludedRecipients.size}
-                  </p>
-                </div>
+              <div className="border-b p-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  1. Select Contacts
+                </h2>
               </div>
 
               <div className="border-b p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    1. Select Contacts
-                  </h2>
-                  <span className="text-xs text-gray-500">
-                    Sirf source se filter karke bheje gaye contacts yahan dikhte hain.
-                  </span>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setContactTab("select")}
+                    className={`rounded-lg px-3 py-2 text-sm font-medium ${contactTab === "select"
+                      ? "bg-green-600 text-white"
+                      : "border bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                  >
+                    Select Leads
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setContactTab("paste")}
+                    className={`rounded-lg px-3 py-2 text-sm font-medium ${contactTab === "paste"
+                      ? "bg-green-600 text-white"
+                      : "border bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                  >
+                    Paste Contacts
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setContactTab("exclude")}
+                    className={`rounded-lg px-3 py-2 text-sm font-medium ${contactTab === "exclude"
+                      ? "bg-green-600 text-white"
+                      : "border bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                  >
+                    Exclude Contacts
+                  </button>
                 </div>
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
+
+                {contactTab === "paste" && (
+                  <div className="mt-4">
+                    <h3 className="font-semibold text-gray-900">Paste Mobile Numbers</h3>
+                    <textarea
+                      value={pastedNumbers}
+                      onChange={(event) => setPastedNumbers(event.target.value)}
+                      placeholder={"9876543210\n919876543210"}
+                      rows={5}
+                      className="mt-3 w-full rounded-lg border px-3 py-2 text-sm"
+                    />
+                    <p className="mt-2 text-sm text-gray-600">
+                      Unique valid numbers: {pastedRecipients.length}
+                    </p>
+                  </div>
+                )}
+
+                {contactTab === "exclude" && (
+                  <div className="mt-4 rounded-lg bg-amber-50 p-3">
+                    <h3 className="font-semibold text-gray-900">Exclude Mobile Numbers</h3>
+                    <textarea
+                      value={excludedNumbers}
+                      onChange={(event) => setExcludedNumbers(event.target.value)}
+                      placeholder={"919876543210\n919123456789"}
+                      rows={5}
+                      className="mt-3 w-full rounded-lg border bg-white px-3 py-2 text-sm"
+                    />
+                    <p className="mt-2 text-sm font-medium text-amber-800">
+                      Excluded numbers: {excludedRecipients.size}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+             <div className="border-b p-4">
+  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <input
@@ -986,15 +1021,13 @@ export default function WhatsAppBulkPage() {
                 <span>
                   Showing {filteredContacts.length} contacts · Loaded {contacts.length}
                 </span>
-                <span>
-                  Same normalized mobile number is shown once in this source list.
-                </span>
+
               </div>
             </section>
 
             <section className="rounded-xl border bg-white p-4">
               <h2 className="text-lg font-semibold text-gray-900">
-                3. Campaign Summary
+                2. Campaign
               </h2>
               <div className="mt-4 space-y-3 text-sm">
                 <div>
@@ -1010,6 +1043,41 @@ export default function WhatsAppBulkPage() {
                     className="w-full rounded-lg border px-3 py-2.5 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
                     required
                   />
+                </div>
+                <div>
+                  <label className="mb-1 block font-medium text-gray-700">
+                    Select Template *
+                  </label>
+
+                  <select
+                    value={templateId}
+                    onChange={(event) => setTemplateId(event.target.value)}
+                    disabled={templateLoading}
+                    className="w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none focus:border-green-600"
+                  >
+                    <option value="">Select a template</option>
+                    {templates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.template_name} · {template.language_code} · {template.status}
+                      </option>
+                    ))}
+                  </select>
+
+                  {selectedTemplate && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                        {selectedTemplate.category}
+                      </span>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${templateIsActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-amber-100 text-amber-800"
+                          }`}
+                      >
+                        {selectedTemplate.status}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <SummaryRow label="Source" value={contacts.length > 0 ? (source === "leads" ? "CRM Lead List contacts" : "Meta Report contacts") : "No source selected"} />
                 <div className="relative">
@@ -1058,9 +1126,7 @@ export default function WhatsAppBulkPage() {
                     </div>
                   )}
 
-                  <p className="mt-1 text-xs text-gray-500">
-                    Selected Roles ke employees ko is Campaign ke chats ka access milega.
-                  </p>
+
                 </div>
                 <SummaryRow
                   label="Selected recipients"
@@ -1090,67 +1156,18 @@ export default function WhatsAppBulkPage() {
                   </span>
                 </div>
               </div>
-              <p className="mt-3 text-xs leading-5 text-gray-500">
-                Cost is indicative, not a Meta quote. Actual charges depend on
-                category, recipient country, current pricing and applicable taxes.
-              </p>
-              <button
-                onClick={handleCreateCampaign}
-                disabled={!canSendCampaign}
-                className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Send className="h-4 w-4" />
-                Send WhatsApp Messages
-              </button>
-              <p className="mt-3 text-center text-xs text-gray-500">
-                Clicking this button will send the selected template to all valid recipients.
-              </p>
+
             </section>
 
           </div>
-          <div className="space-y-4">
+          <div className="contents">
             <section className="rounded-xl border bg-white p-4">
               <h2 className="text-lg font-semibold text-gray-900">
-                2. Choose Template
+                3. Preview
               </h2>
-              <label className="mt-4 block text-sm font-medium text-gray-700">
-                WhatsApp template
-              </label>
-              <select
-                value={templateId}
-                onChange={(event) => setTemplateId(event.target.value)}
-                disabled={templateLoading}
-                className="mt-2 w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none focus:border-green-600"
-              >
-                <option value="">Select a template</option>
-                {templates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.template_name} · {template.language_code} ·{" "}
-                    {template.status}
-                  </option>
-                ))}
-              </select>
 
-              {selectedTemplate && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                    {selectedTemplate.category}
-                  </span>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${templateIsActive
-                      ? "bg-green-100 text-green-800"
-                      : "bg-amber-100 text-amber-800"
-                      }`}
-                  >
-                    {selectedTemplate.status}
-                  </span>
-                </div>
-              )}
               <div className="mt-5">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Eye className="h-4 w-4" />
-                  WhatsApp Message Preview
-                </div>
+
 
                 <div className="rounded-xl border bg-[#e5ddd5] p-3 sm:p-4">
                   {selectedTemplate ? (
@@ -1215,10 +1232,15 @@ export default function WhatsAppBulkPage() {
                   )}
                 </div>
 
-                <p className="mt-2 text-xs text-gray-500">
-                  Variables ka final preview actual sending ke samay recipient-specific
-                  values ke saath banega.
-                </p>
+
+                <button
+                  onClick={handleCreateCampaign}
+                  disabled={!canSendCampaign}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Send className="h-4 w-4" />
+                  Send WhatsApp Messages
+                </button>
               </div>
             </section>
 
