@@ -74,7 +74,23 @@ type MessageLog = {
     event_at: string;
     created_at: string;
 };
-
+type BotAnalysisRow = {
+    bot_name: string;
+    node_id: string;
+    question: string;
+    button_id: string;
+    button_name: string;
+    next_node_id: string | null;
+    total_clicks: number;
+    unique_users: number;
+};
+type BotClickUser = {
+    recipient_id: string;
+    interactive_reply_id: string;
+    phone_number: string;
+    message_text: string | null;
+    received_at: string;
+};
 type DeliveryStatus =
     | "read"
     | "delivered"
@@ -235,6 +251,196 @@ function MetricCard({
     );
 }
 
+function BotAnalysisSection({
+    rows,
+    clickUsers,
+    expandedButtons,
+    selectedButton,
+    onButtonClick,
+    onUsersClick,
+}: {
+    rows: BotAnalysisRow[];
+    clickUsers: BotClickUser[];
+    expandedButtons: string[];
+    selectedButton: string | null;
+    onButtonClick: (buttonId: string, nextNodeId: string | null) => void;
+    onUsersClick: (buttonId: string) => void;
+}) {
+    if (rows.length === 0) return null;
+
+    const rowsByNode = new Map<string, BotAnalysisRow[]>();
+
+    rows.forEach((row) => {
+        const current = rowsByNode.get(row.node_id) ?? [];
+        current.push(row);
+        rowsByNode.set(row.node_id, current);
+    });
+
+    const allNodeIds = Array.from(rowsByNode.keys());
+
+    const childNodeIds = new Set(
+        rows
+            .map((row) => row.next_node_id)
+            .filter((id): id is string => Boolean(id))
+    );
+
+    const rootNodeIds = allNodeIds.filter((id) => !childNodeIds.has(id));
+
+    const renderNode = (
+        nodeId: string,
+        depth = 0,
+        path: string[] = []
+    ): React.ReactNode => {
+        if (path.includes(nodeId)) return null;
+
+        const nodeRows = rowsByNode.get(nodeId);
+        if (!nodeRows?.length) return null;
+
+        const nextPath = [...path, nodeId];
+
+        return (
+            <div
+                key={`${nodeId}-${depth}`}
+                className={`relative ${depth > 0 ? "ml-3 border-l-2 border-green-200 pl-4 sm:ml-6 sm:pl-6" : ""}`}
+            >
+                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                    <div className="border-b bg-gray-50 px-4 py-3">
+                        <p className="whitespace-pre-wrap text-sm font-semibold leading-6 text-gray-800">
+                            {nodeRows[0].question || "Bot Question"}
+                        </p>
+                    </div>
+
+                    <div className="space-y-2 p-3">
+                        {nodeRows.map((row) => {
+                            const isExpanded = expandedButtons.includes(row.button_id);
+                            const isSelected = selectedButton === row.button_id;
+
+                            const users = clickUsers.filter(
+                                (user) =>
+                                    user.interactive_reply_id === row.button_id
+                            );
+
+                            return (
+                                <div
+                                    key={row.button_id}
+                                    className="overflow-hidden rounded-lg border border-gray-200"
+                                >
+                                    <div className="flex flex-wrap items-center gap-2 p-2 sm:p-3">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                onButtonClick(
+                                                    row.button_id,
+                                                    row.next_node_id
+                                                )
+                                            }
+                                            className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-medium text-gray-800 hover:text-green-700"
+                                        >
+                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-green-50 text-xs font-bold text-green-700">
+                                                {row.next_node_id
+                                                    ? isExpanded ? "−" : "+"
+                                                    : "•"}
+                                            </span>
+                                            <span className="break-words">
+                                                {row.button_name || "Unnamed Button"}
+                                            </span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => onUsersClick(row.button_id)}
+                                            className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold ${isSelected
+                                                ? "bg-blue-100 text-blue-800"
+                                                : "bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                                                }`}
+                                        >
+                                            {number(row.total_clicks)} Clicks
+                                            <span className="ml-2">
+                                                · {number(row.unique_users)} Users
+                                            </span>
+                                        </button>
+                                    </div>
+
+                                    {isSelected && (
+                                        <div className="border-t bg-blue-50/50 p-3">
+                                            <p className="mb-3 text-xs font-bold text-gray-700">
+                                                Users who clicked this button ({users.length})
+                                            </p>
+
+                                            {users.length === 0 ? (
+                                                <p className="text-xs text-gray-500">
+                                                    No users found.
+                                                </p>
+                                            ) : (
+                                                <div className="max-h-64 space-y-2 overflow-y-auto">
+                                                    {users.map((user, index) => (
+                                                        <div
+                                                            key={`${user.recipient_id}-${index}`}
+                                                            className="rounded-lg border bg-white p-3 text-xs"
+                                                        >
+                                                            <p className="font-semibold text-gray-800">
+                                                                {user.phone_number || "Unknown number"}
+                                                            </p>
+
+                                                            {user.message_text && (
+                                                                <p className="mt-1 text-gray-600">
+                                                                    {user.message_text}
+                                                                </p>
+                                                            )}
+
+                                                            <p className="mt-1 text-gray-400">
+                                                                {formatDate(user.received_at)}
+                                                            </p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {isExpanded && row.next_node_id && (
+                                        <div className="border-t bg-gray-50/70 p-3">
+                                            {renderNode(
+                                                row.next_node_id,
+                                                depth + 1,
+                                                nextPath
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <section className="rounded-xl border bg-white p-4 md:p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h2 className="text-lg font-bold text-gray-900">
+                        Bot Flow Analysis
+                    </h2>
+                    <p className="mt-1 text-sm text-green-700">
+                        Bot: {rows[0]?.bot_name}
+                    </p>
+                </div>
+                <p className="text-xs text-gray-500">
+                    Button खोलें: Child Flow · Clicks/Users खोलें: User List
+                </p>
+            </div>
+
+            <div className="space-y-4">
+                {(rootNodeIds.length ? rootNodeIds : allNodeIds).map((nodeId) =>
+                    renderNode(nodeId)
+                )}
+            </div>
+        </section>
+    );
+}
+
 function CampaignDetailsContent() {
     const params = useParams<{ id: string }>();
     const router = useRouter();
@@ -243,6 +449,10 @@ function CampaignDetailsContent() {
     const [campaign, setCampaign] = useState<Campaign | null>(null);
     const [templateName, setTemplateName] = useState("");
     const [templateComponents, setTemplateComponents] = useState<TemplateComponent[]>([]);
+    const [botAnalysis, setBotAnalysis] = useState<BotAnalysisRow[]>([]);
+    const [botClickUsers, setBotClickUsers] = useState<BotClickUser[]>([]);
+    const [expandedBotButtons, setExpandedBotButtons] = useState<string[]>([]);
+    const [selectedBotButton, setSelectedBotButton] = useState<string | null>(null);
     const [recipients, setRecipients] = useState<RecipientView[]>([]);
     const [contactsById, setContactsById] = useState<
         Record<string, ContactInfo>
@@ -257,6 +467,8 @@ function CampaignDetailsContent() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [sortKey, setSortKey] = useState<SortKey>("sent_at");
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(50);
 
     const handleSort = (key: SortKey) => {
         if (sortKey === key) {
@@ -266,7 +478,9 @@ function CampaignDetailsContent() {
             setSortDirection("asc");
         }
     };
-
+    useEffect(() => {
+        setPage(1);
+    }, [search, statusFilter, pageSize]);
     const loadDetails = useCallback(async () => {
         if (!campaignId) {
             setError("Campaign ID URL mein nahi mili. Campaign History par jaakar Analyze par click karein.");
@@ -292,6 +506,20 @@ function CampaignDetailsContent() {
             setCampaign(campaignData as Campaign);
             setTemplateName("");
             setTemplateComponents([]);
+            setBotAnalysis([]);
+
+            if (campaignData.id) {
+                const { data: botData, error: botError } = await supabase.rpc(
+                    "get_whatsapp_campaign_bot_analysis",
+                    {
+                        p_campaign_id: campaignData.id,
+                    }
+                );
+
+                if (botError) throw botError;
+
+                setBotAnalysis((botData ?? []) as BotAnalysisRow[]);
+            }
 
             if (campaignData.template_id) {
                 const { data: templateData, error: templateError } = await supabase
@@ -323,6 +551,25 @@ function CampaignDetailsContent() {
             if (recipientError) throw recipientError;
 
             const recipientRows = (recipientData ?? []) as Recipient[];
+            const recipientIds = recipientRows.map((row) => row.id);
+            const clickUserRows: BotClickUser[] = [];
+
+            for (let i = 0; i < recipientIds.length; i += 100) {
+                const batch = recipientIds.slice(i, i + 100);
+
+                const { data: clickData, error: clickError } = await supabase
+                    .from("whatsapp_inbound_messages")
+                    .select("recipient_id,interactive_reply_id,phone_number,message_text,received_at")
+                    .in("recipient_id", batch)
+                    .not("interactive_reply_id", "is", null)
+                    .order("received_at", { ascending: false });
+
+                if (clickError) throw clickError;
+
+                clickUserRows.push(...((clickData ?? []) as BotClickUser[]));
+            }
+
+            setBotClickUsers(clickUserRows);
             const contactIds = Array.from(
                 new Set(
                     recipientRows
@@ -443,6 +690,9 @@ function CampaignDetailsContent() {
             );
             setCampaign(null);
             setRecipients([]);
+            setBotClickUsers([]);
+            setExpandedBotButtons([]);
+            setSelectedBotButton(null);
             setContactsById({});
             setLogs([]);
         } finally {
@@ -551,7 +801,30 @@ function CampaignDetailsContent() {
         sortKey,
         sortDirection,
     ]);
+    const totalPages = Math.max(1, Math.ceil(visibleRecipients.length / pageSize));
 
+    const paginatedRecipients = visibleRecipients.slice(
+        (page - 1) * pageSize,
+        page * pageSize
+    );
+    const handleBotButtonClick = (
+        buttonId: string,
+        nextNodeId: string | null
+    ) => {
+        if (!nextNodeId) return;
+
+        setExpandedBotButtons((current) =>
+            current.includes(buttonId)
+                ? current.filter((id) => id !== buttonId)
+                : [...current, buttonId]
+        );
+    };
+
+    const handleBotUsersClick = (buttonId: string) => {
+        setSelectedBotButton((current) =>
+            current === buttonId ? null : buttonId
+        );
+    };
     const sortLabel = (key: SortKey) =>
         sortKey === key ? (sortDirection === "asc" ? " ↑" : " ↓") : " ↕";
 
@@ -620,66 +893,8 @@ function CampaignDetailsContent() {
                             <StatusBadge status={campaign.status} />
                         </div>
                     </div>
-{templateComponents.length > 0 && (
-    <section className="rounded-xl border bg-white p-4 md:p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-bold text-gray-900">
-                Message Sent in This Campaign
-            </h2>
+                    
 
-            {templateName && (
-                <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
-                    {templateName}
-                </span>
-            )}
-        </div>
-
-        <div className="max-w-2xl rounded-xl border bg-gray-50 p-4">
-            {templateComponents.map((component, index) => {
-                const type = component.type?.toUpperCase();
-
-                if (type === "BODY") {
-                    return (
-                        <p
-                            key={index}
-                            className="whitespace-pre-wrap break-words text-sm leading-7 text-gray-800"
-                        >
-                            {component.text}
-                        </p>
-                    );
-                }
-
-                if (type === "FOOTER") {
-                    return (
-                        <p
-                            key={index}
-                            className="mt-4 border-t pt-3 text-xs text-gray-500"
-                        >
-                            {component.text}
-                        </p>
-                    );
-                }
-
-                if (type === "BUTTONS" && component.buttons?.length) {
-                    return (
-                        <div key={index} className="mt-4 space-y-2">
-                            {component.buttons.map((button, buttonIndex) => (
-                                <div
-                                    key={buttonIndex}
-                                    className="rounded-lg border bg-white px-3 py-2 text-center text-sm font-medium text-green-700"
-                                >
-                                    {button.text}
-                                </div>
-                            ))}
-                        </div>
-                    );
-                }
-
-                return null;
-            })}
-        </div>
-    </section>
-)}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <MetricCard
                             title="Recipient rows"
@@ -724,7 +939,14 @@ function CampaignDetailsContent() {
                             icon={<CheckCircle2 className="h-5 w-5" />}
                         />
                     </div>
-
+                    <BotAnalysisSection
+                        rows={botAnalysis}
+                        clickUsers={botClickUsers}
+                        expandedButtons={expandedBotButtons}
+                        selectedButton={selectedBotButton}
+                        onButtonClick={handleBotButtonClick}
+                        onUsersClick={handleBotUsersClick}
+                    />
                     <section className="rounded-xl border bg-white">
                         <div className="flex flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
                             <h2 className="text-lg font-semibold text-gray-900">
@@ -803,7 +1025,7 @@ function CampaignDetailsContent() {
                                 </thead>
 
                                 <tbody className="divide-y">
-                                    {visibleRecipients.length === 0 ? (
+                                    {paginatedRecipients.length === 0 ? (
                                         <tr>
                                             <td
                                                 colSpan={7}
@@ -813,12 +1035,12 @@ function CampaignDetailsContent() {
                                             </td>
                                         </tr>
                                     ) : (
-                                        visibleRecipients.map((recipient, index) => {
+                                        paginatedRecipients.map((recipient, index) => {
                                             const contact = contactsById[recipient.contact_id];
 
                                             return (
                                                 <tr key={recipient.id} className="hover:bg-gray-50">
-                                                    <td className="px-3 py-3">{index + 1}</td>
+                                                    <td className="px-3 py-3">{(page - 1) * pageSize + index + 1}</td>
                                                     <td className="px-3 py-3">
                                                         {contact?.name || "—"}
                                                     </td>
@@ -867,9 +1089,47 @@ function CampaignDetailsContent() {
                             </table>
                         </div>
 
-                        <div className="border-t px-4 py-3 text-xs text-gray-500">
-                            Showing {visibleRecipients.length} of {recipients.length} recipient
-                            rows. Column headings par click karke sorting badal sakte hain.
+                        <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-xs text-gray-500">
+                                Showing {visibleRecipients.length === 0 ? 0 : (page - 1) * pageSize + 1}
+                                {" - "}
+                                {Math.min(page * pageSize, visibleRecipients.length)}
+                                {" of "}
+                                {visibleRecipients.length} recipients
+                            </p>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                                <select
+                                    value={pageSize}
+                                    onChange={(event) => setPageSize(Number(event.target.value))}
+                                    className="rounded-lg border bg-white px-2 py-1.5 text-xs"
+                                >
+                                    <option value={50}>50 rows</option>
+                                    <option value={100}>100 rows</option>
+                                </select>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                                    disabled={page === 1}
+                                    className="rounded-lg border px-3 py-1.5 text-xs disabled:opacity-40"
+                                >
+                                    Previous
+                                </button>
+
+                                <span className="text-xs text-gray-600">
+                                    Page {page} of {totalPages}
+                                </span>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                                    disabled={page >= totalPages}
+                                    className="rounded-lg border px-3 py-1.5 text-xs disabled:opacity-40"
+                                >
+                                    Next
+                                </button>
+                            </div>
                         </div>
                     </section>
                 </>
@@ -888,6 +1148,7 @@ function CampaignDetailsContent() {
             )}
         </div>
     );
+
 }
 
 export default function WhatsAppCampaignDetailsPage() {
