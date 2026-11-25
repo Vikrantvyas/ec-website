@@ -148,8 +148,9 @@ function CampaignHistoryContent() {
             if (queryError) throw queryError;
 
             const rows = (data ?? []) as (Campaign & {
-                has_more: boolean;
-            })[];
+    has_more: boolean;
+    total_count: number;
+})[];
 
             setCampaigns(rows);
             setTotalCampaigns(rows[0]?.total_count ?? 0);
@@ -367,7 +368,7 @@ function CampaignHistoryContent() {
                         </h1>
                     </div>
 
-                  
+
                 </div>
 
                 <button
@@ -455,59 +456,59 @@ function CampaignHistoryContent() {
 
                     <section className="overflow-hidden rounded-xl border bg-white">
                         <div className="space-y-4 border-b p-4">
-    <h2 className="text-lg font-semibold text-gray-900">
-        Campaign History
-    </h2>
+                            <h2 className="text-lg font-semibold text-gray-900">
+                                Campaign History
+                            </h2>
 
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-        {/* Campaign Search */}
-        <div className="relative min-w-0 flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+                                {/* Campaign Search */}
+                                <div className="relative min-w-0 flex-1">
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
 
-            <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Campaign name search karein..."
-                className="h-10 w-full rounded-lg border py-2 pl-9 pr-3 text-sm"
-            />
-        </div>
+                                    <input
+                                        value={search}
+                                        onChange={(event) => setSearch(event.target.value)}
+                                        placeholder="Campaign name search karein..."
+                                        className="h-10 w-full rounded-lg border py-2 pl-9 pr-3 text-sm"
+                                    />
+                                </div>
 
-        {/* From Date */}
-        <label className="w-full text-sm text-gray-600 lg:w-44">
-            From
-            <input
-                type="date"
-                value={dateFrom}
-                onChange={(event) => setDateFrom(event.target.value)}
-                className="mt-1 block h-10 w-full rounded-lg border px-3 text-sm"
-            />
-        </label>
+                                {/* From Date */}
+                                <label className="w-full text-sm text-gray-600 lg:w-44">
+                                    From
+                                    <input
+                                        type="date"
+                                        value={dateFrom}
+                                        onChange={(event) => setDateFrom(event.target.value)}
+                                        className="mt-1 block h-10 w-full rounded-lg border px-3 text-sm"
+                                    />
+                                </label>
 
-        {/* To Date */}
-        <label className="w-full text-sm text-gray-600 lg:w-44">
-            To
-            <input
-                type="date"
-                value={dateTo}
-                onChange={(event) => setDateTo(event.target.value)}
-                className="mt-1 block h-10 w-full rounded-lg border px-3 text-sm"
-            />
-        </label>
+                                {/* To Date */}
+                                <label className="w-full text-sm text-gray-600 lg:w-44">
+                                    To
+                                    <input
+                                        type="date"
+                                        value={dateTo}
+                                        onChange={(event) => setDateTo(event.target.value)}
+                                        className="mt-1 block h-10 w-full rounded-lg border px-3 text-sm"
+                                    />
+                                </label>
 
-        {/* Delete Button */}
-        <button
-            type="button"
-            onClick={() => void deleteSelectedCampaigns()}
-            disabled={!selectedIds.length || deleting || loading}
-            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-            <Trash2 className="h-4 w-4" />
-            {deleting
-                ? "Deleting..."
-                : `Delete Selected (${selectedIds.length})`}
-        </button>
-    </div>
-</div>
+                                {/* Delete Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => void deleteSelectedCampaigns()}
+                                    disabled={!selectedIds.length || deleting || loading}
+                                    className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    {deleting
+                                        ? "Deleting..."
+                                        : `Delete Selected (${selectedIds.length})`}
+                                </button>
+                            </div>
+                        </div>
 
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[1150px] text-left text-sm">
