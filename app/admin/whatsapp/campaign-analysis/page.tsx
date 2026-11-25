@@ -118,6 +118,11 @@ function CampaignHistoryContent() {
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(false);
+    const [campaignOffset, setCampaignOffset] = useState(0);
+    const [totalCampaigns, setTotalCampaigns] = useState(0);
+    const CAMPAIGN_PAGE_SIZE = 10;
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState("");
     const [notice, setNotice] = useState("");
@@ -125,178 +130,34 @@ function CampaignHistoryContent() {
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
 
+
     const loadCampaigns = useCallback(async () => {
         setLoading(true);
         setError("");
         setNotice("");
 
         try {
-            const { data, error: queryError } = await supabase
-                .from("whatsapp_campaigns")
-                .select(
-                    "id,name,template_id,status,total_recipients,accepted_count,delivered_count,read_count,failed_count,estimated_cost,created_at,started_at,completed_at"
-                )
-                .order("created_at", { ascending: false })
-                .limit(500);
+            const { data, error: queryError } = await supabase.rpc(
+                "get_whatsapp_campaign_analysis",
+                {
+                    p_offset: 0,
+                    p_limit: CAMPAIGN_PAGE_SIZE,
+                }
+            );
 
             if (queryError) throw queryError;
 
-            const rows = (data ?? []) as Campaign[];
-            const templateIds = Array.from(
-                new Set(
-                    rows
-                        .map((campaign) => campaign.template_id)
-                        .filter((id): id is string => Boolean(id))
-                )
-            );
+            const rows = (data ?? []) as (Campaign & {
+                has_more: boolean;
+            })[];
 
-            const templateNamesById = new Map<string, string>();
-
-            if (templateIds.length > 0) {
-                const { data: templateData, error: templateError } = await supabase
-                    .from("whatsapp_templates")
-                    .select("id,template_name")
-                    .in("id", templateIds);
-
-                if (templateError) throw templateError;
-
-                for (const template of templateData ?? []) {
-                    templateNamesById.set(template.id, template.template_name);
-                }
-            }
-
-            const rowsWithTemplate = rows.map((campaign) => ({
-                ...campaign,
-                template_name: campaign.template_id
-                    ? templateNamesById.get(campaign.template_id) ?? "—"
-                    : "—",
-            }));
-            if (rows.length === 0) {
-                setCampaigns([]);
-                setSelectedIds([]);
-                return;
-            }
-
-            const campaignIds = rowsWithTemplate.map((campaign) => campaign.id);
-
-            const recipientRows: CampaignRecipientRow[] = [];
-
-            for (let offset = 0; ; offset += 1000) {
-                const { data: recipientData, error: recipientError } = await supabase
-                    .from("whatsapp_campaign_recipients")
-                    .select("campaign_id,status,message_id")
-                    .in("campaign_id", campaignIds)
-                    .order("created_at", { ascending: true })
-                    .range(offset, offset + 999);
-
-                if (recipientError) throw recipientError;
-
-                const batch = (recipientData ?? []) as CampaignRecipientRow[];
-                recipientRows.push(...batch);
-
-                if (batch.length < 1000) break;
-            }
-
-            const messageIds = Array.from(
-                new Set(
-                    recipientRows
-                        .map((row) => row.message_id)
-                        .filter((id): id is string => Boolean(id))
-                )
-            );
-
-            const logsByMessage = new Map<string, CampaignLogRow[]>();
-
-            for (let i = 0; i < messageIds.length; i += 100) {
-                const batchIds = messageIds.slice(i, i + 100);
-
-                for (let offset = 0; ; offset += 1000) {
-                    const { data: logData, error: logError } = await supabase
-                        .from("whatsapp_message_logs")
-                        .select("message_id,status")
-                        .eq("direction", "outbound")
-                        .in("message_id", batchIds)
-                        .order("event_at", { ascending: false })
-                        .range(offset, offset + 999);
-
-                    if (logError) throw logError;
-
-                    const batch = (logData ?? []) as CampaignLogRow[];
-
-                    for (const log of batch) {
-                        if (!log.message_id) continue;
-
-                        const existing = logsByMessage.get(log.message_id) ?? [];
-                        existing.push(log);
-                        logsByMessage.set(log.message_id, existing);
-                    }
-
-                    if (batch.length < 1000) break;
-                }
-            }
-
-            const metricsByCampaign = new Map<
-                string,
-                {
-                    total: number;
-                    accepted: number;
-                    delivered: number;
-                    read: number;
-                    failed: number;
-                }
-            >();
-
-            for (const recipient of recipientRows) {
-                const relatedLogs = recipient.message_id
-                    ? logsByMessage.get(recipient.message_id) ?? []
-                    : [];
-
-                const status = getCampaignRecipientStatus(recipient, relatedLogs);
-
-                const metrics = metricsByCampaign.get(recipient.campaign_id) ?? {
-                    total: 0,
-                    accepted: 0,
-                    delivered: 0,
-                    read: 0,
-                    failed: 0,
-                };
-
-                metrics.total++;
-
-                if (status === "sent" || status === "accepted") {
-                    metrics.accepted++;
-                } else if (status === "delivered" || status === "read") {
-                    metrics.delivered++;
-
-                    if (status === "read") {
-                        metrics.read++;
-                    }
-                } else if (status === "failed") {
-                    metrics.failed++;
-                }
-
-                metricsByCampaign.set(recipient.campaign_id, metrics);
-            }
-
-            const updatedRows = rowsWithTemplate.map((campaign) => {
-                const metrics = metricsByCampaign.get(campaign.id);
-
-                if (!metrics || metrics.total === 0) return campaign;
-
-                return {
-                    ...campaign,
-                    total_recipients: metrics.total,
-                    accepted_count: metrics.accepted,
-                    delivered_count: metrics.delivered,
-                    read_count: metrics.read,
-                    failed_count: metrics.failed,
-                };
-            });
-
-            setCampaigns(updatedRows);
+            setCampaigns(rows);
+            setTotalCampaigns(rows[0]?.total_count ?? 0);
+            setHasMore(rows.length > 0 && rows[0].has_more);
+            setCampaignOffset(rows.length);
 
             setSelectedIds((current) =>
-                current.filter((id) => rowsWithTemplate.some((row) => row.id === id))
+                current.filter((id) => rows.some((row) => row.id === id))
             );
         } catch (err) {
             setError(
@@ -312,6 +173,47 @@ function CampaignHistoryContent() {
     useEffect(() => {
         void loadCampaigns();
     }, [loadCampaigns]);
+
+    const loadMoreCampaigns = useCallback(async () => {
+        if (loadingMore || !hasMore) return;
+
+        setLoadingMore(true);
+        setError("");
+
+        try {
+            const { data, error: queryError } = await supabase.rpc(
+                "get_whatsapp_campaign_analysis",
+                {
+                    p_offset: campaignOffset,
+                    p_limit: CAMPAIGN_PAGE_SIZE,
+                }
+            );
+
+            if (queryError) throw queryError;
+
+            const rows = (data ?? []) as (Campaign & {
+                has_more: boolean;
+            })[];
+
+            setCampaigns((current) => [
+                ...current,
+                ...rows.filter(
+                    (row) => !current.some((item) => item.id === row.id)
+                ),
+            ]);
+
+            setCampaignOffset((current) => current + rows.length);
+            setHasMore(rows.length > 0 && rows[0].has_more);
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "More campaigns load nahi ho saki."
+            );
+        } finally {
+            setLoadingMore(false);
+        }
+    }, [campaignOffset, hasMore, loadingMore]);
 
     const filteredCampaigns = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -422,12 +324,20 @@ function CampaignHistoryContent() {
 
             if (recipientDeleteError) throw recipientDeleteError;
 
-            const { error: campaignDeleteError } = await supabase
-                .from("whatsapp_campaigns")
-                .delete()
-                .in("id", idsToDelete);
+            const { data: deletedCampaigns, error: campaignDeleteError } =
+                await supabase
+                    .from("whatsapp_campaigns")
+                    .delete()
+                    .in("id", idsToDelete)
+                    .select("id");
 
             if (campaignDeleteError) throw campaignDeleteError;
+
+            if ((deletedCampaigns ?? []).length !== idsToDelete.length) {
+                throw new Error(
+                    `Only ${(deletedCampaigns ?? []).length} of ${idsToDelete.length} campaigns deleted. Check Supabase DELETE permissions (RLS).`
+                );
+            }
 
             setSelectedIds([]);
 
@@ -457,9 +367,7 @@ function CampaignHistoryContent() {
                         </h1>
                     </div>
 
-                    <p className="mt-1 text-sm text-gray-500">
-                        Campaign history, delivery performance aur recipient analysis.
-                    </p>
+                  
                 </div>
 
                 <button
@@ -517,10 +425,10 @@ function CampaignHistoryContent() {
                         <div className="rounded-xl border bg-white p-4">
                             <p className="text-sm text-gray-500">Campaigns loaded</p>
                             <p className="mt-2 text-2xl font-bold">
-                                {campaigns.length.toLocaleString("en-IN")}
+                                {campaigns.length.toLocaleString("en-IN")} / {totalCampaigns.toLocaleString("en-IN")}
                             </p>
                             <p className="mt-1 text-xs text-gray-500">
-                                Latest 500 campaigns
+                                Loaded campaigns / Total campaigns
                             </p>
                         </div>
 
@@ -547,60 +455,59 @@ function CampaignHistoryContent() {
 
                     <section className="overflow-hidden rounded-xl border bg-white">
                         <div className="space-y-4 border-b p-4">
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                <h2 className="text-lg font-semibold text-gray-900">
-                                    Campaign History
-                                </h2>
+    <h2 className="text-lg font-semibold text-gray-900">
+        Campaign History
+    </h2>
 
-                                <button
-                                    type="button"
-                                    onClick={() => void deleteSelectedCampaigns()}
-                                    disabled={!selectedIds.length || deleting || loading}
-                                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    <Trash2 className="h-4 w-4" />
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+        {/* Campaign Search */}
+        <div className="relative min-w-0 flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
 
-                                    {deleting
-                                        ? "Deleting..."
-                                        : `Delete Selected (${selectedIds.length})`}
-                                </button>
-                            </div>
+            <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Campaign name search karein..."
+                className="h-10 w-full rounded-lg border py-2 pl-9 pr-3 text-sm"
+            />
+        </div>
 
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                                <div className="relative md:col-span-2">
-                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        {/* From Date */}
+        <label className="w-full text-sm text-gray-600 lg:w-44">
+            From
+            <input
+                type="date"
+                value={dateFrom}
+                onChange={(event) => setDateFrom(event.target.value)}
+                className="mt-1 block h-10 w-full rounded-lg border px-3 text-sm"
+            />
+        </label>
 
-                                    <input
-                                        value={search}
-                                        onChange={(event) => setSearch(event.target.value)}
-                                        placeholder="Campaign name search karein..."
-                                        className="w-full rounded-lg border py-2.5 pl-9 pr-3 text-sm"
-                                    />
-                                </div>
+        {/* To Date */}
+        <label className="w-full text-sm text-gray-600 lg:w-44">
+            To
+            <input
+                type="date"
+                value={dateTo}
+                onChange={(event) => setDateTo(event.target.value)}
+                className="mt-1 block h-10 w-full rounded-lg border px-3 text-sm"
+            />
+        </label>
 
-                                <label className="text-sm text-gray-600">
-                                    From
-
-                                    <input
-                                        type="date"
-                                        value={dateFrom}
-                                        onChange={(event) => setDateFrom(event.target.value)}
-                                        className="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
-                                    />
-                                </label>
-
-                                <label className="text-sm text-gray-600">
-                                    To
-
-                                    <input
-                                        type="date"
-                                        value={dateTo}
-                                        onChange={(event) => setDateTo(event.target.value)}
-                                        className="mt-1 block w-full rounded-lg border px-3 py-2 text-sm"
-                                    />
-                                </label>
-                            </div>
-                        </div>
+        {/* Delete Button */}
+        <button
+            type="button"
+            onClick={() => void deleteSelectedCampaigns()}
+            disabled={!selectedIds.length || deleting || loading}
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+            <Trash2 className="h-4 w-4" />
+            {deleting
+                ? "Deleting..."
+                : `Delete Selected (${selectedIds.length})`}
+        </button>
+    </div>
+</div>
 
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[1150px] text-left text-sm">
@@ -724,9 +631,24 @@ function CampaignHistoryContent() {
 
                         <div className="border-t px-4 py-3 text-xs text-gray-500">
                             Showing {filteredCampaigns.length} of {campaigns.length} loaded
-                            campaigns. Saved counters webhook updates na hone par actual delivery
-                            status se alag ho sakte hain.
+                            campaigns.
                         </div>
+
+                        {hasMore && (
+                            <div className="flex justify-center border-t p-4">
+                                <button
+                                    type="button"
+                                    onClick={() => void loadMoreCampaigns()}
+                                    disabled={loadingMore || loading}
+                                    className="inline-flex items-center gap-2 rounded-lg border border-green-700 px-6 py-2 text-sm font-semibold text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <RefreshCw
+                                        className={`h-4 w-4 ${loadingMore ? "animate-spin" : ""}`}
+                                    />
+                                    {loadingMore ? "Loading..." : "Load More"}
+                                </button>
+                            </div>
+                        )}
                     </section>
                 </>
             )}
