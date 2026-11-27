@@ -76,20 +76,38 @@ type MessageLog = {
 };
 type BotAnalysisRow = {
     bot_name: string;
+    parent_node_id: string | null;
+    parent_button_id: string | null;
+    parent_button_name: string | null;
     node_id: string;
     question: string;
     button_id: string;
     button_name: string;
     next_node_id: string | null;
+    has_child_buttons: boolean;
     total_clicks: number;
     unique_users: number;
 };
+
 type BotClickUser = {
+    inbound_id: string;
     recipient_id: string;
-    interactive_reply_id: string;
     phone_number: string;
     message_text: string | null;
     received_at: string;
+    bot_name: string;
+    parent_node_id: string | null;
+    parent_button_id: string | null;
+    parent_button_name: string | null;
+    node_id: string;
+    question: string;
+    button_id: string;
+    button_name: string;
+    next_node_id: string | null;
+};
+type BotSummary = {
+    total_clicks: number;
+    unique_users: number;
 };
 type DeliveryStatus =
     | "read"
@@ -254,6 +272,7 @@ function MetricCard({
 function BotAnalysisSection({
     rows,
     clickUsers,
+    summary,
     expandedButtons,
     selectedButton,
     onButtonClick,
@@ -261,10 +280,11 @@ function BotAnalysisSection({
 }: {
     rows: BotAnalysisRow[];
     clickUsers: BotClickUser[];
+    summary: BotSummary;
     expandedButtons: string[];
     selectedButton: string | null;
-    onButtonClick: (buttonId: string, nextNodeId: string | null) => void;
-    onUsersClick: (buttonId: string) => void;
+    onButtonClick: (pathKey: string, nextNodeId: string | null) => void;
+    onUsersClick: (pathKey: string) => void;
 }) {
     if (rows.length === 0) return null;
 
@@ -288,78 +308,155 @@ function BotAnalysisSection({
 
     const renderNode = (
         nodeId: string,
+        parentButtonId: string | null,
         depth = 0,
         path: string[] = []
     ): React.ReactNode => {
         if (path.includes(nodeId)) return null;
 
-        const nodeRows = rowsByNode.get(nodeId);
-        if (!nodeRows?.length) return null;
+        const nodeRows = (rowsByNode.get(nodeId) ?? []).filter(
+            (row) => row.parent_button_id === parentButtonId
+        );
+
+        if (nodeRows.length === 0) return null;
 
         const nextPath = [...path, nodeId];
+        const parentRow = parentButtonId
+            ? rows.find(
+                (row) =>
+                    row.node_id === nodeRows[0].parent_node_id &&
+                    row.button_id === parentButtonId
+            )
+            : null;
 
+        const answeredUsers = new Set(
+            clickUsers
+                .filter(
+                    (user) =>
+                        user.node_id === nodeId &&
+                        user.parent_button_id === parentButtonId
+                )
+                .map((user) => user.phone_number)
+        ).size;
+
+        const questionPendingUsers = parentButtonId
+            ? Math.max((parentRow?.unique_users ?? 0) - answeredUsers, 0)
+            : 0;
         return (
             <div
-                key={`${nodeId}-${depth}`}
-                className={`relative ${depth > 0 ? "ml-3 border-l-2 border-green-200 pl-4 sm:ml-6 sm:pl-6" : ""}`}
+                key={`${parentButtonId ?? "root"}-${nodeId}-${depth}`}
+                className={`relative ${depth > 0
+                    ? "ml-3 border-l-2 border-green-200 pl-4 sm:ml-6 sm:pl-6"
+                    : ""
+                    }`}
             >
                 <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                    <div className="border-b bg-gray-50 px-4 py-3">
-                        <p className="whitespace-pre-wrap text-sm font-semibold leading-6 text-gray-800">
-                            {nodeRows[0].question || "Bot Question"}
-                        </p>
-                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-gray-50 px-4 py-3">
+    <p className="whitespace-pre-wrap text-sm font-semibold leading-6 text-gray-800">
+        {nodeRows[0].question || "Bot Question"}
+    </p>
+
+    {parentButtonId && (
+        <span className="shrink-0 rounded-lg bg-orange-50 px-2.5 py-2 text-xs font-semibold text-orange-800">
+            Pending {number(questionPendingUsers)}
+        </span>
+    )}
+</div>
 
                     <div className="space-y-2 p-3">
                         {nodeRows.map((row) => {
-                            const isExpanded = expandedButtons.includes(row.button_id);
-                            const isSelected = selectedButton === row.button_id;
+                            const pathKey = `${parentButtonId ?? "root"}:${nodeId}:${row.button_id}`;
 
+                            const isExpanded = expandedButtons.includes(pathKey);
+                            const isSelected = selectedButton === pathKey;
                             const users = clickUsers.filter(
                                 (user) =>
-                                    user.interactive_reply_id === row.button_id
+                                    user.button_id === row.button_id &&
+                                    user.node_id === row.node_id &&
+                                    user.parent_button_id === row.parent_button_id
                             );
+
+                            const directChildUsers = row.has_child_buttons
+                                ? clickUsers.filter(
+                                    (user) =>
+                                        user.node_id === row.next_node_id &&
+                                        user.parent_node_id === row.node_id &&
+                                        user.parent_button_id === row.button_id
+                                )
+                                : [];
+
+                            const childTotalClicks = directChildUsers.length;
+
+                            const childUniqueUsers = new Set(
+                                directChildUsers.map((user) => user.phone_number)
+                            ).size;
+
+                            const pendingUsers = Math.max(
+                                row.unique_users - childUniqueUsers,
+                                0
+                            );
+
+
 
                             return (
                                 <div
-                                    key={row.button_id}
+                                    key={pathKey}
                                     className="overflow-hidden rounded-lg border border-gray-200"
                                 >
+
                                     <div className="flex flex-wrap items-center gap-2 p-2 sm:p-3">
                                         <button
                                             type="button"
                                             onClick={() =>
                                                 onButtonClick(
-                                                    row.button_id,
-                                                    row.next_node_id
+                                                    pathKey,
+                                                    row.has_child_buttons ? row.next_node_id : null
                                                 )
                                             }
                                             className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-medium text-gray-800 hover:text-green-700"
                                         >
                                             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-green-50 text-xs font-bold text-green-700">
                                                 {row.next_node_id
-                                                    ? isExpanded ? "−" : "+"
+                                                    ? isExpanded
+                                                        ? "−"
+                                                        : "+"
                                                     : "•"}
                                             </span>
+
                                             <span className="break-words">
                                                 {row.button_name || "Unnamed Button"}
                                             </span>
                                         </button>
 
-                                        <button
-                                            type="button"
-                                            onClick={() => onUsersClick(row.button_id)}
-                                            className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold ${isSelected
-                                                ? "bg-blue-100 text-blue-800"
-                                                : "bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
-                                                }`}
-                                        >
-                                            {number(row.total_clicks)} Clicks
-                                            <span className="ml-2">
-                                                · {number(row.unique_users)} Users
-                                            </span>
-                                        </button>
+                                        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                                            <button
+                                                type="button"
+                                                onClick={() => onUsersClick(pathKey)}
+                                                className={`rounded-lg px-2.5 py-2 ${isSelected
+                                                    ? "bg-blue-100 text-blue-800"
+                                                    : "bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                                                    }`}
+                                            >
+                                                Users {number(row.unique_users)}
+                                            </button>
+
+
+                                            {row.has_child_buttons && (
+                                                <>
+                                                    <span className="rounded-lg bg-green-50 px-2.5 py-2 text-green-800">
+                                                        Button Clicks {number(childTotalClicks)}
+                                                    </span>
+
+                                                    <span className="rounded-lg bg-orange-50 px-2.5 py-2 text-orange-800">
+                                                        Pending {number(pendingUsers)}
+                                                    </span>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
+
+
+
 
                                     {isSelected && (
                                         <div className="border-t bg-blue-50/50 p-3">
@@ -373,9 +470,9 @@ function BotAnalysisSection({
                                                 </p>
                                             ) : (
                                                 <div className="max-h-64 space-y-2 overflow-y-auto">
-                                                    {users.map((user, index) => (
+                                                    {users.map((user) => (
                                                         <div
-                                                            key={`${user.recipient_id}-${index}`}
+                                                            key={user.inbound_id}
                                                             className="rounded-lg border bg-white p-3 text-xs"
                                                         >
                                                             <p className="font-semibold text-gray-800">
@@ -398,10 +495,11 @@ function BotAnalysisSection({
                                         </div>
                                     )}
 
-                                    {isExpanded && row.next_node_id && (
+                                    {isExpanded && row.has_child_buttons && row.next_node_id && (
                                         <div className="border-t bg-gray-50/70 p-3">
                                             {renderNode(
                                                 row.next_node_id,
+                                                row.button_id,
                                                 depth + 1,
                                                 nextPath
                                             )}
@@ -427,14 +525,35 @@ function BotAnalysisSection({
                         Bot: {rows[0]?.bot_name}
                     </p>
                 </div>
+
                 <p className="text-xs text-gray-500">
                     Button खोलें: Child Flow · Clicks/Users खोलें: User List
                 </p>
             </div>
 
+            <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+                    <p className="text-sm font-medium text-gray-600">
+                        Total Button Clicks
+                    </p>
+                    <p className="mt-1 text-2xl font-bold text-green-800">
+                        {number(summary.total_clicks)}
+                    </p>
+                </div>
+
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                    <p className="text-sm font-medium text-gray-600">
+                        Unique Users
+                    </p>
+                    <p className="mt-1 text-2xl font-bold text-blue-800">
+                        {number(summary.unique_users)}
+                    </p>
+                </div>
+            </div>
+
             <div className="space-y-4">
                 {(rootNodeIds.length ? rootNodeIds : allNodeIds).map((nodeId) =>
-                    renderNode(nodeId)
+                    renderNode(nodeId, null)
                 )}
             </div>
         </section>
@@ -450,6 +569,10 @@ function CampaignDetailsContent() {
     const [templateName, setTemplateName] = useState("");
     const [templateComponents, setTemplateComponents] = useState<TemplateComponent[]>([]);
     const [botAnalysis, setBotAnalysis] = useState<BotAnalysisRow[]>([]);
+    const [botSummary, setBotSummary] = useState<BotSummary>({
+        total_clicks: 0,
+        unique_users: 0,
+    });
     const [botClickUsers, setBotClickUsers] = useState<BotClickUser[]>([]);
     const [expandedBotButtons, setExpandedBotButtons] = useState<string[]>([]);
     const [selectedBotButton, setSelectedBotButton] = useState<string | null>(null);
@@ -507,10 +630,13 @@ function CampaignDetailsContent() {
             setTemplateName("");
             setTemplateComponents([]);
             setBotAnalysis([]);
-
+            setBotSummary({
+                total_clicks: 0,
+                unique_users: 0,
+            });
             if (campaignData.id) {
                 const { data: botData, error: botError } = await supabase.rpc(
-                    "get_whatsapp_campaign_bot_analysis",
+                    "get_whatsapp_campaign_bot_path_analysis",
                     {
                         p_campaign_id: campaignData.id,
                     }
@@ -519,6 +645,21 @@ function CampaignDetailsContent() {
                 if (botError) throw botError;
 
                 setBotAnalysis((botData ?? []) as BotAnalysisRow[]);
+                const { data: summaryData, error: summaryError } = await supabase.rpc(
+                    "get_whatsapp_campaign_bot_summary",
+                    {
+                        p_campaign_id: campaignData.id,
+                    }
+                );
+
+                if (summaryError) throw summaryError;
+
+                setBotSummary(
+                    (summaryData?.[0] ?? {
+                        total_clicks: 0,
+                        unique_users: 0,
+                    }) as BotSummary
+                );
             }
 
             if (campaignData.template_id) {
@@ -551,25 +692,16 @@ function CampaignDetailsContent() {
             if (recipientError) throw recipientError;
 
             const recipientRows = (recipientData ?? []) as Recipient[];
-            const recipientIds = recipientRows.map((row) => row.id);
-            const clickUserRows: BotClickUser[] = [];
+            const { data: clickUserData, error: clickUserError } = await supabase.rpc(
+                "get_whatsapp_campaign_bot_path_click_users",
+                {
+                    p_campaign_id: campaignId,
+                }
+            );
 
-            for (let i = 0; i < recipientIds.length; i += 100) {
-                const batch = recipientIds.slice(i, i + 100);
+            if (clickUserError) throw clickUserError;
 
-                const { data: clickData, error: clickError } = await supabase
-                    .from("whatsapp_inbound_messages")
-                    .select("recipient_id,interactive_reply_id,phone_number,message_text,received_at")
-                    .in("recipient_id", batch)
-                    .not("interactive_reply_id", "is", null)
-                    .order("received_at", { ascending: false });
-
-                if (clickError) throw clickError;
-
-                clickUserRows.push(...((clickData ?? []) as BotClickUser[]));
-            }
-
-            setBotClickUsers(clickUserRows);
+            setBotClickUsers((clickUserData ?? []) as BotClickUser[]);
             const contactIds = Array.from(
                 new Set(
                     recipientRows
@@ -808,21 +940,21 @@ function CampaignDetailsContent() {
         page * pageSize
     );
     const handleBotButtonClick = (
-        buttonId: string,
+        pathKey: string,
         nextNodeId: string | null
     ) => {
         if (!nextNodeId) return;
 
         setExpandedBotButtons((current) =>
-            current.includes(buttonId)
-                ? current.filter((id) => id !== buttonId)
-                : [...current, buttonId]
+            current.includes(pathKey)
+                ? current.filter((id) => id !== pathKey)
+                : [...current, pathKey]
         );
     };
 
-    const handleBotUsersClick = (buttonId: string) => {
+    const handleBotUsersClick = (pathKey: string) => {
         setSelectedBotButton((current) =>
-            current === buttonId ? null : buttonId
+            current === pathKey ? null : pathKey
         );
     };
     const sortLabel = (key: SortKey) =>
@@ -893,7 +1025,7 @@ function CampaignDetailsContent() {
                             <StatusBadge status={campaign.status} />
                         </div>
                     </div>
-                    
+
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <MetricCard
@@ -941,6 +1073,7 @@ function CampaignDetailsContent() {
                     </div>
                     <BotAnalysisSection
                         rows={botAnalysis}
+                        summary={botSummary}
                         clickUsers={botClickUsers}
                         expandedButtons={expandedBotButtons}
                         selectedButton={selectedBotButton}
