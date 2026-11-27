@@ -10,6 +10,7 @@ import {
     CirclePause,
     Copy,
     GitBranch,
+    GripVertical,
     LoaderCircle,
     MessageSquare,
     Plus,
@@ -36,6 +37,7 @@ type BotNode = {
     question: string;
     type: "buttons" | "list" | "text" | "url_button";
     options: BotOption[];
+    listButtonText?: string;
     urlButtonText?: string;
     urlButtonUrl?: string;
     delayMinutes?: number;
@@ -105,6 +107,7 @@ function normalizeFlow(value: unknown): BotFlow {
         return {
             nodes: (value as BotFlow).nodes.map((node) => ({
                 ...node,
+                listButtonText: node.listButtonText ?? "Options",
                 delayMinutes: node.delayMinutes ?? 0,
                 followUpEnabled: node.followUpEnabled ?? false,
                 followUpMinutes: node.followUpMinutes ?? 60,
@@ -192,6 +195,8 @@ export default function WhatsAppBotsPage() {
     const [startMode, setStartMode] = useState<StartMode>("manual");
     const [triggerKeyword, setTriggerKeyword] = useState("");
     const [flow, setFlow] = useState<BotFlow>(emptyFlow);
+    const [expandedNodeId, setExpandedNodeId] = useState<string | null>(null);
+    const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
     async function saveBotSettings() {
         setSettingsSaving(true);
         setError("");
@@ -283,10 +288,13 @@ export default function WhatsAppBotsPage() {
         setStatus("draft");
         setStartMode("manual");
         setTriggerKeyword("");
+
+        const firstNodeId = makeId();
+
         setFlow({
             nodes: [
                 {
-                    id: makeId(),
+                    id: firstNodeId,
                     question: "",
                     type: "buttons",
                     options: [
@@ -296,6 +304,8 @@ export default function WhatsAppBotsPage() {
                 },
             ],
         });
+
+        setExpandedNodeId(firstNodeId);
         setBuilderTab("form");
         setError("");
         setNotice("");
@@ -310,7 +320,11 @@ export default function WhatsAppBotsPage() {
         setStatus(bot.status);
         setStartMode(bot.start_mode);
         setTriggerKeyword(bot.trigger_keyword ?? "");
-        setFlow(normalizeFlow(bot.flow));
+
+        const normalizedFlow = normalizeFlow(bot.flow);
+        setFlow(normalizedFlow);
+        setExpandedNodeId(normalizedFlow.nodes[0]?.id ?? null);
+
         setBuilderTab("form");
         setError("");
         setNotice("");
@@ -340,21 +354,53 @@ export default function WhatsAppBotsPage() {
         setFlow((current) => ({
             nodes: [...current.nodes, newNode],
         }));
+        setExpandedNodeId(newNode.id);
     }
 
     function deleteNode(nodeId: string) {
-        setFlow((current) => ({
-            nodes: current.nodes
-                .filter((node) => node.id !== nodeId)
-                .map((node) => ({
-                    ...node,
-                    options: node.options.map((option) =>
-                        option.nextNodeId === nodeId
-                            ? { ...option, nextNodeId: "" }
-                            : option
-                    ),
-                })),
-        }));
+        const remainingNodes = flow.nodes.filter((node) => node.id !== nodeId);
+
+        setFlow({
+            nodes: remainingNodes.map((node) => ({
+                ...node,
+                options: node.options.map((option) =>
+                    option.nextNodeId === nodeId
+                        ? { ...option, nextNodeId: "" }
+                        : option
+                ),
+            })),
+        });
+
+        if (expandedNodeId === nodeId) {
+            setExpandedNodeId(remainingNodes[0]?.id ?? null);
+        }
+    }
+    function moveNode(draggedId: string, targetId: string) {
+        if (draggedId === targetId) return;
+
+        setFlow((current) => {
+            const nodes = [...current.nodes];
+
+            const fromIndex = nodes.findIndex(
+                (node) => node.id === draggedId
+            );
+
+            const toIndex = nodes.findIndex(
+                (node) => node.id === targetId
+            );
+
+            if (fromIndex === -1 || toIndex === -1) return current;
+
+            const [movedNode] = nodes.splice(fromIndex, 1);
+            nodes.splice(toIndex, 0, movedNode);
+
+            return {
+                ...current,
+                nodes,
+            };
+        });
+
+        setDraggedNodeId(null);
     }
 
     function addOption(nodeId: string) {
@@ -828,7 +874,7 @@ export default function WhatsAppBotsPage() {
 
                                                     {/* Trigger Keyword */}
                                                     <div className="min-w-0">
-                                                       
+
                                                         {bot.trigger_keyword?.trim() ? (
                                                             <span
                                                                 className="inline-flex max-w-full truncate rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700"
@@ -997,10 +1043,12 @@ export default function WhatsAppBotsPage() {
                                                 (item: any) => item.type === "QUICK_REPLY"
                                             );
 
+                                            const firstNodeId = makeId();
+
                                             setFlow({
                                                 nodes: [
                                                     {
-                                                        id: makeId(),
+                                                        id: firstNodeId,
                                                         question: body?.text ?? "",
                                                         type: quickReplies.length > 0 ? "buttons" : "text",
                                                         options: quickReplies.slice(0, 3).map(
@@ -1013,6 +1061,8 @@ export default function WhatsAppBotsPage() {
                                                     },
                                                 ],
                                             });
+
+                                            setExpandedNodeId(firstNodeId);
 
                                             setStatus("draft");
                                             setStartMode("manual");
@@ -1191,24 +1241,73 @@ export default function WhatsAppBotsPage() {
                                 <div className="space-y-4 p-4">
                                     {flow.nodes.map((node, index) => (
                                         <div
+                                            id={`bot-question-${node.id}`}
                                             key={node.id}
-                                            className="rounded-2xl border border-slate-200 p-4"
+                                            onDragOver={(event) => {
+                                                event.preventDefault();
+                                                event.dataTransfer.dropEffect = "move";
+                                            }}
+                                            onDrop={(event) => {
+                                                event.preventDefault();
+
+                                                if (draggedNodeId) {
+                                                    moveNode(draggedNodeId, node.id);
+                                                }
+                                            }}
+                                            className={`rounded-2xl border p-4 transition ${draggedNodeId === node.id
+                                                    ? "border-emerald-400 bg-emerald-50 opacity-50"
+                                                    : "border-slate-200"
+                                                }`}
                                         >
                                             <div className="mb-4 flex items-center justify-between gap-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-sm font-bold text-emerald-700">
+                                                <button
+    type="button"
+    draggable
+    title="Drag to reorder question"
+    className="cursor-grab touch-none rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 active:cursor-grabbing"
+    onDragStart={(event) => {
+        event.stopPropagation();
+        setDraggedNodeId(node.id);
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", node.id);
+    }}
+    onDragEnd={() => setDraggedNodeId(null)}
+    onClick={(event) => event.stopPropagation()}
+>
+    <GripVertical size={20} />
+</button>
+                                                <button
+                                                    type="button"
+                                                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                                                    onClick={() =>
+                                                        setExpandedNodeId(
+                                                            expandedNodeId === node.id ? null : node.id
+                                                        )
+                                                    }
+                                                >
+                                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-sm font-bold text-emerald-700">
                                                         {index + 1}
                                                     </span>
-                                                    <div>
+
+                                                    <div className="min-w-0 flex-1">
                                                         <h3 className="font-semibold text-slate-900">
                                                             Question {index + 1}
                                                         </h3>
-                                                        <p className="text-xs text-slate-500">
-                                                            ID: {node.id}
+
+                                                        <p className="truncate text-xs text-slate-500">
+                                                            {node.question.trim() || "Question text यहाँ लिखें"}
                                                         </p>
                                                     </div>
-                                                </div>
+
+                                                    <ArrowDown
+                                                        size={18}
+                                                        className={`shrink-0 text-slate-500 transition-transform ${expandedNodeId === node.id ? "rotate-180" : ""
+                                                            }`}
+                                                    />
+                                                </button>
+
                                                 <button
+                                                    type="button"
                                                     className="rounded-lg p-2 text-red-500 hover:bg-red-50"
                                                     title="Delete Question"
                                                     onClick={() => deleteNode(node.id)}
@@ -1216,161 +1315,429 @@ export default function WhatsAppBotsPage() {
                                                     <Trash2 size={17} />
                                                 </button>
                                             </div>
+                                            {expandedNodeId === node.id && (
+                                                <>
+                                                    <label className="mb-4 block space-y-1.5 text-sm font-medium text-slate-700">
+                                                        Question Text *
+                                                        <textarea
+                                                            className={field}
+                                                            rows={2}
+                                                            value={node.question}
+                                                            onChange={(event) =>
+                                                                updateNode(node.id, {
+                                                                    question: event.target.value,
+                                                                })
+                                                            }
+                                                            placeholder="ग्राहक को क्या प्रश्न भेजना है?"
+                                                        />
+                                                    </label>
 
-                                            <label className="mb-4 block space-y-1.5 text-sm font-medium text-slate-700">
-                                                Question Text *
-                                                <textarea
-                                                    className={field}
-                                                    rows={2}
-                                                    value={node.question}
-                                                    onChange={(event) =>
-                                                        updateNode(node.id, {
-                                                            question: event.target.value,
-                                                        })
-                                                    }
-                                                    placeholder="ग्राहक को क्या प्रश्न भेजना है?"
-                                                />
-                                            </label>
-
-                                            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
-                                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={node.followUpEnabled ?? false}
-                                                        onChange={(event) =>
-                                                            updateNode(node.id, {
-                                                                followUpEnabled: event.target.checked,
-                                                            })
-                                                        }
-                                                        className="h-4 w-4 accent-emerald-600"
-                                                    />
-                                                    Enable Follow-up Message
-                                                </label>
-
-                                                {node.followUpEnabled && (
-                                                    <div className="mt-4 space-y-3">
-                                                        <label className="block space-y-1.5 text-sm font-medium text-slate-700">
-                                                            Follow-up कब भेजना है? (Minutes)
+                                                    <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+                                                        <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
                                                             <input
-                                                                type="number"
-                                                                min="1"
-                                                                max="43200"
-                                                                className={field}
-                                                                value={node.followUpMinutes ?? 60}
+                                                                type="checkbox"
+                                                                checked={node.followUpEnabled ?? false}
                                                                 onChange={(event) =>
                                                                     updateNode(node.id, {
-                                                                        followUpMinutes: Math.max(
-                                                                            1,
-                                                                            Number(event.target.value) || 1
-                                                                        ),
+                                                                        followUpEnabled: event.target.checked,
                                                                     })
                                                                 }
+                                                                className="h-4 w-4 accent-emerald-600"
                                                             />
+                                                            Enable Follow-up Message
                                                         </label>
 
-                                                        <label className="block space-y-1.5 text-sm font-medium text-slate-700">
-                                                            Follow-up Message *
-                                                            <textarea
-                                                                rows={3}
-                                                                className={field}
-                                                                value={node.followUpMessage ?? ""}
-                                                                onChange={(event) =>
-                                                                    updateNode(node.id, {
-                                                                        followUpMessage: event.target.value,
-                                                                    })
-                                                                }
-                                                                placeholder="अपना Follow-up संदेश लिखें..."
-                                                            />
-                                                        </label>
+                                                        {node.followUpEnabled && (
+                                                            <div className="mt-4 space-y-3">
+                                                                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                                    Follow-up कब भेजना है? (Minutes)
+                                                                    <input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        max="43200"
+                                                                        className={field}
+                                                                        value={node.followUpMinutes ?? 60}
+                                                                        onChange={(event) =>
+                                                                            updateNode(node.id, {
+                                                                                followUpMinutes: Math.max(
+                                                                                    1,
+                                                                                    Number(event.target.value) || 1
+                                                                                ),
+                                                                            })
+                                                                        }
+                                                                    />
+                                                                </label>
 
-                                                        <p className="text-xs text-slate-500">
-                                                            उदाहरण: 60 मिनट = 1 घंटा। Follow-up तभी भेजा जाएगा जब Form Submit नहीं हुआ हो।
-                                                        </p>
-                                                        <label className="block space-y-1.5 text-sm font-medium text-slate-700">
-                                                            Follow-up Reply Type
-                                                            <select
-                                                                className={field}
-                                                                value={node.followUpType ?? "buttons"}
-                                                                onChange={(event) =>
-                                                                    updateNode(node.id, {
-                                                                        followUpType: event.target.value as "buttons" | "list" | "text",
-                                                                    })
-                                                                }
-                                                            >
-                                                                <option value="text">Normal Text</option>
-                                                                <option value="buttons">Reply Buttons (max 3)</option>
-                                                                <option value="list">List Message (max 10)</option>
+                                                                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                                    Follow-up Message *
+                                                                    <textarea
+                                                                        rows={3}
+                                                                        className={field}
+                                                                        value={node.followUpMessage ?? ""}
+                                                                        onChange={(event) =>
+                                                                            updateNode(node.id, {
+                                                                                followUpMessage: event.target.value,
+                                                                            })
+                                                                        }
+                                                                        placeholder="अपना Follow-up संदेश लिखें..."
+                                                                    />
+                                                                </label>
 
-                                                            </select>
-                                                        </label>
-
-                                                        {(node.followUpType ?? "buttons") !== "text" && (
-                                                            <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
-                                                                <div className="text-sm font-semibold text-slate-700">
-                                                                    Follow-up Reply Options
-                                                                </div>
-
-                                                                {(node.followUpOptions ?? []).map((option, optionIndex) => (
-                                                                    <div
-                                                                        key={option.id}
-                                                                        className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_1.5fr_auto]"
+                                                                <p className="text-xs text-slate-500">
+                                                                    उदाहरण: 60 मिनट = 1 घंटा। Follow-up तभी भेजा जाएगा जब Form Submit नहीं हुआ हो।
+                                                                </p>
+                                                                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                                    Follow-up Reply Type
+                                                                    <select
+                                                                        className={field}
+                                                                        value={node.followUpType ?? "buttons"}
+                                                                        onChange={(event) =>
+                                                                            updateNode(node.id, {
+                                                                                followUpType: event.target.value as "buttons" | "list" | "text",
+                                                                            })
+                                                                        }
                                                                     >
+                                                                        <option value="text">Normal Text</option>
+                                                                        <option value="buttons">Reply Buttons (max 3)</option>
+                                                                        <option value="list">List Message (max 10)</option>
 
-                                                                        <div className="space-y-1">
-                                                                            <input
-                                                                                className={field}
-                                                                                value={option.title}
-                                                                                placeholder={
-                                                                                    node.followUpType === "list"
-                                                                                        ? "List title (max 24 characters)"
-                                                                                        : "Button title (max 20 characters)"
-                                                                                }
-                                                                                maxLength={node.followUpType === "list" ? 24 : 20}
-                                                                                onChange={(event) => {
-                                                                                    const options = [...(node.followUpOptions ?? [])];
-                                                                                    options[optionIndex] = {
-                                                                                        ...options[optionIndex],
-                                                                                        title: event.target.value,
-                                                                                    };
-                                                                                    updateNode(node.id, { followUpOptions: options });
-                                                                                }}
-                                                                            />
-                                                                            <p className="text-right text-xs text-slate-500">
-                                                                                {option.title.length}/{node.followUpType === "list" ? 24 : 20}
-                                                                                {" characters"}
-                                                                            </p>
+                                                                    </select>
+                                                                </label>
+
+                                                                {(node.followUpType ?? "buttons") !== "text" && (
+                                                                    <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+                                                                        <div className="text-sm font-semibold text-slate-700">
+                                                                            Follow-up Reply Options
                                                                         </div>
 
+                                                                        {(node.followUpOptions ?? []).map((option, optionIndex) => (
+                                                                            <div
+                                                                                key={option.id}
+                                                                                className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_1.5fr_auto]"
+                                                                            >
 
+                                                                                <div className="space-y-1">
+                                                                                    <input
+                                                                                        className={field}
+                                                                                        value={option.title}
+                                                                                        placeholder={
+                                                                                            node.followUpType === "list"
+                                                                                                ? "List title (max 24 characters)"
+                                                                                                : "Button title (max 20 characters)"
+                                                                                        }
+                                                                                        maxLength={node.followUpType === "list" ? 24 : 20}
+                                                                                        onChange={(event) => {
+                                                                                            const options = [...(node.followUpOptions ?? [])];
+                                                                                            options[optionIndex] = {
+                                                                                                ...options[optionIndex],
+                                                                                                title: event.target.value,
+                                                                                            };
+                                                                                            updateNode(node.id, { followUpOptions: options });
+                                                                                        }}
+                                                                                    />
+                                                                                    <p className="text-right text-xs text-slate-500">
+                                                                                        {option.title.length}/{node.followUpType === "list" ? 24 : 20}
+                                                                                        {" characters"}
+                                                                                    </p>
+                                                                                </div>
+
+
+                                                                                <input
+                                                                                    className={field}
+                                                                                    value={option.id}
+                                                                                    placeholder="Option ID"
+                                                                                    onChange={(event) => {
+                                                                                        const options = [...(node.followUpOptions ?? [])];
+                                                                                        options[optionIndex] = {
+                                                                                            ...options[optionIndex],
+                                                                                            id: event.target.value,
+                                                                                        };
+                                                                                        updateNode(node.id, { followUpOptions: options });
+                                                                                    }}
+                                                                                />
+                                                                                <select
+                                                                                    className={field}
+                                                                                    value={option.nextNodeId ?? ""}
+                                                                                    onChange={(event) => {
+                                                                                        const options = [...(node.followUpOptions ?? [])];
+
+                                                                                        options[optionIndex] = {
+                                                                                            ...options[optionIndex],
+                                                                                            nextNodeId: event.target.value,
+                                                                                        };
+
+                                                                                        updateNode(node.id, { followUpOptions: options });
+                                                                                    }}
+                                                                                >
+                                                                                    <option value="">End / No next question</option>
+
+                                                                                    {flow.nodes
+                                                                                        .filter((target) => target.id !== node.id)
+                                                                                        .map((target) => (
+                                                                                            <option key={target.id} value={target.id}>
+                                                                                                {target.question.trim()
+                                                                                                    ? target.question.slice(0, 55)
+                                                                                                    : `Question ${flow.nodes.indexOf(target) + 1}`}
+                                                                                            </option>
+                                                                                        ))}
+                                                                                </select>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="rounded-md border border-red-200 px-3 py-2 text-sm text-red-600"
+                                                                                    onClick={() =>
+                                                                                        updateNode(node.id, {
+                                                                                            followUpOptions: (node.followUpOptions ?? []).filter(
+                                                                                                (_, index) => index !== optionIndex
+                                                                                            ),
+                                                                                        })
+                                                                                    }
+                                                                                >
+                                                                                    हटाएँ
+                                                                                </button>
+                                                                            </div>
+                                                                        ))}
+
+                                                                        <button
+                                                                            type="button"
+                                                                            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                                                            disabled={(node.followUpOptions ?? []).length >= (
+                                                                                node.followUpType === "list" ? 10 : 3
+                                                                            )}
+                                                                            onClick={() =>
+                                                                                updateNode(node.id, {
+                                                                                    followUpOptions: [
+                                                                                        ...(node.followUpOptions ?? []),
+                                                                                        {
+                                                                                            id: makeId(),
+                                                                                            title: "",
+                                                                                            nextNodeId: "",
+                                                                                        },
+                                                                                    ],
+                                                                                })
+                                                                            }
+                                                                        >
+                                                                            + Add Follow-up Option
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <label className="mb-4 block space-y-1.5 text-sm font-medium text-slate-700">
+                                                        Reply Type
+                                                        <select
+                                                            className={field}
+                                                            value={node.type}
+                                                            onChange={(event) =>
+                                                                updateNode(node.id, {
+                                                                    type: event.target.value as BotNode["type"],
+                                                                })
+                                                            }
+                                                        >
+                                                            <option value="buttons">Reply Buttons (max 3)</option>
+                                                            <option value="list">List Message</option>
+                                                            <option value="text">Text Question</option>
+                                                            <option value="url_button">URL Button (website link)</option>
+                                                        </select>
+                                                    </label>
+                                                    {node.type === "list" && (
+                                                        <label className="mb-4 block space-y-1.5 text-sm font-medium text-slate-700">
+                                                            List Button Text *
+                                                            <input
+                                                                className={field}
+                                                                value={node.listButtonText ?? "Options"}
+                                                                onChange={(event) =>
+                                                                    updateNode(node.id, {
+                                                                        listButtonText: event.target.value,
+                                                                    })
+                                                                }
+                                                                maxLength={20}
+                                                                placeholder="Options"
+                                                            />
+                                                            <span className="block text-xs text-slate-500">
+                                                                {(node.listButtonText ?? "Options").length}/20 characters
+                                                            </span>
+                                                        </label>
+                                                    )}
+                                                    {index === 0 &&
+                                                        selectedTemplateId &&
+                                                        (() => {
+                                                            const template = approvedTemplates.find(
+                                                                (item) => item.id === selectedTemplateId
+                                                            );
+
+                                                            const buttonsComponent = template?.components?.find(
+                                                                (item: any) => item.type === "BUTTONS"
+                                                            );
+
+                                                            const templateButtons = buttonsComponent?.buttons ?? [];
+                                                            const displayButtons = templateButtons.filter(
+                                                                (button: any) => button.type !== "QUICK_REPLY"
+                                                            );
+                                                            if (displayButtons.length === 0) return null;
+
+                                                            return (
+                                                                <div className="mb-4 space-y-2">
+                                                                    <p className="text-sm font-semibold text-slate-800">
+                                                                        Original Template Buttons
+                                                                    </p>
+
+                                                                    {displayButtons.map((button: any, buttonIndex: number) => (
+                                                                        <div
+                                                                            key={`${button.type}-${buttonIndex}`}
+                                                                            className="grid grid-cols-1 gap-2 rounded-xl bg-slate-50 p-3 md:grid-cols-[1fr_1fr_1.5fr]"
+                                                                        >
+                                                                            <input
+                                                                                className={field}
+                                                                                value={button.text ?? button.title ?? button.type}
+                                                                                readOnly
+                                                                                title="Original Template Button"
+                                                                            />
+
+                                                                            <input
+                                                                                className={field}
+                                                                                value={button.type}
+                                                                                readOnly
+                                                                                title="Button Type"
+                                                                            />
+
+                                                                            <input
+                                                                                className={field}
+                                                                                value={
+                                                                                    button.type === "URL"
+                                                                                        ? button.url ?? ""
+                                                                                        : button.type === "PHONE_NUMBER"
+                                                                                            ? button.phone_number ?? ""
+                                                                                            : ""
+                                                                                }
+                                                                                readOnly
+                                                                                title="Button Action"
+                                                                                placeholder="No URL or phone number"
+                                                                            />
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    {node.type === "url_button" && (
+                                                        <div className="mb-4 space-y-3 rounded-xl border border-blue-200 bg-blue-50/50 p-4">
+                                                            <p className="text-sm font-semibold text-slate-800">
+                                                                URL Button Settings
+                                                            </p>
+
+                                                            <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                                URL Button Text
+                                                                <input
+                                                                    className={field}
+                                                                    value={node.urlButtonText ?? ""}
+                                                                    onChange={(event) =>
+                                                                        updateNode(node.id, {
+                                                                            urlButtonText: event.target.value,
+                                                                        })
+                                                                    }
+                                                                    maxLength={20}
+                                                                    placeholder="Visit Website"
+                                                                />
+                                                                <span className="block text-xs text-slate-500">
+                                                                    {(node.urlButtonText ?? "").length}/20 characters
+                                                                </span>
+                                                            </label>
+
+                                                            <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                                Button URL
+                                                                <input
+                                                                    className={field}
+                                                                    type="url"
+                                                                    value={node.urlButtonUrl ?? ""}
+                                                                    onChange={(event) =>
+                                                                        updateNode(node.id, {
+                                                                            urlButtonUrl: event.target.value,
+                                                                        })
+                                                                    }
+                                                                    placeholder="https://ecindore.com/"
+                                                                />
+                                                            </label>
+
+                                                            <p className="text-xs text-slate-500">
+                                                                यह Bot Builder का preview/configuration है। WhatsApp पर
+                                                                URL Button भेजने की functionality अलग चरण में जोड़ी जाएगी।
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                    {(node.type === "buttons" || node.type === "list") && (
+                                                        <div className="space-y-3">
+
+                                                            <div className="flex items-center justify-between">
+                                                                <p className="text-sm font-semibold text-slate-800">
+                                                                    Reply Options
+                                                                </p>
+                                                                <button
+                                                                    className={secondary}
+                                                                    onClick={() => addOption(node.id)}
+                                                                    disabled={
+                                                                        node.type === "buttons" &&
+                                                                        node.options.length >= 3
+                                                                    }
+                                                                >
+                                                                    <Plus size={15} /> Add Option
+                                                                </button>
+                                                            </div>
+
+                                                            {node.options.map((option) => (
+
+                                                                <div
+                                                                    key={option.id}
+                                                                    className="grid grid-cols-1 items-start gap-2 rounded-xl bg-slate-50 p-3 md:grid-cols-[auto_1fr_1fr_1.5fr]"
+                                                                >
+                                                                    <button
+                                                                        type="button"
+                                                                        className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+                                                                        onClick={() => deleteOption(node.id, option.id)}
+                                                                        title="Remove Option"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+
+                                                                    <div className="min-w-0">
                                                                         <input
                                                                             className={field}
-                                                                            value={option.id}
-                                                                            placeholder="Option ID"
-                                                                            onChange={(event) => {
-                                                                                const options = [...(node.followUpOptions ?? [])];
-                                                                                options[optionIndex] = {
-                                                                                    ...options[optionIndex],
-                                                                                    id: event.target.value,
-                                                                                };
-                                                                                updateNode(node.id, { followUpOptions: options });
-                                                                            }}
+                                                                            value={option.title}
+                                                                            onChange={(event) =>
+                                                                                updateOption(node.id, option.id, {
+                                                                                    title: event.target.value,
+                                                                                })
+                                                                            }
+                                                                            placeholder={
+                                                                                node.type === "list"
+                                                                                    ? "List title (max 24 characters)"
+                                                                                    : "Button title (max 20 characters)"
+                                                                            }
+                                                                            maxLength={node.type === "list" ? 24 : 20}
                                                                         />
+                                                                        <p className="mt-1 text-xs text-slate-500">
+                                                                            {option.title.length}/{node.type === "list" ? 24 : 20}
+                                                                        </p>
+                                                                    </div>
+
+                                                                    <input
+                                                                        className={field}
+                                                                        value={option.id}
+                                                                        readOnly
+                                                                        title="Reply ID"
+                                                                    />
+
+                                                                    <div className="flex min-w-0 items-center gap-2">
                                                                         <select
-                                                                            className={field}
-                                                                            value={option.nextNodeId ?? ""}
-                                                                            onChange={(event) => {
-                                                                                const options = [...(node.followUpOptions ?? [])];
-
-                                                                                options[optionIndex] = {
-                                                                                    ...options[optionIndex],
+                                                                            className={`${field} flex-1 min-w-0`}
+                                                                            value={option.nextNodeId}
+                                                                            onChange={(event) =>
+                                                                                updateOption(node.id, option.id, {
                                                                                     nextNodeId: event.target.value,
-                                                                                };
-
-                                                                                updateNode(node.id, { followUpOptions: options });
-                                                                            }}
+                                                                                })
+                                                                            }
                                                                         >
                                                                             <option value="">End / No next question</option>
-
                                                                             {flow.nodes
                                                                                 .filter((target) => target.id !== node.id)
                                                                                 .map((target) => (
@@ -1381,258 +1748,33 @@ export default function WhatsAppBotsPage() {
                                                                                     </option>
                                                                                 ))}
                                                                         </select>
+
                                                                         <button
                                                                             type="button"
-                                                                            className="rounded-md border border-red-200 px-3 py-2 text-sm text-red-600"
-                                                                            onClick={() =>
-                                                                                updateNode(node.id, {
-                                                                                    followUpOptions: (node.followUpOptions ?? []).filter(
-                                                                                        (_, index) => index !== optionIndex
-                                                                                    ),
-                                                                                })
-                                                                            }
+                                                                            disabled={!option.nextNodeId}
+                                                                            title="Go to selected question"
+                                                                            className="shrink-0 rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
+                                                                            onClick={() => {
+                                                                                const target = document.getElementById(
+                                                                                    `bot-question-${option.nextNodeId}`
+                                                                                );
+
+                                                                                target?.scrollIntoView({
+                                                                                    behavior: "smooth",
+                                                                                    block: "center",
+                                                                                });
+                                                                            }}
                                                                         >
-                                                                            हटाएँ
+                                                                            <ArrowDown size={17} />
                                                                         </button>
                                                                     </div>
-                                                                ))}
 
-                                                                <button
-                                                                    type="button"
-                                                                    className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-                                                                    disabled={(node.followUpOptions ?? []).length >= (
-                                                                        node.followUpType === "list" ? 10 : 3
-                                                                    )}
-                                                                    onClick={() =>
-                                                                        updateNode(node.id, {
-                                                                            followUpOptions: [
-                                                                                ...(node.followUpOptions ?? []),
-                                                                                {
-                                                                                    id: makeId(),
-                                                                                    title: "",
-                                                                                    nextNodeId: "",
-                                                                                },
-                                                                            ],
-                                                                        })
-                                                                    }
-                                                                >
-                                                                    + Add Follow-up Option
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <label className="mb-4 block space-y-1.5 text-sm font-medium text-slate-700">
-                                                Reply Type
-                                                <select
-                                                    className={field}
-                                                    value={node.type}
-                                                    onChange={(event) =>
-                                                        updateNode(node.id, {
-                                                            type: event.target.value as BotNode["type"],
-                                                        })
-                                                    }
-                                                >
-                                                    <option value="buttons">Reply Buttons (max 3)</option>
-                                                    <option value="list">List Message</option>
-                                                    <option value="text">Text Question</option>
-                                                    <option value="url_button">URL Button (website link)</option>
-                                                </select>
-                                            </label>
-                                            {index === 0 &&
-                                                selectedTemplateId &&
-                                                (() => {
-                                                    const template = approvedTemplates.find(
-                                                        (item) => item.id === selectedTemplateId
-                                                    );
-
-                                                    const buttonsComponent = template?.components?.find(
-                                                        (item: any) => item.type === "BUTTONS"
-                                                    );
-
-                                                    const templateButtons = buttonsComponent?.buttons ?? [];
-                                                    const displayButtons = templateButtons.filter(
-                                                        (button: any) => button.type !== "QUICK_REPLY"
-                                                    );
-                                                    if (displayButtons.length === 0) return null;
-
-                                                    return (
-                                                        <div className="mb-4 space-y-2">
-                                                            <p className="text-sm font-semibold text-slate-800">
-                                                                Original Template Buttons
-                                                            </p>
-
-                                                            {displayButtons.map((button: any, buttonIndex: number) => (
-                                                                <div
-                                                                    key={`${button.type}-${buttonIndex}`}
-                                                                    className="grid grid-cols-1 gap-2 rounded-xl bg-slate-50 p-3 md:grid-cols-[1fr_1fr_1.5fr]"
-                                                                >
-                                                                    <input
-                                                                        className={field}
-                                                                        value={button.text ?? button.title ?? button.type}
-                                                                        readOnly
-                                                                        title="Original Template Button"
-                                                                    />
-
-                                                                    <input
-                                                                        className={field}
-                                                                        value={button.type}
-                                                                        readOnly
-                                                                        title="Button Type"
-                                                                    />
-
-                                                                    <input
-                                                                        className={field}
-                                                                        value={
-                                                                            button.type === "URL"
-                                                                                ? button.url ?? ""
-                                                                                : button.type === "PHONE_NUMBER"
-                                                                                    ? button.phone_number ?? ""
-                                                                                    : ""
-                                                                        }
-                                                                        readOnly
-                                                                        title="Button Action"
-                                                                        placeholder="No URL or phone number"
-                                                                    />
                                                                 </div>
+
                                                             ))}
                                                         </div>
-                                                    );
-                                                })()}
-                                            {node.type === "url_button" && (
-                                                <div className="mb-4 space-y-3 rounded-xl border border-blue-200 bg-blue-50/50 p-4">
-                                                    <p className="text-sm font-semibold text-slate-800">
-                                                        URL Button Settings
-                                                    </p>
-
-                                                    <label className="block space-y-1.5 text-sm font-medium text-slate-700">
-                                                        URL Button Text
-                                                        <input
-                                                            className={field}
-                                                            value={node.urlButtonText ?? ""}
-                                                            onChange={(event) =>
-                                                                updateNode(node.id, {
-                                                                    urlButtonText: event.target.value,
-                                                                })
-                                                            }
-                                                            maxLength={20}
-                                                            placeholder="Visit Website"
-                                                        />
-                                                        <span className="block text-xs text-slate-500">
-                                                            {(node.urlButtonText ?? "").length}/20 characters
-                                                        </span>
-                                                    </label>
-
-                                                    <label className="block space-y-1.5 text-sm font-medium text-slate-700">
-                                                        Button URL
-                                                        <input
-                                                            className={field}
-                                                            type="url"
-                                                            value={node.urlButtonUrl ?? ""}
-                                                            onChange={(event) =>
-                                                                updateNode(node.id, {
-                                                                    urlButtonUrl: event.target.value,
-                                                                })
-                                                            }
-                                                            placeholder="https://ecindore.com/"
-                                                        />
-                                                    </label>
-
-                                                    <p className="text-xs text-slate-500">
-                                                        यह Bot Builder का preview/configuration है। WhatsApp पर
-                                                        URL Button भेजने की functionality अलग चरण में जोड़ी जाएगी।
-                                                    </p>
-                                                </div>
-                                            )}
-                                            {(node.type === "buttons" || node.type === "list") && (
-                                                <div className="space-y-3">
-
-                                                    <div className="flex items-center justify-between">
-                                                        <p className="text-sm font-semibold text-slate-800">
-                                                            Reply Options
-                                                        </p>
-                                                        <button
-                                                            className={secondary}
-                                                            onClick={() => addOption(node.id)}
-                                                            disabled={
-                                                                node.type === "buttons" &&
-                                                                node.options.length >= 3
-                                                            }
-                                                        >
-                                                            <Plus size={15} /> Add Option
-                                                        </button>
-                                                    </div>
-
-                                                    {node.options.map((option) => (
-
-                                                        <div
-                                                            key={option.id}
-                                                            className="grid grid-cols-1 items-start gap-2 rounded-xl bg-slate-50 p-3 md:grid-cols-[auto_1fr_1fr_1.5fr]"
-                                                        >
-                                                            <button
-                                                                type="button"
-                                                                className="rounded-lg p-2 text-red-500 hover:bg-red-50"
-                                                                onClick={() => deleteOption(node.id, option.id)}
-                                                                title="Remove Option"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-
-                                                            <div className="min-w-0">
-                                                                <input
-                                                                    className={field}
-                                                                    value={option.title}
-                                                                    onChange={(event) =>
-                                                                        updateOption(node.id, option.id, {
-                                                                            title: event.target.value,
-                                                                        })
-                                                                    }
-                                                                    placeholder={
-                                                                        node.type === "list"
-                                                                            ? "List title (max 24 characters)"
-                                                                            : "Button title (max 20 characters)"
-                                                                    }
-                                                                    maxLength={node.type === "list" ? 24 : 20}
-                                                                />
-                                                                <p className="mt-1 text-xs text-slate-500">
-                                                                    {option.title.length}/{node.type === "list" ? 24 : 20}
-                                                                </p>
-                                                            </div>
-
-                                                            <input
-                                                                className={field}
-                                                                value={option.id}
-                                                                readOnly
-                                                                title="Reply ID"
-                                                            />
-
-                                                            <select
-                                                                className={field}
-                                                                value={option.nextNodeId}
-                                                                onChange={(event) =>
-                                                                    updateOption(node.id, option.id, {
-                                                                        nextNodeId: event.target.value,
-                                                                    })
-                                                                }
-                                                            >
-                                                                <option value="">End / No next question</option>
-                                                                {flow.nodes
-                                                                    .filter((target) => target.id !== node.id)
-                                                                    .map((target) => (
-                                                                        <option key={target.id} value={target.id}>
-                                                                            {target.question.trim()
-                                                                                ? target.question.slice(0, 55)
-                                                                                : `Question ${flow.nodes.indexOf(target) + 1}`}
-                                                                        </option>
-                                                                    ))}
-                                                            </select>
-                                                        </div>
-
-
-                                                    ))}
-                                                </div>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     ))}
