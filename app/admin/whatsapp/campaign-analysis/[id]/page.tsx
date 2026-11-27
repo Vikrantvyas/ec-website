@@ -352,16 +352,16 @@ function BotAnalysisSection({
             >
                 <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-gray-50 px-4 py-3">
-    <p className="whitespace-pre-wrap text-sm font-semibold leading-6 text-gray-800">
-        {nodeRows[0].question || "Bot Question"}
-    </p>
+                        <p className="whitespace-pre-wrap text-sm font-normal leading-6 text-gray-800">
+                            {nodeRows[0].question || "Bot Question"}
+                        </p>
 
-    {parentButtonId && (
-        <span className="shrink-0 rounded-lg bg-orange-50 px-2.5 py-2 text-xs font-semibold text-orange-800">
-            Pending {number(questionPendingUsers)}
-        </span>
-    )}
-</div>
+                        {parentButtonId && (
+                            <span className="shrink-0 rounded-lg bg-orange-50 px-2.5 py-2 text-xs font-semibold text-orange-800">
+                                Pending {number(questionPendingUsers)}
+                            </span>
+                        )}
+                    </div>
 
                     <div className="space-y-2 p-3">
                         {nodeRows.map((row) => {
@@ -518,38 +518,24 @@ function BotAnalysisSection({
         <section className="rounded-xl border bg-white p-4 md:p-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <div>
-                    <h2 className="text-lg font-bold text-gray-900">
-                        Bot Flow Analysis
-                    </h2>
+                  
                     <p className="mt-1 text-sm text-green-700">
                         Bot: {rows[0]?.bot_name}
                     </p>
                 </div>
 
-                <p className="text-xs text-gray-500">
-                    Button खोलें: Child Flow · Clicks/Users खोलें: User List
-                </p>
-            </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                    <span className="rounded-lg bg-gray-100 px-2.5 py-2 text-gray-700">
+                        Users {number(summary.unique_users)}
+                    </span>
 
-            <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-green-200 bg-green-50 p-4">
-                    <p className="text-sm font-medium text-gray-600">
-                        Total Button Clicks
-                    </p>
-                    <p className="mt-1 text-2xl font-bold text-green-800">
-                        {number(summary.total_clicks)}
-                    </p>
-                </div>
-
-                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-                    <p className="text-sm font-medium text-gray-600">
-                        Unique Users
-                    </p>
-                    <p className="mt-1 text-2xl font-bold text-blue-800">
-                        {number(summary.unique_users)}
-                    </p>
+                    <span className="rounded-lg bg-green-50 px-2.5 py-2 text-green-800">
+                        Button Clicks {number(summary.total_clicks)}
+                    </span>
                 </div>
             </div>
+
+
 
             <div className="space-y-4">
                 {(rootNodeIds.length ? rootNodeIds : allNodeIds).map((nodeId) =>
@@ -576,6 +562,9 @@ function CampaignDetailsContent() {
     const [botClickUsers, setBotClickUsers] = useState<BotClickUser[]>([]);
     const [expandedBotButtons, setExpandedBotButtons] = useState<string[]>([]);
     const [selectedBotButton, setSelectedBotButton] = useState<string | null>(null);
+    const [recipientExpanded, setRecipientExpanded] = useState(false);
+    const [recipientLoading, setRecipientLoading] = useState(false);
+    const [recipientLoaded, setRecipientLoaded] = useState(false);
     const [recipients, setRecipients] = useState<RecipientView[]>([]);
     const [contactsById, setContactsById] = useState<
         Record<string, ContactInfo>
@@ -604,6 +593,149 @@ function CampaignDetailsContent() {
     useEffect(() => {
         setPage(1);
     }, [search, statusFilter, pageSize]);
+    const loadRecipientDetails = useCallback(async () => {
+        if (!campaignId || recipientLoaded || recipientLoading) return;
+
+        setRecipientLoading(true);
+
+        try {
+            const { data: recipientData, error: recipientError } = await supabase
+                .from("whatsapp_campaign_recipients")
+                .select(
+                    "id,campaign_id,contact_id,status,message_id,error_code,error_message,attempts,sent_at,delivered_at,read_at,created_at"
+                )
+                .eq("campaign_id", campaignId)
+                .order("created_at", { ascending: true })
+                .limit(5000);
+
+            if (recipientError) throw recipientError;
+
+            const recipientRows = (recipientData ?? []) as Recipient[];
+
+            const contactIds = Array.from(
+                new Set(
+                    recipientRows
+                        .map((row) => row.contact_id)
+                        .filter((id): id is string => Boolean(id))
+                )
+            );
+
+            const contactMap: Record<string, ContactInfo> = {};
+
+            for (let i = 0; i < contactIds.length; i += 100) {
+                const batch = contactIds.slice(i, i + 100);
+
+                const { data: contactData, error: contactError } = await supabase
+                    .from("whatsapp_contacts")
+                    .select("id,name,phone_number")
+                    .in("id", batch);
+
+                if (contactError) throw contactError;
+
+                for (const contact of (contactData ?? []) as ContactInfo[]) {
+                    contactMap[contact.id] = contact;
+                }
+            }
+
+            const phoneNumbers = Array.from(
+                new Set(
+                    Object.values(contactMap)
+                        .map((contact) => contact.phone_number)
+                        .filter((phone): phone is string => Boolean(phone))
+                )
+            );
+
+            const repliesByPhone: Record<string, InboundReply> = {};
+
+            for (let i = 0; i < phoneNumbers.length; i += 100) {
+                const batch = phoneNumbers.slice(i, i + 100);
+
+                const { data: inboundData, error: inboundError } = await supabase
+                    .from("whatsapp_inbound_messages")
+                    .select("phone_number,message_text,received_at")
+                    .in("phone_number", batch)
+                    .order("received_at", { ascending: false })
+                    .limit(5000);
+
+                if (inboundError) throw inboundError;
+
+                for (const reply of (inboundData ?? []) as InboundReply[]) {
+                    if (
+                        reply.phone_number &&
+                        !repliesByPhone[reply.phone_number]
+                    ) {
+                        repliesByPhone[reply.phone_number] = reply;
+                    }
+                }
+            }
+
+            const messageIds = Array.from(
+                new Set(
+                    recipientRows
+                        .map((row) => row.message_id)
+                        .filter((id): id is string => Boolean(id))
+                )
+            );
+
+            let logRows: MessageLog[] = [];
+
+            for (let i = 0; i < messageIds.length; i += 100) {
+                const batch = messageIds.slice(i, i + 100);
+
+                const { data: logData, error: logError } = await supabase
+                    .from("whatsapp_message_logs")
+                    .select(
+                        "message_id,status,error_code,error_message,event_at,created_at"
+                    )
+                    .eq("direction", "outbound")
+                    .in("message_id", batch)
+                    .order("event_at", { ascending: false })
+                    .limit(1000);
+
+                if (logError) throw logError;
+
+                logRows = logRows.concat((logData ?? []) as MessageLog[]);
+            }
+
+            const logsByMessage = new Map<string, MessageLog[]>();
+
+            for (const log of logRows) {
+                if (!log.message_id) continue;
+
+                const current = logsByMessage.get(log.message_id) ?? [];
+                current.push(log);
+                logsByMessage.set(log.message_id, current);
+            }
+
+            const views: RecipientView[] = recipientRows.map((recipient) => {
+                const relatedLogs = recipient.message_id
+                    ? logsByMessage.get(recipient.message_id) ?? []
+                    : [];
+
+                const result = resolveStatus(recipient, relatedLogs);
+
+                return {
+                    ...recipient,
+                    finalStatus: result.status,
+                    finalError: result.error,
+                };
+            });
+
+            setRecipients(views);
+            setContactsById(contactMap);
+            setLastRepliesByPhone(repliesByPhone);
+            setLogs(logRows);
+            setRecipientLoaded(true);
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Recipient Details load nahi ho sake."
+            );
+        } finally {
+            setRecipientLoading(false);
+        }
+    }, [campaignId, recipientLoaded, recipientLoading]);
     const loadDetails = useCallback(async () => {
         if (!campaignId) {
             setError("Campaign ID URL mein nahi mili. Campaign History par jaakar Analyze par click karein.");
@@ -680,18 +812,6 @@ function CampaignDetailsContent() {
                     );
                 }
             }
-            const { data: recipientData, error: recipientError } = await supabase
-                .from("whatsapp_campaign_recipients")
-                .select(
-                    "id,campaign_id,contact_id,status,message_id,error_code,error_message,attempts,sent_at,delivered_at,read_at,created_at"
-                )
-                .eq("campaign_id", campaignId)
-                .order("created_at", { ascending: true })
-                .limit(5000);
-
-            if (recipientError) throw recipientError;
-
-            const recipientRows = (recipientData ?? []) as Recipient[];
             const { data: clickUserData, error: clickUserError } = await supabase.rpc(
                 "get_whatsapp_campaign_bot_path_click_users",
                 {
@@ -702,125 +822,14 @@ function CampaignDetailsContent() {
             if (clickUserError) throw clickUserError;
 
             setBotClickUsers((clickUserData ?? []) as BotClickUser[]);
-            const contactIds = Array.from(
-                new Set(
-                    recipientRows
-                        .map((row) => row.contact_id)
-                        .filter((id): id is string => Boolean(id))
-                )
-            );
 
-            const contactMap: Record<string, ContactInfo> = {};
-
-            for (let i = 0; i < contactIds.length; i += 100) {
-                const batch = contactIds.slice(i, i + 100);
-
-                const { data: contactData, error: contactError } = await supabase
-                    .from("whatsapp_contacts")
-                    .select("id,name,phone_number")
-                    .in("id", batch);
-
-                if (contactError) throw contactError;
-
-                for (const contact of (contactData ?? []) as ContactInfo[]) {
-                    contactMap[contact.id] = contact;
-                }
-            }
-
-            setContactsById(contactMap);
-            const phoneNumbers = Array.from(
-                new Set(
-                    Object.values(contactMap)
-                        .map((contact) => contact.phone_number)
-                        .filter((phone): phone is string => Boolean(phone))
-                )
-            );
-
-            const repliesByPhone: Record<string, InboundReply> = {};
-
-            for (let i = 0; i < phoneNumbers.length; i += 100) {
-                const batch = phoneNumbers.slice(i, i + 100);
-
-                const { data: inboundData, error: inboundError } = await supabase
-                    .from("whatsapp_inbound_messages")
-                    .select("phone_number,message_text,received_at")
-                    .in("phone_number", batch)
-                    .order("received_at", { ascending: false })
-                    .limit(5000);
-
-                if (inboundError) throw inboundError;
-
-                for (const reply of (inboundData ?? []) as InboundReply[]) {
-                    if (
-                        reply.phone_number &&
-                        !repliesByPhone[reply.phone_number]
-                    ) {
-                        repliesByPhone[reply.phone_number] = reply;
-                    }
-                }
-            }
-
-            setLastRepliesByPhone(repliesByPhone);
-            const messageIds = Array.from(
-                new Set(
-                    recipientRows
-                        .map((row) => row.message_id)
-                        .filter((id): id is string => Boolean(id))
-                )
-            );
-
-            let logRows: MessageLog[] = [];
-
-            for (let i = 0; i < messageIds.length; i += 100) {
-                const batch = messageIds.slice(i, i + 100);
-
-                const { data: logData, error: logError } = await supabase
-                    .from("whatsapp_message_logs")
-                    .select(
-                        "message_id,status,error_code,error_message,event_at,created_at"
-                    )
-                    .eq("direction", "outbound")
-                    .in("message_id", batch)
-                    .order("event_at", { ascending: false })
-                    .limit(1000);
-
-                if (logError) throw logError;
-
-                logRows = logRows.concat((logData ?? []) as MessageLog[]);
-            }
-
-            const logsByMessage = new Map<string, MessageLog[]>();
-
-            for (const log of logRows) {
-                if (!log.message_id) continue;
-                const current = logsByMessage.get(log.message_id) ?? [];
-                current.push(log);
-                logsByMessage.set(log.message_id, current);
-            }
-
-            const views: RecipientView[] = recipientRows.map((recipient) => {
-                const relatedLogs = recipient.message_id
-                    ? logsByMessage.get(recipient.message_id) ?? []
-                    : [];
-
-                const result = resolveStatus(recipient, relatedLogs);
-
-                return {
-                    ...recipient,
-                    finalStatus: result.status,
-                    finalError: result.error,
-                };
-            });
-
-            setRecipients(views);
-            setLogs(logRows);
         } catch (err) {
             setError(
                 err instanceof Error
                     ? err.message
                     : "Campaign details load nahi ho sake."
             );
-            setCampaign(null);
+
             setRecipients([]);
             setBotClickUsers([]);
             setExpandedBotButtons([]);
@@ -836,24 +845,16 @@ function CampaignDetailsContent() {
         void loadDetails();
     }, [loadDetails]);
 
-    const counts = useMemo(() => {
-        const result = {
-            total: recipients.length,
-            read: 0,
-            delivered: 0,
-            sent: 0,
-            accepted: 0,
-            failed: 0,
-            pending: 0,
-            unknown: 0,
-        };
-
-        for (const recipient of recipients) {
-            result[recipient.finalStatus] += 1;
-        }
-
-        return result;
-    }, [recipients]);
+    const counts = useMemo(() => ({
+        total: Number(campaign?.total_recipients ?? 0),
+        read: Number(campaign?.read_count ?? 0),
+        delivered: Number(campaign?.delivered_count ?? 0),
+        sent: 0,
+        accepted: Number(campaign?.accepted_count ?? 0),
+        failed: Number(campaign?.failed_count ?? 0),
+        pending: 0,
+        unknown: 0,
+    }), [campaign]);
 
     const visibleRecipients = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -962,24 +963,21 @@ function CampaignDetailsContent() {
 
     return (
         <div className="space-y-6 p-4 md:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-4">
                     <button
                         type="button"
                         onClick={() => router.push("/admin/whatsapp/campaign-analysis")}
-                        className="mb-3 inline-flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-medium hover:bg-gray-50"
+                        className="inline-flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-medium hover:bg-gray-50"
                     >
                         <ArrowLeft className="h-4 w-4" />
-                        Back to Campaign History
+                        Back
                     </button>
-                    <div className="flex items-center gap-2">
-                        <BarChart3 className="h-7 w-7 text-green-700" />
-                        <h1 className="text-2xl font-bold text-gray-900">
-                            Campaign Analysis
-                        </h1>
-                    </div>
+
                     {campaign && (
-                        <p className="mt-1 text-sm text-gray-500">{campaign.name}</p>
+                        <h1 className="text-2xl font-bold text-gray-900">
+                            {campaign.name}
+                        </h1>
                     )}
                 </div>
 
@@ -994,13 +992,6 @@ function CampaignDetailsContent() {
                 </button>
             </div>
 
-            {error && (
-                <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                    <AlertCircle className="h-5 w-5 shrink-0" />
-                    <span>{error}</span>
-                </div>
-            )}
-
             {loading ? (
                 <div className="rounded-xl border bg-white p-10 text-center text-gray-500">
                     Campaign analysis load ho rahi hai...
@@ -1008,68 +999,72 @@ function CampaignDetailsContent() {
             ) : campaign ? (
                 <>
 
-                    <div className="rounded-xl border bg-white p-4 md:p-5">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900">
-                                    {campaign.name}
-                                </h2>
-                                <p className="mt-1 text-sm text-gray-500">
-                                    Created: {formatDate(campaign.created_at)}
+                    <div className="overflow-x-auto rounded-xl border bg-white">
+                        <div className="flex min-w-max divide-x divide-gray-200">
+                            <div className="min-w-[150px] p-4">
+                                <p className="text-xs text-gray-500">Started</p>
+                                <p className="mt-1 text-sm font-semibold text-gray-800">
+                                    {formatDate(campaign.started_at)}
                                 </p>
-                                <p className="text-sm text-gray-500">
-                                    Started: {formatDate(campaign.started_at)} · Completed:{" "}
+                            </div>
+
+                            <div className="min-w-[150px] p-4">
+                                <p className="text-xs text-gray-500">Completed</p>
+                                <p className="mt-1 text-sm font-semibold text-gray-800">
                                     {formatDate(campaign.completed_at)}
                                 </p>
                             </div>
-                            <StatusBadge status={campaign.status} />
+
+                            <div className="min-w-[110px] p-4">
+                                <p className="text-xs text-gray-500">Status</p>
+                                <div className="mt-2">
+                                    <StatusBadge status={campaign.status} />
+                                </div>
+                            </div>
+                            <div className="min-w-[130px] p-4">
+                                <p className="text-xs text-gray-500">Recipients</p>
+                                <p className="mt-1 text-xl font-bold text-gray-900">
+                                    {number(counts.total)}
+                                </p>
+                            </div>
+
+                            <div className="min-w-[110px] p-4">
+                                <p className="text-xs text-gray-500">Failed</p>
+                                <p className="mt-1 text-xl font-bold text-red-700">
+                                    {number(counts.failed)}
+                                    <span className="ml-1 text-xs font-medium">
+                                        ({percent(counts.failed, counts.total)})
+                                    </span>
+                                </p>
+                            </div>
+
+                            <div className="min-w-[120px] p-4">
+                                <p className="text-xs text-gray-500">Delivered</p>
+                                <p className="mt-1 text-xl font-bold text-green-700">
+                                    {number(counts.delivered)}
+                                    <span className="ml-1 text-xs font-medium">
+                                        ({percent(counts.delivered, counts.total)})
+                                    </span>
+                                </p>
+                            </div>
+
+                            <div className="min-w-[110px] p-4">
+                                <p className="text-xs text-gray-500">Read</p>
+                                <p className="mt-1 text-xl font-bold text-purple-700">
+                                    {number(counts.read)}
+                                    <span className="ml-1 text-xs font-medium">
+                                        ({percent(counts.read, counts.total)})
+                                    </span>
+                                </p>
+                            </div>
+
+                            <div className="min-w-[150px] p-4">
+                                <p className="text-xs text-gray-500">Cost (₹)</p>
+                                <p className="mt-1 text-xl font-bold text-gray-900">
+                                    ₹{Number(campaign.estimated_cost ?? 0).toFixed(2)}
+                                </p>
+                            </div>
                         </div>
-                    </div>
-
-
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        <MetricCard
-                            title="Recipient rows"
-                            value={number(counts.total)}
-                            icon={<Users className="h-5 w-5" />}
-                        />
-                        <MetricCard
-                            title="Read"
-                            value={number(counts.read)}
-                            subtitle={percent(counts.read, counts.total)}
-                            icon={<Eye className="h-5 w-5" />}
-                        />
-                        <MetricCard
-                            title="Delivered"
-                            value={number(counts.delivered)}
-                            subtitle={percent(counts.delivered, counts.total)}
-                            icon={<CheckCircle2 className="h-5 w-5" />}
-                        />
-                        <MetricCard
-                            title="Failed"
-                            value={number(counts.failed)}
-                            subtitle={percent(counts.failed, counts.total)}
-                            icon={<XCircle className="h-5 w-5" />}
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        <MetricCard
-                            title="Sent / Accepted"
-                            value={number(counts.sent + counts.accepted)}
-                            subtitle={percent(counts.sent + counts.accepted, counts.total)}
-                            icon={<Send className="h-5 w-5" />}
-                        />
-                        <MetricCard
-                            title="Estimated cost saved"
-                            value={`₹${Number(campaign.estimated_cost ?? 0).toFixed(2)}`}
-                            icon={<BarChart3 className="h-5 w-5" />}
-                        />
-                        <MetricCard
-                            title="Matched log rows"
-                            value={number(logs.length)}
-                            icon={<CheckCircle2 className="h-5 w-5" />}
-                        />
                     </div>
                     <BotAnalysisSection
                         rows={botAnalysis}
@@ -1082,33 +1077,50 @@ function CampaignDetailsContent() {
                     />
                     <section className="rounded-xl border bg-white">
                         <div className="flex flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
-                            <h2 className="text-lg font-semibold text-gray-900">
-                                Recipient Details
-                            </h2>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const next = !recipientExpanded;
+                                    setRecipientExpanded(next);
 
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <input
-                                    value={search}
-                                    onChange={(event) => setSearch(event.target.value)}
-                                    placeholder="Name, mobile, message ID..."
-                                    className="w-full rounded-lg border px-3 py-2 text-sm"
-                                />
+                                    if (next) {
+                                        void loadRecipientDetails();
+                                    }
+                                }}
+                                className="flex w-full items-center justify-between text-left"
+                            >
+                                <span className="text-lg font-semibold text-gray-900">
+                                    Recipient Details
+                                </span>
+                                <span className="text-xl font-bold text-gray-600">
+                                    {recipientExpanded ? "−" : "+"}
+                                </span>
+                            </button>
+                            {recipientExpanded && (
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <input
+                                        value={search}
+                                        onChange={(event) => setSearch(event.target.value)}
+                                        placeholder="Name, mobile, message ID..."
+                                        className="w-full rounded-lg border px-3 py-2 text-sm"
+                                    />
 
-                                <select
-                                    value={statusFilter}
-                                    onChange={(event) => setStatusFilter(event.target.value)}
-                                    className="rounded-lg border bg-white px-3 py-2 text-sm"
-                                >
-                                    <option value="all">All statuses</option>
-                                    <option value="read">Read</option>
-                                    <option value="delivered">Delivered</option>
-                                    <option value="sent">Sent</option>
-                                    <option value="accepted">Accepted</option>
-                                    <option value="failed">Failed</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="unknown">Unknown</option>
-                                </select>
-                            </div>
+                                    <select
+                                        value={statusFilter}
+                                        onChange={(event) => setStatusFilter(event.target.value)}
+                                        className="rounded-lg border bg-white px-3 py-2 text-sm"
+                                    >
+                                        <option value="all">All statuses</option>
+                                        <option value="read">Read</option>
+                                        <option value="delivered">Delivered</option>
+                                        <option value="sent">Sent</option>
+                                        <option value="accepted">Accepted</option>
+                                        <option value="failed">Failed</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="unknown">Unknown</option>
+                                    </select>
+                                </div>
+                            )}
                         </div>
 
                         <div className="overflow-x-auto">
