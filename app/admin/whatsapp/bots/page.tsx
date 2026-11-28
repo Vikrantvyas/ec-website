@@ -122,6 +122,28 @@ function normalizeFlow(value: unknown): BotFlow {
 
     return { nodes: [] };
 }
+function getQuestionStatus(
+    node: BotNode,
+    allNodes: BotNode[]
+): "pending" | "connected" | "end" | "url" {
+    if (node.type === "text") {
+        return "end";
+    }
+
+    if (node.type === "url_button") {
+        return "url";
+    }
+
+    const allOptionsMapped =
+        node.options.length > 0 &&
+        node.options.every(
+            (option) =>
+                option.nextNodeId === "__END__" ||
+                allNodes.some((target) => target.id === option.nextNodeId)
+        );
+
+    return allOptionsMapped ? "connected" : "pending";
+}
 
 function StatusBadge({ status }: { status: BotStatus }) {
     const styles: Record<BotStatus, string> = {
@@ -590,7 +612,8 @@ export default function WhatsAppBotsPage() {
             }
             const invalidNext = node.options.some(
                 (option) =>
-                    option.nextNodeId &&
+                    option.nextNodeId !== "" &&
+                    option.nextNodeId !== "__END__" &&
                     !flow.nodes.some((target) => target.id === option.nextNodeId)
             );
 
@@ -1255,27 +1278,33 @@ export default function WhatsAppBotsPage() {
                                                 }
                                             }}
                                             className={`rounded-2xl border p-4 transition ${draggedNodeId === node.id
-                                                    ? "border-emerald-400 bg-emerald-50 opacity-50"
-                                                    : "border-slate-200"
+                                                ? "border-emerald-400 bg-emerald-50 opacity-50"
+                                                : getQuestionStatus(node, flow.nodes) === "pending"
+                                                    ? "border-amber-300 bg-amber-50/50"
+                                                    : getQuestionStatus(node, flow.nodes) === "connected"
+                                                        ? "border-emerald-300 bg-emerald-50/30"
+                                                        : getQuestionStatus(node, flow.nodes) === "end"
+                                                            ? "border-slate-300 bg-slate-100/70"
+                                                            : "border-blue-200 bg-blue-50/30"
                                                 }`}
                                         >
                                             <div className="mb-4 flex items-center justify-between gap-3">
                                                 <button
-    type="button"
-    draggable
-    title="Drag to reorder question"
-    className="cursor-grab touch-none rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 active:cursor-grabbing"
-    onDragStart={(event) => {
-        event.stopPropagation();
-        setDraggedNodeId(node.id);
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", node.id);
-    }}
-    onDragEnd={() => setDraggedNodeId(null)}
-    onClick={(event) => event.stopPropagation()}
->
-    <GripVertical size={20} />
-</button>
+                                                    type="button"
+                                                    draggable
+                                                    title="Drag to reorder question"
+                                                    className="cursor-grab touch-none rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 active:cursor-grabbing"
+                                                    onDragStart={(event) => {
+                                                        event.stopPropagation();
+                                                        setDraggedNodeId(node.id);
+                                                        event.dataTransfer.effectAllowed = "move";
+                                                        event.dataTransfer.setData("text/plain", node.id);
+                                                    }}
+                                                    onDragEnd={() => setDraggedNodeId(null)}
+                                                    onClick={(event) => event.stopPropagation()}
+                                                >
+                                                    <GripVertical size={20} />
+                                                </button>
                                                 <button
                                                     type="button"
                                                     className="flex min-w-0 flex-1 items-center gap-3 text-left"
@@ -1290,9 +1319,30 @@ export default function WhatsAppBotsPage() {
                                                     </span>
 
                                                     <div className="min-w-0 flex-1">
-                                                        <h3 className="font-semibold text-slate-900">
-                                                            Question {index + 1}
-                                                        </h3>
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <h3 className="font-semibold text-slate-900">
+                                                                Question {index + 1}
+                                                            </h3>
+
+                                                            <span
+                                                                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${getQuestionStatus(node, flow.nodes) === "pending"
+                                                                    ? "bg-amber-100 text-amber-800"
+                                                                    : getQuestionStatus(node, flow.nodes) === "connected"
+                                                                        ? "bg-emerald-100 text-emerald-800"
+                                                                        : getQuestionStatus(node, flow.nodes) === "end"
+                                                                            ? "bg-slate-200 text-slate-700"
+                                                                            : "bg-blue-100 text-blue-800"
+                                                                    }`}
+                                                            >
+                                                                {getQuestionStatus(node, flow.nodes) === "pending"
+                                                                    ? "Mapping Pending"
+                                                                    : getQuestionStatus(node, flow.nodes) === "connected"
+                                                                        ? "Connected"
+                                                                        : getQuestionStatus(node, flow.nodes) === "end"
+                                                                            ? "End Question"
+                                                                            : "URL Button"}
+                                                            </span>
+                                                        </div>
 
                                                         <p className="truncate text-xs text-slate-500">
                                                             {node.question.trim() || "Question text यहाँ लिखें"}
@@ -1737,7 +1787,9 @@ export default function WhatsAppBotsPage() {
                                                                                 })
                                                                             }
                                                                         >
-                                                                            <option value="">End / No next question</option>
+                                                                            <option value="">Select Next Question</option>
+                                                                            <option value="__END__">End / No next question</option>
+
                                                                             {flow.nodes
                                                                                 .filter((target) => target.id !== node.id)
                                                                                 .map((target) => (
