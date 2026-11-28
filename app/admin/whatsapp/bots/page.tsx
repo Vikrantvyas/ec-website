@@ -218,6 +218,25 @@ export default function WhatsAppBotsPage() {
     const [triggerKeyword, setTriggerKeyword] = useState("");
     const [flow, setFlow] = useState<BotFlow>(emptyFlow);
     const [expandedNodeId, setExpandedNodeId] = useState<string | null>(null);
+    const [focusQuestionNodeId, setFocusQuestionNodeId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!focusQuestionNodeId || expandedNodeId !== focusQuestionNodeId) return;
+
+        const questionInput = document.getElementById(
+            `bot-question-input-${focusQuestionNodeId}`
+        ) as HTMLTextAreaElement | null;
+
+        if (!questionInput) return;
+
+        questionInput.focus();
+        questionInput.setSelectionRange(
+            questionInput.value.length,
+            questionInput.value.length
+        );
+
+        setFocusQuestionNodeId(null);
+    }, [focusQuestionNodeId, expandedNodeId, flow.nodes]);
     const [followUpModalNodeId, setFollowUpModalNodeId] = useState<string | null>(null);
     const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
     async function saveBotSettings() {
@@ -381,7 +400,81 @@ export default function WhatsAppBotsPage() {
         }));
         setExpandedNodeId(newNode.id);
     }
+    function duplicateNode(nodeId: string) {
+        let duplicatedNodeId = "";
 
+        setFlow((current) => {
+            const sourceIndex = current.nodes.findIndex(
+                (node) => node.id === nodeId
+            );
+
+            if (sourceIndex === -1) return current;
+
+            const sourceNode = current.nodes[sourceIndex];
+
+            const duplicatedNode: BotNode = {
+                ...sourceNode,
+                id: makeId(),
+
+                options: sourceNode.options.map((option) => ({
+                    ...option,
+                    id: makeId(),
+                })),
+
+                followUpOptions: (sourceNode.followUpOptions ?? []).map((option) => ({
+                    ...option,
+                    id: makeId(),
+                })),
+            };
+
+            duplicatedNodeId = duplicatedNode.id;
+
+            const updatedNodes = [...current.nodes];
+            updatedNodes.splice(sourceIndex + 1, 0, duplicatedNode);
+
+            return {
+                ...current,
+                nodes: updatedNodes,
+            };
+        });
+
+        setExpandedNodeId(duplicatedNodeId);
+        setFocusQuestionNodeId(duplicatedNodeId);
+    }
+    function addNodeForOption(nodeId: string, optionId: string) {
+        const newNode: BotNode = {
+            id: makeId(),
+            question: "",
+            type: "buttons",
+            options: [
+                { id: makeId(), title: "Option 1", nextNodeId: "" },
+                { id: makeId(), title: "Option 2", nextNodeId: "" },
+                { id: makeId(), title: "Option 3", nextNodeId: "" },
+            ],
+        };
+
+        setFlow((current) => ({
+            ...current,
+            nodes: [
+                ...current.nodes.map((node) =>
+                    node.id === nodeId
+                        ? {
+                            ...node,
+                            options: node.options.map((option) =>
+                                option.id === optionId
+                                    ? { ...option, nextNodeId: newNode.id }
+                                    : option
+                            ),
+                        }
+                        : node
+                ),
+                newNode,
+            ],
+        }));
+
+        setExpandedNodeId(newNode.id);
+        setFocusQuestionNodeId(newNode.id);
+    }
     function deleteNode(nodeId: string) {
         const remainingNodes = flow.nodes.filter((node) => node.id !== nodeId);
 
@@ -1283,14 +1376,23 @@ export default function WhatsAppBotsPage() {
                                                 >
                                                     <GripVertical size={20} />
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                                                <div
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left"
                                                     onClick={() =>
                                                         setExpandedNodeId(
                                                             expandedNodeId === node.id ? null : node.id
                                                         )
                                                     }
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === "Enter" || event.key === " ") {
+                                                            event.preventDefault();
+                                                            setExpandedNodeId(
+                                                                expandedNodeId === node.id ? null : node.id
+                                                            );
+                                                        }
+                                                    }}
                                                 >
                                                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-sm font-bold text-emerald-700">
                                                         {index + 1}
@@ -1320,6 +1422,49 @@ export default function WhatsAppBotsPage() {
                                                                             ? "End Question"
                                                                             : "URL Button"}
                                                             </span>
+
+                                                            {(() => {
+                                                                const linkedQuestions = flow.nodes.flatMap((source, sourceIndex) =>
+                                                                    source.options.some((option) => option.nextNodeId === node.id)
+                                                                        ? [{ id: source.id, number: sourceIndex + 1 }]
+                                                                        : []
+                                                                );
+
+                                                                return linkedQuestions.length > 0 ? (
+                                                                    <div className="flex flex-wrap items-center gap-1.5">
+                                                                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                                                                            Linked to
+                                                                        </span>
+
+                                                                        {linkedQuestions.map((linkedQuestion, linkedIndex) => (
+                                                                            <span key={linkedQuestion.id} className="inline-flex items-center">
+                                                                                {linkedIndex > 0 && (
+                                                                                    <span className="mr-1 text-sm text-slate-500">,</span>
+                                                                                )}
+
+                                                                                <button
+                                                                                    type="button"
+                                                                                    title={`Go to Question ${linkedQuestion.number}`}
+                                                                                    className="text-sm font-semibold text-blue-700 underline decoration-blue-300 underline-offset-2 hover:text-blue-900"
+                                                                                    onClick={(event) => {
+                                                                                        event.stopPropagation();
+                                                                                        setExpandedNodeId(linkedQuestion.id);
+
+                                                                                        document
+                                                                                            .getElementById(`bot-question-${linkedQuestion.id}`)
+                                                                                            ?.scrollIntoView({
+                                                                                                behavior: "smooth",
+                                                                                                block: "center",
+                                                                                            });
+                                                                                    }}
+                                                                                >
+                                                                                    Question {linkedQuestion.number}
+                                                                                </button>
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                ) : null;
+                                                            })()}
                                                         </div>
 
                                                         <p className="truncate text-xs text-slate-500">
@@ -1332,7 +1477,16 @@ export default function WhatsAppBotsPage() {
                                                         className={`shrink-0 text-slate-500 transition-transform ${expandedNodeId === node.id ? "rotate-180" : ""
                                                             }`}
                                                     />
-                                                </button>
+                                                </div>
+                                                <button
+    type="button"
+    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50"
+    title="Duplicate Question"
+    onClick={() => duplicateNode(node.id)}
+>
+    <Copy size={14} />
+    Duplicate
+</button>
                                                 <button
                                                     type="button"
                                                     className={`shrink-0 rounded-lg border px-3 py-2 text-xs font-semibold transition ${node.followUpEnabled
@@ -1363,6 +1517,7 @@ export default function WhatsAppBotsPage() {
                                                                 Question Text *
                                                             </label>
                                                             <textarea
+                                                                id={`bot-question-input-${node.id}`}
                                                                 className={`${field} h-10 min-h-10 resize-none leading-5`}
                                                                 rows={1}
                                                                 value={node.question}
@@ -1570,28 +1725,39 @@ export default function WhatsAppBotsPage() {
                                                                             </button>
                                                                         </div>
 
-                                                                        <select
-                                                                            className={field}
-                                                                            value={option.nextNodeId}
-                                                                            onChange={(event) =>
-                                                                                updateOption(node.id, option.id, {
-                                                                                    nextNodeId: event.target.value,
-                                                                                })
-                                                                            }
-                                                                        >
-                                                                            <option value="">Select Next Question</option>
-                                                                            <option value="__END__">End / No next question</option>
+                                                                        <div className="flex min-w-0 items-center gap-2">
+                                                                            <select
+                                                                                className={`${field} min-w-0 flex-1`}
+                                                                                value={option.nextNodeId}
+                                                                                onChange={(event) =>
+                                                                                    updateOption(node.id, option.id, {
+                                                                                        nextNodeId: event.target.value,
+                                                                                    })
+                                                                                }
+                                                                            >
+                                                                                <option value="">Select Next Question</option>
+                                                                                <option value="__END__">End / No next question</option>
 
-                                                                            {flow.nodes
-                                                                                .filter((target) => target.id !== node.id)
-                                                                                .map((target) => (
-                                                                                    <option key={target.id} value={target.id}>
-                                                                                        {target.question.trim()
-                                                                                            ? target.question.slice(0, 55)
-                                                                                            : `Question ${flow.nodes.indexOf(target) + 1}`}
-                                                                                    </option>
-                                                                                ))}
-                                                                        </select>
+                                                                                {flow.nodes
+                                                                                    .filter((target) => target.id !== node.id)
+                                                                                    .map((target) => (
+                                                                                        <option key={target.id} value={target.id}>
+                                                                                            {target.question.trim()
+                                                                                                ? target.question.slice(0, 55)
+                                                                                                : `Question ${flow.nodes.indexOf(target) + 1}`}
+                                                                                        </option>
+                                                                                    ))}
+                                                                            </select>
+
+                                                                            <button
+                                                                                type="button"
+                                                                                title="Add and connect a new question"
+                                                                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                                                                onClick={() => addNodeForOption(node.id, option.id)}
+                                                                            >
+                                                                                <Plus size={18} />
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
                                                                 ))}
                                                             </div>
