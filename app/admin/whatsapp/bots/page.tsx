@@ -969,20 +969,11 @@ export default function WhatsAppBotsPage() {
                     <div className="space-y-5">
                         <section className={`${card} p-5`}>
                             <div className="mb-5 flex items-center gap-3">
-                                <div className="rounded-xl bg-emerald-50 p-3 text-emerald-700">
-                                    <Bot size={24} />
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-bold text-slate-900">
-                                        {editingId ? "Edit Bot" : "Create New Bot"}
-                                    </h2>
-                                    <p className="text-sm text-slate-500">
-                                        Basic details और start settings
-                                    </p>
-                                </div>
+
+
                             </div>
 
-                            <div className="grid gap-4 md:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
                                 <label className="space-y-1.5 text-sm font-medium text-slate-700">
                                     Bot Name *
                                     <input
@@ -993,22 +984,9 @@ export default function WhatsAppBotsPage() {
                                     />
                                 </label>
 
-                                <label className="space-y-1.5 text-sm font-medium text-slate-700">
-                                    Status
-                                    <select
-                                        className={field}
-                                        value={status}
-                                        onChange={(event) =>
-                                            setStatus(event.target.value as BotStatus)
-                                        }
-                                    >
-                                        <option value="draft">Draft</option>
-                                        <option value="active">Active</option>
-                                        <option value="paused">Paused</option>
-                                    </select>
-                                </label>
+                                
 
-                                <label className="space-y-1.5 text-sm font-medium text-slate-700 md:col-span-2">
+                                <label className="space-y-1.5 text-sm font-medium text-slate-700">
                                     Description
                                     <input
                                         className={field}
@@ -1017,10 +995,9 @@ export default function WhatsAppBotsPage() {
                                         placeholder="यह Bot किस काम के लिए है?"
                                     />
                                 </label>
-                            </div>
 
-                            <div className="mt-4">
-                                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+
+                                <label className="space-y-1.5 text-sm font-medium text-slate-700">
                                     Approved WhatsApp Template
                                     <select
                                         className={field}
@@ -1100,7 +1077,37 @@ export default function WhatsAppBotsPage() {
                                         ))}
                                     </select>
                                 </label>
+                                <label className="space-y-1.5 text-sm font-medium text-slate-700">
+                                    Bot Start Mode
+                                    <select
+                                        className={field}
+                                        value={startMode}
+                                        onChange={(event) =>
+                                            setStartMode(event.target.value as StartMode)
+                                        }
+                                    >
+                                        <option value="manual">Manual</option>
+                                        <option value="automatic">Automatic</option>
+                                        <option value="both">Both</option>
+                                    </select>
+                                </label>
+                                <label className="space-y-1.5 text-sm font-medium text-slate-700">
+                                    Status
+                                    <select
+                                        className={field}
+                                        value={status}
+                                        onChange={(event) =>
+                                            setStatus(event.target.value as BotStatus)
+                                        }
+                                    >
+                                        <option value="draft">Draft</option>
+                                        <option value="active">Active</option>
+                                        <option value="paused">Paused</option>
+                                    </select>
+                                </label>
+                            </div>
 
+                            <div className="mt-4">
                                 {approvedTemplates.length === 0 && (
                                     <p className="mt-1 text-xs text-amber-700">
                                         कोई approved template नहीं मिला। पहले Templates page पर Sync करें।
@@ -1144,11 +1151,11 @@ export default function WhatsAppBotsPage() {
                                             )}
 
                                             {buttons?.buttons?.length > 0 && (
-                                                <div className="mt-4 space-y-2">
+                                                <div className="mt-4 flex flex-nowrap gap-2 overflow-x-auto">
                                                     {buttons.buttons.map((button: any, index: number) => (
                                                         <div
                                                             key={`${button.type}-${index}`}
-                                                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                                                            className="shrink-0 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
                                                         >
                                                             {button.type === "URL" ? (
                                                                 <a
@@ -1181,37 +1188,7 @@ export default function WhatsAppBotsPage() {
                                 })()}
                             </div>
 
-                            <div className="mt-5">
-                                <p className="mb-2 text-sm font-semibold text-slate-800">
-                                    Bot Start Mode
-                                </p>
-                                <div className="grid gap-3 sm:grid-cols-3">
-                                    {(
-                                        [
-                                            ["manual", "Manual", "Inbox से Start करें"],
-                                            ["automatic", "Automatic", "Keyword Trigger"],
-                                            ["both", "Both", "दोनों तरीके"],
-                                        ] as const
-                                    ).map(([value, title, subtitle]) => (
-                                        <button
-                                            key={value}
-                                            type="button"
-                                            onClick={() => setStartMode(value)}
-                                            className={`rounded-xl border p-3 text-left transition ${startMode === value
-                                                ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-100"
-                                                : "border-slate-200 hover:border-slate-300"
-                                                }`}
-                                        >
-                                            <span className="block font-semibold text-slate-900">
-                                                {title}
-                                            </span>
-                                            <span className="mt-1 block text-xs text-slate-500">
-                                                {subtitle}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                            
 
                             {(startMode === "automatic" || startMode === "both") && (
                                 <label className="mt-4 block space-y-1.5 text-sm font-medium text-slate-700">
