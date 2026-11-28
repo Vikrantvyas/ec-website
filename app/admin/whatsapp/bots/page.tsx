@@ -1358,56 +1358,56 @@ export default function WhatsAppBotsPage() {
                                             {expandedNodeId === node.id && (
                                                 <>
                                                     <div className="mb-4 grid grid-cols-1 items-end gap-3 md:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)_auto]">
-    <div className="flex min-w-0 flex-col">
-        <label className="mb-1.5 h-5 text-sm font-medium leading-5 text-slate-700">
-            Question Text *
-        </label>
-        <textarea
-            className={`${field} h-10 min-h-10 resize-none leading-5`}
-            rows={1}
-            value={node.question}
-            onChange={(event) =>
-                updateNode(node.id, {
-                    question: event.target.value,
-                })
-            }
-            placeholder="ग्राहक को क्या प्रश्न भेजना है?"
-        />
-    </div>
+                                                        <div className="flex min-w-0 flex-col">
+                                                            <label className="mb-1.5 h-5 text-sm font-medium leading-5 text-slate-700">
+                                                                Question Text *
+                                                            </label>
+                                                            <textarea
+                                                                className={`${field} h-10 min-h-10 resize-none leading-5`}
+                                                                rows={1}
+                                                                value={node.question}
+                                                                onChange={(event) =>
+                                                                    updateNode(node.id, {
+                                                                        question: event.target.value,
+                                                                    })
+                                                                }
+                                                                placeholder="ग्राहक को क्या प्रश्न भेजना है?"
+                                                            />
+                                                        </div>
 
-    <div className="flex min-w-0 flex-col">
-        <label className="mb-1.5 h-5 text-sm font-medium leading-5 text-slate-700">
-            Reply Type
-        </label>
-        <select
-            className={`${field} h-10`}
-            value={node.type}
-            onChange={(event) =>
-                updateNode(node.id, {
-                    type: event.target.value as BotNode["type"],
-                })
-            }
-        >
-            <option value="buttons">Reply Buttons (max 3)</option>
-            <option value="list">List Message</option>
-            <option value="text">Text Question</option>
-            <option value="url_button">URL Button (website link)</option>
-        </select>
-    </div>
+                                                        <div className="flex min-w-0 flex-col">
+                                                            <label className="mb-1.5 h-5 text-sm font-medium leading-5 text-slate-700">
+                                                                Reply Type
+                                                            </label>
+                                                            <select
+                                                                className={`${field} h-10`}
+                                                                value={node.type}
+                                                                onChange={(event) =>
+                                                                    updateNode(node.id, {
+                                                                        type: event.target.value as BotNode["type"],
+                                                                    })
+                                                                }
+                                                            >
+                                                                <option value="buttons">Reply Buttons (max 3)</option>
+                                                                <option value="list">List Message</option>
+                                                                <option value="text">Text Question</option>
+                                                                <option value="url_button">URL Button (website link)</option>
+                                                            </select>
+                                                        </div>
 
-    {(node.type === "buttons" || node.type === "list") && (
-        <button
-            type="button"
-            className={`${secondary} h-10 whitespace-nowrap`}
-            onClick={() => addOption(node.id)}
-            disabled={
-                node.type === "buttons" && node.options.length >= 3
-            }
-        >
-            <Plus size={15} /> Add Option
-        </button>
-    )}
-</div>
+                                                        {(node.type === "buttons" || node.type === "list") && (
+                                                            <button
+                                                                type="button"
+                                                                className={`${secondary} h-10 whitespace-nowrap`}
+                                                                onClick={() => addOption(node.id)}
+                                                                disabled={
+                                                                    node.type === "buttons" && node.options.length >= 3
+                                                                }
+                                                            >
+                                                                <Plus size={15} /> Add Option
+                                                            </button>
+                                                        )}
+                                                    </div>
 
 
                                                     {node.type === "list" && (
@@ -1536,7 +1536,7 @@ export default function WhatsAppBotsPage() {
                                                     )}
                                                     {(node.type === "buttons" || node.type === "list") && (
                                                         <div className="space-y-3">
-                                                            
+
                                                             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                                                                 {node.options.map((option, optionIndex) => (
                                                                     <div
@@ -1615,7 +1615,7 @@ export default function WhatsAppBotsPage() {
                                                     onClick={() => setFollowUpModalNodeId(null)}
                                                 >
                                                     <div
-                                                        className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+                                                        className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
                                                         onClick={(event) => event.stopPropagation()}
                                                     >
                                                         <div className="flex items-center justify-between border-b border-slate-200 p-4">
@@ -1640,204 +1640,193 @@ export default function WhatsAppBotsPage() {
                                                         </div>
 
                                                         <div className="max-h-[75vh] space-y-4 overflow-y-auto p-5">
-                                                            <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={followUpNode.followUpEnabled ?? false}
-                                                                    onChange={(event) =>
-                                                                        updateNode(followUpNode.id, {
-                                                                            followUpEnabled: event.target.checked,
-                                                                        })
-                                                                    }
-                                                                    className="h-4 w-4 accent-emerald-600"
-                                                                />
-                                                                Enable Follow-up Message
-                                                            </label>
 
-                                                            {followUpNode.followUpEnabled && (
-                                                                <div className="space-y-4">
-                                                                    <label className="block space-y-1.5 text-sm font-medium text-slate-700">
-                                                                        Follow-up कब भेजना है? (Minutes)
-                                                                        <input
-                                                                            type="number"
-                                                                            min="1"
-                                                                            max="43200"
-                                                                            className={field}
-                                                                            value={followUpNode.followUpMinutes ?? 60}
-                                                                            onChange={(event) =>
-                                                                                updateNode(followUpNode.id, {
-                                                                                    followUpMinutes: Math.max(
-                                                                                        1,
-                                                                                        Number(event.target.value) || 1
-                                                                                    ),
-                                                                                })
-                                                                            }
-                                                                        />
-                                                                    </label>
 
-                                                                    <label className="block space-y-1.5 text-sm font-medium text-slate-700">
-                                                                        Follow-up Message *
-                                                                        <textarea
-                                                                            rows={3}
-                                                                            className={field}
-                                                                            value={followUpNode.followUpMessage ?? ""}
-                                                                            onChange={(event) =>
-                                                                                updateNode(followUpNode.id, {
-                                                                                    followUpMessage: event.target.value,
-                                                                                })
-                                                                            }
-                                                                            placeholder="अपना Follow-up संदेश लिखें..."
-                                                                        />
-                                                                    </label>
+                                                            <div className="space-y-4">
+                                                                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                                    Follow-up कब भेजना है? (Minutes)
+                                                                    <input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        max="43200"
+                                                                        className={field}
+                                                                        value={followUpNode.followUpMinutes ?? 60}
+                                                                        onChange={(event) =>
+                                                                            updateNode(followUpNode.id, {
+                                                                                followUpMinutes: Math.max(
+                                                                                    1,
+                                                                                    Number(event.target.value) || 1
+                                                                                ),
+                                                                            })
+                                                                        }
+                                                                    />
+                                                                </label>
 
-                                                                    <p className="text-xs text-slate-500">
-                                                                        उदाहरण: 60 मिनट = 1 घंटा। Follow-up तभी भेजा जाएगा जब Form Submit नहीं हुआ हो।
-                                                                    </p>
+                                                                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                                    Follow-up Message *
+                                                                    <textarea
+                                                                        rows={3}
+                                                                        className={field}
+                                                                        value={followUpNode.followUpMessage ?? ""}
+                                                                        onChange={(event) =>
+                                                                            updateNode(followUpNode.id, {
+                                                                                followUpMessage: event.target.value,
+                                                                            })
+                                                                        }
+                                                                        placeholder="अपना Follow-up संदेश लिखें..."
+                                                                    />
+                                                                </label>
 
-                                                                    <label className="block space-y-1.5 text-sm font-medium text-slate-700">
-                                                                        Follow-up Reply Type
-                                                                        <select
-                                                                            className={field}
-                                                                            value={followUpNode.followUpType ?? "buttons"}
-                                                                            onChange={(event) =>
-                                                                                updateNode(followUpNode.id, {
-                                                                                    followUpType: event.target.value as "buttons" | "list" | "text",
-                                                                                })
-                                                                            }
-                                                                        >
-                                                                            <option value="text">Normal Text</option>
-                                                                            <option value="buttons">Reply Buttons (max 3)</option>
-                                                                            <option value="list">List Message (max 10)</option>
-                                                                        </select>
-                                                                    </label>
+                                                                <p className="text-xs text-slate-500">
+                                                                    उदाहरण: 60 मिनट = 1 घंटा। Follow-up तभी भेजा जाएगा जब Form Submit नहीं हुआ हो।
+                                                                </p>
 
-                                                                    {(followUpNode.followUpType ?? "buttons") !== "text" && (
-                                                                        <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                                                                            <div className="text-sm font-semibold text-slate-700">
-                                                                                Follow-up Reply Options
-                                                                            </div>
+                                                                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                                                                    Follow-up Reply Type
+                                                                    <select
+                                                                        className={field}
+                                                                        value={followUpNode.followUpType ?? "buttons"}
+                                                                        onChange={(event) =>
+                                                                            updateNode(followUpNode.id, {
+                                                                                followUpType: event.target.value as "buttons" | "list" | "text",
+                                                                            })
+                                                                        }
+                                                                    >
+                                                                        <option value="text">Normal Text</option>
+                                                                        <option value="buttons">Reply Buttons (max 3)</option>
+                                                                        <option value="list">List Message (max 10)</option>
+                                                                    </select>
+                                                                </label>
 
-                                                                            {(followUpNode.followUpOptions ?? []).map((option, optionIndex) => (
-                                                                                <div
-                                                                                    key={option.id}
-                                                                                    className="grid grid-cols-1 gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-[1fr_1fr_1.5fr_auto]"
-                                                                                >
-                                                                                    <div className="space-y-1">
-                                                                                        <input
-                                                                                            className={field}
-                                                                                            value={option.title}
-                                                                                            placeholder={
-                                                                                                followUpNode.followUpType === "list"
-                                                                                                    ? "List title (max 24 characters)"
-                                                                                                    : "Button title (max 20 characters)"
-                                                                                            }
-                                                                                            maxLength={followUpNode.followUpType === "list" ? 24 : 20}
-                                                                                            onChange={(event) => {
-                                                                                                const options = [...(followUpNode.followUpOptions ?? [])];
-                                                                                                options[optionIndex] = {
-                                                                                                    ...options[optionIndex],
-                                                                                                    title: event.target.value,
-                                                                                                };
-                                                                                                updateNode(followUpNode.id, {
-                                                                                                    followUpOptions: options,
-                                                                                                });
-                                                                                            }}
-                                                                                        />
-                                                                                        <p className="text-right text-xs text-slate-500">
-                                                                                            {option.title.length}/{followUpNode.followUpType === "list" ? 24 : 20} characters
-                                                                                        </p>
-                                                                                    </div>
+                                                                {(followUpNode.followUpType ?? "buttons") !== "text" && (
+                                                                    <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                                                        <div className="text-sm font-semibold text-slate-700">
+                                                                            Follow-up Reply Options
+                                                                        </div>
 
+                                                                        {(followUpNode.followUpOptions ?? []).map((option, optionIndex) => (
+                                                                            <div
+                                                                                key={option.id}
+                                                                                className="grid grid-cols-1 gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-[1fr_1fr_1.5fr_auto]"
+                                                                            >
+                                                                                <div className="space-y-1">
                                                                                     <input
                                                                                         className={field}
-                                                                                        value={option.id}
-                                                                                        placeholder="Option ID"
+                                                                                        value={option.title}
+                                                                                        placeholder={
+                                                                                            followUpNode.followUpType === "list"
+                                                                                                ? "List title (max 24 characters)"
+                                                                                                : "Button title (max 20 characters)"
+                                                                                        }
+                                                                                        maxLength={followUpNode.followUpType === "list" ? 24 : 20}
                                                                                         onChange={(event) => {
                                                                                             const options = [...(followUpNode.followUpOptions ?? [])];
                                                                                             options[optionIndex] = {
                                                                                                 ...options[optionIndex],
-                                                                                                id: event.target.value,
+                                                                                                title: event.target.value,
                                                                                             };
                                                                                             updateNode(followUpNode.id, {
                                                                                                 followUpOptions: options,
                                                                                             });
                                                                                         }}
                                                                                     />
-
-                                                                                    <select
-                                                                                        className={field}
-                                                                                        value={option.nextNodeId ?? ""}
-                                                                                        onChange={(event) => {
-                                                                                            const options = [...(followUpNode.followUpOptions ?? [])];
-                                                                                            options[optionIndex] = {
-                                                                                                ...options[optionIndex],
-                                                                                                nextNodeId: event.target.value,
-                                                                                            };
-                                                                                            updateNode(followUpNode.id, {
-                                                                                                followUpOptions: options,
-                                                                                            });
-                                                                                        }}
-                                                                                    >
-                                                                                        <option value="">End / No next question</option>
-                                                                                        {flow.nodes
-                                                                                            .filter((target) => target.id !== followUpNode.id)
-                                                                                            .map((target) => (
-                                                                                                <option key={target.id} value={target.id}>
-                                                                                                    {target.question.trim()
-                                                                                                        ? target.question.slice(0, 55)
-                                                                                                        : `Question ${flow.nodes.indexOf(target) + 1}`}
-                                                                                                </option>
-                                                                                            ))}
-                                                                                    </select>
-
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        className="rounded-md border border-red-200 px-3 py-2 text-sm text-red-600"
-                                                                                        onClick={() =>
-                                                                                            updateNode(followUpNode.id, {
-                                                                                                followUpOptions: (followUpNode.followUpOptions ?? []).filter(
-                                                                                                    (_, index) => index !== optionIndex
-                                                                                                ),
-                                                                                            })
-                                                                                        }
-                                                                                    >
-                                                                                        हटाएँ
-                                                                                    </button>
+                                                                                    <p className="text-right text-xs text-slate-500">
+                                                                                        {option.title.length}/{followUpNode.followUpType === "list" ? 24 : 20} characters
+                                                                                    </p>
                                                                                 </div>
-                                                                            ))}
 
-                                                                            <button
-                                                                                type="button"
-                                                                                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                                                                                disabled={(followUpNode.followUpOptions ?? []).length >= (
-                                                                                    followUpNode.followUpType === "list" ? 10 : 3
-                                                                                )}
-                                                                                onClick={() =>
-                                                                                    updateNode(followUpNode.id, {
-                                                                                        followUpOptions: [
-                                                                                            ...(followUpNode.followUpOptions ?? []),
-                                                                                            {
-                                                                                                id: makeId(),
-                                                                                                title: "",
-                                                                                                nextNodeId: "",
-                                                                                            },
-                                                                                        ],
-                                                                                    })
-                                                                                }
-                                                                            >
-                                                                                + Add Follow-up Option
-                                                                            </button>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
+                                                                                <input
+                                                                                    className={field}
+                                                                                    value={option.id}
+                                                                                    placeholder="Option ID"
+                                                                                    onChange={(event) => {
+                                                                                        const options = [...(followUpNode.followUpOptions ?? [])];
+                                                                                        options[optionIndex] = {
+                                                                                            ...options[optionIndex],
+                                                                                            id: event.target.value,
+                                                                                        };
+                                                                                        updateNode(followUpNode.id, {
+                                                                                            followUpOptions: options,
+                                                                                        });
+                                                                                    }}
+                                                                                />
+
+                                                                                <select
+                                                                                    className={field}
+                                                                                    value={option.nextNodeId ?? ""}
+                                                                                    onChange={(event) => {
+                                                                                        const options = [...(followUpNode.followUpOptions ?? [])];
+                                                                                        options[optionIndex] = {
+                                                                                            ...options[optionIndex],
+                                                                                            nextNodeId: event.target.value,
+                                                                                        };
+                                                                                        updateNode(followUpNode.id, {
+                                                                                            followUpOptions: options,
+                                                                                        });
+                                                                                    }}
+                                                                                >
+                                                                                    <option value="">End / No next question</option>
+                                                                                    {flow.nodes
+                                                                                        .filter((target) => target.id !== followUpNode.id)
+                                                                                        .map((target) => (
+                                                                                            <option key={target.id} value={target.id}>
+                                                                                                {target.question.trim()
+                                                                                                    ? target.question.slice(0, 55)
+                                                                                                    : `Question ${flow.nodes.indexOf(target) + 1}`}
+                                                                                            </option>
+                                                                                        ))}
+                                                                                </select>
+
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="rounded-md border border-red-200 px-3 py-2 text-sm text-red-600"
+                                                                                    onClick={() =>
+                                                                                        updateNode(followUpNode.id, {
+                                                                                            followUpOptions: (followUpNode.followUpOptions ?? []).filter(
+                                                                                                (_, index) => index !== optionIndex
+                                                                                            ),
+                                                                                        })
+                                                                                    }
+                                                                                >
+                                                                                    हटाएँ
+                                                                                </button>
+                                                                            </div>
+                                                                        ))}
+
+                                                                        <button
+                                                                            type="button"
+                                                                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                                                            disabled={(followUpNode.followUpOptions ?? []).length >= (
+                                                                                followUpNode.followUpType === "list" ? 10 : 3
+                                                                            )}
+                                                                            onClick={() =>
+                                                                                updateNode(followUpNode.id, {
+                                                                                    followUpOptions: [
+                                                                                        ...(followUpNode.followUpOptions ?? []),
+                                                                                        {
+                                                                                            id: makeId(),
+                                                                                            title: "",
+                                                                                            nextNodeId: "",
+                                                                                        },
+                                                                                    ],
+                                                                                })
+                                                                            }
+                                                                        >
+                                                                            + Add Follow-up Option
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
 
                                                         <div className="flex justify-end border-t border-slate-200 p-4">
                                                             <button
                                                                 type="button"
                                                                 className={primary}
-                                                                onClick={() => setFollowUpModalNodeId(null)}
+                                                                onClick={() => {
+                                                                    updateNode(followUpNode.id, { followUpEnabled: true });
+                                                                    setFollowUpModalNodeId(null);
+                                                                }}
                                                             >
                                                                 Done
                                                             </button>
